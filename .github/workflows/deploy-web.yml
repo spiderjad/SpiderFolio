@@ -75,6 +75,9 @@ jobs:
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate true
+          # El certificado del FTP de Hostinger no lleva el nombre de FTP_SERVER: se sigue verificando
+          # la cadena, solo se omite la comprobación del nombre del host.
+          set ssl:check-hostname false
           set net:max-retries 3
           set net:timeout 30
           mirror --reverse --delete --verbose=1 --parallel=4 web/dist/ "$FTP_DIR"
