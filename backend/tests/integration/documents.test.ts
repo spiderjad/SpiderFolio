@@ -899,3 +899,19 @@ describe("PDF y comparación", () => {
     expect((await compare(w.stranger.token)).status).toBe(404);
   });
 });
+
+describe("tipos de documento por defecto", () => {
+  it("se crean en el idioma de la empresa, no en el de quien abre la pantalla", async () => {
+    const w = await pagesWorld(ctx, "Docs tipos en inglés");
+    await ctx.prisma.workspace.update({
+      where: { id: w.ws.workspaceId },
+      data: { settings: { timezone: "Europe/London", locale: "en" } },
+    });
+    // The owner's app is in Spanish (no Accept-Language: the default locale).
+    const res = await w.call("get", w.ws.token, "/admin/documents/types");
+    expect(res.status).toBe(200);
+    const names = (res.body as { items: { code: string; name: string }[] }).items;
+    expect(names.find((type) => type.code === "PRC")?.name).toBe("Procedure");
+    expect(names.find((type) => type.code === "INS")?.name).toBe("Work instruction");
+  });
+});

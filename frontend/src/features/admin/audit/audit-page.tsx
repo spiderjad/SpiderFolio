@@ -25,6 +25,11 @@ import { formatDateTime } from "@/lib/utils";
 import { auditApi, auditKeys, type AuditEvent, type AuditFilters } from "./audit-api";
 import { locale, texts } from "@/i18n";
 
+/** "Creó un código QR" → "creó un código QR": only the first letter, so acronyms keep their case. */
+function lowerFirst(label: string): string {
+  return label.charAt(0).toLocaleLowerCase(locale) + label.slice(1);
+}
+
 const t = texts.audit;
 const select =
   "h-9 w-full rounded-lg border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
@@ -242,7 +247,7 @@ export function AuditPage() {
                   <p className="text-sm">
                     <span className="font-medium">{actorLabel(event)}</span>{" "}
                     <span className="text-muted-foreground">
-                      {actionLabel(event.action).toLowerCase()}
+                      {lowerFirst(actionLabel(event.action))}
                     </span>
                   </p>
                   <p className="truncate text-xs text-muted-foreground">

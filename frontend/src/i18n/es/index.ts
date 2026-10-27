@@ -271,7 +271,7 @@ export const es = {
   dashboard: {
     title: "Inicio",
     greeting: (firstName: string, workspace: string) =>
-      `Hola, ${firstName}. Esto es lo que pasa en ${workspace}.`,
+      `Hola, ${firstName}. Esto es lo que pasa en ${workspace}${workspace.endsWith(".") ? "" : "."}`,
     sharedBanner: {
       text: (count: number) =>
         count === 1 ? "Te compartieron 1 elemento." : `Te compartieron ${String(count)} elementos.`,

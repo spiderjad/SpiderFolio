@@ -76,12 +76,15 @@ interface Ids {
 interface Capture {
   name: string;
   who: Who;
-  path: (ids: Ids) => string;
+  path: (ids: Ids, locale: Locale) => string;
   /** Algo que tiene que verse antes de capturar. */
   ready?: string;
   /** Acción extra antes de capturar (abrir un diálogo…). */
   then?: (page: Page, locale: Locale) => Promise<void>;
 }
+
+/** A word that matches several demo documents in each language. */
+const SEARCH: Record<Locale, string> = { es: "limpieza", en: "cleaning" };
 
 const CAPTURES: Capture[] = [
   { name: "inicio", who: "owner", path: (i) => `/app/${i.slug}` },
@@ -107,7 +110,7 @@ const CAPTURES: Capture[] = [
   {
     name: "busqueda",
     who: "owner",
-    path: (i) => `/app/${i.slug}/search?q=${encodeURIComponent("limpieza cleaning")}`,
+    path: (i, locale) => `/app/${i.slug}/search?q=${encodeURIComponent(SEARCH[locale])}`,
   },
   { name: "accesos", who: "owner", path: (i) => `/app/${i.slug}/admin/access` },
   { name: "miembros", who: "owner", path: (i) => `/app/${i.slug}/admin/members` },
@@ -238,8 +241,94 @@ async function signIn(context: BrowserContext, email: string): Promise<void> {
   });
 }
 
+/** Splash (.animate-pulse), skeletons (.skeleton, components/ui/display.tsx) and busy regions. */
+const LOADING = '[aria-busy="true"], .animate-pulse, .skeleton';
+
+/**
+ * Waits until the app has finished loading: still inside /app (the session opened), the main content
+ * visible with text, no splash, skeletons or busy regions, every visible image loaded and the fonts
+ * ready. Throws instead of letting a half-loaded screen through.
+ */
+
+async function waitUntilReady(page: Page): Promise<void> {
+  try {
+    await page.waitForFunction(
+      (loading) => {
+        if (!window.location.pathname.startsWith("/app/")) return false;
+        const main = document.querySelector("main");
+        if (main === null || main.innerText.trim() === "") return false;
+        if (document.querySelector(loading) !== null) return false;
+        // Every visible image finished loading and is not broken.
+        for (const img of Array.from(document.images)) {
+          if (img.getClientRects().length === 0) continue;
+          if (!img.complete || img.naturalWidth === 0) return false;
+        }
+        return document.fonts.status === "loaded";
+      },
+      LOADING,
+      { timeout: 30_000 },
+    );
+  } catch {
+    const path = new URL(page.url()).pathname;
+    if (!path.startsWith("/app/")) throw new Error(`la sesión no se abrió: quedó en ${path}`);
+    const state = await page.evaluate(
+      (loading) => ({
+        main: document.querySelector("main") !== null,
+        busy: document.querySelectorAll(loading).length,
+        broken: Array.from(document.images).filter(
+          (img) => img.getClientRects().length > 0 && img.complete && img.naturalWidth === 0,
+        ).length,
+      }),
+      LOADING,
+    );
+    if (!state.main) throw new Error("sigue la pantalla de carga (sin contenido principal)");
+    if (state.broken > 0) throw new Error(`${String(state.broken)} imagen(es) rota(s) en pantalla`);
+    throw new Error(
+      `la pantalla no terminó de cargar (${String(state.busy)} splash, skeletons o elementos ocupados)`,
+    );
+  }
+}
+
+/**
+ * Fails a blank capture or one with only the splash: almost every pixel is the background color. A
+ * real screen (sidebar, text, cards) has well over 1.5% of pixels away from the background; the splash
+ * logo alone is about 0.2%.
+ */
+async function assertNotBlank(png: Buffer): Promise<void> {
+  const { data, info } = await sharp(png)
+    .resize({ width: 240 })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = info.width * info.height;
+  const at = (index: number): number => data[index] ?? 0;
+  const counts = new Map<number, number>();
+  for (let i = 0; i < data.length; i += 3) {
+    const key = ((at(i) >> 3) << 10) | ((at(i + 1) >> 3) << 5) | (at(i + 2) >> 3);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const background = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
+  const [r, g, b] = [
+    (background >> 10) << 3,
+    ((background >> 5) & 31) << 3,
+    (background & 31) << 3,
+  ];
+  let content = 0;
+  for (let i = 0; i < data.length; i += 3) {
+    const distance = Math.abs(at(i) - r) + Math.abs(at(i + 1) - g) + Math.abs(at(i + 2) - b);
+    if (distance > 40) content++;
+  }
+  const ratio = content / pixels;
+  if (ratio < 0.015) {
+    throw new Error(
+      `la captura está casi vacía (${(ratio * 100).toFixed(1)} % de contenido): en blanco o con el splash`,
+    );
+  }
+}
+
 async function shoot(page: Page, file: string): Promise<void> {
   const png = await page.screenshot({ type: "png" });
+  await assertNotBlank(png);
   // 1600 px de ancho alcanzan para la web; WebP pesa ~5 veces menos que PNG.
   await sharp(png).resize({ width: 1600 }).webp({ quality: 82 }).toFile(file);
 }
@@ -276,6 +365,8 @@ try {
       for (const theme of ["light", "dark"] as const satisfies readonly Theme[]) {
         await page.emulateMedia({ colorScheme: theme });
         await page.goto(`${BASE}/app`);
+        // Let the session refresh finish first: navigating away mid-refresh loses the rotated cookie.
+        await waitUntilReady(page);
         await page.evaluate(
           ([key, value]) => {
             window.localStorage.setItem(key, value);
@@ -285,20 +376,13 @@ try {
         for (const capture of captures) {
           try {
             await page.keyboard.press("Escape");
-            await page.goto(`${BASE}${capture.path(ids)}`);
-            // Hay pantallas con sondeo (avisos): en vez de «sin red», que no quede ningún esqueleto.
-            await page.waitForLoadState("load");
-            await page
-              .waitForFunction(
-                () => document.querySelectorAll(".animate-pulse").length === 0,
-                null,
-                {
-                  timeout: 15_000,
-                },
-              )
-              .catch(() => undefined);
+            await page.goto(`${BASE}${capture.path(ids, locale)}`);
+            // Some screens poll (notifications): instead of "network idle", wait for the content.
+            await waitUntilReady(page);
             if (capture.ready !== undefined) await page.getByText(capture.ready).first().waitFor();
             await capture.then?.(page, locale);
+            // A dialog can load its own skeletons: check again right before the shot.
+            await waitUntilReady(page);
             // Que terminen de pintarse gráficos y avatares.
             await sleep(400);
             await shoot(page, join(out, locale, `${capture.name}-${theme}.webp`));

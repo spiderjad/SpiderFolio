@@ -3,6 +3,7 @@
 // partes siguientes; acá están el modelo, la numeración y la lectura de lo vigente.
 import type { DocStatus, NodeType } from "../../generated/prisma/client.ts";
 import { contentMessages, defaultDataTexts } from "../../i18n/index.ts";
+import { readWorkspaceLocale, withLocale } from "../../i18n/locales.ts";
 import { AppError, notFound } from "../../lib/errors.ts";
 import { atLeast } from "../access/access.ts";
 import { levelOfNode, requireLevel } from "../access/access-context.ts";
@@ -26,11 +27,16 @@ export interface DocumentTypeView {
 
 async function ensureTypes(ctx: AdminContext): Promise<void> {
   if ((await ctx.db.documentType.count()) > 0) return;
+  // Named in the company's language, not in the language of whoever opens the screen first.
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
+  const names = withLocale(readWorkspaceLocale(workspace?.settings), () => ({
+    ...defaultDataTexts.documentTypes,
+  }));
   await ctx.db.documentType.createMany({
     skipDuplicates: true,
     data: DEFAULT_TYPES.map((code, index) => ({
       code,
-      name: defaultDataTexts.documentTypes[code],
+      name: names[code],
       prefix: code,
       position: index,
     })),

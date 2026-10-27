@@ -270,7 +270,7 @@ export const en: Messages = {
   dashboard: {
     title: "Home",
     greeting: (firstName: string, workspace: string) =>
-      `Hi, ${firstName}. Here’s what’s happening at ${workspace}.`,
+      `Hi, ${firstName}. Here’s what’s happening at ${workspace}${workspace.endsWith(".") ? "" : "."}`,
     sharedBanner: {
       text: (count: number) =>
         count === 1

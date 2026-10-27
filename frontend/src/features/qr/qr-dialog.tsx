@@ -32,25 +32,37 @@ export function QrDialog({ target, onClose }: { target: QrTarget | null; onClose
   );
 }
 
-/** La imagen del código (SVG) pedida con la sesión; no se deja en ningún lado. */
+/** Reads a blob as a data: URL (the CSP allows data: images, not blob:). */
+function dataUrlOf(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("FileReader"));
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error("FileReader"));
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** The code's image (SVG), fetched with the session and kept only in memory. */
 function Preview({ slug, qr }: { slug: string; qr: QrView }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
-    let url: string | null = null;
     let cancelled = false;
     void qrApi
       .image(slug, qr.id, "svg")
-      .then((blob) => {
-        if (cancelled) return;
-        url = URL.createObjectURL(blob);
-        setSrc(url);
+      .then(dataUrlOf)
+      .then((url) => {
+        if (!cancelled) setSrc(url);
       })
       .catch(() => {
         setSrc(null);
       });
     return () => {
       cancelled = true;
-      if (url !== null) URL.revokeObjectURL(url);
     };
   }, [slug, qr.id]);
   return src === null ? (

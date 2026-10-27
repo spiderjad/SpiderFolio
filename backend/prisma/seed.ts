@@ -4,6 +4,7 @@
 // Las mismas empresas se usan para las capturas de la web (scripts/capturas.ts).
 import type { SeatType, SystemRole } from "../src/generated/prisma/client.ts";
 import { forTenant } from "../src/db/tenant.ts";
+import { withLocale } from "../src/i18n/locales.ts";
 import { createPrismaClient, type PrismaClient } from "../src/lib/prisma.ts";
 import { createPasswords } from "../src/modules/auth/passwords.ts";
 import { createWorkspace } from "../src/modules/workspaces/workspaces.service.ts";
@@ -267,7 +268,10 @@ const { databaseUrl, demoPassword } = assertSafeSeedTarget(process.env);
 const prisma = createPrismaClient(databaseUrl);
 try {
   const passwordHash = await (await createPasswords()).hash(demoPassword);
-  for (const company of companies) await seedCompany(prisma, company, passwordHash);
+  // Default data (system roles, document types) is created in the company's own language.
+  for (const company of companies) {
+    await withLocale(company.locale, () => seedCompany(prisma, company, passwordHash));
+  }
 } finally {
   await prisma.$disconnect();
 }
