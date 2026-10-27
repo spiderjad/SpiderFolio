@@ -1,0 +1,88 @@
+---
+title: "First administrator"
+description: "Create your company on the new installation, protect your account with two-step verification and grant access to the server back office."
+group: empezar
+order: 4
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+With SpiderFolio installed ([Install on your server](/en/docs/install)), you need the first person: the
+one who creates the company and becomes its **owner**. This guide covers that first day.
+
+## 1. Create the company
+
+1. Open your installation's address followed by `/register` (for example,
+   `https://docs.your-company.com/register`). You can also get there from the sign-in screen with
+   **Get started for free**.
+2. Fill in **Full name**, **Company name**, **Email** and **Password** (at least 10 characters).
+3. Tick **I accept the Terms and conditions and the Privacy policy** and click **Create account**.
+
+Whoever signs up creates the company and gets the **Owner** role: they can do everything, including the
+**Security** section, which only the owner can manage.
+
+One installation can host several companies, each with its data isolated. For now, sign-up stays open to
+anyone who reaches `/register`: if your server is only for your company, don't publish it outside your
+network, or keep an eye on new companies from the back office (step 4).
+
+## 2. Confirm your email
+
+You'll get an email with a link. Until you open it, you can't invite your team or publish documents,
+and Home reminds you with a banner. If it doesn't arrive, check your spam folder and the server's email
+settings ([Troubleshooting](/en/docs/troubleshooting)).
+
+## 3. Turn on two-step verification
+
+You're the most powerful account in the company: protect it with a second factor.
+
+1. Click your name at the bottom of the sidebar and choose **My profile**.
+2. Under **Two-step verification**, click **Turn on**.
+3. Scan the code with your authenticator app (Google Authenticator, Microsoft Authenticator or another).
+   If you can't scan it, click **Can't scan it? Show the key** and type it in.
+4. Enter the 6-digit code shown in the app and click **Turn on**.
+5. Save **Your recovery codes** (**Copy** or **Download**) somewhere safe and click **I've saved them**.
+   Each code works only once and they won't be shown again.
+
+<Shot name="perfil" alt="My profile, with the Two-step verification section" />
+
+More in [Security and two-step verification](/en/docs/security-and-2fa).
+
+## 4. Grant access to the server back office
+
+The back office (`/internal`, **Companies on this installation**) is for whoever manages the server: it
+lists every company on the installation with its usage and limits. Counts only, never content.
+
+There's no button for it: you flag the person in the database. Their account must already exist. From
+the server's `deploy/` folder:
+
+```sh
+docker compose exec db psql -U spiderfolio -d spiderfolio \
+  -c "UPDATE \"User\" SET \"isStaff\" = true WHERE email = 'you@example.com';"
+```
+
+If you changed `POSTGRES_USER` or `POSTGRES_DB` in `.env`, use those values for `-U` and `-d`.
+
+- The person must have **two-step verification turned on**: without it, the back office won't open.
+- For everyone else, `/internal` doesn't exist (it responds like a page that can't be found).
+- To remove access, run the same command with `false`. It takes effect immediately.
+
+It's an installation-level permission, not a company one: the person doesn't need to be a member of
+any company.
+
+## 5. Recommended first steps
+
+1. **Review the company's security**: in **Management › Security**, choose the **Company language**,
+   **People visibility**, whether controlled documents allow self-approval and what department heads
+   can do.
+
+   <Shot name="seguridad" alt="The company Security section, with the language, people visibility and controlled document rules" />
+
+2. **Set up departments** in **Management › Departments**: permissions build on them
+   ([Departments](/en/docs/departments)).
+3. **Invite your team** from **Management › Members** ([Invite people](/en/docs/invite-people)). Give
+   the admin role only to those who need it ([Roles and permissions](/en/docs/roles-and-permissions)).
+4. **Set limits** if you want to cap storage or file size, in **Management › Limits and usage**
+   ([Limits](/en/docs/limits)). There are none by default.
+5. **Schedule backups** before you load real data ([Backups](/en/docs/backups)).
+6. Optional: the company's own [SMTP email](/en/docs/smtp-email) and [Bian](/en/docs/bian-setup).

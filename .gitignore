@@ -1,0 +1,31 @@
+# Dependencias y builds
+node_modules/
+dist/
+coverage/
+.astro/
+.vite/
+*.tsbuildinfo
+
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Prisma
+backend/src/generated/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+
+# Instalación propia (deploy/)
+deploy/.env
+deploy/backups/

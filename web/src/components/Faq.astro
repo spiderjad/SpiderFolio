@@ -1,0 +1,27 @@
+---
+import { texts, type Locale } from "../i18n/index.ts";
+import Icon from "./Icon.astro";
+
+interface Props {
+  locale: Locale;
+  /** Cantidad de preguntas a mostrar; todas si no se indica. */
+  limit?: number;
+}
+const { locale, limit } = Astro.props;
+const all = texts(locale).faq.items;
+const items = limit === undefined ? all : all.slice(0, limit);
+---
+
+<div class="divide-y rounded-2xl border bg-background">
+  {
+    items.map((item) => (
+      <details class="group p-5">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 font-medium">
+          {item.q}
+          <Icon name="chevron-down" class="shrink-0 transition-transform group-open:rotate-180" />
+        </summary>
+        <p class="mt-3 text-muted-foreground">{item.a}</p>
+      </details>
+    ))
+  }
+</div>

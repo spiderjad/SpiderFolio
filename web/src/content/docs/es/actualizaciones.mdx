@@ -1,0 +1,106 @@
+---
+title: "Actualizaciones"
+description: "Cómo actualizar SpiderFolio: versiones SemVer, pull y up, migraciones automáticas y cómo volver atrás."
+group: autoalojamiento
+order: 6
+icon: arrow-right
+---
+
+import { REPO_URL } from "../../../config/site.ts";
+
+## Versiones
+
+SpiderFolio sigue [versionado semántico](https://semver.org/lang/es/) (`MAYOR.MENOR.PARCHE`):
+
+- **Parche** (`1.4.0` → `1.4.1`): correcciones. Actualiza sin miedo.
+- **Menor** (`1.4.1` → `1.5.0`): funciones nuevas, compatibles con lo anterior. Puede traer variables
+  nuevas opcionales.
+- **Mayor** (`1.5.0` → `2.0.0`): cambios que pueden pedir pasos manuales. **Lee siempre las notas de la
+  versión** antes, en <a href={`${REPO_URL}/releases`}>GitHub</a>.
+
+Por defecto, `compose.yaml` usa la etiqueta `latest`. Para decidir tú cuándo actualizar, fija la
+versión en `.env`:
+
+```sh
+SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:1.5.0
+```
+
+## Actualizar
+
+1. **Haz una copia** (siempre, antes de actualizar):
+
+   ```sh
+   cd /opt/spiderfolio/deploy
+   ./backup.sh /var/backups/spiderfolio
+   ```
+
+2. **Trae los archivos nuevos** de `deploy/` (`compose.yaml`, `Caddyfile`, scripts y `.env.example`):
+
+   ```sh
+   git pull
+   ```
+
+3. **Compara `.env.example` con tu `.env`**: una versión puede agregar variables. Este comando lista las
+   que están en el ejemplo y no en tu `.env`:
+
+   ```sh
+   comm -23 <(grep -oE '^[A-Z_]+=' .env.example | sort) <(grep -oE '^[A-Z_]+=' .env | sort)
+   ```
+
+   Si falta una obligatoria, la API no arranca y el log dice cuál. Las nuevas obligatorias se indican
+   en las notas de la versión.
+
+4. Si fijaste `SPIDERFOLIO_IMAGE`, cámbiala a la versión nueva.
+5. **Baja la imagen y reinicia**:
+
+   ```sh
+   docker compose pull
+   docker compose up -d
+   docker compose logs -f app     # espera «API lista»
+   ```
+
+   Usa los mismos perfiles de siempre (`--profile https`, `--profile pdf`) o `COMPOSE_PROFILES` en
+   `.env`.
+
+La app queda fuera de servicio unos segundos mientras se recrean los contenedores.
+
+## Migraciones automáticas
+
+No hay que correr nada a mano: al arrancar, la app aplica las migraciones pendientes de la base, y
+también las de los plugins instalados. El worker espera a que la app termine de migrar antes de
+arrancar.
+
+- Si la base todavía no responde, la app reintenta durante un minuto.
+- Una migración que falla no deja la base a medias: cada una corre en una transacción. Revisa
+  `docker compose logs app`, corrige la causa y vuelve a arrancar.
+
+## Si compilas la imagen tú
+
+Por ejemplo, para incluir plugins. Desde la raíz del repositorio:
+
+```sh
+git pull
+docker build -t spiderfolio:local .
+cd deploy
+docker compose up -d
+```
+
+Con `SPIDERFOLIO_IMAGE=spiderfolio:local` en `.env`.
+
+## Volver atrás
+
+Las migraciones no se deshacen solas: una versión anterior de la app no siempre funciona con una base
+ya migrada. Para volver a la versión anterior:
+
+1. Fija `SPIDERFOLIO_IMAGE` a la etiqueta anterior en `.env`.
+2. **Restaura la copia** que hiciste antes de actualizar:
+   `./restore.sh /var/backups/spiderfolio/<carpeta>`. El script detiene la app, recupera la base y los
+   archivos y vuelve a arrancar con la imagen anterior.
+
+Lo que se haya cargado entre la copia y la vuelta atrás se pierde. Ver
+[Copias de seguridad](/es/docs/copias-de-seguridad).
+
+## Relacionado
+
+- [Configuración](/es/docs/configuracion)
+- [Solución de problemas](/es/docs/solucion-de-problemas)

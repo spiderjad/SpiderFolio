@@ -1,0 +1,90 @@
+---
+title: "Primer administrador"
+description: "Crea tu empresa en la instalación recién hecha, protege tu cuenta con la verificación en dos pasos y da acceso al backoffice del servidor."
+group: empezar
+order: 4
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+Con SpiderFolio ya instalado ([Instalar en tu servidor](/es/docs/instalar)), falta la primera persona:
+quien crea la empresa y queda como su **propietario**. Esta guía cubre ese primer día.
+
+## 1. Crea la empresa
+
+1. Abre la dirección de tu instalación seguida de `/register` (por ejemplo,
+   `https://docs.tu-empresa.com/register`). Desde la pantalla de inicio de sesión también llegas con
+   **Empieza gratis**.
+2. Completa **Nombre y apellido**, **Nombre de la empresa**, **Email** y **Contraseña** (mínimo 10
+   caracteres).
+3. Marca **Acepto los Términos y condiciones y la Política de privacidad** y pulsa **Crear cuenta**.
+
+Quien se registra crea la empresa y queda con el rol **Propietario**: puede hacer todo, incluida la
+sección **Seguridad**, que es solo suya.
+
+En una misma instalación puede haber varias empresas, cada una con sus datos aislados. Hoy el registro
+queda abierto para cualquiera que llegue a `/register`: si tu servidor es solo para tu empresa, no lo
+publiques fuera de tu red o vigila las empresas nuevas desde el backoffice (paso 4).
+
+## 2. Confirma tu email
+
+Te llega un email con un enlace. Hasta que lo abras, no puedes invitar a tu equipo ni publicar
+documentos, y el Inicio te lo recuerda con un aviso. Si no llega, revisa la carpeta de spam y la
+configuración de email del servidor ([Solución de problemas](/es/docs/solucion-de-problemas)).
+
+## 3. Activa la verificación en dos pasos
+
+Eres la cuenta con más poder de la empresa: protégela con un segundo factor.
+
+1. Pulsa tu nombre al pie del menú lateral y elige **Mi perfil**.
+2. En **Verificación en dos pasos**, pulsa **Activar**.
+3. Escanea el código con tu app de autenticación (Google Authenticator, Microsoft Authenticator u otra).
+   Si no puedes escanearlo, pulsa **¿No puedes escanearlo? Mostrar la clave** y escríbela a mano.
+4. Escribe el código de 6 dígitos que muestra la app y pulsa **Activar**.
+5. Guarda **Tus códigos de recuperación** (**Copiar** o **Descargar**) en un lugar seguro y pulsa
+   **Ya los guardé**. Cada código vale una sola vez y no se vuelven a mostrar.
+
+<Shot name="perfil" alt="Mi perfil, con la sección Verificación en dos pasos" />
+
+Más detalles en [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa).
+
+## 4. Da acceso al backoffice del servidor
+
+El backoffice (`/internal`, **Empresas de esta instalación**) es para quien administra el servidor:
+muestra cada empresa de la instalación con su uso y sus límites. Solo cantidades, nunca contenido.
+
+No hay un botón para darlo: se marca a la persona en la base de datos. Tiene que tener ya su cuenta
+creada. Desde la carpeta `deploy/` del servidor:
+
+```sh
+docker compose exec db psql -U spiderfolio -d spiderfolio \
+  -c "UPDATE \"User\" SET \"isStaff\" = true WHERE email = 'tu@email.com';"
+```
+
+Si cambiaste `POSTGRES_USER` o `POSTGRES_DB` en `.env`, usa esos valores en `-U` y `-d`.
+
+- La persona tiene que tener **activada la verificación en dos pasos**: sin ella, el backoffice no abre.
+- Para el resto de la gente, `/internal` no existe (responde como una página que no se encuentra).
+- Para quitar el acceso, repite la orden con `false`. El cambio vale al momento.
+
+Es un permiso de la instalación, no de una empresa: no hace falta que esa persona sea miembro de
+ninguna.
+
+## 5. Primeros pasos recomendados
+
+1. **Revisa la seguridad de la empresa**: en **Gestión › Seguridad**, elige el **Idioma de la empresa**,
+   la **Visibilidad de personas**, si se permite la autoaprobación de documentos controlados y qué
+   pueden hacer los jefes de departamento.
+
+   <Shot name="seguridad" alt="La sección Seguridad de la empresa, con el idioma, la visibilidad de personas y las reglas de documentos controlados" />
+
+2. **Arma los departamentos** en **Gestión › Departamentos**: los permisos se apoyan en ellos
+   ([Departamentos](/es/docs/departamentos)).
+3. **Invita a tu equipo** desde **Gestión › Miembros** ([Invitar personas](/es/docs/invitar-personas)).
+   Da el rol de administrador solo a quien lo necesite ([Roles y permisos](/es/docs/roles-y-permisos)).
+4. **Fija límites** si quieres acotar el almacenamiento o el tamaño de los archivos, en
+   **Gestión › Límites y uso** ([Límites](/es/docs/limites)). Por defecto no hay ninguno.
+5. **Programa las copias de seguridad** antes de cargar datos reales
+   ([Copias de seguridad](/es/docs/copias-de-seguridad)).
+6. Opcional: el [email SMTP propio](/es/docs/email-smtp) de la empresa y [Bian](/es/docs/configurar-bian).

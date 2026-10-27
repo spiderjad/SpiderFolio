@@ -1,0 +1,114 @@
+/*
+ * Preset de diseño de SpiderFolio para Tailwind 4 (CLAUDE.md, sección 10.2). App y web lo usan así:
+ *
+ *   @import "tailwindcss";
+ *   @import "@spiderfolio/tailwind-preset/preset.css";
+ *
+ * Acá no hay valores de color: viven en src/tokens.ts y se generan en tokens.css, que además
+ * borra la paleta de Tailwind (bg-purple-600 y similares no existen).
+ */
+@import "tw-animate-css";
+@import "./tokens.css";
+
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans:
+    "Inter Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono:
+    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
+
+  --shadow-card: 0 1px 2px 0 hsl(240 10% 8% / 0.04);
+  --shadow-pop: 0 12px 32px -12px hsl(240 10% 8% / 0.2), 0 2px 6px -2px hsl(240 10% 8% / 0.08);
+
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* Tokens de movimiento (sección 10.8): únicas duraciones y curvas de app y web.
+     Con prefers-reduced-motion las duraciones valen 0 y los desplazamientos también. */
+  :root {
+    --motion-duration-fast: 150ms;
+    --motion-duration-base: 200ms;
+    --motion-duration-slow: 300ms;
+    --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --motion-distance: 8px;
+    --motion-scale-from: 0.98;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --motion-duration-fast: 0.01ms;
+      --motion-duration-base: 0.01ms;
+      --motion-duration-slow: 0.01ms;
+      --motion-distance: 0px;
+      --motion-scale-from: 1;
+    }
+  }
+
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Texto largo (docs y editor): 17 px, interlineado 1.75, colores de los tokens.
+   Como los tokens cambian con .dark, no hace falta prose-invert. */
+@utility prose {
+  --tw-prose-body: hsl(var(--foreground));
+  --tw-prose-headings: hsl(var(--foreground));
+  --tw-prose-lead: hsl(var(--muted-foreground));
+  --tw-prose-links: hsl(var(--primary));
+  --tw-prose-bold: hsl(var(--foreground));
+  --tw-prose-counters: hsl(var(--muted-foreground));
+  --tw-prose-bullets: hsl(var(--border));
+  --tw-prose-hr: hsl(var(--border));
+  --tw-prose-quotes: hsl(var(--foreground));
+  --tw-prose-quote-borders: hsl(var(--border));
+  --tw-prose-captions: hsl(var(--muted-foreground));
+  --tw-prose-code: hsl(var(--foreground));
+  --tw-prose-pre-code: hsl(var(--foreground));
+  --tw-prose-pre-bg: hsl(var(--muted));
+  --tw-prose-th-borders: hsl(var(--border));
+  --tw-prose-td-borders: hsl(var(--border));
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}

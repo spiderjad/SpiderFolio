@@ -1,0 +1,131 @@
+---
+// Diagrama: una conversación con Bian que se escribe sola (la pregunta, los puntos de «escribiendo», la
+// respuesta y la fuente). Sin movimiento, se ve la conversación completa.
+import Icon from "../Icon.astro";
+
+interface Props {
+  t: { question: string; answer: string; source: string };
+}
+const { t } = Astro.props;
+---
+
+<div class="chat" data-animate aria-hidden="true">
+  <p class="bubble user">{t.question}</p>
+  <div class="bubble bian">
+    <span class="dots"><span></span><span></span><span></span></span>
+    <p class="answer">{t.answer}</p>
+    <span class="source">
+      <Icon name="file-check" size={14} />
+      {t.source}
+    </span>
+  </div>
+</div>
+
+<style>
+  .chat {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .bubble {
+    margin: 0;
+    max-width: 90%;
+    border-radius: 1rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .user {
+    justify-self: end;
+    border-bottom-right-radius: 0.3rem;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  .bian {
+    position: relative;
+    display: grid;
+    gap: 0.6rem;
+    justify-self: start;
+    border-bottom-left-radius: 0.3rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+  .answer {
+    margin: 0;
+  }
+  .dots {
+    display: none;
+  }
+  .source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    justify-self: start;
+    border-radius: 999px;
+    background: hsl(var(--primary-soft));
+    color: hsl(var(--primary-soft-foreground));
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .chat.is-in .user {
+      animation: rise 0.45s ease-out both;
+    }
+    /* «Escribiendo…» y después el texto, que se descubre de arriba abajo. */
+    .chat.is-in .dots {
+      position: absolute;
+      top: 0.9rem;
+      left: 0.9rem;
+      display: flex;
+      gap: 0.25rem;
+      animation: vanish 0.2s linear both 1.9s;
+    }
+    .chat.is-in .dots span {
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 999px;
+      background: hsl(var(--muted-foreground));
+      animation: blink 1s ease-in-out infinite;
+    }
+    .chat.is-in .dots span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    .chat.is-in .dots span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+    .chat.is-in .bian {
+      animation: rise 0.45s ease-out both 0.6s;
+    }
+    .chat.is-in .answer {
+      animation: write 2.2s steps(28, end) both 2s;
+    }
+    .chat.is-in .source {
+      animation: rise 0.4s var(--motion-ease-emphasized, ease-out) both 4.3s;
+    }
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+    }
+    @keyframes blink {
+      50% {
+        opacity: 0.25;
+      }
+    }
+    @keyframes vanish {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+    @keyframes write {
+      from {
+        clip-path: inset(0 0 100% 0);
+      }
+      to {
+        clip-path: inset(0 0 0 0);
+      }
+    }
+  }
+</style>

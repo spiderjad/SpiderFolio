@@ -1,0 +1,100 @@
+---
+title: "Updates"
+description: "How to update SpiderFolio: SemVer versions, pull and up, automatic migrations and how to roll back."
+group: autoalojamiento
+order: 6
+icon: arrow-right
+---
+
+import { REPO_URL } from "../../../config/site.ts";
+
+## Versions
+
+SpiderFolio follows [semantic versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
+
+- **Patch** (`1.4.0` → `1.4.1`): fixes. Update without worry.
+- **Minor** (`1.4.1` → `1.5.0`): new features, backwards compatible. May add new optional variables.
+- **Major** (`1.5.0` → `2.0.0`): changes that may need manual steps. **Always read the release notes**
+  first, on <a href={`${REPO_URL}/releases`}>GitHub</a>.
+
+By default, `compose.yaml` uses the `latest` tag. To decide when to update, pin the version in `.env`:
+
+```sh
+SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:1.5.0
+```
+
+## Update
+
+1. **Take a backup** (always, before updating):
+
+   ```sh
+   cd /opt/spiderfolio/deploy
+   ./backup.sh /var/backups/spiderfolio
+   ```
+
+2. **Fetch the new `deploy/` files** (`compose.yaml`, `Caddyfile`, scripts and `.env.example`):
+
+   ```sh
+   git pull
+   ```
+
+3. **Compare `.env.example` with your `.env`**: a release may add variables. This command lists the ones
+   in the example that aren't in your `.env`:
+
+   ```sh
+   comm -23 <(grep -oE '^[A-Z_]+=' .env.example | sort) <(grep -oE '^[A-Z_]+=' .env | sort)
+   ```
+
+   If a required one is missing, the API doesn't start and the log says which. New required variables
+   are listed in the release notes.
+
+4. If you pinned `SPIDERFOLIO_IMAGE`, change it to the new version.
+5. **Pull the image and restart**:
+
+   ```sh
+   docker compose pull
+   docker compose up -d
+   docker compose logs -f app     # wait for "API lista" (API ready)
+   ```
+
+   Use the same profiles as always (`--profile https`, `--profile pdf`) or `COMPOSE_PROFILES` in `.env`.
+
+The app is unavailable for a few seconds while the containers are recreated.
+
+## Automatic migrations
+
+There's nothing to run by hand: on startup, the app applies pending database migrations, including
+those of installed plugins. The worker waits for the app to finish migrating before it starts.
+
+- If the database isn't responding yet, the app retries for a minute.
+- A failed migration doesn't leave the database half-done: each one runs in a transaction. Check
+  `docker compose logs app`, fix the cause and start again.
+
+## If you build the image yourself
+
+For example, to include plugins. From the repository root:
+
+```sh
+git pull
+docker build -t spiderfolio:local .
+cd deploy
+docker compose up -d
+```
+
+With `SPIDERFOLIO_IMAGE=spiderfolio:local` in `.env`.
+
+## Roll back
+
+Migrations aren't undone automatically: an older version of the app doesn't always work with an already
+migrated database. To go back to the previous version:
+
+1. Pin `SPIDERFOLIO_IMAGE` to the previous tag in `.env`.
+2. **Restore the backup** you took before updating: `./restore.sh /var/backups/spiderfolio/<folder>`.
+   The script stops the app, brings back the database and files and starts again with the previous image.
+
+Anything added between the backup and the rollback is lost. See [Backups](/en/docs/backups).
+
+## Related
+
+- [Configuration](/en/docs/configuration)
+- [Troubleshooting](/en/docs/troubleshooting)

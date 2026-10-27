@@ -1,0 +1,78 @@
+---
+title: "Server requirements"
+description: "The server, network, domain and services you need to host SpiderFolio, and how to prepare it before installing."
+group: autoalojamiento
+order: 1
+icon: check
+---
+
+SpiderFolio runs on any Linux server with Docker. This guide helps you choose and prepare it before
+moving on to [Install on your server](/en/docs/install).
+
+## Hardware
+
+| Resource | Recommended |
+| --- | --- |
+| CPU and RAM | **2 vCPUs and 4 GB** for a company of up to about 200 people. Add 1 GB if you turn on Gotenberg (PDFs). |
+| Disk | SSD, from **40 GB**: the system, Docker images and the database, **plus the size of your files** (if you keep them on local disk) and room for backups. |
+
+If you keep files in an S3 bucket ([Storage](/en/docs/storage)), the server's disk only needs the
+database and the backups.
+
+## Software
+
+- **Linux** (Debian, Ubuntu, Rocky… any distribution with Docker).
+- **Docker Engine 24 or later** and **Docker Compose v2**. Check with:
+
+  ```sh
+  docker --version
+  docker compose version
+  ```
+
+- `git` to download the project and `openssl` to generate the secrets.
+
+You don't need to install Node or PostgreSQL: they come in the images.
+
+## Network and domain
+
+- **A domain or subdomain** (for example `docs.your-company.com`) with a DNS `A` record pointing to the
+  server's public IP (and `AAAA` if you use IPv6). Check it before starting:
+
+  ```sh
+  dig +short docs.your-company.com
+  ```
+
+- **Open ports**: 22 (SSH, ideally only from your IPs), 80 and 443. Port 80 is needed for Let's Encrypt
+  to issue the certificate.
+- **HTTPS**: sessions use secure cookies, so without HTTPS you can only sign in from the server itself
+  (`localhost`). See [Proxy and HTTPS](/en/docs/proxy-and-https).
+- The database doesn't need any open port.
+
+## External services
+
+- **Email (SMTP) server**, required: your company's or a transactional service (Resend, Postmark,
+  Amazon SES…). Check that your hosting provider doesn't block outgoing ports 587 or 465.
+- **S3 bucket**, optional: AWS S3, Cloudflare R2, MinIO or another compatible service.
+- **Anthropic account**, optional: only if you turn on Bian, the AI assistant.
+
+## Prepare the server
+
+Before loading real data:
+
+1. Create **your own user with sudo** and don't work as `root`.
+2. **SSH with keys only**, no passwords.
+3. A **firewall** that only allows 22, 80 and 443.
+4. **Automatic security updates** for the system.
+5. Set `deploy/.env` permissions to `600`.
+6. Schedule daily [backups](/en/docs/backups) off the server and **test a restore**.
+
+## Basic monitoring
+
+- An external uptime monitor on `https://your-domain/api/health`: it returns `{"status":"ok"}` when the
+  API and the database are working.
+- A disk alert at 80 % (`df -h`, `docker system df`).
+- From time to time, each company's **Audit log**: spikes in failed sign-ins.
+
+## Next step
+
+[Install on your server](/en/docs/install).

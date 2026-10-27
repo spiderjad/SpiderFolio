@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vulnerabilidad de seguridad
+    url: https://github.com/spiderjad/SpiderFolio/security/policy
+    about: Repórtala en privado, nunca en un issue público.
+  - name: Plugins comerciales
+    url: https://spiderfolio.spiderjad.com/plugins
+    about: Información y contacto sobre los plugins.

@@ -1,0 +1,65 @@
+{
+  "name": "spiderfolio",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": "^24.11.0",
+    "npm": ">=11.19.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "frontend",
+    "web"
+  ],
+  "scripts": {
+    "prepare": "node scripts/install-hooks.ts",
+    "hooks:install": "node scripts/install-hooks.ts",
+    "check:secrets": "node scripts/check-secrets.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings=0",
+    "check": "npm run typecheck && npm run lint && vitest run --changed --passWithNoTests && npm run test:integration -- --changed --passWithNoTests",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:storage": "npm run test:storage -w @spiderfolio/backend",
+    "test:integration": "npm run test:integration -w @spiderfolio/backend",
+    "test:docker": "node scripts/test-docker.ts",
+    "smoke:auth": "node scripts/smoke-auth.ts",
+    "services:up": "docker compose up -d",
+    "services:down": "docker compose down",
+    "db:migrate": "npm run db:migrate -w @spiderfolio/backend",
+    "db:seed": "npm run db:seed -w @spiderfolio/backend",
+    "dev": "concurrently -n api,worker,app,web -c magenta,cyan,green,yellow \"npm run dev -w @spiderfolio/backend\" \"npm run dev:worker -w @spiderfolio/backend\" \"npm run dev -w @spiderfolio/frontend\" \"npm run dev -w @spiderfolio/web\"",
+    "e2e": "npm run e2e:app && npm run e2e:web",
+    "build:app": "npm run build -w @spiderfolio/frontend",
+    "dev:web": "npm run dev -w @spiderfolio/web",
+    "build:brand": "node scripts/build-brand.ts",
+    "build:web": "npm run build -w @spiderfolio/web",
+    "e2e:app": "npm run e2e -w @spiderfolio/frontend",
+    "e2e:web": "npm run e2e -w @spiderfolio/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.1",
+    "concurrently": "10.0.6",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "4.1.11"
+  },
+  "allowScripts": {
+    "@prisma/engines": false,
+    "argon2": false,
+    "esbuild": false,
+    "fsevents": false,
+    "prisma": false,
+    "sharp": false
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "printWidth": 100,
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": "frontend/public/compat.js",
+      "options": {
+        "trailingComma": "es5"
+      }
+    }
+  ]
+}

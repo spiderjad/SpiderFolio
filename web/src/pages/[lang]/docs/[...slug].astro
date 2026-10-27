@@ -1,0 +1,40 @@
+---
+// Guías de la documentación: src/content/docs/<idioma>/<slug>.mdx → /<idioma>/docs/<slug>. Cada
+// slug tiene que estar en el mapa de src/i18n/<idioma>/routes.ts (así el selector de idioma y los
+// hreflang llevan a la misma guía en el otro idioma); si falta, el build falla. La portada de cada
+// idioma es index.mdx.
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+import { DOC_KEYS, LOCALES, docSlug } from "../../../i18n/index.ts";
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import { docRef } from "../../../lib/docs.ts";
+
+export const getStaticPaths = (async () => {
+  const docs = await getCollection("docs");
+  const paths = docs.map((entry) => {
+    const ref = docRef(entry.id);
+    if (ref === null) {
+      throw new Error(`La guía content/docs/${entry.id}.mdx no está en src/i18n/<idioma>/routes.ts`);
+    }
+    return {
+      params: { lang: ref.locale, slug: ref.slug || undefined },
+      props: { entry, locale: ref.locale, key: ref.key },
+    };
+  });
+  for (const locale of LOCALES) {
+    for (const key of DOC_KEYS) {
+      if (!paths.some((path) => path.props.locale === locale && path.props.key === key)) {
+        throw new Error(`Falta la guía «${key}» en content/docs/${locale}/ (slug «${docSlug(key, locale)}»)`);
+      }
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { entry, locale, key } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+
+<DocsLayout entry={entry} headings={headings} locale={locale} docKey={key}>
+  <Content />
+</DocsLayout>

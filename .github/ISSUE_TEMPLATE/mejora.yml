@@ -1,0 +1,21 @@
+name: Proponer una mejora
+description: Una idea para SpiderFolio.
+labels: ["mejora"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qué problema resuelve
+      description: Describe la situación de tu empresa en la que hoy falta algo.
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Qué propones
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas que consideraste

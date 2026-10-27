@@ -1,0 +1,95 @@
+---
+title: "Roles y permisos"
+description: "Qué puede administrar cada persona: los roles de sistema, los roles personalizados, las capacidades y el grupo Plugins."
+group: administracion
+order: 4
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Qué es un rol
+
+Un rol es un conjunto de **capacidades administrativas**: qué puede gestionar una persona (miembros,
+departamentos, espacios, auditoría…). El rol **no** decide qué contenido ve: eso lo dan sus departamentos y
+los accesos de cada espacio. Y lo que hacen jefes y subjefes sale de su **cargo** en el departamento, no del
+rol (mira [Departamentos](/es/docs/departamentos)).
+
+La sección está en **Administración › Roles y permisos** y necesitas la capacidad **Gestionar roles**.
+
+<Shot name="roles" alt="La pantalla Roles y permisos, con los roles de sistema y los personalizados" />
+
+## Roles de sistema
+
+Son cuatro, vienen con cada empresa y no se pueden cambiar ni borrar:
+
+- **Propietario**: todo, incluida la licencia de plugins, transferir la propiedad y borrar el workspace.
+  Siempre hay al menos uno. Es el único que ve **Seguridad › General** y **Licencia y plugins**.
+- **Administrador**: todo lo administrativo, excepto la licencia de plugins y borrar el workspace.
+- **Miembro**: usa el contenido según sus departamentos y permisos, sin capacidades administrativas.
+- **Invitado**: persona externa. Solo ve lo que se le comparte de forma explícita, siempre con plaza de
+  lector y sin departamentos.
+
+## Roles personalizados
+
+Sirven para dar a alguien solo una parte de la administración. Por ejemplo, un **Responsable de Calidad**
+puede ser un Miembro con **Aprobar documentos**, **Pedir lecturas**, **Auditar permisos** y **Ver el registro
+de auditoría**.
+
+1. Pulsa **Nuevo rol**.
+2. Escribe el **Nombre** y, si quieres, la **Descripción**.
+3. Elige el **Rol base**: **Administrador** (nivel de administrador), **Miembro** (nivel de miembro) o
+   **Invitado** (externo, sin capacidades administrativas).
+4. Activa las **Capacidades**. Cada una explica qué permite.
+5. Pulsa **Crear**.
+
+Para cambiar un rol, usa el lápiz de su tarjeta; para borrarlo, el cubo de basura. Cada tarjeta dice cuántas
+personas lo tienen y cuántas capacidades da.
+
+## Las capacidades
+
+Están agrupadas por área:
+
+| Grupo | Capacidades |
+|---|---|
+| **Miembros** | **Ver miembros**, **Invitar personas**, **Gestionar miembros**, **Suspender miembros**, **Gestionar el ingreso con PIN** |
+| **Organización** | **Gestionar departamentos**, **Gestionar roles** |
+| **Contenido** | **Crear espacios**, **Gestionar espacios**, **Acceso a todo el contenido**, **Auditar permisos**, **Gestionar la papelera**, **Ver almacenamiento** |
+| **Documentos controlados** | **Aprobar documentos**, **Pedir lecturas**, **Códigos QR públicos**, **Compartir auditorías**, **Gestionar vencimientos** |
+| **Auditoría** | **Ver el registro de auditoría**, **Exportar la auditoría** |
+| **Administración** | **Gestionar la seguridad**, **Ajustes de la empresa** |
+| **Plugins** | Las que traen los plugins activos (solo aparece si hay alguno) |
+
+**Acceso a todo el contenido** deja ver el contenido aunque la persona no tenga permiso: úsala con cuidado.
+
+### El grupo Plugins
+
+Cada plugin instalado puede agregar sus propias capacidades, con su nombre y su explicación (por ejemplo,
+**Administrar el conector MCP**). El propietario las tiene todas desde el primer momento; los
+administradores no. Si quieres que otra persona use las funciones administrativas de un plugin, el
+propietario crea un rol personalizado con esas capacidades y se lo asigna. Mira
+[Licencia y plugins](/es/docs/licencia-y-plugins).
+
+## Reglas
+
+- Solo puedes dar capacidades que tú tienes. Las demás aparecen apagadas con el aviso «No puedes dar esta
+  capacidad porque tú no la tienes».
+- No puedes crear un rol con un rol base por encima del tuyo, ni modificar o borrar un rol que da más poder
+  del que tienes.
+- Un rol de invitado no lleva capacidades.
+- Un rol con capacidades administrativas no puede asignarse a un lector: necesita plaza completa.
+- Un rol en uso no se puede borrar: primero cambia el rol de esas personas y revoca las invitaciones
+  pendientes con ese rol.
+- Crear, cambiar y borrar roles queda en el registro de auditoría.
+
+## Lista y Matriz
+
+Arriba a la derecha cambias de **Lista** a **Matriz**: todos los roles en columnas y todas las capacidades en
+filas, con una marca donde el rol la tiene. Sirve para comparar de un vistazo. En las dos vistas puedes
+buscar un rol y filtrar por **Tipo** (**Todos los roles**, **De sistema**, **Personalizados**).
+
+## Relacionado
+
+- [Miembros](/es/docs/miembros)
+- [Departamentos](/es/docs/departamentos)
+- [Licencia y plugins](/es/docs/licencia-y-plugins)

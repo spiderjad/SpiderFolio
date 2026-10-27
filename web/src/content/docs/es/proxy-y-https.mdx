@@ -1,0 +1,161 @@
+---
+title: "Proxy y HTTPS"
+description: "HTTPS automático con el perfil https y Caddy, o tu propio proxy (nginx, Traefik) con ejemplos, TRUST_PROXY_HOPS y cookies seguras."
+group: autoalojamiento
+order: 2
+icon: lock
+---
+
+SpiderFolio necesita **HTTPS** para funcionar desde otros equipos: las sesiones viajan en cookies
+seguras, que el navegador solo guarda por HTTPS (o en `localhost`). Tienes dos caminos:
+
+- **El perfil `https`**: un Caddy incluido que pide y renueva solo el certificado. Es lo más simple si
+  el servidor es solo para SpiderFolio.
+- **Tu propio proxy** (nginx, Traefik, Apache…), si ya tienes uno o compartes el servidor con otras
+  aplicaciones.
+
+En ambos casos la app escucha en el puerto 4000 del contenedor, que se publica en
+`HTTP_BIND:HTTP_PORT` (por defecto `127.0.0.1:8080`, solo accesible desde el propio servidor).
+
+## Opción 1: perfil https con Caddy
+
+1. Crea el registro DNS `A` de tu dominio apuntando al servidor y comprueba que resuelve
+   (`dig +short docs.tu-empresa.com`).
+2. Abre los puertos **80 y 443** (el 80 lo usa Let's Encrypt para validar el dominio).
+3. En `deploy/.env`:
+
+   ```sh
+   DOMAIN=docs.tu-empresa.com
+   APP_URL=https://docs.tu-empresa.com
+   WEB_URL=https://docs.tu-empresa.com
+   TRUST_PROXY_HOPS=1
+   ```
+
+4. Arranca con el perfil:
+
+   ```sh
+   docker compose --profile https up -d
+   docker compose logs -f caddy    # verás cuando obtiene el certificado
+   ```
+
+Caddy comprime las respuestas, añade HSTS (`Strict-Transport-Security`) y reenvía todo a la app. Los
+certificados se guardan en el volumen `caddy-data` y se renuevan solos. La política de seguridad de
+contenido (CSP) y el resto de cabeceras las pone la propia app.
+
+Para no escribir `--profile https` cada vez, agrega `COMPOSE_PROFILES=https` (o `https,pdf`) al final
+de `.env`.
+
+El `compose.yaml` publica Caddy en los puertos 80 y 443: si en el servidor ya hay otro proxy en esos
+puertos, usa la opción 2.
+
+## Opción 2: tu propio proxy
+
+1. Deja la app solo en local (los valores por defecto):
+
+   ```sh
+   HTTP_BIND=127.0.0.1
+   HTTP_PORT=8080
+   APP_URL=https://docs.tu-empresa.com
+   WEB_URL=https://docs.tu-empresa.com
+   TRUST_PROXY_HOPS=1
+   ```
+
+2. Arranca **sin** el perfil `https`: `docker compose up -d`.
+3. Configura tu proxy para que reenvíe el dominio a `http://127.0.0.1:8080`, con TLS y estas
+   condiciones:
+   - Pasa las cabeceras `Host`, `X-Forwarded-For` y `X-Forwarded-Proto`.
+   - Admite cuerpos de **al menos 100 MB**: con el almacenamiento local, los archivos de hasta 100 MB
+     se suben en una sola petición (los más grandes, en partes de 16 MB).
+   - Tiempos de espera generosos, para subidas y descargas grandes y para las respuestas de Bian, que
+     llegan de a poco.
+
+### Ejemplo con nginx
+
+```nginx
+server {
+    listen 80;
+    server_name docs.tu-empresa.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name docs.tu-empresa.com;
+
+    ssl_certificate     /etc/letsencrypt/live/docs.tu-empresa.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/docs.tu-empresa.com/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    client_max_body_size 110m;
+    proxy_read_timeout   300s;
+    proxy_send_timeout   300s;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Los certificados puedes obtenerlos con Certbot (`certbot --nginx -d docs.tu-empresa.com`). Las
+respuestas de Bian ya piden a nginx que no las almacene en búfer, así que no hace falta nada más.
+
+### Ejemplo con Traefik
+
+Si Traefik corre en Docker, conecta la app a su red con un archivo `deploy/compose.override.yaml`
+(Docker Compose lo lee solo, junto a `compose.yaml`):
+
+```yaml
+services:
+  app:
+    networks: [default, traefik]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.spiderfolio.rule=Host(`docs.tu-empresa.com`)
+      - traefik.http.routers.spiderfolio.entrypoints=websecure
+      - traefik.http.routers.spiderfolio.tls.certresolver=letsencrypt
+      - traefik.http.services.spiderfolio.loadbalancer.server.port=4000
+
+networks:
+  traefik:
+    external: true
+```
+
+Cambia `traefik`, `websecure` y `letsencrypt` por los nombres de la red, el punto de entrada y el
+resolvedor de certificados de tu Traefik. Traefik no limita el tamaño de las peticiones por defecto.
+
+## TRUST_PROXY_HOPS
+
+Indica cuántos proxies hay entre Internet y la app. Con él, la app toma la IP real de cada persona de
+la cabecera `X-Forwarded-For`, y esa IP se usa en los límites de intentos (por ejemplo, de inicio de
+sesión) y en el registro de auditoría.
+
+| Situación | Valor |
+| --- | --- |
+| Detrás de Caddy (perfil `https`) o de tu proxy | `1` |
+| Un CDN (por ejemplo Cloudflare) delante de tu proxy | `2` |
+| La app expuesta directamente, sin proxy | `0` |
+
+Un valor mayor que el real permite que alguien falsee su IP y esquive los límites. Uno menor hace que
+todas las personas compartan la IP del proxy y se bloqueen entre sí al llegar al límite.
+
+## Cookies seguras
+
+- La sesión se guarda en una cookie `HttpOnly`, `Secure` y `SameSite=Strict`. Por HTTP (salvo en
+  `localhost`), el navegador no la guarda: puedes iniciar sesión, pero al recargar la página o a los
+  pocos minutos vuelves a la pantalla de inicio de sesión.
+- `APP_URL` tiene que ser exactamente la dirección con la que se entra, con `https://` y sin barra
+  final. Si no coincide, los enlaces de los emails y las subidas y descargas de archivos apuntan a otra
+  dirección y fallan.
+- La app y la API comparten dominio (la API está en `/api`): no hace falta configurar CORS en el proxy.
+
+## Relacionado
+
+- [Configuración](/es/docs/configuracion)
+- [Almacenamiento](/es/docs/almacenamiento)
+- [Solución de problemas](/es/docs/solucion-de-problemas)

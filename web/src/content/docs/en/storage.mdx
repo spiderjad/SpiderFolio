@@ -1,0 +1,117 @@
+---
+title: "Storage"
+description: "Where files are kept: the server's local disk or an S3 bucket (AWS, R2, MinIO), with its CORS and signed URLs."
+group: autoalojamiento
+order: 3
+icon: folder
+---
+
+SpiderFolio keeps everything that isn't a file (pages, permissions, history…) in the database. The files
+your team uploads, their versions and the ZIPs generated for download go to separate storage, chosen
+with `STORAGE_DRIVER`:
+
+| | `local` (default) | `s3` |
+| --- | --- | --- |
+| Where | The `files` Docker volume, on the server's disk | An AWS S3, Cloudflare R2, MinIO or other compatible bucket |
+| Setup | None | Bucket, credentials and CORS |
+| Uploads and downloads | Go through the app (and your proxy) | Go straight between the browser and the bucket |
+| Backups | Included by `backup.sh` | With your provider's tools |
+| Best when | You have few files or a server with plenty of disk | You have lots of files or want to keep them off the server's disk |
+
+Decide before loading real data: changing `STORAGE_DRIVER` doesn't move files that are already stored.
+
+## Local disk
+
+This is what `.env.example` ships with:
+
+```sh
+STORAGE_DRIVER=local
+```
+
+Files live in the `files` volume, mounted at `/data/files` inside the app and worker containers. File
+names aren't stored on disk: each object has an internal key, and names and permissions live in the
+database.
+
+- The container runs as the `node` user, which must be able to write to `/data/files`. The Docker volume
+  already allows this. If you swap it for a folder on the server, grant the permissions:
+  `sudo chown -R 1000:1000 /path/to/folder`.
+- Uploads go through your proxy: it must accept request bodies of at least 100 MB
+  ([Proxy and HTTPS](/en/docs/proxy-and-https)).
+- Keep an eye on free space (`df -h`). Each company can cap its usage in [Limits](/en/docs/limits).
+
+## S3 bucket
+
+```sh
+STORAGE_DRIVER=s3
+S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+S3_REGION=auto
+S3_FORCE_PATH_STYLE=false
+S3_BUCKET=spiderfolio-files
+S3_SYSTEM_BUCKET=spiderfolio-files-system
+S3_ACCESS_KEY=…
+S3_SECRET_KEY=…
+```
+
+Create **two private buckets** (no public access): one for files and another for the ZIPs generated when
+downloading large folders. If you don't set `S3_SYSTEM_BUCKET`, `<S3_BUCKET>-system` is used. The
+credentials must be able to read, write and delete in both.
+
+By provider:
+
+| Provider | `S3_ENDPOINT` | `S3_REGION` | `S3_FORCE_PATH_STYLE` |
+| --- | --- | --- | --- |
+| AWS S3 | Empty | The bucket's region (for example `eu-west-1`) | `false` |
+| Cloudflare R2 | `https://<account-id>.r2.cloudflarestorage.com` | `auto` | `false` |
+| MinIO | Your MinIO's public URL, with HTTPS | `us-east-1` (or the one you configured) | `true` |
+
+The browser talks to the bucket directly, so `S3_ENDPOINT` must be an address your team can reach from
+their devices, not an internal-only one. The app adds that origin to its Content Security Policy (CSP)
+automatically.
+
+### Bucket CORS
+
+Because uploads and downloads go from the browser to the bucket, the bucket must accept requests from
+`APP_URL`. Set this CORS rule (AWS and R2 format; the equivalent on MinIO):
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://docs.your-company.com"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+- The origin is exactly your `APP_URL`, without a trailing slash.
+- `ETag` must be exposed: files over 100 MB are uploaded in parts and the app needs it to join them.
+- Apply the rule to both buckets.
+
+Without CORS, uploads fail in the browser even if the credentials are right.
+
+## Signed URLs
+
+With both storage types, the browser never receives credentials: the app checks permissions and hands
+out a **signed URL** for that specific operation.
+
+- An upload URL is valid for **5 minutes**, and only for that file, with its size and type.
+- A download URL is valid for **1 minute**. If someone copies it, it stops working almost at once.
+- With S3, the provider signs them. With local disk, the app serves them under `/api/v1/storage/…` with a
+  signature derived from `JWT_ACCESS_SECRET`.
+- Downloads of types that could run code (HTML, SVG, XML) are always served as attachments, never
+  opened in the browser.
+
+## Backups
+
+- With `local`, `backup.sh` saves the `files` volume into `files.tar.gz`.
+- With `s3`, `files.tar.gz` is empty: turn on bucket **versioning** or copy it with your provider's tools.
+
+See [Backups](/en/docs/backups).
+
+## Related
+
+- [Configuration](/en/docs/configuration)
+- [Files](/en/docs/files)
+- [Troubleshooting](/en/docs/troubleshooting)

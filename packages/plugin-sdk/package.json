@@ -1,0 +1,19 @@
+{
+  "name": "@spiderfolio/plugin-sdk",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "description": "Contrato de los plugins de SpiderFolio: manifiesto, licencias y puntos de extensión",
+  "exports": {
+    ".": "./src/index.ts",
+    "./backend": "./src/backend.ts",
+    "./frontend": "./src/frontend.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
+  }
+}

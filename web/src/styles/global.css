@@ -1,0 +1,252 @@
+@import "tailwindcss";
+@import "@spiderfolio/tailwind-preset/preset.css";
+
+@source "../";
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Degradado violeta muy tenue (≤ 6 %) detrás de héroes y cabeceras de docs. */
+.hero-glow {
+  background-image: linear-gradient(to bottom, hsl(var(--primary) / 0.06), transparent 420px);
+}
+
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Movimiento de la web (docs/spec/diseno.md 10.8). Más expresivo que la app: 600 ms y 20 px.
+   Solo transform y opacity; todo dentro de no-preference. Aparición al hacer scroll con
+   scroll-driven animations donde el navegador las soporta; si no, IntersectionObserver
+   (src/scripts/reveal.ts) con la clase html.reveal-fallback; sin JavaScript todo se ve de entrada. */
+:root {
+  --reveal-duration: 600ms;
+  --reveal-distance: 20px;
+  --reveal-step: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --reveal-duration: 0.01ms;
+    --reveal-distance: 0px;
+    --reveal-step: 0ms;
+  }
+}
+
+.site-header {
+  view-transition-name: site-header;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(root) {
+    animation-duration: var(--motion-duration-fast);
+    animation-timing-function: var(--motion-ease-out);
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--reveal-distance));
+    }
+  }
+
+  /* Héroe: entrada al cargar, escalonada. */
+  .hero-stagger > * {
+    animation: rise-in var(--reveal-duration) var(--motion-ease-emphasized) both;
+    animation-delay: calc(var(--i, 0) * var(--reveal-step));
+  }
+  .hero-stagger > :nth-child(2) {
+    --i: 1;
+  }
+  .hero-stagger > :nth-child(3) {
+    --i: 2;
+  }
+  .hero-stagger > :nth-child(4) {
+    --i: 3;
+  }
+  .hero-stagger > :nth-child(5) {
+    --i: 4;
+  }
+  .hero-stagger > :nth-child(n + 6) {
+    --i: 5;
+  }
+
+  /* Todo lo que aparece en <main> (títulos, textos, listas, tarjetas, tablas, FAQ, imágenes).
+     Lo que está dentro de una tarjeta o del héroe no se anima aparte. Esta lista se repite en
+     REVEAL_SELECTOR (src/scripts/reveal.ts): cambiarlas juntas. */
+  main
+    :is(h1, h2, h3, h4, p, li, article, figure, details, table, pre, img, .reveal):not(
+      .hero-stagger *,
+      .hero-shot *,
+      .reveal *,
+      article *,
+      figure *,
+      details *,
+      table *
+    ) {
+    &:nth-child(2) {
+      --i: 1;
+    }
+    &:nth-child(3) {
+      --i: 2;
+    }
+    &:nth-child(4) {
+      --i: 3;
+    }
+    &:nth-child(5) {
+      --i: 4;
+    }
+    &:nth-child(n + 6) {
+      --i: 5;
+    }
+
+    @supports (animation-timeline: view()) {
+      animation: reveal-on-scroll linear both;
+      animation-timeline: view();
+      /* El escalonado va en el rango: cada hermano arranca un poco más adelante. */
+      animation-range: entry calc(var(--i, 0) * 4%) entry calc(50% + var(--i, 0) * 4%);
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    @keyframes reveal-on-scroll {
+      from {
+        opacity: 0;
+        transform: translateY(var(--reveal-distance));
+      }
+    }
+    @keyframes depth-on-scroll {
+      from {
+        opacity: 0.6;
+        transform: perspective(1200px) rotateX(6deg) scale(0.97);
+      }
+    }
+
+    /* Captura del panel: profundidad leve ligada al scroll. */
+    .depth {
+      transform-origin: center top;
+      animation: depth-on-scroll linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+  }
+
+  /* Sin animation-timeline: IntersectionObserver marca .is-in al entrar en pantalla. */
+  html.reveal-fallback
+    main
+    :is(h1, h2, h3, h4, p, li, article, figure, details, table, pre, img, .reveal):not(
+      .hero-stagger *,
+      .hero-shot *,
+      .reveal *,
+      article *,
+      figure *,
+      details *,
+      table *
+    ) {
+    opacity: 0;
+    transform: translateY(var(--reveal-distance));
+    transition-property: opacity, transform;
+    transition-duration: var(--reveal-duration);
+    transition-timing-function: var(--motion-ease-emphasized);
+    transition-delay: calc(var(--i, 0) * var(--reveal-step));
+
+    &.is-in {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Capturas de la app (components/Shot.astro): la del tema del visitante. */
+.shot {
+  margin: 2rem 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--surface));
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04), 0 12px 32px -12px hsl(var(--foreground) / 0.18);
+}
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.shot-dark,
+.dark .shot-light {
+  display: none !important;
+}
+.dark .shot-dark {
+  display: block !important;
+}
+.shot figcaption {
+  border-top: 1px solid hsl(var(--border));
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Tarjetas con un realce leve al pasar el cursor (solo con movimiento). */
+.lift {
+  transition:
+    border-color var(--motion-duration-fast, 150ms) ease,
+    box-shadow 300ms ease,
+    transform 300ms var(--motion-ease-out, ease-out);
+}
+.lift:hover {
+  border-color: hsl(var(--foreground) / 0.25);
+  box-shadow: 0 18px 40px -24px hsl(var(--foreground) / 0.35);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lift:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* Captura del héroe: con profundidad (sombra y resplandor violeta detrás). */
+.hero-shot {
+  position: relative;
+}
+.hero-shot::before {
+  content: "";
+  position: absolute;
+  inset: 8% 6% -4%;
+  z-index: -1;
+  border-radius: 2rem;
+  background: radial-gradient(60% 60% at 50% 40%, hsl(var(--primary) / 0.35), transparent 70%);
+  filter: blur(40px);
+}
+.hero-shot .shot {
+  margin: 0;
+  border-radius: 1.25rem;
+  box-shadow:
+    0 2px 4px hsl(var(--foreground) / 0.04),
+    0 40px 80px -30px hsl(var(--foreground) / 0.45);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-shot {
+    animation: hero-shot-in 900ms var(--motion-ease-emphasized, ease-out) both 350ms;
+  }
+  @keyframes hero-shot-in {
+    from {
+      opacity: 0;
+      transform: perspective(1400px) rotateX(10deg) translateY(30px) scale(0.97);
+    }
+  }
+}
+
+/* Botón de copiar el comando. */
+.copy.is-copied {
+  background: hsl(var(--success-soft));
+  color: hsl(var(--success-soft-foreground));
+}

@@ -1,0 +1,39 @@
+---
+import Faq from "../components/Faq.astro";
+import { pageAlternates, texts, type Locale } from "../i18n/index.ts";
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = texts(locale).faq;
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    inLanguage: locale,
+    mainEntity: t.items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  },
+];
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t.metaTitle}
+  description={t.subtitle}
+  alternates={pageAlternates("faq")}
+  jsonLd={jsonLd}
+>
+  <section class="hero-glow">
+    <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <h1 class="font-display text-5xl tracking-tight md:text-6xl">{t.title}</h1>
+      <p class="mt-4 text-lg text-muted-foreground">{t.subtitle}</p>
+      <div class="mt-10"><Faq locale={locale} /></div>
+    </div>
+  </section>
+</MarketingLayout>

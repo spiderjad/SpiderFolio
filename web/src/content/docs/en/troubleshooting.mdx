@@ -1,0 +1,164 @@
+---
+title: "Troubleshooting"
+description: "Common problems on a self-hosted installation and how to fix them: startup, HTTPS, email, large files, PDFs, permissions and logs."
+group: autoalojamiento
+order: 7
+icon: search
+---
+
+import { REPO_URL, SITE } from "../../../config/site.ts";
+
+Almost every problem shows up in the logs. Always start there.
+
+## Read the logs
+
+From the `deploy/` folder:
+
+```sh
+docker compose ps                          # status of each service
+docker compose logs -f app                 # the API (startup, migrations, errors)
+docker compose logs -f worker              # emails, PDFs and background jobs
+docker compose logs --tail 200 app worker  # the last 200 lines of both
+docker compose logs --since 1h caddy       # the proxy's last hour (https profile)
+```
+
+Logs rotate automatically (5 files of 10 MB per service). They never show secrets or passwords. Log
+messages are in Spanish.
+
+To check whether the API and the database respond: `curl -fsS https://your-domain/api/health` returns
+`{"status":"ok"}`.
+
+## The API doesn't start
+
+**Symptom**: `docker compose ps` shows `app` restarting or `unhealthy`, and the `worker` doesn't start
+(it waits for the app to be healthy).
+
+**Usual cause**: a variable in `.env` is missing or badly formatted. The log says so ("invalid or missing
+environment variables"):
+
+```text
+Variables de entorno inválidas o faltantes: JWT_ACCESS_SECRET, MFA_ENCRYPTION_KEY
+```
+
+Check each variable it names:
+
+| Variable | Typical mistake |
+| --- | --- |
+| `JWT_ACCESS_SECRET` | Shorter than 64 characters. Generate it with `openssl rand -base64 48`. |
+| `EMAIL_ENCRYPTION_KEY`, `MFA_ENCRYPTION_KEY` | Not 32 bytes in base64 (44 characters ending in `=`), one is missing, or they're identical. |
+| `APP_URL`, `WEB_URL` | Not a full URL (missing `https://`). |
+| `SMTP_HOST`, `MAIL_FROM` | Empty. |
+| `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` | Missing with `STORAGE_DRIVER=s3`. |
+| `ANTHROPIC_API_KEY` | Missing with `BIAN_ENABLED=true`. |
+| `EMAIL_ALLOW_PRIVATE_HOSTS` | Set to `true`: not allowed in production. |
+
+If `docker compose` refuses to start before creating the containers, with a message about
+`POSTGRES_PASSWORD` or `DOMAIN`, that variable is empty (`DOMAIN` is only required with the `https`
+profile).
+
+After fixing `.env`: `docker compose up -d --force-recreate app worker`.
+
+**Other causes**: if the log keeps repeating "La base todavía no responde o falló la migración" (the
+database isn't responding yet or the migration failed), check `docker compose logs db`. If a migration
+is failing, the previous message says which one; the database isn't left half-done.
+
+## You sign in but it asks for your password again
+
+**Cause**: you're using HTTP. The session uses a secure cookie that the browser only keeps over HTTPS
+(or on `localhost`).
+
+**Fix**: always use `https://`, with the `https` profile or your own proxy, and set `APP_URL` to that
+exact address. See [Proxy and HTTPS](/en/docs/proxy-and-https).
+
+## Caddy can't get the certificate
+
+- Check that the domain points to the server: `dig +short your-domain`.
+- Open ports **80 and 443** on the server's firewall and your provider's.
+- Make sure no other service is using those ports (`sudo ss -tlnp | grep -E ':80|:443'`).
+- Check `docker compose logs caddy`: Let's Encrypt rate-limits failed attempts, so fix the cause before
+  retrying many times.
+
+## Emails don't arrive
+
+Emails are sent by the **worker**, not the API. Check:
+
+1. `docker compose logs worker`: the SMTP server's error appears there (authentication, connection
+   refused, sender not allowed…).
+2. **Port**: `587` uses STARTTLS and `465` direct TLS. Many hosting providers block port 25, and some
+   also block outgoing 587 or 465.
+3. **Username and password**: `SMTP_USER` and `SMTP_PASS`, without stray quotes.
+4. **Sender**: `MAIL_FROM` must be an address your provider lets you use.
+5. **Spam**: if they land in spam or don't reach certain domains, set up SPF and DKIM for the
+   `MAIL_FROM` domain with your provider.
+
+Failed sends are retried automatically. If a company uses its own email server, its notifications go
+through it: the status and the last error are in **Management › Security**, **Email** tab
+([SMTP email](/en/docs/smtp-email)).
+
+## Error 413 or large files that won't upload
+
+**Cause**: the proxy limits request size. With local disk, files up to 100 MB are uploaded in a single
+request that goes through your proxy.
+
+- **nginx**: raise `client_max_body_size` (for example `110m`) and the timeouts (`proxy_read_timeout`,
+  `proxy_send_timeout`).
+- **A CDN in front** (Cloudflare or another): check its per-request upload limit, which may sit just
+  below 100 MB.
+- The `https` profile with Caddy has no limit.
+
+If the message says the file exceeds the maximum size, it isn't the proxy: it's a company limit, changed
+in **Management › Limits and usage** ([Limits](/en/docs/limits)).
+
+## Uploads fail with S3
+
+- **CORS**: the browser console shows a CORS error. Set up the bucket rule with your exact `APP_URL` and
+  `ETag` exposed ([Storage](/en/docs/storage)).
+- **Internal endpoint**: `S3_ENDPOINT` must be reachable from your team's devices, not only from the
+  server.
+- **Credentials**: check they can read, write and delete in both buckets.
+
+## "This server doesn't generate the PDF for controlled pages"
+
+Gotenberg is missing. Set `GOTENBERG_URL=http://gotenberg:3000` in `.env` and start with the `pdf`
+profile:
+
+```sh
+docker compose --profile https --profile pdf up -d --force-recreate
+```
+
+If it's still not generated, check `docker compose logs worker gotenberg`. See
+[Gotenberg](/en/docs/gotenberg).
+
+## File permission errors
+
+**Symptom**: the log shows `EACCES` or `permission denied` on `/data/files`.
+
+**Cause**: the app runs as the `node` user (UID 1000) and can't write to the folder. This happens when
+you swap the `files` volume for a folder on the server, or restore files as another user.
+
+```sh
+sudo chown -R 1000:1000 /path/to/folder
+```
+
+With the default Docker volume, nothing is needed.
+
+## Everyone gets locked out with "too many attempts"
+
+**Cause**: `TRUST_PROXY_HOPS` doesn't match your network. If it's lower than the real number of proxies,
+everyone appears to come from the same IP and shares the limit.
+
+**Fix**: `1` behind Caddy or your own proxy, `2` if there's also a CDN. See
+[Proxy and HTTPS](/en/docs/proxy-and-https).
+
+## Nobody can sign in with two-step verification
+
+If you changed or lost `MFA_ENCRYPTION_KEY`, codes can no longer be checked. Recover the original value
+from your `.env` backup ([Backups](/en/docs/backups)). If it only affects one person (they lost their
+phone and recovery codes), an administrator can reset their verification from **Management › Members**.
+
+## If none of this helps
+
+- Search for or open an issue on <a href={`${REPO_URL}/issues`}>GitHub</a> with the version, the steps and the log
+  lines. **Never paste your `.env`** or any secret.
+- If you think you've found a vulnerability, don't open a public issue: email
+  <a href={`mailto:${SITE.securityEmail}`}>{SITE.securityEmail}</a>.

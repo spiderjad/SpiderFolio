@@ -1,0 +1,28 @@
+---
+// Página 404 de cada idioma (dist/<idioma>/404.html, por build.format "file"). public/.htaccess usa
+// la 404 bilingüe de la raíz para cualquier ruta inexistente; estas quedan para enlazarlas.
+import type { GetStaticPaths } from "astro";
+import { LOCALES, pagePath, texts, type Locale } from "../../i18n/index.ts";
+import MarketingLayout from "../../layouts/MarketingLayout.astro";
+
+export const getStaticPaths = (() =>
+  LOCALES.map((locale) => ({ params: { lang: locale }, props: { locale } }))) satisfies GetStaticPaths;
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = texts(locale).notFound;
+---
+
+<MarketingLayout locale={locale} title={t.title} description={t.title} noindex>
+  <section class="mx-auto max-w-xl px-4 py-32 text-center sm:px-6">
+    <h1 class="font-display text-5xl tracking-tight">{t.title}</h1>
+    <a
+      href={pagePath("home", locale)}
+      class="mt-8 inline-flex h-12 items-center rounded-full bg-foreground px-7 font-medium text-background"
+    >
+      {t.action}
+    </a>
+  </section>
+</MarketingLayout>

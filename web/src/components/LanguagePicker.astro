@@ -1,0 +1,48 @@
+---
+// Selector de idioma: enlaza a esta misma página en cada idioma (mapa de src/i18n/routes.ts). Sin
+// equivalente (404), lleva al inicio de cada idioma. data-astro-reload fuerza una carga completa para
+// que la búsqueda (Pagefind) cargue el índice del idioma nuevo.
+import { LOCALES, LOCALE_INFO, pagePath, texts, type Alternates, type Locale } from "../i18n/index.ts";
+import Icon from "./Icon.astro";
+
+interface Props {
+  locale: Locale;
+  alternates?: Alternates;
+}
+const { locale, alternates } = Astro.props;
+const t = texts(locale);
+const hrefOf = (target: Locale): string => alternates?.[target] ?? pagePath("home", target);
+---
+
+<details class="language-picker group relative">
+  <summary
+    aria-label={`${t.a11y.language}: ${LOCALE_INFO[locale].name}`}
+    class="inline-flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&::-webkit-details-marker]:hidden"
+  >
+    <Icon name="globe" size={18} />
+    <span class="font-medium uppercase">{locale}</span>
+  </summary>
+  <ul
+    class="absolute right-0 top-12 z-50 min-w-40 rounded-xl border bg-background p-1 shadow-pop"
+    aria-label={t.a11y.language}
+  >
+    {
+      LOCALES.map((target) => (
+        <li>
+          <a
+            href={hrefOf(target)}
+            hreflang={LOCALE_INFO[target].hreflang}
+            lang={LOCALE_INFO[target].hreflang}
+            data-astro-reload
+            data-locale-choice={target}
+            aria-current={target === locale ? "true" : undefined}
+            class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted aria-[current=true]:font-medium aria-[current=true]:text-primary"
+          >
+            {LOCALE_INFO[target].name}
+            {target === locale && <Icon name="check" size={16} />}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</details>

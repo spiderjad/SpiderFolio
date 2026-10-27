@@ -1,0 +1,175 @@
+---
+// Diagrama: un QR pegado en el puesto abre siempre la versión vigente. La línea de escaneo recorre el
+// código y el teléfono muestra la versión; sin movimiento, se ve el resultado.
+import Icon from "../Icon.astro";
+
+interface Props {
+  t: { label: string; version: string; read: string };
+}
+const { t } = Astro.props;
+// Un patrón fijo de 9×9 que parece un QR (no codifica nada).
+const pattern =
+  "111101111100101001101101011101011101100001001111111111000101000101101011111010101100100110111101011101111101001";
+const cells = Array.from({ length: 81 }, (_, index) => pattern[index] === "1");
+const finder = (row: number, col: number) =>
+  (row < 3 && col < 3) || (row < 3 && col > 5) || (row > 5 && col < 3);
+---
+
+<div class="qr" data-animate aria-hidden="true">
+  <div class="sticker">
+    <div class="code">
+      {
+        cells.map((on, index) => {
+          const row = Math.floor(index / 9);
+          const col = index % 9;
+          return <span class:list={[(on || finder(row, col)) && "on"]} />;
+        })
+      }
+      <span class="scan"></span>
+    </div>
+    <span class="label">{t.label}</span>
+  </div>
+  <Icon name="arrow-right" size={22} class="arrow" />
+  <div class="phone">
+    <span class="notch"></span>
+    <span class="line w80"></span>
+    <span class="line w60"></span>
+    <span class="version">{t.version}</span>
+    <span class="line w90"></span>
+    <span class="line w70"></span>
+    <span class="read">
+      <Icon name="check" size={14} />
+      {t.read}
+    </span>
+  </div>
+</div>
+
+<style>
+  .qr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+  }
+  .sticker {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px dashed hsl(var(--border));
+    background: hsl(var(--background));
+    padding: 0.85rem;
+  }
+  .code {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(9, 0.55rem);
+    gap: 1px;
+    overflow: hidden;
+  }
+  .code span:not(.scan) {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 1px;
+    background: transparent;
+  }
+  .code span.on {
+    background: hsl(var(--foreground));
+  }
+  .scan {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 12px 2px hsl(var(--primary) / 0.6);
+    opacity: 0;
+  }
+  .label {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.7rem;
+    color: hsl(var(--muted-foreground));
+  }
+  .arrow {
+    color: hsl(var(--muted-foreground));
+  }
+  .phone {
+    display: grid;
+    gap: 0.4rem;
+    width: 9rem;
+    border-radius: 1.25rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    padding: 0.9rem 0.8rem 1rem;
+    box-shadow: 0 14px 30px -18px hsl(var(--foreground) / 0.4);
+  }
+  .notch {
+    justify-self: center;
+    width: 2.5rem;
+    height: 0.3rem;
+    margin-bottom: 0.25rem;
+    border-radius: 999px;
+    background: hsl(var(--muted));
+  }
+  .line {
+    height: 0.4rem;
+    border-radius: 999px;
+    background: hsl(var(--muted));
+  }
+  .w60 {
+    width: 60%;
+  }
+  .w70 {
+    width: 70%;
+  }
+  .w80 {
+    width: 80%;
+  }
+  .w90 {
+    width: 90%;
+  }
+  .version {
+    justify-self: start;
+    border-radius: 999px;
+    background: hsl(var(--success-soft));
+    color: hsl(var(--success-soft-foreground));
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+  .read {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    color: hsl(var(--primary));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .qr.is-in .scan {
+      animation: scan 1.6s ease-in-out 2 both;
+    }
+    .qr.is-in .phone {
+      animation: rise 0.6s var(--motion-ease-emphasized, ease-out) both 1.4s;
+    }
+    .qr.is-in .read {
+      animation: rise 0.45s ease-out both 2.4s;
+    }
+    @keyframes scan {
+      0% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(5.4rem);
+      }
+    }
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+    }
+  }
+</style>

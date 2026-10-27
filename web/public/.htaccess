@@ -1,0 +1,82 @@
+# Web pública en hosting compartido (Apache o LiteSpeed). Ver docs/despliegue-web.md.
+# Se copia tal cual a dist/ y la sube .github/workflows/deploy-web.yml por FTP.
+# La CSP tiene que ser exactamente la de web/csp.ts: scripts/check-dist.ts lo verifica en cada build.
+
+Options -Indexes -MultiViews
+# /es se sirve desde es.html aunque exista la carpeta es/: sin la barra que agrega mod_dir.
+DirectorySlash Off
+DirectoryIndex index.html
+AddDefaultCharset utf-8
+AddType application/wasm .wasm
+AddType application/json .json
+# Una ruta inexistente muestra la 404 de su idioma; fuera de /es y /en, la de los dos idiomas.
+ErrorDocument 404 /404.html
+<If "%{REQUEST_URI} =~ m#^/es(/|$)#">
+  ErrorDocument 404 /es/404.html
+</If>
+<If "%{REQUEST_URI} =~ m#^/en(/|$)#">
+  ErrorDocument 404 /en/404.html
+</If>
+
+# Orden de las reglas (importa): 1) HTTPS, 2) URLs antiguas, 3) portada por idioma, 4) URLs
+# canónicas (sin .html ni barra final), 5) reescritura interna a .html. Las redirecciones van
+# primero y la reescritura interna al final: al reescribir, Apache vuelve a pasar por estas reglas
+# con la ruta nueva, y las de 4) miran THE_REQUEST (la petición original), así que no hay bucles.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Siempre por HTTPS (también detrás del proxy del hosting).
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # URLs antiguas sin idioma → versión en español.
+  RewriteRule ^(instalacion|plugins|seguridad|faq|docs)/?$ /es/$1 [R=301,L]
+  RewriteRule ^(docs|legal)/(.+?)/?$ /es/$1/$2 [R=301,L]
+  RewriteRule ^docs-index\.json$ /es/docs-index.json [R=301,L]
+
+  # Portada: con el idioma del navegador (Accept-Language) va directo a /en o /es. Si el primero no es
+  # ninguno de los dos, index.html elige con lang-redirect.js (idioma guardado o navigator.languages)
+  # y, sin JavaScript, muestra los enlaces a cada idioma.
+  RewriteCond %{HTTP:Accept-Language} ^en [NC]
+  RewriteRule ^$ /en [R=302,L,E=VARY_LANG:1]
+  RewriteCond %{HTTP:Accept-Language} ^es [NC]
+  RewriteRule ^$ /es [R=302,L,E=VARY_LANG:1]
+
+  # URLs canónicas sin ".html" ni barra final.
+  RewriteCond %{THE_REQUEST} \s/+index\.html[\s?]
+  RewriteRule ^ / [R=301,L]
+  RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?]
+  RewriteRule ^ /%1 [R=301,L]
+  RewriteCond %{REQUEST_URI} ^/(.+)/$
+  RewriteRule ^ /%1 [R=301,L]
+
+  # /es/instalacion → es/instalacion.html (build.format "file" de astro.config.mjs). Solo si no
+  # existe tal cual (archivos estáticos) y sí existe el .html.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ $1.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always append Vary "Accept-Language" env=VARY_LANG
+
+  # HTML, JSON y XML: se revalidan en cada visita (un despliegue nuevo se ve al momento).
+  <FilesMatch "\.(html|json|xml|txt)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  # Recursos de Astro con hash en el nombre (/_astro/*.Ab12Cd34.js): un año, inmutables.
+  <FilesMatch "\.[A-Za-z0-9_-]{8}\.(js|css|woff2?|svg|png|jpe?g|webp|avif)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # Capturas de la app (/capturas/*.webp): sin hash en el nombre, una semana y luego se revalidan.
+  <If "%{REQUEST_URI} =~ m#^/capturas/.+\.webp$#">
+    Header set Cache-Control "public, max-age=604800"
+  </If>
+</IfModule>

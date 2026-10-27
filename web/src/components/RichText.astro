@@ -1,0 +1,14 @@
+---
+// Texto de los catálogos con enlaces intercalados (src/i18n/types.ts).
+import type { Rich } from "../i18n/types.ts";
+
+interface Props {
+  value: Rich;
+  /** Clases de los enlaces. */
+  linkClass?: string;
+}
+const { value, linkClass } = Astro.props;
+const parts = typeof value === "string" ? [value] : value;
+---
+
+{parts.map((part) => (typeof part === "string" ? part : <a href={part.href} class={linkClass}>{part.text}</a>))}

@@ -1,0 +1,179 @@
+---
+// Diagrama: el ciclo de un documento controlado (borrador → revisión → vigente → obsoleto). Se anima al
+// entrar en pantalla (data-animate, scripts/animate.ts); sin movimiento, se ve el estado final.
+import Icon from "../Icon.astro";
+
+interface Props {
+  t: {
+    code: string;
+    name: string;
+    steps: readonly string[];
+    approved: string;
+  };
+}
+const { t } = Astro.props;
+---
+
+<div class="lifecycle" data-animate aria-hidden="true">
+  <div class="card">
+    <span class="code">{t.code}</span>
+    <span class="name">{t.name}</span>
+    <span class="badge">{t.steps[2]}</span>
+  </div>
+  <ol class="steps">
+    {
+      t.steps.map((step, index) => (
+        <li style={`--i: ${String(index)}`} class:list={[index === 3 && "last"]}>
+          <span class="dot" />
+          <span class="label">{step}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <p class="approved">
+    <Icon name="check" size={16} />
+    {t.approved}
+  </p>
+</div>
+
+<style>
+  .lifecycle {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  .code {
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 0.1rem 0.55rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+  }
+  .name {
+    font-weight: 600;
+  }
+  .badge {
+    margin-left: auto;
+    border-radius: 999px;
+    background: hsl(var(--success-soft));
+    color: hsl(var(--success-soft-foreground));
+    padding: 0.1rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* Riel y su relleno. */
+  .steps::before,
+  .steps::after {
+    content: "";
+    position: absolute;
+    top: 0.6rem;
+    left: 12.5%;
+    right: 12.5%;
+    height: 2px;
+    border-radius: 2px;
+    background: hsl(var(--border));
+  }
+  .steps::after {
+    background: hsl(var(--primary));
+    transform-origin: left;
+  }
+  .steps li {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    font-size: 0.8125rem;
+  }
+  .dot {
+    position: relative;
+    z-index: 1;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    border: 2px solid hsl(var(--primary));
+    background: hsl(var(--primary));
+    box-shadow: 0 0 0 4px hsl(var(--background));
+  }
+  .last .dot {
+    border-color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted));
+  }
+  .last .label {
+    color: hsl(var(--muted-foreground));
+    text-decoration: line-through;
+  }
+  .approved {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-self: start;
+    margin: 0;
+    border-radius: 999px;
+    background: hsl(var(--primary-soft));
+    color: hsl(var(--primary-soft-foreground));
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lifecycle.is-in .steps::after {
+      animation: fill 2.8s var(--motion-ease-out, ease-out) both;
+    }
+    .lifecycle.is-in .dot {
+      animation: light 0.5s ease-out both;
+      animation-delay: calc(var(--i) * 0.8s);
+    }
+    .lifecycle.is-in .label {
+      animation: fade 0.5s ease-out both;
+      animation-delay: calc(var(--i) * 0.8s);
+    }
+    .lifecycle.is-in .badge,
+    .lifecycle.is-in .approved {
+      animation: pop 0.45s var(--motion-ease-emphasized, ease-out) both;
+      animation-delay: 1.7s;
+    }
+    @keyframes fill {
+      from {
+        transform: scaleX(0);
+      }
+    }
+    @keyframes light {
+      from {
+        background: hsl(var(--background));
+        border-color: hsl(var(--border));
+        transform: scale(0.7);
+      }
+    }
+    @keyframes fade {
+      from {
+        opacity: 0.25;
+      }
+    }
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.96);
+      }
+    }
+  }
+</style>

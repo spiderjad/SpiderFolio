@@ -1,0 +1,48 @@
+---
+title: "Códigos QR"
+description: "Generar un QR que abre siempre la versión vigente, QR con sesión o público, hoja de etiquetas para imprimir y revocar."
+group: uso-diario
+order: 9
+icon: qr
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+Un código QR pegado en una máquina, un tablero o una puerta lleva directo al documento que se usa ahí: el instructivo de limpieza, el plan de emergencia, la hoja de seguridad. El código **abre siempre la versión vigente**: cuando publicas una versión nueva, no hay que reimprimir nada.
+
+## Dónde está
+
+En una página, **Más acciones** › **Generar QR**; en un archivo, **Generar QR** en su menú del explorador. Necesitas poder **editar** el documento. Las carpetas no tienen QR.
+
+<Shot name="qr" alt="El diálogo de códigos QR con la vista previa, las descargas y la hoja de etiquetas" />
+
+## Generar un QR
+
+1. Abre **Generar QR**.
+2. Pulsa **Generar QR**. Se crea un código que **Pide iniciar sesión**.
+3. Descárgalo con **Descargar PNG** o **Descargar SVG**, o arma una **Hoja de etiquetas (A4)** en tamaño **Pequeñas**, **Medianas** o **Grandes**. Cada etiqueta lleva el QR, el código del documento, el título y el área.
+
+Un documento puede tener varios QR. Cada uno muestra su tipo, cuántos escaneos tuvo y la fecha del último. El contador no guarda quién escaneó ni desde dónde.
+
+## Con sesión o público
+
+- **Pide iniciar sesión** (el normal): quien lo escanea tiene que entrar con su cuenta y poder ver el documento. Si no lo ve, no se abre.
+- **Público · sin sesión**: cualquiera que lo escanee lee este documento, y solo este, sin iniciar sesión y en solo lectura. Úsalo para instrucciones de seguridad para contratistas o visitas.
+
+Para **Generar QR público** necesitas el nivel **Gestionar** sobre el documento y la capacidad **Códigos QR públicos** en tu rol. SpiderFolio te pide confirmarlo antes de crearlo.
+
+Quien abre un QR público ve el documento con la nota «Documento compartido por código QR, solo lectura.» y, si es un archivo, el botón **Descargar el archivo**.
+
+## Revocar
+
+Si un QR ya no debe abrir (lo pegaste en el lugar equivocado, o el público ya no hace falta), pulsa **Revocar**. Deja de abrir de inmediato: quien lo escanee verá «Este código QR ya no es válido.». Los que ya imprimiste hay que reemplazarlos.
+
+Puede revocarlo quien lo generó o quien gestiona el documento. Generar y revocar QR queda en la auditoría.
+
+## Relacionado
+
+- [Documentos controlados](/es/docs/documentos-controlados)
+- [Lecturas obligatorias](/es/docs/lecturas-obligatorias)
+- [Roles y permisos](/es/docs/roles-y-permisos)

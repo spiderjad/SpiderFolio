@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+package-lock.json
+.astro
+backend/src/generated
+# Texto de especificación, no Markdown formal: se edita a mano
+CLAUDE.md
+docs/spec
+# Generado desde packages/tailwind-preset/src/tokens.ts
+packages/tailwind-preset/tokens.css

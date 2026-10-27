@@ -1,0 +1,112 @@
+---
+title: "Install on your server"
+description: "SpiderFolio with Docker on your own server: requirements, minimum configuration, first start and checks."
+group: empezar
+order: 2
+icon: shield
+---
+
+import { REPO_URL } from "../../../config/site.ts";
+
+SpiderFolio is open source and installs on your own server with Docker Compose. The installation has
+four parts:
+
+- **db**: the PostgreSQL 16 database (no public port).
+- **app**: the API, which also serves the web app. It applies database migrations automatically on startup.
+- **worker**: background jobs (emails, PDFs, search, trash…). It uses the same image.
+- Optional: **caddy** (automatic HTTPS, `https` profile) and **gotenberg** (PDFs of controlled
+  documents, `pdf` profile).
+
+## What you need
+
+- A Linux server with **Docker Engine 24 or later** and **Docker Compose v2** (`docker compose version`).
+- **2 vCPUs and 4 GB of RAM** for a company of up to about 200 people. Disk space depending on your files.
+- An **email (SMTP) server**: your company's or a transactional service (Resend, Postmark, Amazon
+  SES…). Without email, verifications and invitations aren't delivered.
+- A **domain** pointing to the server, to sign in over HTTPS from any device. Without HTTPS it only
+  works from the server itself (`localhost`).
+
+Details are in [Server requirements](/en/docs/server-requirements).
+
+## Step by step
+
+1. **Download** the project and copy the example configuration:
+
+   ```sh
+   git clone https://github.com/spiderjad/SpiderFolio.git
+   cd SpiderFolio/deploy
+   cp .env.example .env
+   chmod 600 .env
+   ```
+
+2. **Generate the secrets**. Each line gives a different value; use one per variable:
+
+   ```sh
+   openssl rand -base64 48   # JWT_ACCESS_SECRET
+   openssl rand -base64 32   # EMAIL_ENCRYPTION_KEY
+   openssl rand -base64 32   # MFA_ENCRYPTION_KEY (different from the previous one)
+   ```
+
+3. **Fill in `.env`** with at least:
+
+   | Variable | What to set |
+   | --- | --- |
+   | `APP_URL`, `WEB_URL` | The URL people will use, for example `https://docs.your-company.com` |
+   | `DOMAIN` | With the `https` profile: the domain, without `https://` (`docs.your-company.com`) |
+   | `POSTGRES_PASSWORD` | A long password |
+   | `JWT_ACCESS_SECRET`, `EMAIL_ENCRYPTION_KEY`, `MFA_ENCRYPTION_KEY` | The secrets from step 2 |
+   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Your email server's details |
+
+   The other variables have sensible defaults. They're all explained in
+   [Configuration](/en/docs/configuration).
+
+   Keep a copy of `.env` somewhere safe: without `MFA_ENCRYPTION_KEY` nobody can sign in again with
+   their two-step verification.
+
+4. **Start** it. Pick one of these:
+
+   ```sh
+   # With automatic HTTPS (Let's Encrypt): DOMAIN filled in and ports 80 and 443 open
+   docker compose --profile https up -d
+
+   # The same, plus PDFs of controlled documents (set GOTENBERG_URL=http://gotenberg:3000)
+   docker compose --profile https --profile pdf up -d
+
+   # Without Caddy: the app listens on HTTP_BIND:HTTP_PORT (127.0.0.1:8080 by default), behind your proxy
+   docker compose up -d
+   ```
+
+   If you already have your own proxy (nginx, Traefik…), see [Proxy and HTTPS](/en/docs/proxy-and-https).
+
+5. **Check** that it started:
+
+   ```sh
+   docker compose ps
+   docker compose logs -f app      # wait for the "API lista" (API ready) line
+   curl -fsS https://docs.your-company.com/api/health
+   ```
+
+   `/api/health` returns `{"status":"ok"}` when the API and the database are working. If the API
+   doesn't start, the log names the missing variable: see [Troubleshooting](/en/docs/troubleshooting).
+
+6. **Create your company**: go to your domain, click **Create account** and you become the owner.
+   Continue with [First administrator](/en/docs/first-administrator).
+
+## If there's no published image
+
+`compose.yaml` uses the `ghcr.io/spiderjad/spiderfolio:latest` image. If you'd rather build it yourself
+(for example, to include plugins), from the repository root:
+
+```sh
+docker build -t spiderfolio:local .
+```
+
+Then set `SPIDERFOLIO_IMAGE=spiderfolio:local` in `deploy/.env` and run `docker compose up -d`.
+
+## After installing
+
+- [Proxy and HTTPS](/en/docs/proxy-and-https) and [Storage](/en/docs/storage).
+- [Backups](/en/docs/backups): schedule them before you load real data.
+- [Updates](/en/docs/updates).
+
+The technical installation guide is also in the repository: <a href={`${REPO_URL}/tree/main/docs/install`}>docs/install</a>.

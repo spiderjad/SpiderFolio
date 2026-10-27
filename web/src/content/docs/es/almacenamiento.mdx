@@ -1,0 +1,121 @@
+---
+title: "Almacenamiento"
+description: "Dónde se guardan los archivos: el disco local del servidor o un bucket S3 (AWS, R2, MinIO), con su CORS y las URLs firmadas."
+group: autoalojamiento
+order: 3
+icon: folder
+---
+
+SpiderFolio guarda en la base de datos todo lo que no es un archivo (páginas, permisos, historial…). Los
+archivos que sube tu equipo, sus versiones y los ZIP generados para descargar van a un almacenamiento
+aparte, que eliges con `STORAGE_DRIVER`:
+
+| | `local` (por defecto) | `s3` |
+| --- | --- | --- |
+| Dónde | El volumen de Docker `files`, en el disco del servidor | Un bucket de AWS S3, Cloudflare R2, MinIO u otro compatible |
+| Configuración | Ninguna | Bucket, credenciales y CORS |
+| Subidas y descargas | Pasan por la app (y por tu proxy) | Van directo entre el navegador y el bucket |
+| Copias de seguridad | `backup.sh` las incluye | Con las herramientas del proveedor |
+| Conviene si | Tienes pocos archivos o un servidor con disco de sobra | Tienes muchos archivos o quieres separar el disco del servidor |
+
+Elige antes de cargar datos reales: al cambiar `STORAGE_DRIVER` no se mueven los archivos que ya están
+guardados.
+
+## Disco local
+
+Es lo que trae `.env.example`:
+
+```sh
+STORAGE_DRIVER=local
+```
+
+Los archivos quedan en el volumen `files`, montado en `/data/files` dentro de los contenedores de la
+app y del worker. No guarda nombres de archivo en el disco: cada objeto tiene una clave interna, y los
+nombres y permisos viven en la base.
+
+- El contenedor corre con el usuario `node`, que tiene que poder escribir en `/data/files`. Con el
+  volumen de Docker ya es así. Si lo cambias por una carpeta del servidor, dale los permisos:
+  `sudo chown -R 1000:1000 /ruta/de/la/carpeta`.
+- Las subidas pasan por tu proxy: tiene que admitir cuerpos de al menos 100 MB
+  ([Proxy y HTTPS](/es/docs/proxy-y-https)).
+- Vigila el espacio libre (`df -h`). Cada empresa puede acotar lo que usa en
+  [Límites](/es/docs/limites).
+
+## Bucket S3
+
+```sh
+STORAGE_DRIVER=s3
+S3_ENDPOINT=https://<id-de-cuenta>.r2.cloudflarestorage.com
+S3_REGION=auto
+S3_FORCE_PATH_STYLE=false
+S3_BUCKET=spiderfolio-files
+S3_SYSTEM_BUCKET=spiderfolio-files-system
+S3_ACCESS_KEY=…
+S3_SECRET_KEY=…
+```
+
+Crea **dos buckets privados** (sin acceso público): uno para los archivos y otro para los ZIP que se
+generan al descargar carpetas grandes. Si no defines `S3_SYSTEM_BUCKET`, se usa `<S3_BUCKET>-system`.
+Las credenciales tienen que poder leer, escribir y borrar en los dos.
+
+Según el proveedor:
+
+| Proveedor | `S3_ENDPOINT` | `S3_REGION` | `S3_FORCE_PATH_STYLE` |
+| --- | --- | --- | --- |
+| AWS S3 | Vacío | La del bucket (por ejemplo `eu-west-1`) | `false` |
+| Cloudflare R2 | `https://<id-de-cuenta>.r2.cloudflarestorage.com` | `auto` | `false` |
+| MinIO | La URL pública de tu MinIO, con HTTPS | `us-east-1` (o la que tengas configurada) | `true` |
+
+El navegador habla directamente con el bucket, así que `S3_ENDPOINT` tiene que ser una dirección que
+tu equipo pueda abrir desde sus equipos, no una solo interna. La app agrega sola ese origen a su
+política de seguridad de contenido (CSP).
+
+### CORS del bucket
+
+Como las subidas y descargas van del navegador al bucket, el bucket tiene que aceptar peticiones desde
+`APP_URL`. Configura esta regla CORS (formato de AWS y R2; en MinIO, el equivalente):
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://docs.tu-empresa.com"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+- El origen es exactamente tu `APP_URL`, sin barra final.
+- `ETag` tiene que estar expuesto: los archivos de más de 100 MB se suben en partes y la app lo
+  necesita para unirlas.
+- Aplica la regla a los dos buckets.
+
+Sin CORS, las subidas fallan en el navegador aunque las credenciales estén bien.
+
+## URLs firmadas
+
+Con los dos almacenamientos, el navegador nunca recibe credenciales: la app comprueba los permisos y
+entrega una **URL firmada** para esa operación concreta.
+
+- Una URL de subida vale **5 minutos** y solo para ese archivo, con su tamaño y su tipo.
+- Una URL de descarga vale **1 minuto**. Si alguien la copia, deja de funcionar enseguida.
+- Con S3, las firma el propio proveedor. Con el disco local, las atiende la app en `/api/v1/storage/…`
+  con una firma derivada de `JWT_ACCESS_SECRET`.
+- Las descargas de tipos que podrían ejecutar código (HTML, SVG, XML) salen siempre como archivo
+  adjunto, nunca abiertas en el navegador.
+
+## Copias de seguridad
+
+- Con `local`, `backup.sh` guarda el volumen `files` en `files.tar.gz`.
+- Con `s3`, `files.tar.gz` queda vacío: activa el **versionado** del bucket o cópialo con las
+  herramientas del proveedor.
+
+Ver [Copias de seguridad](/es/docs/copias-de-seguridad).
+
+## Relacionado
+
+- [Configuración](/es/docs/configuracion)
+- [Archivos](/es/docs/archivos)
+- [Solución de problemas](/es/docs/solucion-de-problemas)

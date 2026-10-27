@@ -1,0 +1,74 @@
+---
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource/instrument-serif";
+import { ClientRouter } from "astro:transitions";
+import "../styles/global.css";
+import { SITE } from "../config/site.ts";
+import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, type Alternates, type Locale } from "../i18n/index.ts";
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  /** Rutas de esta misma página en cada idioma: canonical, hreflang y og:locale:alternate. */
+  alternates?: Alternates;
+  /** Datos estructurados (schema.org) de la página. */
+  jsonLd?: object[];
+  noindex?: boolean;
+}
+
+const { locale, title, description, alternates, jsonLd = [], noindex = false } = Astro.props;
+const fullTitle = title === SITE.name ? title : `${title} · ${SITE.name}`;
+const absolute = (path: string): string => new URL(path, Astro.site).href;
+const canonical = absolute(alternates?.[locale] ?? Astro.url.pathname);
+// "<" escapado: el JSON no puede cerrar el <script> que lo contiene.
+const jsonLdText = (data: object): string => JSON.stringify(data).replace(/</g, "\\u003c");
+---
+
+<!doctype html>
+<html lang={LOCALE_INFO[locale].hreflang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {
+      alternates &&
+        LOCALES.map((other) => (
+          <link rel="alternate" hreflang={LOCALE_INFO[other].hreflang} href={absolute(alternates[other])} />
+        ))
+    }
+    {alternates && <link rel="alternate" hreflang="x-default" href={absolute(alternates[DEFAULT_LOCALE])} />}
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={LOCALE_INFO[locale].ogLocale} />
+    {
+      alternates &&
+        LOCALES.filter((other) => other !== locale).map((other) => (
+          <meta property="og:locale:alternate" content={LOCALE_INFO[other].ogLocale} />
+        ))
+    }
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script is:inline src="/theme-init.js"></script>
+    <slot name="head" />
+    <!-- Sin soporte nativo de View Transitions la navegación es la normal (fallback none). -->
+    <ClientRouter fallback="none" />
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={jsonLdText(data)} />)}
+  </head>
+  <body class="min-h-screen bg-background font-sans text-foreground antialiased">
+    <slot />
+  </body>
+</html>
+
+<script>
+  import "../scripts/reveal.ts";
+</script>

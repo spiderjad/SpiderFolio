@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.astro
+**/coverage
+**/test-results
+**/playwright-report
+.git
+.env
+.env.*
+!.env.example
+*.log
+backend/src/generated

@@ -1,0 +1,272 @@
+@import "tailwindcss";
+@import "@spiderfolio/tailwind-preset/preset.css";
+@import "sonner/dist/styles.css";
+@import "./page-editor.css";
+
+/* Las clases se buscan en el código de la app (el preset no tiene componentes). */
+@source "../";
+
+/* Densidad compacta (estilo Notion/Linear), solo en la app: texto de interfaz de 14 px y secundario
+   de 13 px (text-xs). El editor de páginas conserva su tipografía de lectura (prose, 17 px). */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+}
+@layer base {
+  body {
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+}
+
+/* Layout sin desborde horizontal: la columna implícita de una grilla es "auto" y no baja de su
+   contenido más ancho (un texto largo, un interruptor, un árbol), con lo que ensancha toda la
+   página. Con minmax(0, 1fr) la columna se achica y el contenido se parte o scrollea dentro de su
+   caja. Las utilidades grid-cols-* y sm:grid-cols-* siguen mandando (capa utilities). */
+@layer base {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Barra de scroll fina que solo se ve al pasar el mouse (zona central del menú lateral). */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scroll-thin:hover,
+.scroll-thin:focus-within {
+  scrollbar-color: hsl(var(--foreground) / 0.25) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+}
+.scroll-thin:hover::-webkit-scrollbar-thumb,
+.scroll-thin:focus-within::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--foreground) / 0.25);
+}
+
+/* Movimiento de la app (docs/spec/diseno.md 10.8): sutil y rápido. Duraciones, curvas y
+   desplazamientos salen de los tokens --motion-* del preset (valen 0 con reduced-motion);
+   solo transform, opacity y el borde del hover; mejora progresiva (sin soporte no hay animación). */
+.card-hover {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-out);
+}
+.card-hover:hover {
+  border-color: hsl(var(--foreground) / 0.25);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Entre pantallas: View Transitions con React Router (viewTransition), solo fade. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--motion-duration-fast);
+    animation-timing-function: var(--motion-ease-out);
+  }
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      translate: 0 var(--motion-distance);
+    }
+  }
+  .page-enter {
+    animation: page-enter var(--motion-duration-slow) var(--motion-ease-emphasized) both;
+  }
+
+  /* Menús, diálogos, popovers y tooltips: entrada con @starting-style (fade + escala 98 → 100 %).
+     Radix desmonta al cerrar salvo que haya una animación en curso: la salida es una animación. */
+  .motion-pop,
+  .motion-fade,
+  .motion-slide {
+    transition:
+      opacity var(--motion-duration-base) var(--motion-ease-out),
+      scale var(--motion-duration-base) var(--motion-ease-out),
+      translate var(--motion-duration-base) var(--motion-ease-out);
+    transition-behavior: allow-discrete;
+  }
+  @starting-style {
+    .motion-pop:not([data-state="closed"]) {
+      opacity: 0;
+      scale: var(--motion-scale-from);
+    }
+    .motion-fade:not([data-state="closed"]) {
+      opacity: 0;
+    }
+    .motion-slide:not([data-state="closed"]) {
+      opacity: 0;
+      translate: -24px 0;
+    }
+  }
+  @keyframes pop-out {
+    to {
+      opacity: 0;
+      scale: var(--motion-scale-from);
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes slide-out {
+    to {
+      opacity: 0;
+      translate: -24px 0;
+    }
+  }
+  .motion-pop[data-state="closed"] {
+    animation: pop-out var(--motion-duration-fast) var(--motion-ease-out) forwards;
+  }
+  .motion-fade[data-state="closed"] {
+    animation: fade-out var(--motion-duration-fast) var(--motion-ease-out) forwards;
+  }
+  .motion-slide[data-state="closed"] {
+    animation: slide-out var(--motion-duration-fast) var(--motion-ease-out) forwards;
+  }
+
+  /* Panel de Bian: entra desde la derecha en 250 ms (en móvil, pantalla completa desde abajo). El
+     contenido aparece en fundido un instante después. Con reduced-motion los tokens valen 0. */
+  .bian-panel {
+    transition:
+      opacity calc(var(--motion-duration-base) * 1.25) var(--motion-ease-emphasized),
+      translate calc(var(--motion-duration-base) * 1.25) var(--motion-ease-emphasized);
+    transition-behavior: allow-discrete;
+  }
+  @starting-style {
+    .bian-panel:not([data-state="closed"]) {
+      opacity: 0;
+      translate: 100% 0;
+    }
+  }
+  @media (max-width: 639px) {
+    @starting-style {
+      .bian-panel:not([data-state="closed"]) {
+        translate: 0 100%;
+      }
+    }
+  }
+  @keyframes bian-panel-out {
+    to {
+      opacity: 0;
+      translate: 100% 0;
+    }
+  }
+  @keyframes bian-panel-out-mobile {
+    to {
+      opacity: 0;
+      translate: 0 100%;
+    }
+  }
+  .bian-panel[data-state="closed"] {
+    animation: bian-panel-out var(--motion-duration-base) var(--motion-ease-out) forwards;
+  }
+  @media (max-width: 639px) {
+    .bian-panel[data-state="closed"] {
+      animation: bian-panel-out-mobile var(--motion-duration-base) var(--motion-ease-out) forwards;
+    }
+  }
+  @keyframes bian-fade-in {
+    from {
+      opacity: 0;
+      translate: 0 6px;
+    }
+  }
+  .bian-fade-in {
+    animation: bian-fade-in var(--motion-duration-base) var(--motion-ease-out) both;
+  }
+  .bian-panel-body {
+    animation: bian-fade-in var(--motion-duration-base) var(--motion-ease-out) 100ms both;
+  }
+  /* La coleta de Bian: se balancea mientras trabaja (data-bian-busy), de fondo en el avatar grande de
+     la bienvenida (bian-sway) y da un vaivén al pasar el mouse (bian-wiggle). */
+  @keyframes bian-sway {
+    0%,
+    100% {
+      transform: rotate(-5deg);
+    }
+    50% {
+      transform: rotate(7deg);
+    }
+  }
+  @keyframes bian-wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    30% {
+      transform: rotate(10deg);
+    }
+    65% {
+      transform: rotate(-7deg);
+    }
+  }
+  .bian-tail {
+    transform-box: view-box;
+  }
+  [data-bian-busy="true"] .bian-tail {
+    animation: bian-sway 0.9s ease-in-out infinite;
+  }
+  .bian-sway .bian-tail {
+    animation: bian-sway 3.2s ease-in-out infinite;
+  }
+  .bian-wiggle:hover .bian-tail {
+    animation: bian-wiggle 0.6s ease-in-out;
+  }
+
+  /* Texto con brillo que recorre (estados «Buscando…» y «Redactando…»). */
+  .bian-shimmer {
+    background: linear-gradient(
+        90deg,
+        hsl(var(--muted-foreground)) 0%,
+        hsl(var(--primary)) 50%,
+        hsl(var(--muted-foreground)) 100%
+      )
+      0 0 / 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: bian-shimmer 1.8s linear infinite;
+  }
+  @keyframes bian-shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Skeleton con brillo suave: un gradiente que se desplaza con transform. */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.06), transparent);
+    transform: translateX(-100%);
+    animation: skeleton-shimmer 1.6s var(--motion-ease-out) infinite;
+  }
+  @keyframes skeleton-shimmer {
+    to {
+      transform: translateX(100%);
+    }
+  }
+}
+
+/* Toasts de sonner: ya animan solos; con reduced-motion aparecen sin transición. */
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* El fragmento que Bian citó, resaltado al abrir el documento. */
+::highlight(bian-cite) {
+  background-color: hsl(var(--warning) / 0.35);
+}

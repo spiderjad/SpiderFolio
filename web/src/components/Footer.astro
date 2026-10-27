@@ -1,0 +1,70 @@
+---
+import { REPO_URL, SITE } from "../config/site.ts";
+import { docPath, pagePath, texts, type Locale } from "../i18n/index.ts";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = texts(locale);
+const l = t.footer.links;
+const columns = [
+  {
+    title: t.footer.columns.product,
+    links: [
+      { label: l.features, href: pagePath("home", locale, t.home.featuresAnchor) },
+      { label: l.install, href: pagePath("install", locale) },
+      { label: l.plugins, href: pagePath("plugins", locale) },
+      { label: l.security, href: pagePath("security", locale) },
+    ],
+  },
+  {
+    title: t.footer.columns.resources,
+    links: [
+      { label: l.docs, href: docPath("intro", locale) },
+      { label: l.faq, href: pagePath("faq", locale) },
+      { label: l.github, href: REPO_URL },
+    ],
+  },
+  {
+    title: t.footer.columns.legal,
+    links: [
+      { label: l.privacy, href: pagePath("privacy", locale) },
+      { label: l.terms, href: pagePath("terms", locale) },
+      { label: l.cookies, href: pagePath("cookies", locale) },
+    ],
+  },
+];
+---
+
+<footer class="border-t bg-surface">
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+    <div>
+      <p class="text-lg font-semibold tracking-tight">{SITE.name}</p>
+      <p class="mt-2 max-w-xs text-sm text-muted-foreground">{t.footer.tagline}</p>
+    </div>
+    {
+      columns.map((column) => (
+        <div>
+          <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {column.title}
+          </p>
+          <ul class="mt-4 space-y-2">
+            {column.links.map((link) => (
+              <li>
+                <a href={link.href} class="text-sm hover:text-primary">
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+  <div class="border-t">
+    <p class="mx-auto max-w-6xl px-4 py-5 text-sm text-muted-foreground sm:px-6">
+      {t.footer.rights(new Date().getFullYear(), SITE.owner, SITE.name)}
+    </p>
+  </div>
+</footer>

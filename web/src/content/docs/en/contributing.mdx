@@ -1,0 +1,177 @@
+---
+title: "Contributing"
+description: "Set up the development environment, learn the project rules, sign the CLA and open your issue or pull request."
+group: desarrolladores
+order: 2
+icon: users
+---
+
+import { REPO_URL } from "../../../config/site.ts";
+
+SpiderFolio is open source (AGPLv3) and contributions are welcome: code, documentation, translations
+and bug reports. The code is on <a href={REPO_URL}>GitHub</a>.
+
+## Before you start
+
+- Read and accept the <a href={`${REPO_URL}/blob/main/CODE_OF_CONDUCT.md`}>code of conduct</a>.
+- Every contribution requires accepting the <a href={`${REPO_URL}/blob/main/CLA.md`}>CLA</a> (you sign it in your first pull request).
+- For a large change, open an issue first so we can discuss the approach.
+- A vulnerability **never** goes in a public issue: follow the <a href={`${REPO_URL}/blob/main/SECURITY.md`}>security policy</a> and write to security@spiderjad.com.
+
+## Development environment
+
+You need **Node 24** (exact version in `.nvmrc`), **npm 11** and **Docker**.
+
+1. Clone the repository and copy the example configuration:
+
+   ```sh
+   git clone https://github.com/spiderjad/SpiderFolio.git
+   cd SpiderFolio
+   cp .env.example .env
+   ```
+
+2. In `.env`, fill in `JWT_ACCESS_SECRET` (at least 64 random characters), `S3_ACCESS_KEY`,
+   `S3_SECRET_KEY` and `SEED_DEMO_PASSWORD`.
+3. Start the services (PostgreSQL, Mailpit, RustFS and Gotenberg):
+
+   ```sh
+   docker compose up -d
+   ```
+
+4. Install the dependencies, apply the migrations and load the demo data:
+
+   ```sh
+   npm install
+   npm run db:migrate
+   npm run db:seed
+   ```
+
+5. Start everything:
+
+   ```sh
+   npm run dev
+   ```
+
+   You get the API on `:4000`, the worker, the app at http://localhost:5173 and the website at
+   http://localhost:4321. Emails land in Mailpit: http://localhost:8025.
+
+`npm run db:seed` creates demo companies with content (for example, "Embutidos Demo S.L.", with
+`@demo.local` users). Use it only on your local database.
+
+`npm install` also turns on the git pre-commit hook: it checks that you don't commit secrets and that
+`.env.example` keeps its secrets empty.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | API, worker, app and website at once. |
+| `npm run typecheck` | TypeScript at the root and in every workspace. |
+| `npm run lint` | ESLint, no warnings allowed. |
+| `npm run test` | Unit tests, no external services. |
+| `npm run test:integration` | Tests against real PostgreSQL and Mailpit (needs `docker compose up -d`). |
+| `npm run check:secrets` | No secrets in versioned files (the hook and CI run it too). |
+| `npm run db:migrate` | Applies the Prisma migrations to your local database. |
+| `npm run format` | Formats with Prettier. |
+
+## Project rules
+
+The full rules are in `CLAUDE.md` and in `docs/spec/` (in Spanish). The most important ones:
+
+- **Strict TypeScript**: no `any` and no `@ts-ignore`.
+- **Isolation between companies**: all access to a workspace's data goes through `forTenant`; a resource
+  belonging to another company responds 404. See [Architecture](/en/docs/architecture#isolation-between-companies-multi-tenancy).
+- **Permissions in the backend**: always checked on the server; the app only hides things.
+- **Validation**: Zod on every body, query and params; errors use the single shared format, with no
+  stack traces or Prisma errors.
+- **Layered backend**: routes → service → database, with no business logic in the routes.
+- **Lists paginated on the server**, with a cursor (`cursor` → `nextCursor`, `pageSize` 25 by default and
+  100 at most). In the app, infinite scroll; never fetch the whole list to filter in the browser.
+- **UI texts centralised** in `i18n/`, in neutral Spanish with informal «tú» (the reference language) and
+  in English.
+- **No new dependencies** without discussing it first.
+- **No secrets** in the code or in the logs. Security measures (CSP, CORS, rate limits) are never turned
+  off to make something work.
+- **Named migrations**: `prisma migrate dev --name <description>`, and review the SQL before applying it.
+- **The core never depends on plugins**: anything that is an extension goes through the extension points
+  (see [Create a plugin](/en/docs/create-a-plugin)).
+
+## Translations
+
+The app, the API emails and the website are available in Spanish (`es`, the reference catalog) and
+English (`en`). Brazilian Portuguese is planned.
+
+- **Fix a translation**: edit the matching catalog: `frontend/src/i18n/en/`, `backend/src/i18n/en.ts`,
+  `web/src/i18n/en/` or `web/src/content/docs/en/`.
+- **Add a text**: put it in the Spanish catalog and in the English one. If a key is missing or left
+  over, the typecheck fails.
+- **Change a screen**: if your change modifies what people see (a button, a menu, a step), update that
+  screen's guide in `web/src/content/docs/es/` **and** in `web/src/content/docs/en/`. Button and menu
+  names go in the guide exactly as they appear in the app.
+- **Add a language**: follow the "Sumar un idioma" steps in `docs/spec/i18n.md`: copy the English
+  catalog, translate it and register the language in the app, the API and the website.
+- Use the glossary and tone guide in that same file so terms stay consistent everywhere (for example,
+  «espacio» → *space*, «jefe» → *head*, «documento controlado» → *controlled document*).
+
+## Report a bug or suggest an improvement
+
+In <a href={`${REPO_URL}/issues/new/choose`}>Issues</a>, choose a template:
+
+- **Reportar un error** (report a bug): what you did, what you expected and what happened. If you can,
+  add the output of `docker compose logs app worker` around the error, without secrets or personal
+  data.
+- **Proponer una mejora** (suggest an improvement): describe the situation in your company where
+  something is missing today.
+
+For vulnerabilities and commercial plugins, the same chooser takes you to the security policy and to the
+[plugins](/en/plugins) page.
+
+## Open a pull request
+
+1. Create a branch from `main`.
+2. Before opening the pull request, run:
+
+   ```sh
+   npm run typecheck
+   npm run lint
+   npm run test
+   npm run test:integration   # needs the docker compose services
+   ```
+
+3. Fill in the template: **what changes and why**, and **how it was tested**.
+4. Tick the **CLA** box.
+
+Tips:
+
+- One pull request per topic.
+- If you touch permissions or isolation between companies, add tests. Tests are written for the backend,
+  security, permissions and pure logic; not for app screens or components.
+- Commit messages in Spanish, in the present tense («agrega…», «corrige…»).
+
+## The CLA
+
+The contributor license agreement (`CLA.md`, version 1.0, in Spanish) says, in short:
+
+- The contribution is yours or you have the right to submit it (if it's part of your job, your employer
+  authorised it).
+- You grant a broad copyright and patent license on your contribution, which allows it to be distributed
+  under the AGPLv3 and also under other licenses, including commercial ones. This is what keeps the
+  project sustainable.
+- You remain the author of your contribution and can use it however you like.
+
+You sign it in your first pull request, by ticking the box in the template or writing in the
+description, with your full name:
+
+> Leí el CLA (CLA.md, versión 1.0) y lo acepto para esta y mis futuras contribuciones a SpiderFolio.
+
+("I have read the CLA (CLA.md, version 1.0) and accept it for this and my future contributions to
+SpiderFolio.")
+
+If you contribute on behalf of a company, say so and write to contacto@spiderjad.com for the corporate
+agreement.
+
+## Related guides
+
+- [Architecture](/en/docs/architecture)
+- [Create a plugin](/en/docs/create-a-plugin)
+- [Install on your server](/en/docs/install)

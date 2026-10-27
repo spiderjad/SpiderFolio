@@ -1,0 +1,116 @@
+---
+title: "Documentation"
+description: "How to install SpiderFolio on your server, configure it and use it to organise your company's documentation."
+group: empezar
+order: 1
+icon: home
+---
+
+import Shot from "../../../components/Shot.astro";
+import { SITE, REPO_URL } from "../../../config/site.ts";
+
+{SITE.name} is an internal documentation manager for small businesses: wiki-style pages, files and
+folders organised by department, with permissions anyone can understand. Every folder, file and page
+explains who has access and why.
+
+<Shot name="inicio" alt="SpiderFolio Home for a sample company" eager />
+
+## Open source, on your own server
+
+- **Open source**: the code is public, under the <a href={`${REPO_URL}/blob/main/LICENSE`}>AGPLv3</a> licence.
+  You can use, study and modify it. If you offer a modified version as a service, you must publish
+  your changes under the same licence.
+- **Self-hosted**: you install it on your own server with Docker. Your documents and your database stay
+  on your infrastructure.
+- **Complete at no cost**: commercial plugins add extra features, but the core works in full without
+  them.
+
+## What's included
+
+- **Files and pages** in company or department spaces, with versions and a trash.
+- **Permissions by department and role**, with an explanation for every access.
+- **Controlled documents**: a single current version, approvals, read confirmation and audit trail.
+- **Built for the shop floor**: QR codes, expiry dates and a simple view for operators.
+- **Bian**, the optional AI assistant, which only answers with what each person can already see.
+
+## Where to start
+
+<div class="not-prose my-8 grid gap-4 sm:grid-cols-3">
+  <a
+    href="/en/docs/install"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ★
+    </span>
+    <p class="mt-4 font-semibold">Install</p>
+    <p class="mt-1 text-sm text-muted-foreground">SpiderFolio on your server with Docker, step by step.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Get started →</p>
+  </a>
+  <a
+    href="/en/docs/configuration"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ⚙
+    </span>
+    <p class="mt-4 font-semibold">Configuration</p>
+    <p class="mt-1 text-sm text-muted-foreground">Every variable in the .env file, explained.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Read →</p>
+  </a>
+  <a
+    href="/en/docs/first-administrator"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      →
+    </span>
+    <p class="mt-4 font-semibold">First administrator</p>
+    <p class="mt-1 text-sm text-muted-foreground">Create your company and get it ready for your team.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Read →</p>
+  </a>
+  <a
+    href="/en/docs/files"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ▦
+    </span>
+    <p class="mt-4 font-semibold">Daily use</p>
+    <p class="mt-1 text-sm text-muted-foreground">Files, pages, controlled documents and QR codes.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Read →</p>
+  </a>
+  <a
+    href="/en/docs/members"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ☰
+    </span>
+    <p class="mt-4 font-semibold">Administration</p>
+    <p class="mt-1 text-sm text-muted-foreground">Members, departments, roles and limits.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Read →</p>
+  </a>
+  <a
+    href="/en/docs/server-requirements"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ⛁
+    </span>
+    <p class="mt-4 font-semibold">Self-hosting</p>
+    <p class="mt-1 text-sm text-muted-foreground">HTTPS, storage, backups, updates and troubleshooting.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Read →</p>
+  </a>
+</div>
+
+## How this documentation is organised
+
+- **Get started**: install, configure and create your company.
+- **Daily use**: the screens the whole team uses, with their buttons exactly as you'll see them.
+- **Administration** and **Security**: for the company owner and administrators.
+- **Self-hosting**: for whoever looks after the server.
+- **Developers**: architecture, how to contribute and how to build a plugin.
+
+Search all the documentation with <kbd>⌘K</kbd> (or <kbd>Ctrl</kbd> + <kbd>K</kbd>). The code and bug
+reports are on <a href={REPO_URL}>GitHub</a>.

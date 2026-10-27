@@ -1,0 +1,36 @@
+---
+// 404 fuera de /<idioma>/: en el idioma por defecto, con enlaces al inicio de cada idioma.
+import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, pagePath, texts } from "../i18n/index.ts";
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+
+const t = texts(DEFAULT_LOCALE).notFound;
+---
+
+<MarketingLayout locale={DEFAULT_LOCALE} title={t.title} description={t.title} noindex>
+  <section class="mx-auto max-w-xl px-4 py-32 text-center sm:px-6">
+    {
+      LOCALES.map((locale, index) =>
+        index === 0 ? (
+          <h1 class="font-display text-5xl tracking-tight">{texts(locale).notFound.title}</h1>
+        ) : (
+          <p lang={LOCALE_INFO[locale].hreflang} class="mt-4 text-lg text-muted-foreground">
+            {texts(locale).notFound.title}
+          </p>
+        ),
+      )
+    }
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      {
+        LOCALES.map((locale) => (
+          <a
+            href={pagePath("home", locale)}
+            lang={LOCALE_INFO[locale].hreflang}
+            class="inline-flex h-12 items-center rounded-full bg-foreground px-7 font-medium text-background"
+          >
+            {texts(locale).notFound.action}
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</MarketingLayout>

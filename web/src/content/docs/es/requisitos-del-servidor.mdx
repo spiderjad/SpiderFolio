@@ -1,0 +1,81 @@
+---
+title: "Requisitos del servidor"
+description: "Qué servidor, red, dominio y servicios necesitas para alojar SpiderFolio, y cómo prepararlo antes de instalar."
+group: autoalojamiento
+order: 1
+icon: check
+---
+
+SpiderFolio corre en cualquier servidor Linux con Docker. Esta guía te ayuda a elegirlo y prepararlo
+antes de seguir con [Instalar en tu servidor](/es/docs/instalar).
+
+## Hardware
+
+| Recurso | Recomendado |
+| --- | --- |
+| CPU y RAM | **2 vCPU y 4 GB** para una empresa de hasta unas 200 personas. Suma 1 GB si activas Gotenberg (PDF). |
+| Disco | SSD, desde **40 GB**: el sistema, las imágenes de Docker y la base, **más el tamaño de tus archivos** (si los guardas en el disco local) y espacio para las copias de seguridad. |
+
+Si guardas los archivos en un bucket S3 ([Almacenamiento](/es/docs/almacenamiento)), el disco del
+servidor solo necesita la base y las copias.
+
+## Software
+
+- **Linux** (Debian, Ubuntu, Rocky… cualquiera con Docker).
+- **Docker Engine 24 o superior** y **Docker Compose v2**. Compruébalo con:
+
+  ```sh
+  docker --version
+  docker compose version
+  ```
+
+- `git` para descargar el proyecto y `openssl` para generar los secretos.
+
+No hace falta instalar Node ni PostgreSQL: vienen en las imágenes.
+
+## Red y dominio
+
+- **Un dominio o subdominio** (por ejemplo `docs.tu-empresa.com`) con un registro DNS `A` apuntando a
+  la IP pública del servidor (y `AAAA` si usas IPv6). Compruébalo antes de arrancar:
+
+  ```sh
+  dig +short docs.tu-empresa.com
+  ```
+
+- **Puertos abiertos**: 22 (SSH, mejor solo desde tus IP), 80 y 443. El 80 hace falta para que Let's
+  Encrypt emita el certificado.
+- **HTTPS**: las sesiones usan cookies seguras, así que sin HTTPS solo se puede entrar desde el propio
+  servidor (`localhost`). Ver [Proxy y HTTPS](/es/docs/proxy-y-https).
+- La base de datos no necesita ningún puerto abierto.
+
+## Servicios externos
+
+- **Servidor de email (SMTP)**, obligatorio: el de tu empresa o un servicio transaccional (Resend,
+  Postmark, Amazon SES…). Comprueba que tu proveedor de servidores no bloquee el puerto 587 o 465
+  de salida.
+- **Bucket S3**, opcional: AWS S3, Cloudflare R2, MinIO u otro compatible.
+- **Cuenta de Anthropic**, opcional: solo si activas a Bian, el asistente IA.
+
+## Preparar el servidor
+
+Antes de cargar datos reales:
+
+1. Crea un **usuario propio con sudo** y no trabajes como `root`.
+2. **SSH solo con clave**, sin contraseña.
+3. Un **firewall** que deje pasar solo 22, 80 y 443.
+4. **Actualizaciones automáticas** de seguridad del sistema.
+5. Deja `deploy/.env` con permisos `600`.
+6. Programa las [copias de seguridad](/es/docs/copias-de-seguridad) diarias fuera del servidor y
+   **prueba una restauración**.
+
+## Monitoreo mínimo
+
+- Un monitor externo de disponibilidad sobre `https://tu-dominio/api/health`: responde
+  `{"status":"ok"}` cuando la API y la base funcionan.
+- Una alerta de disco al 80 % (`df -h`, `docker system df`).
+- De vez en cuando, el **Registro de auditoría** de cada empresa: picos de inicios de
+  sesión fallidos.
+
+## Siguiente paso
+
+[Instalar en tu servidor](/es/docs/instalar).

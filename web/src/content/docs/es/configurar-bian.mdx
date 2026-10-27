@@ -1,0 +1,131 @@
+---
+title: "Configurar Bian"
+description: "Encender a Bian en la instalación con la clave de Anthropic, activarlo en la empresa y repartir las consultas del mes con límites por persona y por departamento."
+group: administracion
+order: 5
+icon: sparkles
+---
+
+import Shot from "../../../components/Shot.astro";
+
+**Bian** es el asistente de SpiderFolio: responde preguntas con los documentos que cada persona ya puede ver,
+siempre con sus fuentes, y nunca ve lo que la persona no ve. Funciona con Claude, de Anthropic, a través de
+su API. Cómo se usa en el día a día está en [Bian](/es/docs/bian); esta guía es para quien lo configura.
+
+Bian tiene dos llaves, y hacen falta las dos:
+
+1. **La instalación**: quien administra el servidor le da a SpiderFolio una clave de la API de Anthropic.
+2. **La empresa**: el propietario o un administrador lo activa y decide cuántas consultas se pueden hacer.
+
+## 1. En el servidor: la clave de Anthropic
+
+Esto lo hace quien administra el servidor, en el archivo `deploy/.env`:
+
+```ini
+BIAN_ENABLED=true
+ANTHROPIC_API_KEY=<tu clave de API de Anthropic>
+```
+
+1. Crea una clave en la consola de Anthropic (console.anthropic.com), en la cuenta que va a pagar las
+   consultas.
+2. Pon `BIAN_ENABLED=true` y pega la clave en `ANTHROPIC_API_KEY`.
+3. Aplica el cambio desde la carpeta `deploy`:
+
+   ```sh
+   docker compose up -d
+   ```
+
+   Se recrean la API y el worker con la configuración nueva.
+
+Ten en cuenta:
+
+- Si pones `BIAN_ENABLED=true` sin clave, la API no arranca y el log te dice que falta `ANTHROPIC_API_KEY`.
+- Las consultas se cobran en **esa** cuenta de Anthropic, para todas las empresas de la instalación. Cada
+  empresa puede ponerse un total por mes (más abajo); en la cuenta de Anthropic también puedes fijar un tope
+  de gasto.
+- La clave es un secreto: nunca la subas a un repositorio ni la compartas por chat.
+- El worker prepara el contenido para Bian en segundo plano a medida que cambia.
+
+Todas las variables están en [Configuración](/es/docs/configuracion).
+
+## 2. En la empresa: Administración › Bian
+
+Pulsa **Administración** y luego **Bian**. La ven quienes tienen **Gestionar la seguridad** o **Ajustes de la
+empresa** (el propietario y los administradores tienen las dos). La pantalla tiene tres pestañas:
+**Resumen**, **Uso** y **Valoraciones**.
+
+<Shot name="bian-admin" alt="Administración › Bian, con los interruptores, las consultas del mes y los límites por persona" />
+
+### Activar a Bian
+
+En **Resumen**, la tarjeta **Asistente Bian** tiene dos interruptores:
+
+- **Activar a Bian en tu empresa**: viene encendido. Si lo apagas, nadie puede preguntarle y se deja de
+  indexar el contenido nuevo.
+- **Permitir a invitados**: apagado por defecto. Los invitados externos solo ven lo que les compartieron, y
+  Bian solo usa eso.
+
+Si la instalación no tiene Bian (paso 1), encenderlo acá no alcanza: las personas verán que Bian no está
+disponible.
+
+### El total del mes de la empresa
+
+La tarjeta **Consultas del mes** muestra cuántas se usaron y cuándo se renueva (el día 1 de cada mes).
+
+1. En **Total por mes de toda la empresa**, escribe un número. Vacío es **Sin límite**.
+2. Pulsa **Guardar total**.
+
+Cuando la empresa llega al total, Bian se pausa para todos hasta el mes siguiente, salvo que lo amplíes. Es
+el mismo valor que **Consultas a Bian por mes** en [Límites y uso](/es/docs/limites): si lo cambias en un lugar,
+cambia en el otro.
+
+### Límites por persona y por departamento
+
+En **Límites por persona** decides cuánto puede usar cada uno, siempre dentro del total de la empresa:
+
+- **General (por persona)**: para quienes no tienen una excepción. Elige **Un número** (consultas al mes) o
+  **Sin límite** y pulsa **Guardar**.
+- **Excepciones por departamento**: elige un departamento, el modo y pulsa **Agregar**. Vale para cada persona
+  de ese departamento.
+- **Excepciones por persona**: elige a una persona, el modo y pulsa **Agregar**. Acá hay un modo más, **Sin
+  acceso**, para que esa persona no use a Bian.
+
+Cuál vale: primero la excepción de la persona, luego la de su departamento y, si no hay ninguna, la general.
+Si alguien está en varios departamentos con excepción, vale la más generosa. Sin ninguna regla, cada persona
+puede usar lo que quede del total de la empresa. Para borrar una regla, pulsa **Quitar**.
+
+Cuando una persona llega a su límite, Bian se lo dice y le ofrece **Pedir más consultas**: quienes
+administran Bian reciben un aviso en la campana (una vez por persona y por mes).
+
+### Qué cuenta como una consulta
+
+Cada pregunta que se le hace a Bian, cada **Resumir con Bian** y cada **Redactar con Bian**. Si Bian no puede
+responder por un error, la consulta no se descuenta.
+
+### Qué se envía a Anthropic
+
+Solo fragmentos de los documentos que la persona puede ver, en el momento de la consulta, junto con su
+pregunta. Las conversaciones no se guardan en SpiderFolio. En **Resumen**, la tarjeta **Cómo funciona Bian**
+lo resume y enlaza los términos comerciales y la política de privacidad de Anthropic.
+
+## Uso
+
+La pestaña **Uso** muestra cuántas consultas hizo cada uno este mes, **Por persona** o **Por departamento**,
+con su límite. Solo cantidades: nunca el contenido de las preguntas ni de las respuestas. Puedes buscar y
+pulsar **Exportar CSV**; la exportación queda en el registro de auditoría.
+
+## Valoraciones
+
+Las personas pueden marcar cada respuesta con **Me sirvió** (👍) o **No me sirvió** (👎) y, si quieren, el
+motivo: **Información incorrecta**, **Incompleta**, **No citó la fuente correcta** u **Otra**.
+
+En **Valoraciones** ves el porcentaje de **Respuestas que sirvieron** y la tabla de **Documentos citados**, con
+sus 👍, sus 👎 y los motivos. Sirve para encontrar documentos confusos o desactualizados. Filtra por
+**Valoración**, por documento y por fechas (**Desde**, **Hasta**). Solo se guarda la valoración, el motivo y
+los documentos citados: nunca la pregunta ni la respuesta.
+
+## Relacionado
+
+- [Bian](/es/docs/bian)
+- [Límites y uso](/es/docs/limites)
+- [Configuración](/es/docs/configuracion)

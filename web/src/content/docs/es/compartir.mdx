@@ -1,0 +1,71 @@
+---
+title: "Compartir"
+description: "Dar acceso a un elemento o a un espacio a departamentos o personas, con nivel y vencimiento, y ver quién entra y por qué."
+group: uso-diario
+order: 4
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+Compartir da acceso a una carpeta, una página, un archivo o un espacio entero a quien no lo tiene, o le sube el nivel a quien ya entra. Cada recurso explica **quién accede y por qué**, así no hay que adivinar.
+
+## Dónde está
+
+Hace falta el nivel **Gestionar** sobre lo que quieres compartir (los jefes y subjefes lo tienen en los espacios de su área; el propietario y los administradores, en todo).
+
+- **Una carpeta, página o archivo**: en su menú de acciones del explorador, **Compartir**. En una página abierta, el botón **Compartir** arriba a la derecha.
+- **Un espacio**: en las acciones del espacio, **Miembros**. Es el mismo diálogo.
+
+<Shot name="compartir" alt="El diálogo Compartir con los accesos dados y la lista de quién puede entrar y por qué" />
+
+## Dar acceso
+
+1. En **Dar acceso**, elige a quién: **Departamento**, **Persona** o **Toda la empresa**.
+2. Busca y elige el departamento o la persona.
+3. Elige el **Nivel**:
+   - **Ver**: ver y descargar.
+   - **Comentar**: además, comentar en las páginas.
+   - **Editar**: además, crear, editar, subir versiones y mover.
+   - **Gestionar**: además, compartir, borrar y gestionar el documento controlado.
+4. Si quieres, pon una fecha en **Vence (opcional)**. Ese día el acceso se termina solo.
+5. Para un departamento, marca **Incluir subáreas** si también deben entrar los subdepartamentos.
+6. Pulsa **Dar acceso**. A la persona le llega un aviso por email y en la campana.
+
+Conviene dar acceso a **departamentos** antes que a personas sueltas: cuando alguien cambia de área, sus accesos cambian solos. **Toda la empresa** abarca a todos los miembros activos, sin los invitados externos.
+
+Los lectores y los invitados externos no pueden editar ni gestionar: como mucho llegan a **Comentar**.
+
+## Accesos dados
+
+La lista **Accesos dados** muestra cada acceso con su nivel, su vencimiento («Vence …»), si incluye subáreas y quién lo dio. Puedes cambiar el nivel desde la fila o quitar el acceso. Los que vienen de una carpeta de arriba aparecen como «Heredado de «…»» y se cambian allí.
+
+## Herencia
+
+Por defecto, un elemento hereda los accesos de la carpeta que lo contiene, y esta, los del espacio. En **Herencia** puedes:
+
+- **Cortar la herencia**: solo valen los accesos dados aquí (más el propietario y los administradores). Quien hoy entra por el elemento de arriba lo pierde. Si tú también ibas a perder el acceso, te queda un acceso directo de **Gestionar**.
+- **Restaurar la herencia**: vuelve a valer lo dado arriba, además de lo dado aquí.
+
+## Quién puede entrar y por qué
+
+La sección **Quién puede entrar y por qué** lista a cada persona con acceso, su nivel y el motivo: «Es jefe de Calidad.», «Su departamento Producción tiene acceso.», «Se le dio acceso directo.», «Es administrador: gestiona todo el contenido.», con el vencimiento y la herencia cuando corresponde. Usa el buscador para encontrar a alguien.
+
+Para ver todo el panorama de la empresa (por espacio o por persona), quien tiene permiso de auditar accesos usa **Administración** › **Accesos**.
+
+<Shot name="accesos" alt="La pantalla Accesos con los espacios de la empresa y quién ve cada uno" />
+
+## Vencimientos y lo compartido
+
+- Lo compartido se marca en el explorador («Compartido con …», con su vencimiento).
+- Antes de que venza un acceso, la persona recibe un aviso («Tu acceso a «…» vence mañana»).
+- En **Compartidos** › **Por mí** ves todo lo que compartiste (y, si lideras un área, lo que compartió tu equipo). Desde ahí puedes **Extender 1 semana**, **Cambiar vencimiento** o **Quitar acceso**.
+- En **Compartidos** › **Conmigo** ves lo que te compartieron.
+
+## Relacionado
+
+- [Archivos](/es/docs/archivos)
+- [Departamentos](/es/docs/departamentos)
+- [Roles y permisos](/es/docs/roles-y-permisos)

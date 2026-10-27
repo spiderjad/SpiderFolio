@@ -1,0 +1,102 @@
+---
+title: "Invitar personas"
+description: "Suma a tu equipo con un enlace por email: de a una, varias a la vez o importando un CSV."
+group: administracion
+order: 2
+icon: message
+---
+
+import Shot from "../../../components/Shot.astro";
+
+Cada persona entra a la empresa con una invitación: le llega un email con un enlace, crea su cuenta (o usa
+la que ya tiene) y queda con el rol, la plaza y los departamentos que elegiste.
+
+## Antes de empezar
+
+- Necesitas la capacidad **Invitar personas**. Los jefes y subjefes también pueden invitar a su área (más
+  abajo).
+- Tu email tiene que estar confirmado. Si no lo está, al enviar verás «Confirma tu email para poder invitar».
+- La instalación necesita un servidor de email funcionando: mira [Email (SMTP)](/es/docs/email-smtp).
+
+## Invitar
+
+1. En **Administración › Miembros**, pulsa **Invitar personas**.
+2. Escribe los **Emails**: uno por línea, o separados por comas o espacios. Hasta 50 a la vez.
+3. Elige el **Rol**. Solo aparecen los roles que puedes dar.
+4. La **Plaza** queda en **Automática**: plaza completa para miembros y administradores, lector para
+   invitados externos. Puedes elegir otra cuando el rol lo permite.
+5. Marca los **Departamentos** a los que se suma. Un invitado externo no entra a departamentos.
+6. Pulsa **Enviar invitaciones**.
+
+<Shot name="miembros" alt="La pantalla Miembros, con los botones Invitar personas e Importar CSV arriba a la derecha" />
+
+Cada persona recibe un email con un enlace que vence en **7 días**. Quien ya es miembro o ya tiene una
+invitación pendiente se omite, y te avisamos cuántas personas se omitieron.
+
+Si tu empresa usa el plugin **Políticas de seguridad avanzadas** con dominios permitidos, solo puedes invitar
+emails de esos dominios (los invitados externos son la excepción). Si no, verás «Estos emails no son de un
+dominio permitido».
+
+## Invitar siendo jefe o subjefe
+
+Si lideras un departamento, puedes invitar a tu área desde **Mi equipo**, con estas condiciones:
+
+- Solo como miembro o lector, nunca con un rol administrativo.
+- Solo a tus departamentos y sus subáreas.
+- Cada invitación queda en **Invitaciones pendientes** y en el registro de auditoría, y los administradores
+  pueden revocarla.
+
+El propietario puede apagar esta opción en **Administración › Seguridad**, **Los jefes pueden invitar a su
+área**.
+
+## Invitaciones pendientes
+
+Debajo de la tabla de miembros están las **Invitaciones pendientes**, con **Email**, **Rol**, **Plaza**,
+**Vence** e **Invitó**. Puedes buscar por email y filtrar por **Estado** (**Todas**, **Vigentes**,
+**Vencidas**). En cada una:
+
+- **Reenviar**: manda un email nuevo y renueva el plazo. El enlace anterior deja de funcionar.
+- **Revocar**: el enlace deja de funcionar y la plaza queda libre. Puedes invitar a la persona de nuevo
+  cuando quieras.
+
+Una invitación pendiente ocupa una plaza (completa o de lector) hasta que se acepta, vence o se revoca.
+
+## Importar desde un CSV
+
+Para muchas personas, pulsa **Importar CSV**. El archivo lleva una fila por persona y estas columnas:
+
+| Columna | Qué lleva |
+|---|---|
+| `email` | Obligatoria. |
+| `rol` | El nombre de un rol. Si falta, **Miembro**. |
+| `departamentos` | Nombres separados por `\|`, por ejemplo `Calidad\|Producción`. |
+| `plaza` | `FULL` o `READER`. Si falta, la que corresponde al rol. |
+
+La primera fila lleva los nombres de las columnas (también valen en inglés: `role`, `departments`, `seat`).
+Las celdas pueden ir separadas por comas o por punto y coma, así que un archivo guardado desde Excel sirve tal
+cual.
+
+1. Elige el **Archivo CSV** (hasta 200 KB y 500 filas) u **O pega el contenido**.
+2. Pulsa **Vista previa**. Cada fila queda como **Lista**, **Omitida** (ya es miembro o ya tiene invitación)
+   o con **Error** y su motivo: email no válido, repetido en el archivo, rol o departamento que no existe,
+   rol que no puedes dar, plaza no válida o dominio no permitido.
+3. Cuando esté bien, pulsa **Invitar a las filas válidas**.
+
+## Qué ve quien recibe la invitación
+
+El enlace del email abre la pantalla **Te invitaron a unirte**, con el nombre de la empresa, quién invitó y
+con qué rol:
+
+- **Si no tiene cuenta**, escribe su **Nombre y apellido**, elige una **Contraseña** (mínimo 10 caracteres)
+  y pulsa **Aceptar y entrar**. Su email queda confirmado y su cuenta queda en el idioma de la pantalla
+  (el de su navegador, o el que elija con el selector **ES / EN**).
+- **Si ya tiene cuenta**, pulsa **Iniciar sesión**, entra con esa cuenta y luego pulsa **Aceptar
+  invitación**. Si inició sesión con otra cuenta, la pantalla se lo avisa.
+
+Si el enlace venció o ya se usó, la pantalla lo explica: hay que pedir uno nuevo a quien invitó.
+
+## Relacionado
+
+- [Miembros](/es/docs/miembros)
+- [Departamentos](/es/docs/departamentos)
+- [Roles y permisos](/es/docs/roles-y-permisos)

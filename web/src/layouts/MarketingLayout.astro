@@ -1,0 +1,24 @@
+---
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import type { Alternates, Locale } from "../i18n/index.ts";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  alternates?: Alternates;
+  jsonLd?: object[];
+  noindex?: boolean;
+}
+const { locale, alternates } = Astro.props;
+---
+
+<BaseLayout {...Astro.props}>
+  <Header locale={locale} alternates={alternates} />
+  <main>
+    <slot />
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

@@ -1,0 +1,174 @@
+---
+title: "Contribuir"
+description: "Prepara el entorno de desarrollo, conoce las reglas del proyecto, firma el CLA y abre tu issue o pull request."
+group: desarrolladores
+order: 2
+icon: users
+---
+
+import { REPO_URL } from "../../../config/site.ts";
+
+SpiderFolio es open source (AGPLv3) y las contribuciones son bienvenidas: código, documentación,
+traducciones y reportes de errores. El código está en <a href={REPO_URL}>GitHub</a>.
+
+## Antes de empezar
+
+- Lee y acepta el <a href={`${REPO_URL}/blob/main/CODE_OF_CONDUCT.md`}>código de conducta</a>.
+- Toda contribución requiere aceptar el <a href={`${REPO_URL}/blob/main/CLA.md`}>CLA</a> (se firma en tu primer pull request).
+- Para un cambio grande, abre primero un issue y conversemos el enfoque.
+- Una vulnerabilidad **nunca** va en un issue público: sigue la <a href={`${REPO_URL}/blob/main/SECURITY.md`}>política de seguridad</a> y escribe a security@spiderjad.com.
+
+## Entorno de desarrollo
+
+Necesitas **Node 24** (versión exacta en `.nvmrc`), **npm 11** y **Docker**.
+
+1. Clona el repositorio y copia la configuración de ejemplo:
+
+   ```sh
+   git clone https://github.com/spiderjad/SpiderFolio.git
+   cd SpiderFolio
+   cp .env.example .env
+   ```
+
+2. Completa en `.env` `JWT_ACCESS_SECRET` (mínimo 64 caracteres aleatorios), `S3_ACCESS_KEY`,
+   `S3_SECRET_KEY` y `SEED_DEMO_PASSWORD`.
+3. Levanta los servicios (PostgreSQL, Mailpit, RustFS y Gotenberg):
+
+   ```sh
+   docker compose up -d
+   ```
+
+4. Instala las dependencias, aplica las migraciones y carga los datos de demostración:
+
+   ```sh
+   npm install
+   npm run db:migrate
+   npm run db:seed
+   ```
+
+5. Arranca todo:
+
+   ```sh
+   npm run dev
+   ```
+
+   Quedan la API en `:4000`, el worker, la app en http://localhost:5173 y la web en http://localhost:4321.
+   Los emails llegan a Mailpit: http://localhost:8025.
+
+`npm run db:seed` crea empresas de demostración con contenido (por ejemplo, «Embutidos Demo S.L.», con
+usuarios `@demo.local`). Úsalo solo en tu base local.
+
+`npm install` activa también el hook de git de antes de cada commit: verifica que no subas secretos y que
+`.env.example` tenga los secretos vacíos.
+
+## Comandos
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | API, worker, app y web a la vez. |
+| `npm run typecheck` | TypeScript en la raíz y en cada workspace. |
+| `npm run lint` | ESLint, sin advertencias permitidas. |
+| `npm run test` | Pruebas unitarias, sin servicios externos. |
+| `npm run test:integration` | Pruebas contra PostgreSQL y Mailpit reales (necesita `docker compose up -d`). |
+| `npm run check:secrets` | Que no haya secretos en los archivos versionados (también lo corren el hook y el CI). |
+| `npm run db:migrate` | Aplica las migraciones de Prisma en tu base local. |
+| `npm run format` | Formatea con Prettier. |
+
+## Reglas del proyecto
+
+Están completas en `CLAUDE.md` y en `docs/spec/` (en español). Las más importantes:
+
+- **TypeScript estricto**: sin `any` ni `@ts-ignore`.
+- **Aislamiento entre empresas**: todo acceso a datos de un workspace pasa por `forTenant`; un recurso
+  de otra empresa responde 404. Ver [Arquitectura](/es/docs/arquitectura#aislamiento-entre-empresas-multi-tenancy).
+- **Permisos en el backend**: se validan siempre en el servidor; la app solo oculta.
+- **Validación**: Zod en todo body, query y params; los errores salen con el formato único, sin stack ni
+  errores de Prisma.
+- **Backend por capas**: rutas → servicio → base de datos, sin lógica de negocio en las rutas.
+- **Listas paginadas en el servidor**, con cursor (`cursor` → `nextCursor`, `pageSize` de 25 por
+  defecto y 100 como máximo). En la app, scroll infinito; nunca traer la lista completa para filtrar en
+  el navegador.
+- **Textos de interfaz centralizados** en `i18n/`, en español neutro con tuteo (el idioma de referencia)
+  y en inglés.
+- **Sin dependencias nuevas** sin conversarlo antes.
+- **Sin secretos** en el código ni en los logs. No se desactivan medidas de seguridad (CSP, CORS, límite
+  de peticiones) para que algo funcione.
+- **Migraciones con nombre**: `prisma migrate dev --name <descripcion>`, y revisa el SQL antes de
+  aplicarla.
+- **El núcleo nunca depende de los plugins**: lo que es una extensión entra por los puntos de extensión
+  (ver [Crear un plugin](/es/docs/crear-un-plugin)).
+
+## Traducciones
+
+La app, los emails de la API y la web están en español (`es`, el catálogo de referencia) y en inglés
+(`en`). El portugués de Brasil está previsto.
+
+- **Corregir una traducción**: edita el catálogo que corresponda: `frontend/src/i18n/en/`,
+  `backend/src/i18n/en.ts`, `web/src/i18n/en/` o `web/src/content/docs/en/`.
+- **Agregar un texto**: ponlo en el catálogo en español y en el de inglés. Si falta o sobra una clave, el
+  typecheck falla.
+- **Cambiar una pantalla**: si tu cambio modifica lo que se ve (un botón, un menú, un paso), actualiza la
+  guía de esa pantalla en `web/src/content/docs/es/` **y** en `web/src/content/docs/en/`. Los nombres de
+  botones y menús van en la guía exactamente como en la app.
+- **Sumar un idioma**: sigue los pasos de «Sumar un idioma» en `docs/spec/i18n.md`: copiar el catálogo en
+  inglés, traducirlo y registrar el idioma en la app, la API y la web.
+- Usa el glosario y la guía de tono de ese mismo archivo, así los términos quedan iguales en todos lados
+  (por ejemplo, «espacio» → *space*, «jefe» → *head*, «documento controlado» → *controlled document*).
+
+## Reportar un error o proponer una mejora
+
+En <a href={`${REPO_URL}/issues/new/choose`}>Issues</a> elige una plantilla:
+
+- **Reportar un error**: qué hiciste, qué esperabas y qué pasó. Si puedes, agrega la salida de
+  `docker compose logs app worker` alrededor del error, sin secretos ni datos personales.
+- **Proponer una mejora**: describe la situación de tu empresa en la que hoy falta algo.
+
+Para vulnerabilidades y plugins comerciales, las mismas plantillas te llevan a la política de seguridad y
+a la página de [plugins](/es/plugins).
+
+## Abrir un pull request
+
+1. Crea una rama a partir de `main`.
+2. Antes de abrir el pull request, corre:
+
+   ```sh
+   npm run typecheck
+   npm run lint
+   npm run test
+   npm run test:integration   # necesita los servicios de docker compose
+   ```
+
+3. Completa la plantilla: **qué cambia y por qué**, y **cómo se probó**.
+4. Marca la casilla del **CLA**.
+
+Recomendaciones:
+
+- Un pull request por tema.
+- Si tocas permisos o el aislamiento entre empresas, agrega pruebas. Las pruebas se escriben para el
+  backend, la seguridad, los permisos y la lógica pura; no para pantallas ni componentes de la app.
+- Mensajes de commit en español y en presente («agrega…», «corrige…»).
+
+## El CLA
+
+El acuerdo de licencia de contribuidores (`CLA.md`, versión 1.0) dice, en resumen:
+
+- La contribución es tuya o tienes derecho a enviarla (si es parte de tu trabajo, tu empleador lo
+  autorizó).
+- Concedes una licencia amplia de derechos de autor y de patentes sobre tu contribución, que permite
+  distribuirla bajo la AGPLv3 y también bajo otras licencias, incluidas licencias comerciales. Esto es lo
+  que permite sostener el proyecto.
+- Sigues siendo autor de tu contribución y puedes usarla como quieras.
+
+Se firma en tu primer pull request, marcando la casilla de la plantilla o escribiendo en la descripción,
+con tu nombre completo:
+
+> Leí el CLA (CLA.md, versión 1.0) y lo acepto para esta y mis futuras contribuciones a SpiderFolio.
+
+Si contribuyes en nombre de una empresa, indícalo y escribe a contacto@spiderjad.com para el acuerdo
+corporativo.
+
+## Guías relacionadas
+
+- [Arquitectura](/es/docs/arquitectura)
+- [Crear un plugin](/es/docs/crear-un-plugin)
+- [Instalar en tu servidor](/es/docs/instalar)

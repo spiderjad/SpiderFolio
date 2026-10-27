@@ -1,0 +1,33 @@
+---
+// Páginas de la web en cada idioma, con el slug de src/i18n/<idioma>/routes.ts
+// (/es/instalacion, /en/install…).
+import type { GetStaticPaths } from "astro";
+import { LOCALES, PAGE_KEYS, pageSlug, type Locale, type PageKey } from "../../i18n/index.ts";
+import Faq from "../../views/Faq.astro";
+import Home from "../../views/Home.astro";
+import Install from "../../views/Install.astro";
+import Legal from "../../views/Legal.astro";
+import Plugins from "../../views/Plugins.astro";
+import Security from "../../views/Security.astro";
+
+export const getStaticPaths = (() =>
+  LOCALES.flatMap((locale) =>
+    PAGE_KEYS.map((key) => ({
+      params: { lang: locale, page: pageSlug(key, locale) || undefined },
+      props: { locale, key },
+    })),
+  )) satisfies GetStaticPaths;
+
+interface Props {
+  locale: Locale;
+  key: PageKey;
+}
+const { locale, key } = Astro.props;
+---
+
+{key === "home" && <Home locale={locale} />}
+{key === "install" && <Install locale={locale} />}
+{key === "plugins" && <Plugins locale={locale} />}
+{key === "security" && <Security locale={locale} />}
+{key === "faq" && <Faq locale={locale} />}
+{(key === "privacy" || key === "terms" || key === "cookies") && <Legal locale={locale} page={key} />}

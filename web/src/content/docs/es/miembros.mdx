@@ -1,0 +1,143 @@
+---
+title: "Miembros"
+description: "Quién está en la empresa, con qué rol, plaza y departamentos: buscar, filtrar, editar, suspender, quitar y exportar la lista."
+group: administracion
+order: 1
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+**Miembros** es la lista de todas las personas de tu empresa: qué rol tienen, si ocupan una plaza completa o
+de lector, a qué departamentos pertenecen y cuándo entraron por última vez. Desde acá también invitas,
+cambias roles, suspendes y quitas personas.
+
+## Dónde está
+
+En el menú lateral, pulsa **Administración** y luego **Miembros**. También llegas desde el menú de la
+empresa (arriba a la izquierda), **Configuración de la empresa**.
+
+Para verla necesitas la capacidad **Ver miembros** o **Gestionar miembros**. Si no tienes ninguna, la
+sección no aparece.
+
+Si eres jefe o subjefe de un departamento, la pantalla se llama **Mi equipo** y muestra solo a las personas
+de los departamentos que lideras y de sus subáreas.
+
+<Shot name="miembros" alt="La pantalla Miembros, con las plazas, el resumen por jerarquía y la tabla de personas" />
+
+## Lista y Organigrama
+
+Arriba eliges la vista:
+
+- **Lista**: la tabla con todas las personas (la vista de siempre).
+- **Organigrama**: la empresa como un árbol, con el propietario arriba y debajo todos los departamentos y
+  subáreas. Cada área se abre para ver a su jefe, sus subjefes y sus miembros. Tiene un buscador
+  (**Buscar a una persona en el organigrama**) y los botones **Expandir todo** y **Contraer todo**.
+  Las personas que no están en ningún departamento aparecen al final, en **Sin departamento**.
+
+Sobre el organigrama está la **Revisión de la estructura**, que te avisa de lo que conviene corregir:
+departamentos sin jefe, personas sin departamento, jefes con plaza de lector y departamentos sin personas.
+Los administradores que además son jefes aparecen como **Informativo**: no hace falta corregir nada.
+
+Si puedes gestionar a la persona, en el organigrama tienes a mano **Nombrar jefe**, **Nombrar subjefe**,
+**Quitar el cargo** y **Mover a otro departamento**. Más detalles en [Departamentos](/es/docs/departamentos).
+
+## El resumen y las plazas
+
+En la vista **Lista**, arriba de todo ves las **Plazas**: cuántos **Usuarios completos** y cuántos
+**Lectores** hay. No tienen límite; las invitaciones pendientes también ocupan plaza y las personas
+suspendidas no.
+
+- **Usuarios completos**: crean, editan y administran.
+- **Lectores**: leen y confirman lecturas. Los invitados externos y las personas con PIN también son lectores.
+
+Debajo está el **Resumen por jerarquía**: **Todos**, **Propietario**, **Administradores**, **Jefes de
+departamento**, **Miembros** y **Lectores**, con cuántas personas hay en cada grupo. Pulsa uno para filtrar
+la tabla y vuelve a pulsarlo para quitar el filtro.
+
+## La tabla
+
+Cada fila es una persona:
+
+- **Nombre**: su nombre, su email (o su usuario, si entra con PIN) y su puesto. En tu fila verás **Tú**.
+- **Rol**: qué puede administrar. Si puedes cambiarlo, es un selector y se guarda al instante; solo ofrece
+  los roles que puedes dar.
+- **Departamentos**: a cuáles pertenece.
+- **Plaza**: **Completa** o **Lector**.
+- **Estado**: **Activo** o **Suspendido**. Si una persona con PIN se equivocó demasiadas veces, verás
+  además **PIN bloqueado**.
+- **2FA**: **Activa** si tiene la verificación en dos pasos.
+- **Último acceso**: la última vez que usó la empresa, o **Nunca**.
+
+Para encontrar a alguien, escribe en el buscador (**Buscar por nombre, email o puesto**) o usa los filtros
+**Rol** (incluye la opción **Jefes de departamento**), **Departamento** y **Estado**. Pulsa el título de una
+columna para ordenar. La lista carga más personas al llegar al final, y los filtros quedan en la dirección
+de la página: puedes guardarla o compartirla.
+
+## Cambiar a una persona
+
+Abre el menú de la fila (los tres puntos). Cada opción aparece solo si tienes la capacidad que hace falta:
+
+| Opción | Qué hace | Capacidad |
+|---|---|---|
+| **Editar** | Cambia **Nombre y apellido**, **Rol**, **Plaza**, **Puesto** y **Departamentos**. | **Gestionar miembros** |
+| **Suspender** / **Reactivar** | Suspendida, pierde el acceso al instante y deja de ocupar plaza. Puedes deshacerlo desde el aviso o reactivarla cuando quieras. | **Suspender miembros** |
+| **Resetear PIN** | Solo personas con PIN: le da un PIN nuevo, cierra sus sesiones y la desbloquea. | **Gestionar el ingreso con PIN** |
+| **Reiniciar verificación en dos pasos** | Para quien perdió el teléfono y sus códigos. Ver [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa). | **Gestionar miembros** |
+| **Cerrar sus sesiones** | Cierra todas sus sesiones, también en otras empresas de su cuenta. | **Suspender miembros** |
+| **Quitar del workspace** | Deja de pertenecer a la empresa y pierde todos sus accesos. Su cuenta no se borra, pero para volver necesita una invitación nueva. | **Gestionar miembros** |
+
+Cada acción delicada pide confirmación.
+
+En **Editar**, el email solo se puede cambiar si la persona todavía no lo confirmó: tendrá que confirmar el
+nuevo y se cierran sus sesiones. Si ya lo confirmó, lo cambia ella misma desde **Mi perfil**.
+
+## Cambios en bloque
+
+Marca las casillas de varias filas y aparece una barra con **Cambiar rol**, **Cambiar plaza**,
+**Departamentos** (**Agregar a los departamentos**, **Quitar de los departamentos** o **Reemplazar los
+departamentos**), **Suspender** y **Reactivar**. Para suspender en bloque tienes que escribir la palabra
+«suspender» en la confirmación.
+
+Cada persona pasa por las mismas reglas que si la cambiaras sola. Si alguna no se puede cambiar, al terminar
+te decimos cuántas se actualizaron y cuántas no.
+
+## Exportar la lista
+
+Pulsa **Exportar CSV**, arriba a la derecha. Se descarga un archivo con las personas que ves según los
+filtros y el orden que tengas: nombre, email, puesto, rol, plaza, estado, departamentos, último acceso y fecha
+de alta. Se abre bien en Excel y la exportación queda en el registro de auditoría.
+
+## Personas que entran con PIN
+
+Para quienes no tienen email (por ejemplo, operarios que comparten una tablet en la planta), pulsa **Crear
+persona con PIN**. Necesitas la capacidad **Gestionar el ingreso con PIN**.
+
+1. Escribe **Nombre y apellido** y el **Usuario** (de 3 a 32 letras minúsculas, números, punto, guion o
+   guion bajo).
+2. Elige el **Rol** (solo roles de miembro sin capacidades administrativas) y los **Departamentos**.
+3. Si quieres, escribe el **PIN** de 6 dígitos. Si lo dejas vacío, generamos uno.
+4. Pulsa **Crear**. El PIN se muestra **una sola vez**: entrégaselo en persona. Si se pierde, usa **Resetear PIN**.
+
+Al final de la página, la tarjeta **Ingreso con usuario y PIN** permite activar o apagar este ingreso,
+cerrar la sesión por inactividad, cerrar la sesión después de confirmar una lectura y copiar la **Dirección
+para las tablets**.
+
+## Reglas que conviene conocer
+
+- Solo puedes dar roles que no den más poder del que tienes.
+- Un administrador no gestiona a otros administradores ni al propietario, y el rol de propietario no se
+  asigna desde acá. En esas filas el menú no ofrece acciones.
+- Jefes y subjefes no cambian roles, plazas ni estado: suman y quitan personas de sus áreas desde
+  **Departamentos**.
+- Siempre queda al menos un propietario activo.
+- No puedes suspender ni quitar tu propia cuenta.
+- Un invitado externo siempre es **Lector** y no entra a departamentos. Un rol con capacidades
+  administrativas necesita plaza **Completa**.
+
+## Relacionado
+
+- [Invitar personas](/es/docs/invitar-personas)
+- [Departamentos](/es/docs/departamentos)
+- [Roles y permisos](/es/docs/roles-y-permisos)
+- [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)

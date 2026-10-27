@@ -1,0 +1,92 @@
+---
+title: "Bian, el asistente"
+description: "Pregúntale a Bian y responde con los documentos vigentes que puedes ver, citando sus fuentes; resume, explica cambios y redacta borradores."
+group: uso-diario
+order: 11
+icon: sparkles
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+**Bian** es el asistente de SpiderFolio. Le preguntas con tus palabras («¿cuál es el procedimiento para solicitar vacaciones?») y te responde con lo que dicen los documentos de tu empresa, **siempre con sus fuentes**. También resume un documento, explica qué cambió entre versiones y arma un primer borrador de una página.
+
+Bian funciona con Claude, de Anthropic. Tu empresa decide si lo usa y cuántas consultas tiene cada persona (ver [Configurar Bian](/es/docs/configurar-bian)).
+
+## Qué ve Bian
+
+Bian **solo usa lo que tú puedes ver**, con tus mismos permisos. Nunca ve lo que tú no ves, y dos personas con accesos distintos pueden recibir respuestas distintas a la misma pregunta.
+
+- De un **documento controlado**, solo la **versión vigente**: nunca borradores, versiones en revisión ni obsoletas.
+- De una página sin control, su contenido actual; de un archivo, el texto de su versión actual (PDF y Word).
+- De los documentos controlados conoce además su **ficha**: código, tipo, versión vigente, desde cuándo rige, quién lo aprobó, departamento responsable y próxima revisión.
+- No usa lo que está en la papelera ni el texto de un escaneo (una imagen sin texto).
+
+Las instrucciones que alguien escriba dentro de un documento se tratan como texto, no como órdenes para Bian.
+
+## Preguntar
+
+Puedes abrir a Bian de varias formas:
+
+- El botón **Pregúntale a Bian** en la barra de arriba.
+- El recuadro **Pregúntale a Bian** del [Inicio](/es/docs/inicio): escribe y pulsa **Preguntar**.
+- En la búsqueda (Ctrl+K), la acción **Pregúntale a Bian**.
+
+1. Escribe tu pregunta y pulsa **Enviar**. Si no se te ocurre por dónde empezar, Bian te propone preguntas sobre los documentos que abriste hace poco.
+2. Mientras busca verás «Buscando en tus documentos…» y luego «Redactando…». Puedes pulsar **Detener**.
+3. Sigue preguntando en la misma conversación: Bian tiene en cuenta lo anterior. **Nueva conversación** empieza de cero.
+
+Bajo cada respuesta puedes **Copiar respuesta** o **Preguntar de nuevo**. Las conversaciones no se guardan en SpiderFolio.
+
+## Las fuentes
+
+Cada respuesta termina con **Fuentes**: los documentos que usó, con su versión (marcada como **vigente**) y cuántos fragmentos tomó de cada uno.
+
+- **Ver los fragmentos** muestra el texto exacto en que se basó. Si viene de una tabla, muestra solo las filas que tienen que ver con tu pregunta.
+- **Abrir el documento con el fragmento resaltado** te lleva al lugar exacto del documento.
+
+Si Bian no encuentra la respuesta en tus documentos, lo dice («No encontré esto en tus documentos.») en lugar de inventarla. Si encuentra algo parcial, te lo indica y te sugiere probar con otras palabras o abrir el documento.
+
+## Resumir y explicar cambios
+
+Desde **Más acciones** de una página, o desde el menú de un archivo:
+
+- **Resumir con Bian**: un resumen de la versión vigente del documento.
+- **Qué cambió, con Bian**: en un documento controlado con más de una versión, explica qué cambió entre ellas.
+
+## Redactar con Bian
+
+Para empezar un documento nuevo sin hoja en blanco:
+
+1. Crea una **Nueva página** (ver [Páginas](/es/docs/paginas)) y elige **Redactar con Bian**.
+2. Elige el **Tipo de documento** (una de las plantillas, o **Libre (sin plantilla)**).
+3. En **Tus notas**, cuenta qué debe decir: objetivo, pasos, responsables, plazos…
+4. Pulsa **Redactar borrador**.
+
+Bian crea una página nueva con un aviso arriba: es un **borrador** que tú revisas. No se publica ni se envía a revisión, y lo que falta queda entre corchetes para que lo completes. Necesitas poder editar en esa carpeta.
+
+## Valorar las respuestas
+
+Bajo cada respuesta, **Me sirvió** o **No me sirvió**. Si no te sirvió, puedes decir qué falló: **Información incorrecta**, **Incompleta**, **No citó la fuente correcta** u **Otra**. Así quienes administran Bian saben qué documentos conviene mejorar.
+
+Solo se guarda la valoración, el motivo y los documentos citados: nunca la pregunta, la respuesta ni quién valoró.
+
+## Límites
+
+Cada empresa tiene un total de consultas por mes y puede fijar un límite por persona. Abajo del panel ves cuántas te quedan («Te quedan 18 de 20 este mes»).
+
+- Cuenta como una consulta cada pregunta, cada **Resumir con Bian** y cada **Redactar con Bian**. Si Bian no puede responder por un error, no se descuenta.
+- Si llegas a tu límite, pulsa **Pedir más consultas**: se avisa a quienes administran Bian.
+- Si la empresa llega a su total del mes, Bian se pausa hasta el mes siguiente, salvo que se amplíe.
+- Los invitados externos solo pueden usar Bian si la empresa lo habilita, y entonces solo con lo que les compartieron.
+
+Quien administra Bian reparte las consultas y ve el uso y las valoraciones en **Administración** › **Bian**:
+
+<Shot name="bian-admin" alt="La administración de Bian con las consultas del mes y los límites por persona" />
+
+## Relacionado
+
+- [Configurar Bian](/es/docs/configurar-bian)
+- [Búsqueda](/es/docs/busqueda)
+- [Documentos controlados](/es/docs/documentos-controlados)

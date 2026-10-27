@@ -1,0 +1,71 @@
+---
+title: "Gotenberg (PDF)"
+description: "Turn on the pdf profile to generate the PDF of controlled pages, and what happens if you don't."
+group: autoalojamiento
+order: 4
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+[Gotenberg](https://gotenberg.dev) is a service that turns HTML into PDF. SpiderFolio uses it for one
+thing only: generating the **controlled PDF** of pages that are controlled documents. It's optional.
+
+## What it generates
+
+When a controlled page is published, the worker builds its PDF with a header (logo, code, title, version,
+effective date and who prepared, reviewed and approved it) and a "Page X of Y" footer. Every download
+adds the uncontrolled-copy watermark, with who downloaded it and when; obsolete versions also carry an
+"OBSOLETE" stamp.
+
+- **PDF files** uploaded as controlled documents **don't need Gotenberg**: their control sheet and
+  watermark are added anyway.
+- The page's images travel inside the HTML: Gotenberg doesn't need internet access.
+- The PDF uses the **company language** (in **Management › Security**).
+
+More about the flow in [Controlled documents](/en/docs/controlled-documents).
+
+## Turn it on
+
+1. In `deploy/.env`:
+
+   ```sh
+   GOTENBERG_URL=http://gotenberg:3000
+   ```
+
+2. Start with the `pdf` profile (alongside `https` if you use it):
+
+   ```sh
+   docker compose --profile https --profile pdf up -d
+   ```
+
+   Or add `COMPOSE_PROFILES=https,pdf` to `.env` and just run `docker compose up -d`.
+
+3. Check the container is running: `docker compose ps gotenberg`.
+
+Gotenberg needs about **1 GB of RAM**. Its port isn't published: only the app and the worker can reach it
+inside the Docker network. **Don't expose it to the internet**: it converts any HTML it receives.
+
+If you already run your own Gotenberg (version 8) on your internal network, you can point
+`GOTENBERG_URL` at it instead of using the profile.
+
+## What happens without Gotenberg
+
+All of SpiderFolio works the same, except the PDF of controlled pages:
+
+- The PDF isn't generated on publishing.
+- In the controlled document dialog, under **Version history**, this notice appears: "This server
+  doesn't generate the PDF for controlled pages (Gotenberg is missing); it does for PDF files. Whoever
+  manages the installation can turn it on."
+- Approvals, required reading, QR codes and the current version in the app don't change.
+
+<Shot name="control" alt="The controlled document dialog, with its version history" />
+
+If you turn it on later, there's no need to republish anything: each version's PDF is generated the
+first time someone downloads it.
+
+## Related
+
+- [Configuration](/en/docs/configuration)
+- [Server requirements](/en/docs/server-requirements)
+- [Troubleshooting](/en/docs/troubleshooting)

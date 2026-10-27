@@ -1,0 +1,67 @@
+---
+title: "Aprobaciones"
+description: "Enviar un documento controlado a revisión, aprobarlo, pedir cambios o rechazarlo, y la bandeja Aprobaciones."
+group: uso-diario
+order: 6
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+Antes de que una versión de un [documento controlado](/es/docs/documentos-controlados) sea la vigente, alguien con autoridad tiene que revisarla y aprobarla. Todo queda en el historial del documento y en la auditoría.
+
+## Quién puede aprobar
+
+- El propietario y los administradores.
+- Quien tenga la capacidad **Aprobar documentos** por su rol.
+- El jefe o subjefe del departamento responsable del documento, o de uno de sus departamentos superiores.
+
+Además, tiene que poder **ver** el documento: nadie aprueba lo que no ve. Quien envía un documento no puede aprobarlo, salvo que el propietario active **Permitir autoaprobación** en **Administración** › **Seguridad**; en ese caso queda registrado como «aprobó (el propio autor)».
+
+## Enviar a revisión
+
+Necesitas poder **editar** el documento y que su versión más nueva esté en **Borrador**.
+
+1. Abre **Control de documento** (en una página, desde **Más acciones**; en un archivo, desde su menú) y pulsa **Enviar a revisión**.
+2. Revisa el **Departamento responsable**. Si hace falta, pulsa **Cambiar departamento**: su jefe es el aprobador sugerido.
+3. En **Quién aprueba**, marca a las personas. Cada una muestra por qué puede aprobar («Jefe de Calidad», «Administrador», «Puede aprobar»). Si eliges a varias, deben aprobar todas.
+4. Si alguien no ve el documento, aparece como «No tiene acceso a este documento». Si gestionas los accesos, pulsa **Darle acceso para revisar** para darle acceso de solo lectura.
+5. Escribe en **Qué cambió (opcional)** una línea para quien revisa y pulsa **Enviar a revisión**.
+
+Mientras se revisa, el contenido queda congelado: nadie puede editarlo. Si necesitas cambiar algo, **Retirar de revisión** lo devuelve a borrador (se pierden las aprobaciones de ese envío) y puedes volver a enviarlo. Lo puede retirar quien lo envió o quien gestiona el documento.
+
+## La bandeja Aprobaciones
+
+Si puedes aprobar documentos, el menú lateral tiene **Aprobaciones**: los documentos que esperan tu aprobación, con su código, la versión y quién los envió. También aparecen en **Mis pendientes** del Inicio y te llega un aviso («Aprobación pendiente: «…»»).
+
+<Shot name="aprobaciones" alt="La bandeja Aprobaciones con los documentos que esperan revisión" />
+
+Pulsa **Revisar** para abrir el documento. En una página, quien revisa ve la versión en revisión, no la vigente. Para un archivo, la bandeja te lleva a su espacio: ábrelo desde su menú.
+
+## Revisar y decidir
+
+1. Lee el documento. Para comentar el texto, selecciona un fragmento y usa **Comentar** (ver [Páginas](/es/docs/paginas)); el contenido sigue congelado.
+2. Abre **Control de documento** y elige:
+   - **Aprobar**: puedes dejar un comentario opcional. Si eres la última persona que falta, el documento queda **Aprobado** y listo para publicar.
+   - **Pedir cambios**: escribe el **Motivo**. Vuelve a borrador con tus comentarios abiertos y se avisa a quien lo envió, que puede corregirlo y reenviarlo.
+   - **Rechazar**: escribe el **Motivo**. La versión se descarta y queda en el historial: no se publica. Si había una vigente, sigue igual.
+
+El diálogo te recuerda cuántos comentarios abriste y resolviste. Si ya habías revisado una vuelta anterior, muestra los **Cambios desde tu revisión** para que no tengas que leer todo otra vez.
+
+Quien envió el documento recibe un aviso con cada decisión («fue aprobado», «pidió cambios», «fue rechazado»).
+
+## Después de aprobar
+
+Una versión aprobada todavía no es vigente: hay que **Publicar**. Lo hace quien puede aprobar el documento, desde **Control de documento**. Ver [Publicar](/es/docs/documentos-controlados#publicar).
+
+## Todas las revisiones de la empresa
+
+En **Administración** › **Documentos controlados**, la pestaña **Aprobaciones** lista todo lo que está en revisión, con el estado de cada aprobador (**aprobó**, **pidió cambios**, **rechazó** o **pendiente**).
+
+## Relacionado
+
+- [Documentos controlados](/es/docs/documentos-controlados)
+- [Lecturas obligatorias](/es/docs/lecturas-obligatorias)
+- [Roles y permisos](/es/docs/roles-y-permisos)

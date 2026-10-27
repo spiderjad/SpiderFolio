@@ -1,0 +1,94 @@
+# SpiderFolio en un servidor propio (docs/instalacion/README.md).
+#
+#   cp .env.example .env    # y completar los secretos
+#   docker compose up -d     # base, API con la app y worker; migraciones automáticas
+#
+# Opcionales (perfiles):
+#   --profile https   Caddy con HTTPS automático para DOMAIN (puertos 80 y 443)
+#   --profile pdf     Gotenberg: PDF de los documentos controlados (sin él, se avisa en la app)
+#
+# Actualizar: docker compose pull && docker compose up -d (docs/instalacion/actualizar.md).
+
+name: spiderfolio
+
+x-app: &app
+  image: ${SPIDERFOLIO_IMAGE:-ghcr.io/spiderjad/spiderfolio:latest}
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    PORT: "4000"
+    DATABASE_URL: postgres://${POSTGRES_USER:-spiderfolio}:${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env}@db:5432/${POSTGRES_DB:-spiderfolio}
+    STORAGE_DIR: /data/files
+    GOTENBERG_URL: ${GOTENBERG_URL:-}
+  volumes:
+    - files:/data/files
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  db:
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-spiderfolio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:-spiderfolio}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-spiderfolio} -d ${POSTGRES_DB:-spiderfolio}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # API y app. Al arrancar aplica las migraciones pendientes (núcleo y plugins).
+  app:
+    <<: *app
+    # docker compose build: compila la imagen desde el código (con los plugins de plugins/) y la etiqueta
+    # como SPIDERFOLIO_IMAGE; el worker usa la misma.
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      db: { condition: service_healthy }
+    ports:
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:4000"
+
+  # Colas y tareas programadas (emails, PDF, búsqueda, papelera…). Arranca cuando la API ya migró.
+  worker:
+    <<: *app
+    command: ["node", "backend/src/worker.ts"]
+    depends_on:
+      app: { condition: service_healthy }
+    healthcheck:
+      disable: true
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    profiles: ["https"]
+    environment:
+      DOMAIN: ${DOMAIN:?Con el perfil https, completa DOMAIN en .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8.38.0
+    profiles: ["pdf"]
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  files:
+  caddy-data:
+  caddy-config:

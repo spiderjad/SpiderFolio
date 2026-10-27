@@ -1,0 +1,172 @@
+---
+title: "Arquitectura"
+description: "Cómo está armado SpiderFolio por dentro: monorepo, procesos, aislamiento entre empresas, permisos, almacenamiento, colas, idiomas y plugins."
+group: desarrolladores
+order: 1
+icon: layout
+---
+
+import { REPO_URL } from "../../../config/site.ts";
+
+Esta guía es un mapa del código para quien quiere entender SpiderFolio, contribuir o crear un plugin. El
+detalle de cada tema está en la especificación del repositorio: <a href={`${REPO_URL}/tree/main/docs/spec`}>docs/spec</a> (en español).
+
+## Vista general
+
+```text
+Navegador
+  │  app (React)              web pública (Astro, estática)
+  ▼
+Proxy HTTPS (Caddy u otro)
+  │
+  ▼
+API (Express 5, :4000) ──── sirve también la app compilada
+  │   /api/v1/auth          sesión, registro, 2FA
+  │   /api/v1/w/:slug/...   rutas de una empresa (auth → tenant → capacidades)
+  │
+  ├──► PostgreSQL 16 ◄──── Worker (pg-boss: emails, PDF, búsqueda, ZIP, limpiezas)
+  │       datos del núcleo (Prisma), colas (pg-boss), esquemas plugin_*
+  │
+  ├──► Almacenamiento: S3 (RustFS, MinIO, R2…) o disco local
+  └──► Gotenberg (HTML → PDF de los documentos controlados)
+```
+
+## El monorepo
+
+Es un monorepo con workspaces de npm, Node 24 y TypeScript estricto (sin `any` ni `@ts-ignore`).
+
+| Carpeta | Qué hay |
+|---|---|
+| `backend/` | API y worker: Express 5, Prisma 7 sobre PostgreSQL 16, Zod, pg-boss, S3. |
+| `frontend/` | La app: React 18 + Vite, Tailwind 4, componentes propios sobre Radix (`components/ui`), React Router 7, TanStack Query y Table, Tiptap. |
+| `web/` | La web pública y esta documentación, con Astro. |
+| `packages/` | Paquetes compartidos: preset de Tailwind, límites, contenido y `plugin-sdk` (el contrato de los plugins). |
+| `plugins/` | Carpeta donde se instalan los plugins (cada subcarpeta es uno). |
+| `docs/spec/` | La especificación detallada. |
+
+El backend se organiza por áreas en `backend/src/modules/<área>/`, con tres capas: **rutas → servicio →
+base de datos**. Las rutas no tienen lógica de negocio: validan con Zod y llaman al servicio. La app se
+organiza en `frontend/src/features/<área>/` y trae los datos del servidor con TanStack Query.
+
+## Procesos
+
+SpiderFolio corre en dos procesos que usan la misma imagen de Docker:
+
+- **API** (`backend/src/server.ts`, arma la app en `app.ts`): atiende las peticiones HTTP y, en una
+  instalación propia, sirve también la app ya compilada. Al arrancar aplica las migraciones pendientes del
+  núcleo y de los plugins.
+- **Worker** (`backend/src/worker.ts`): procesa las colas y las tareas programadas. En Docker es otro
+  contenedor con la misma imagen (`node backend/src/worker.ts`).
+
+En desarrollo, `npm run dev` levanta la API (:4000), el worker, la app (:5173) y la web (:4321) a la vez.
+
+## Una petición, paso a paso
+
+El orden de los middlewares de la API está en `backend/src/app.ts`:
+
+1. Id de petición, log (pino), cabeceras de seguridad (helmet) y CORS limitado a `APP_URL`.
+2. JSON de hasta 1 MB, cookies e idioma del mensaje (cabecera `Accept-Language`).
+3. Límite de peticiones global y `Cache-Control: no-store` en toda la API.
+4. Rutas de sesión (`/api/v1/auth`) y, para todo lo de una empresa, `/api/v1/w/:workspaceSlug` con la
+   cadena **sesión → tenant → 2FA obligatoria → capacidades**.
+5. 404 y el manejador de errores, que responde siempre con el mismo formato, sin stack ni errores de
+   Prisma.
+
+Las rutas de una empresa se declaran como datos en `backend/src/routes.ts`. Así el test de aislamiento
+entre empresas puede recorrerlas todas: una ruta nueva que no esté cubierta hace fallar el test.
+
+## Aislamiento entre empresas (multi-tenancy)
+
+Cada empresa es un **workspace**. La regla principal: **todo acceso a datos de un workspace pasa por
+`forTenant`** (`backend/src/db/tenant.ts`).
+
+- `forTenant(prisma, workspaceId)` envuelve el cliente de Prisma y solo expone los modelos con tenant.
+  Toda lectura, actualización y borrado agrega la condición del workspace; toda creación inyecta el
+  `workspaceId`, y ninguna actualización puede cambiarlo.
+- No permite consultas en crudo ni escrituras anidadas, ni recorrer relaciones hacia modelos globales que
+  expondrían otras empresas. Las claves foráneas compuestas (`id`, `workspaceId`) impiden en la base
+  apuntar a otro tenant.
+- El middleware de tenant resuelve el workspace a partir del slug de la URL y la membresía de la persona.
+  Nunca se acepta un `workspaceId` desde el body o la query.
+- **Regla del 404**: si el workspace no existe, la persona no es miembro o el recurso es de otra empresa,
+  la respuesta es **404**, nunca 403. Así no se revela que existe.
+
+## Permisos
+
+Los permisos se validan **siempre en el backend**. La app solo oculta lo que no puedes usar.
+
+- **Capacidades** (`backend/src/modules/roles/capabilities.ts`): permisos administrativos como
+  `members.invite`, `spaces.create`, `documents.approve` o `audit.view`. Cada rol tiene las suyas y cada
+  ruta declara las que exige (`capability`, `anyCapability`, `ownerOnly`). Los jefes y subjefes no
+  dependen de una capacidad: su alcance sale del cargo en el departamento.
+- **Acceso a contenido** (`resolveAccess`, en `backend/src/modules/access/access.ts`): la única función
+  que decide qué nivel tiene una persona sobre un espacio, carpeta, página o archivo: **Gestionar** >
+  **Editar** > **Comentar** > **Ver**. Junta los permisos dados a la persona y a sus departamentos (con los
+  departamentos padre), sigue la herencia de carpetas hasta el espacio y aplica las reglas de los espacios
+  privados y confidenciales. Gana el nivel más alto; sin nivel, el elemento no aparece en ningún lado (ni
+  árbol, ni búsqueda, ni Bian).
+- Cada recurso puede **explicar quién accede y por qué**, que es lo que muestra el diálogo **Compartir**.
+
+Más detalle en [Roles y permisos](/es/docs/roles-y-permisos) y en `docs/spec/acceso-a-contenido.md`.
+
+## Almacenamiento de archivos
+
+Todo el acceso a archivos pasa por `backend/src/lib/storage.ts`, con dos opciones (`STORAGE_DRIVER`):
+
+- **`s3`**: cualquier servicio compatible con S3 (RustFS en desarrollo, MinIO, Cloudflare R2…).
+- **`local`**: el disco del servidor (`STORAGE_DIR`). Las «URLs prefirmadas» las atiende la propia API.
+
+El navegador sube y descarga directo con URLs firmadas de corta duración (5 minutos para subir, 60
+segundos para descargar). Los archivos grandes se suben en partes y se reanudan. Las claves de los objetos
+son aleatorias, nunca el nombre original. Un segundo bucket de sistema guarda los ZIP generados en segundo
+plano. Ver [Almacenamiento](/es/docs/almacenamiento).
+
+## Colas y tareas en segundo plano
+
+Las colas usan **pg-boss** sobre la misma base de datos, sin un servicio aparte. La API encola y el worker
+procesa. Algunas colas del núcleo: envío de emails, PDF de documentos controlados, extracción de texto y
+reindexado de la búsqueda, ZIP grandes (exportar e importar), recordatorios de lectura, avisos de accesos
+que vencen, papelera, limpieza de subidas y retención de la auditoría.
+
+Los payloads nunca llevan secretos ni datos personales: para un email viaja el id y el worker busca el
+resto. Los jobs de los plugins usan colas `plugin.<id>.<job>`.
+
+## Idiomas
+
+La app, la API, los emails y la web están en español (el catálogo de referencia) y en inglés.
+
+- **App**: `frontend/src/i18n/es/` y `en/`. El tipo del catálogo obliga a que tengan las mismas claves:
+  si falta o sobra una, el typecheck falla.
+- **API y emails**: `backend/src/i18n/es.ts` y `en.ts`. El idioma sale de la cabecera que manda la app o,
+  en un job, del destinatario y su empresa.
+- **Web y guías**: `web/src/i18n/<idioma>/` y `web/src/content/docs/<idioma>/`.
+
+Ningún texto de interfaz va escrito directo en las pantallas. Ver [Contribuir](/es/docs/contribuir#traducciones).
+
+## Plugins
+
+El núcleo es completo sin plugins y **nunca depende de ellos**. Todo lo que es una extensión entra por
+puntos definidos en `packages/plugin-sdk`:
+
+- **Backend** (`backend/src/plugins/`): el cargador descubre los plugins al arrancar, aplica sus
+  migraciones en su propio esquema (`plugin_<id>`) y arma el runtime que decide, por empresa, cuáles están
+  activos según la licencia. Las rutas de un plugin viven en `/api/v1/w/:slug/plugins/<id>/…`, detrás de
+  la misma cadena que las del núcleo; si el plugin no está activo, responden 404.
+- **App** (`frontend/src/plugins/`): las partes de app se incluyen al compilar con el módulo virtual
+  `virtual:spiderfolio-plugins` (`frontend/plugins.vite.ts`). La app pregunta al servidor cuáles están
+  activos y solo muestra esos: menú lateral, pantallas, secciones de Administración y acciones en menús.
+
+Para escribir uno, sigue [Crear un plugin](/es/docs/crear-un-plugin).
+
+## Rutas de la app
+
+`frontend/src/router.tsx` define las pantallas. Las de una empresa cuelgan de `/app/:workspaceSlug`
+(inicio, archivos, mis documentos, aprobaciones, búsqueda, perfil y administración). Las
+pantallas de plugins están en `/app/:workspaceSlug/p/:pluginId/…` y sus secciones de administración en
+`/app/:workspaceSlug/admin/p/:pluginId/:section`.
+
+## Guías relacionadas
+
+- [Contribuir](/es/docs/contribuir)
+- [Crear un plugin](/es/docs/crear-un-plugin)
+- [Requisitos del servidor](/es/docs/requisitos-del-servidor)

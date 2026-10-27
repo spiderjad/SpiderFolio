@@ -1,0 +1,10 @@
+#!/bin/sh
+# Antes de cada commit: ningún secreto en lo que se va a commitear y .env.example con los secretos
+# vacíos. Se instala solo con `npm install` (core.hooksPath = .githooks). No se salta con --no-verify
+# en el CI: allí corren los mismos pasos.
+set -e
+cd "$(git rev-parse --show-toplevel)"
+echo "→ Verificación de secretos…"
+node scripts/check-secrets.ts --staged
+echo "→ Prueba de .env.example (secretos vacíos)…"
+npx --no-install vitest run tests/env-example.test.ts --reporter=dot

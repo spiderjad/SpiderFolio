@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://spiderfolio.spiderjad.com/sitemap-index.xml

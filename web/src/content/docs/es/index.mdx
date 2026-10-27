@@ -1,0 +1,117 @@
+---
+title: "Documentación"
+description: "Cómo instalar SpiderFolio en tu servidor, configurarlo y usarlo para ordenar la documentación de tu empresa."
+group: empezar
+order: 1
+icon: home
+---
+
+import Shot from "../../../components/Shot.astro";
+import { SITE, REPO_URL } from "../../../config/site.ts";
+
+{SITE.name} es un gestor de documentación interna para pymes: páginas tipo wiki, archivos y carpetas
+ordenados por departamentos, con permisos que se entienden. Cada carpeta, archivo y página explica
+quién accede y por qué.
+
+<Shot name="inicio" alt="El Inicio de SpiderFolio de una empresa de ejemplo" eager />
+
+## Open source y en tu servidor
+
+- **Open source**: el código es público, con licencia <a href={`${REPO_URL}/blob/main/LICENSE`}>AGPLv3</a>.
+  Puedes usarlo, estudiarlo y modificarlo. Si lo ofreces modificado como servicio, tienes que publicar
+  tus cambios con la misma licencia.
+- **Autoinstalable**: lo instalas en tu propio servidor con Docker. Tus documentos y tu base de datos
+  quedan en tu infraestructura.
+- **Completo sin pagar nada**: los plugins comerciales agregan funciones extra, pero el núcleo funciona
+  entero sin ellos.
+
+## Qué incluye
+
+- **Archivos y páginas** en espacios de la empresa o de cada departamento, con versiones y papelera.
+- **Permisos por departamentos y roles**, con la explicación de cada acceso.
+- **Documentos controlados**: una sola versión vigente, aprobaciones, confirmación de lectura y
+  auditoría.
+- **Pensado para planta**: códigos QR, vencimientos y una vista simple para operarios.
+- **Bian**, el asistente IA opcional, que responde solo con lo que cada persona ya puede ver.
+
+## Por dónde empezar
+
+<div class="not-prose my-8 grid gap-4 sm:grid-cols-3">
+  <a
+    href="/es/docs/instalar"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ★
+    </span>
+    <p class="mt-4 font-semibold">Instalar</p>
+    <p class="mt-1 text-sm text-muted-foreground">SpiderFolio en tu servidor con Docker, paso a paso.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Empezar →</p>
+  </a>
+  <a
+    href="/es/docs/configuracion"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ⚙
+    </span>
+    <p class="mt-4 font-semibold">Configuración</p>
+    <p class="mt-1 text-sm text-muted-foreground">Todas las variables del archivo .env, explicadas.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Ver →</p>
+  </a>
+  <a
+    href="/es/docs/primer-administrador"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      →
+    </span>
+    <p class="mt-4 font-semibold">Primer administrador</p>
+    <p class="mt-1 text-sm text-muted-foreground">Crea tu empresa y deja todo listo para tu equipo.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Ver →</p>
+  </a>
+  <a
+    href="/es/docs/archivos"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ▦
+    </span>
+    <p class="mt-4 font-semibold">Uso diario</p>
+    <p class="mt-1 text-sm text-muted-foreground">Archivos, páginas, documentos controlados y QR.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Ver →</p>
+  </a>
+  <a
+    href="/es/docs/miembros"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ☰
+    </span>
+    <p class="mt-4 font-semibold">Administración</p>
+    <p class="mt-1 text-sm text-muted-foreground">Miembros, departamentos, roles y límites.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Ver →</p>
+  </a>
+  <a
+    href="/es/docs/requisitos-del-servidor"
+    class="rounded-2xl border bg-background p-5 transition-colors hover:border-foreground/30"
+  >
+    <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      ⛁
+    </span>
+    <p class="mt-4 font-semibold">Autoalojamiento</p>
+    <p class="mt-1 text-sm text-muted-foreground">HTTPS, almacenamiento, copias, actualizaciones y problemas.</p>
+    <p class="mt-3 text-sm font-medium text-primary">Ver →</p>
+  </a>
+</div>
+
+## Cómo está organizada esta documentación
+
+- **Empezar**: instalar, configurar y crear tu empresa.
+- **Uso diario**: las pantallas que usa todo el equipo, con sus botones tal como los verás.
+- **Administración** y **Seguridad**: para el propietario y los administradores de la empresa.
+- **Autoalojamiento**: para quien mantiene el servidor.
+- **Desarrolladores**: arquitectura, cómo contribuir y cómo crear un plugin.
+
+Puedes buscar en toda la documentación con <kbd>⌘K</kbd> (o <kbd>Ctrl</kbd> + <kbd>K</kbd>). El código
+y los reportes de errores están en <a href={REPO_URL}>GitHub</a>.

@@ -1,0 +1,99 @@
+---
+title: "Documentos controlados"
+description: "Convertir una página o un archivo en documento controlado: código, una sola versión vigente, estados, comparar versiones y PDF controlado."
+group: uso-diario
+order: 5
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+Un **documento controlado** es una página o un archivo con **código** (por ejemplo, PRC-004), **versiones**, **aprobación** y **una sola versión vigente**. Es lo que piden las normas de calidad: todo el mundo lee la versión aprobada, los cambios pasan por revisión y queda registro de quién hizo qué.
+
+<Shot name="documento-controlado" alt="Una página controlada con su código y su estado junto al título" />
+
+## Convertir un documento
+
+Necesitas el nivel **Gestionar** sobre el documento. Las carpetas no se pueden convertir.
+
+1. Abre **Control de documento**: en una página, desde **Más acciones** (los tres puntos); en un archivo, desde su menú en el explorador.
+2. Elige el **Tipo de documento**:
+   - **MAN** (Manual): describe el sistema completo.
+   - **POL** (Política): compromisos y reglas generales.
+   - **PRC** (Procedimiento): qué se hace, quién y en qué orden.
+   - **INS** (Instructivo): cómo se hace una tarea paso a paso.
+   - **FOR** (Formulario): plantilla que se completa como registro.
+3. Elige el **Departamento responsable**. Si no eliges uno, se usa el del espacio. Es quien aprueba el documento por defecto.
+4. El diálogo te muestra el código que se asignará. Pulsa **Convertir en documento controlado**.
+
+La versión actual queda como **borrador 1**. Para que sea vigente, envíala a revisión (ver [Aprobaciones](/es/docs/aprobaciones)).
+
+## Códigos
+
+El código se arma con el prefijo del tipo y un número que sube solo: PRC-001, PRC-002… Cada tipo define además cada cuántos meses se revisa, y de ahí sale la **Próxima revisión** de cada documento.
+
+Los tipos, los prefijos y la numeración se configuran en **Administración** › **Documentos controlados** › **Numeración**. Cambiar el prefijo o el relleno afecta solo a los códigos nuevos, y el contador solo puede subir (bajarlo repetiría códigos ya usados).
+
+## Estados
+
+Cada versión pasa por estos estados:
+
+1. **Borrador**: se escribe y se edita.
+2. **En revisión**: se envió a quienes aprueban. El contenido queda congelado.
+3. **Aprobado**: todos aprobaron; queda listo para publicar.
+4. **Publicado**: es la **versión vigente**. Solo hay una.
+5. **Obsoleto**: la que era vigente hasta que se publicó una nueva. No se borra.
+
+Una versión **Rechazada** se descarta y queda en el historial sin publicarse.
+
+## La versión vigente
+
+- Quien solo puede ver el documento lee siempre la versión vigente, aunque haya cambios en curso. Un aviso le indica el código y la versión que está viendo.
+- Quien edita trabaja sobre el borrador. Editar un documento publicado abre una versión nueva en borrador; la vigente no cambia hasta que se publique la nueva.
+- Bian y los códigos QR usan siempre la versión vigente.
+
+## El diálogo de control
+
+**Control de documento** reúne todo lo del documento:
+
+<Shot name="control" alt="El diálogo de control con la versión vigente, el responsable, las acciones y el historial de versiones" />
+
+- **Versión vigente**, **Responsable** y **Próxima revisión**.
+- Las acciones que te tocan: **Enviar a revisión**, **Aprobar**, **Pedir cambios**, **Rechazar**, **Publicar** o **Retirar de revisión**.
+- **Comparar versiones**, si hay más de una.
+- **Historial de versiones**: cada versión con su estado, quién la envió, quién aprobó, el motivo del cambio y si fue un **Cambio menor** (publicado sin pedir nueva lectura).
+- **Lectura obligatoria**, cuando hay una versión publicada (ver [Lecturas obligatorias](/es/docs/lecturas-obligatorias)).
+
+## Publicar
+
+Publica quien puede aprobar el documento, cuando la versión está **Aprobada**. En **¿Publicar esta versión?**:
+
+- La versión pasa a ser la vigente y la anterior queda obsoleta.
+- **Pedir nueva lectura a quienes debían leer la versión anterior** viene marcado. Si lo desmarcas, queda como cambio menor y las lecturas anteriores siguen valiendo.
+- **Motivo del cambio**: una línea para quienes tengan que releerlo.
+
+## Comparar versiones
+
+**Comparar versiones** muestra lo agregado en verde y lo quitado en rojo tachado. Elige la **Versión de partida** (por defecto, la vigente o la anterior) y la **Versión a comparar** (por defecto, la más nueva), y marca **Solo cambios** para ocultar lo que no cambió. En las páginas se compara el texto; en los archivos, por ahora, solo los datos de cada versión.
+
+## PDF controlado
+
+En el **Historial de versiones**, cada versión publicada u obsoleta tiene su botón para descargar el PDF controlado:
+
+- Lleva una **hoja de control** al principio: empresa, código, título, versión, fecha de entrada en vigor, quién la elaboró y quién la aprobó.
+- Cada página lleva al pie la marca «Copia no controlada · descargada por … el …», con tu nombre y la fecha. Las versiones obsoletas llevan además «OBSOLETO» en diagonal.
+- En los archivos PDF se agrega la hoja de control al original. Las páginas se convierten a PDF con Gotenberg; si tu instalación no lo tiene, verás un aviso (ver [Gotenberg](/es/docs/gotenberg)).
+
+## El listado de documentos
+
+Quien aprueba documentos, pide lecturas o lidera un área tiene **Administración** › **Documentos controlados**: el listado con código, versión vigente, estado, departamento y próxima revisión, con filtros y búsqueda, más las pestañas **Aprobaciones**, **Cumplimiento** y **Numeración**. Un jefe ve solo los de su área.
+
+<Shot name="documentos" alt="El listado de documentos controlados con código, estado, departamento y próxima revisión" />
+
+## Relacionado
+
+- [Aprobaciones](/es/docs/aprobaciones)
+- [Lecturas obligatorias](/es/docs/lecturas-obligatorias)
+- [Códigos QR](/es/docs/codigos-qr)

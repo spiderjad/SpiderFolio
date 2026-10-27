@@ -1,0 +1,1236 @@
+// Modelo de datos del Módulo 1 (CLAUDE.md, sección 6). Los demás modelos entran con su módulo.
+//
+// Aislamiento entre tenants (sección 7.4): toda tabla con datos de un cliente tiene
+// workspaceId, se consulta con forTenant y sus claves foráneas a otras tablas de tenant son
+// compuestas (id, workspaceId): la base impide referenciar un registro de otro workspace.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SystemRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+/// STANDARD: email y contraseña. PIN: lector de planta sin email, entra con usuario + PIN de su
+/// workspace (PinLogin). Un CHECK en la migración liga el tipo con email y passwordHash.
+enum EmailMode {
+  SMTP
+  DOMAIN
+}
+
+enum EmailStatus {
+  DRAFT
+  ACTIVE
+  DISABLED
+}
+
+enum SmtpSecurity {
+  TLS
+  STARTTLS
+}
+
+enum UserKind {
+  STANDARD
+  PIN
+}
+
+enum MemberStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum SeatType {
+  FULL
+  READER
+}
+
+// ─── Globales (sin tenant) ──────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(cuid())
+  email            String?   @unique
+  emailVerifiedAt  DateTime?
+  /// Email nuevo pedido por la propia persona: reemplaza al actual al confirmarlo.
+  pendingEmail     String?
+  passwordHash     String?
+  kind             UserKind  @default(STANDARD)
+  name             String
+  avatarKey        String?
+  /// Portada del perfil (S3) y su encuadre vertical, de 0 (arriba) a 100 (abajo).
+  coverKey         String?
+  coverPositionY   Int       @default(50)
+  /// Idioma elegido en Mi perfil; null = el de la empresa (Workspace.settings.locale).
+  locale           String?
+  failedLogins     Int       @default(0)
+  lockedUntil      DateTime?
+  /// 2FA (TOTP): secreto cifrado con MFA_ENCRYPTION_KEY (`<idClave>:iv:tag:texto`). Con totpEnabledAt
+  /// null es un alta a medias (todavía sin confirmar con un código).
+  totpSecretEnc    String?
+  totpEnabledAt    DateTime?
+  /// Último paso de 30 s aceptado: un código no se reutiliza.
+  totpLastStep     Int?
+  totpFailedCount  Int       @default(0)
+  totpLockedUntil  DateTime?
+  isStaff          Boolean   @default(false) // backoffice interno (12A.3)
+  /// Quiere recibir novedades de SpiderFolio por email (casilla aparte y opcional, desmarcada).
+  marketingOptIn   Boolean   @default(false)
+  marketingOptInAt DateTime?
+  createdAt        DateTime  @default(now())
+
+  sessions         Session[]
+  authTokens       AuthToken[]
+  memberships      Membership[]
+  termsAcceptances TermsAcceptance[]
+  recoveryCodes    RecoveryCode[]
+  trustedDevices   TrustedDevice[]
+}
+
+/// Evidencia de la aceptación de los Términos y la Política de privacidad: una fila por aceptación,
+/// nunca se edita. `version` es la versión vigente (TERMS_VERSION) al aceptar.
+model TermsAcceptance {
+  id         String   @id @default(cuid())
+  userId     String
+  version    String
+  acceptedAt DateTime @default(now())
+  ip         String?
+  userAgent  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, acceptedAt])
+}
+
+/// Una fila por refresh token. Cada rotación revoca la fila (replacedAt) y crea otra en la
+/// misma familia. expiresAt = mín(último uso + REFRESH_TTL_DAYS, familyCreatedAt + tope absoluto).
+model Session {
+  id              String    @id @default(cuid())
+  userId          String
+  familyId        String
+  familyCreatedAt DateTime // login que originó la familia; base del tope absoluto (7.1)
+  tokenHash       String    @unique
+  userAgent       String?
+  ip              String?
+  idleSeconds     Int? // sesiones de PIN (tablets compartidas): vence tras este lapso sin uso
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  replacedAt      DateTime? // revocada por rotación (no por logout): margen de 5 s y reuso
+  mfaAt           DateTime? // cuándo pasó el segundo paso (2FA); null: no lo pasó o la persona no tiene 2FA
+  createdAt       DateTime  @default(now())
+  lastUsedAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // VERIFY_EMAIL | RESET_PASSWORD | CHANGE_EMAIL
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+/// Código de recuperación de la 2FA: de un solo uso, se guarda solo su hash y se muestra una vez.
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@index([userId])
+}
+
+/// Dispositivo de confianza (30 días): salta el segundo paso en ese navegador. Solo el hash del token.
+model TrustedDevice {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Rate limit compartido entre instancias (12). Tabla UNLOGGED: editada en la migración.
+model RateLimitBucket {
+  key     String   @id // SHA-256 de la clave (sin datos personales)
+  hits    Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}
+
+// ─── Workspace y tablas con tenant ──────────────────────────────────────────
+
+model Workspace {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  logoKey          String?
+  accentColor      String? // #rrggbb en minúsculas; null = color de la marca (10.2)
+  storageUsedBytes BigInt    @default(0) // ver 9A.4
+  settings         Json      @default("{}") // zona horaria, idioma y políticas (10.9)
+  /// Límites que fija la empresa (StoredLimitsSchema de @spiderfolio/limits); vacío = sin límites.
+  limits           Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  deletedAt        DateTime?
+
+  roles               Role[]
+  memberships         Membership[]
+  departments         Department[]
+  departmentMembers   DepartmentMember[]
+  invitations         Invitation[]
+  auditLogs           AuditLog[]
+  pinLogins           PinLogin[]
+  spaces              Space[]
+  nodes               Node[]
+  permissions         Permission[]
+  fileVersions        FileVersion[]
+  uploadReservations  UploadReservation[]
+  importJobs          ImportJob[]
+  spaceStates         SpaceUserState[]
+  downloadTokens      DownloadToken[]
+  zipExports          ZipExport[]
+  pageContents        PageContent[]
+  pageImages          PageImage[]
+  commentThreads      CommentThread[]
+  comments            Comment[]
+  mentions            Mention[]
+  sharedSeen          SharedSeen[]
+  notifications       Notification[]
+  documentTypes       DocumentType[]
+  controlledDocuments ControlledDocument[]
+  documentVersions    DocumentVersion[]
+  approvals           Approval[]
+  readRequirements    ReadRequirement[]
+  documentVisits      DocumentVisit[]
+  qrCodes             QrCode[]
+  emailSettings       WorkspaceEmail?
+  contentChunks       ContentChunk[]
+  usageCounters       UsageCounter[]
+  usageCounterMembers UsageCounterMember[]
+  bianLimits          BianLimit[]
+  bianFeedback        BianFeedback[]
+  fileTexts           FileText[]
+  readAcknowledgments ReadAcknowledgment[]
+  license             WorkspaceLicense?
+  pluginSettings      PluginSetting[]
+}
+
+model Role {
+  id           String     @id @default(cuid())
+  workspaceId  String
+  name         String
+  description  String?
+  base         SystemRole // nivel base que extiende
+  capabilities String[] // ver 9.2
+  isSystem     Boolean    @default(false) // los 4 de sistema no se borran
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+  invitations Invitation[]
+
+  @@unique([workspaceId, name])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, isSystem, base])
+}
+
+model Membership {
+  id          String       @id @default(cuid())
+  userId      String
+  workspaceId String
+  roleId      String
+  status      MemberStatus @default(ACTIVE)
+  seatType    SeatType     @default(FULL) // ver 9A.4
+  jobTitle    String?
+  createdAt   DateTime     @default(now())
+  lastSeenAt  DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // NoAction (no Restrict): se verifica al final de la sentencia, así purgar un workspace en
+  // cascada no depende del orden de los triggers; borrar un rol en uso sigue fallando.
+  role      Role      @relation(fields: [roleId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  departments    DepartmentMember[]
+  pinLogin       PinLogin?
+  permissions    Permission[]
+  spaceStates    SpaceUserState[]
+  downloadTokens DownloadToken[]
+
+  @@unique([userId, workspaceId])
+  @@unique([id, workspaceId])
+  @@index([workspaceId])
+  @@index([workspaceId, roleId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, seatType])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, lastSeenAt])
+}
+
+/// Credencial de usuario + PIN de una membresía (7.6). Una fila por persona sin email; el
+/// loginName es único dentro del workspace. Los contadores son por workspace.
+model PinLogin {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  membershipId   String    @unique
+  loginName      String
+  pinHash        String
+  failedAttempts Int       @default(0)
+  lockCount      Int       @default(0) // bloqueos consecutivos: el tiempo se duplica
+  lockedUntil    DateTime?
+  pinChangedAt   DateTime  @default(now())
+  pinChangedById String?
+  createdAt      DateTime  @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([workspaceId, loginName])
+  @@unique([membershipId, workspaceId])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  color       String?
+  parentId    String? // subdepartamentos opcionales
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // NoAction (no SetNull): SetNull también anularía workspaceId, que es parte de la clave.
+  parent      Department?        @relation("DepartmentTree", fields: [parentId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  children    Department[]       @relation("DepartmentTree")
+  members     DepartmentMember[]
+  permissions Permission[]
+  spaces      Space[]
+
+  @@unique([workspaceId, name])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, parentId])
+}
+
+/// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único
+/// parcial en la migración, que Prisma no puede expresar) y uno o más DEPUTY. HEAD y DEPUTY
+/// tienen el alcance ".own" sobre el departamento y sus subdepartamentos.
+enum DepartmentPosition {
+  HEAD
+  DEPUTY
+  MEMBER
+}
+
+model DepartmentMember {
+  departmentId String
+  membershipId String
+  workspaceId  String
+  position     DepartmentPosition @default(MEMBER)
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@id([departmentId, membershipId])
+  @@index([membershipId])
+  @@index([workspaceId])
+}
+
+model Invitation {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  email         String // en minúsculas
+  roleId        String
+  seatType      SeatType
+  departmentIds String[]
+  tokenHash     String    @unique // SHA-256; el token solo viaja en el email
+  invitedById   String // userId de quien invita (sin FK: borrar la cuenta no borra la invitación)
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  revokedAt     DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@index([workspaceId, email])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, acceptedAt, revokedAt, expiresAt])
+}
+
+/// Append-only. workspaceId null = evento global (ej. login fallido sin workspace).
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  actorId     String?
+  action      String // "auth.login", "node.move", "permission.grant"…
+  entityType  String?
+  entityId    String?
+  ip          String?
+  userAgent   String?
+  metadata    Json? // nunca contenido ni secretos
+  createdAt   DateTime @default(now())
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, entityType, entityId])
+}
+
+/// Nivel de acceso a contenido (8.1): MANAGE > EDIT > COMMENT > VIEW.
+enum AccessLevel {
+  MANAGE
+  EDIT
+  COMMENT
+  VIEW
+}
+
+enum NodeType {
+  FOLDER
+  FILE
+  PAGE
+}
+
+/// Espacio: la raíz de un árbol de carpetas, archivos y páginas. Privado = solo con permiso
+/// explícito. El nombre es único por workspace entre los no archivados (índice parcial en la
+/// migración) comparando `nameKey` (NFC y minúsculas).
+model Space {
+  id              String      @id @default(cuid())
+  workspaceId     String
+  name            String
+  nameKey         String
+  icon            String?
+  /// #rrggbb en minúsculas; null = el del departamento dueño o, sin él, el color de marca.
+  color           String?
+  description     String?
+  isPrivate       Boolean     @default(false)
+  /// Confidencial: además de privado, los administradores no entran solos (solo el propietario
+  /// del workspace, el jefe y subjefe del departamento, sus miembros y quien se agregue). Implica
+  /// `isPrivate` (CHECK en la migración).
+  isConfidential  Boolean     @default(false)
+  createdById     String // id de la membresía (sin FK: quitar a la persona no borra el espacio)
+  createdAt       DateTime    @default(now())
+  archivedAt      DateTime?
+  /// Espacio de un departamento (null = de la empresa). Sus jefes y subjefes lo gestionan, y sus
+  /// miembros entran con `departmentLevel` (los de sus subdepartamentos, solo con `includeSubareas`).
+  departmentId    String?
+  /// Nivel de los miembros del departamento: EDIT (por defecto) o VIEW.
+  departmentLevel AccessLevel @default(EDIT)
+  /// Extiende el acceso de miembros a los subdepartamentos (los jefes de áreas superiores gestionan
+  /// el espacio igual).
+  includeSubareas Boolean     @default(false)
+
+  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // NoAction (no SetNull): SetNull también anularía workspaceId. Al borrar un departamento, el
+  // servicio deja sus espacios como espacios de la empresa antes de borrarlo.
+  department    Department?      @relation(fields: [departmentId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  nodes         Node[]
+  permissions   Permission[]
+  userStates    SpaceUserState[]
+  notifications Notification[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, archivedAt])
+  @@index([workspaceId, departmentId])
+}
+
+/// Lo personal de cada persona sobre un espacio: si lo marcó como favorito y cuándo lo abrió por
+/// última vez (para "Recientes"). No da ni quita acceso.
+model SpaceUserState {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  spaceId      String
+  membershipId String
+  favorite     Boolean   @default(false)
+  /// Orden de los favoritos de la persona (menor primero); null = sin orden elegido, al final.
+  favoritePosition Int?
+  visitedAt    DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  space      Space      @relation(fields: [spaceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([spaceId, membershipId])
+  @@index([workspaceId, membershipId, favorite])
+  @@index([workspaceId, membershipId, visitedAt])
+}
+
+/// Árbol único: carpetas, archivos y páginas son nodos. Dos hermanos no pueden llamarse igual
+/// (índice único parcial en la migración sobre `nameKey`, entre los que no están en la papelera).
+model Node {
+  id             String                   @id @default(cuid())
+  workspaceId    String
+  spaceId        String
+  parentId       String? // FOLDER (o PAGE más adelante); null = raíz del espacio
+  type           NodeType
+  name           String
+  nameKey        String // NFC y minúsculas: la comparación de nombres repetidos
+  icon           String?
+  /// Portada de una página: uno de los colores predefinidos (COVERS en nodes.schemas.ts).
+  cover          String?
+  position       String // índice fraccional dentro de la carpeta
+  inheritAccess  Boolean                  @default(true)
+  createdById    String // id de la membresía (sin FK, como en Space)
+  updatedById    String
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  trashedAt      DateTime? // papelera (30 días)
+  trashRootId    String? // el nodo que se borró de verdad: restaurarlo trae a todo su subárbol
+  /// Texto que se indexa para la búsqueda (título aparte): lo mantienen los triggers de la base.
+  searchText     String                   @default("")
+  /// Índice de texto completo (es_unaccent): título y código pesan más que el cuerpo.
+  searchTsv      Unsupported("tsvector")?
+  // Solo FILE: la versión vigente y una copia de sus datos para los listados.
+  currentVersion Int                      @default(0)
+  mimeType       String?
+  sizeBytes      BigInt?
+
+  workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  space               Space                @relation(fields: [spaceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  parent              Node?                @relation("NodeTree", fields: [parentId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  children            Node[]               @relation("NodeTree")
+  permissions         Permission[]
+  versions            FileVersion[]
+  pageContent         PageContent?
+  pageImages          PageImage[]
+  threads             CommentThread[]
+  mentions            Mention[]
+  sharedSeen          SharedSeen[]
+  notifications       Notification[]
+  controlled          ControlledDocument?
+  documentVersions    DocumentVersion[]
+  approvals           Approval[]
+  readRequirements    ReadRequirement[]
+  documentVisits      DocumentVisit[]
+  contentChunks       ContentChunk[]
+  qrCodes             QrCode[]
+  fileTexts           FileText[]
+  readAcknowledgments ReadAcknowledgment[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, spaceId, parentId])
+  @@index([workspaceId, trashedAt])
+  @@index([workspaceId, trashRootId])
+  @@index([searchTsv], type: Gin)
+}
+
+/// Permiso sobre un espacio O un nodo, para una persona O un departamento (CHECK en la
+/// migración). Los departamentos hijos heredan del padre al resolver (8.2).
+model Permission {
+  id              String      @id @default(cuid())
+  workspaceId     String
+  spaceId         String?
+  nodeId          String?
+  membershipId    String?
+  departmentId    String?
+  /// Toda la empresa: todos los miembros activos (sin invitados externos). Ni persona ni departamento.
+  everyone        Boolean     @default(false)
+  level           AccessLevel
+  grantedById     String // id de la membresía de quien lo dio
+  expiresAt       DateTime? // accesos temporales
+  /// Solo para un departamento: el acceso llega también a los miembros de sus subdepartamentos.
+  includeSubareas Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  space      Space?      @relation(fields: [spaceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  node       Node?       @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  membership Membership? @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, spaceId])
+  @@index([workspaceId, nodeId])
+  @@index([workspaceId, membershipId])
+  @@index([workspaceId, departmentId])
+}
+
+/// Cada subida de un archivo. La clave del objeto es aleatoria (nunca el nombre original):
+/// workspaceId/nodeId/version-aleatorio. La cuota cuenta las no purgadas (9A.4).
+model FileVersion {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  nodeId       String
+  version      Int
+  storageKey   String    @unique
+  fileName     String
+  mimeType     String // el detectado por magic bytes, no el declarado
+  sizeBytes    BigInt
+  checksum     String // SHA-256 en hexadecimal
+  uploadedById String // id de la membresía (sin FK)
+  createdAt    DateTime  @default(now())
+  purgedAt     DateTime? // el objeto ya se borró de S3
+  trashedAt    DateTime? // en la papelera de versiones (fileVersionsKept del plan): 30 días
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, version])
+  @@index([workspaceId, purgedAt])
+  @@index([workspaceId, trashedAt])
+  @@index([workspaceId, checksum])
+}
+
+/// Subida en curso: reserva cuota (usado + reservado + nuevo <= límite) y recuerda qué hay que
+/// crear al confirmar. Vence a la hora; un job aborta lo que quedó a medias.
+model UploadReservation {
+  id          String   @id @default(cuid())
+  workspaceId String
+  bytes       BigInt
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  createdById String // id de la membresía
+  spaceId     String
+  parentId    String? // dónde queda el archivo nuevo
+  nodeId      String // el archivo (nuevo o existente, si es una versión nueva)
+  isNewNode   Boolean
+  version     Int
+  name        String // nombre final (ya resuelto el conflicto)
+  conflict    String // reject | keep_both: qué hacer si al confirmar el nombre ya está tomado
+  storageKey  String   @unique
+  mimeType    String // el declarado (el real se detecta al confirmar)
+  multipartId String? // uploadId de S3 en subidas por partes
+  partSize    Int?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, expiresAt])
+  @@index([expiresAt])
+}
+
+/// Importación de un ZIP ya subido (un archivo del árbol): el worker lo descomprime en el destino.
+/// El resumen (importados, omitidos con motivo, duplicados por checksum) queda acá para la pantalla.
+model ImportJob {
+  id          String    @id @default(cuid())
+  workspaceId String
+  spaceId     String
+  parentId    String? // carpeta donde se descomprime (o donde se crea la carpeta nueva)
+  nodeId      String // el archivo ZIP
+  createdById String // id de la membresía
+  newFolder   Boolean // descomprimir dentro de una carpeta nueva con el nombre del ZIP
+  status      String // PENDING | RUNNING | DONE | FAILED
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  summary     Json?
+  error       String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdById, createdAt])
+  @@index([status, createdAt])
+}
+
+/// Descarga directa de un ZIP: un token opaco (solo se guarda su hash), de un solo uso y muy corta
+/// duración, que se canjea con un enlace normal. Los permisos se vuelven a resolver al canjearlo.
+model DownloadToken {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  membershipId String
+  spaceId      String
+  nodeIds      Json // los ids elegidos (el contenido se vuelve a calcular al canjear)
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+/// ZIP grande generado en segundo plano: se guarda en el bucket de sistema 7 días (no cuenta para
+/// la cuota) y se avisa por email con un enlace temporal (solo se guarda su hash).
+model ZipExport {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  spaceId      String
+  membershipId String // quien lo pidió
+  nodeIds      Json
+  status       String // PENDING | RUNNING | DONE | FAILED
+  fileName     String
+  storageKey   String?
+  sizeBytes    BigInt?
+  linkHash     String?   @unique
+  createdAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  expiresAt    DateTime?
+  error        String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, membershipId, createdAt])
+  @@index([expiresAt])
+}
+
+/// El texto de una página (nodo PAGE): documento Tiptap/ProseMirror validado por packages/content.
+/// `revision` sube en cada guardado y permite detectar ediciones simultáneas (control optimista).
+model PageContent {
+  nodeId      String   @id
+  workspaceId String
+  content     Json
+  revision    Int      @default(1)
+  /// Texto plano para búsquedas futuras.
+  textPlain   String   @default("")
+  updatedById String // id de la membresía
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, workspaceId])
+  @@index([workspaceId])
+}
+
+/// Imagen dentro de una página: cuenta para la cuota de almacenamiento (9A.4).
+model PageImage {
+  id          String    @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  storageKey  String    @unique
+  mimeType    String
+  sizeBytes   BigInt
+  createdById String // id de la membresía
+  createdAt   DateTime  @default(now())
+  /// null: subida sin confirmar todavía.
+  confirmedAt DateTime?
+  /// Última vez que la limpieza nocturna vio que sigue en uso (null: nunca).
+  checkedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, nodeId])
+}
+
+/// Hilo de comentarios de una página. Con `quote` está anclado a un fragmento del texto (la marca
+/// `commentThread` del documento lleva el id del hilo); sin `quote` es un comentario general.
+model CommentThread {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  nodeId       String
+  quote        String?
+  status       String    @default("OPEN") // OPEN | RESOLVED
+  createdById  String // id de la membresía
+  createdAt    DateTime  @default(now())
+  resolvedById String?
+  resolvedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  comments  Comment[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, nodeId, status, createdAt])
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  workspaceId String
+  threadId    String
+  authorId    String // id de la membresía
+  body        String
+  createdAt   DateTime  @default(now())
+  editedAt    DateTime?
+  /// Borrado con respuestas de otros: queda el hueco, sin texto.
+  deletedAt   DateTime?
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  thread    CommentThread @relation(fields: [threadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, threadId, createdAt])
+}
+
+/// Una persona mencionada con @ en el texto de una página (`commentId` null) o en un comentario.
+/// Solo avisa: nunca da acceso. `notifiedAt` null = todavía sin aviso (no tenía acceso a la página).
+model Mention {
+  id          String    @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  commentId   String?
+  mentionedId String // id de la membresía mencionada
+  createdById String // id de la membresía de quien menciona
+  createdAt   DateTime  @default(now())
+  notifiedAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, nodeId, mentionedId])
+}
+
+/// Qué elementos compartidos ya abrió cada persona («Nuevo» en Compartido conmigo). Una fila por
+/// persona y elemento; si el acceso se vuelve a dar después de `seenAt`, el elemento vuelve a ser nuevo.
+model SharedSeen {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  membershipId String // id de la membresía (sin FK, como Mention)
+  nodeId       String
+  seenAt       DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([membershipId, nodeId])
+  @@index([workspaceId, membershipId])
+}
+
+/// Avisos de cada persona (campana): alguien compartió algo con ella, o un acceso suyo está por vencer.
+/// Es de quien la recibe (membershipId, sin FK como Mention): nadie lee las de otra persona.
+model Notification {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  membershipId String
+  /// "shared" | "expiring"
+  kind         String
+  /// Quién compartió (membresía), si aplica.
+  actorId      String?
+  spaceId      String?
+  nodeId       String?
+  permissionId String?
+  /// Invitación de la que se avisa («invitation_by_leader»); sin FK: si la invitación se borra, el aviso queda sin detalle.
+  invitationId String?
+  /// Número de versión del documento al que se refiere (avisos de documentos controlados).
+  version      Int?
+  /// El vencimiento del que se avisa («expiring»).
+  expiresAt    DateTime?
+  /// Evita avisar dos veces lo mismo (el job diario puede repetir).
+  dedupeKey    String?
+  createdAt    DateTime  @default(now())
+  readAt       DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  space     Space?    @relation(fields: [spaceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  node      Node?     @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([membershipId, dedupeKey])
+  @@index([workspaceId, membershipId, createdAt])
+}
+
+enum DocStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  OBSOLETE
+  /// Descartada por quien la revisó: queda en el historial, no se publica.
+  REJECTED
+}
+
+/// Tipo de documento controlado (PRC, INS, FOR, POL, MAN…): numeración y regla de aprobadores.
+model DocumentType {
+  id           String @id @default(cuid())
+  workspaceId  String
+  code         String // PRC, INS…
+  name         String
+  prefix       String
+  padding      Int    @default(3)
+  /// Próximo número; se toma con un UPDATE (sin saltos ni repetidos).
+  nextNumber   Int    @default(1)
+  reviewMonths Int    @default(12)
+  /// Quiénes aprueban por defecto: OWNER_HEAD = jefe del departamento responsable.
+  approverRule String @default("OWNER_HEAD")
+  position     Int    @default(0)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, code])
+}
+
+/// Una página o un archivo que pasó a ser documento controlado (1:1 con el nodo).
+model ControlledDocument {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  nodeId            String    @unique
+  code              String
+  docType           String // código del tipo (PRC…)
+  /// Departamento responsable (sin FK, como Mention: su baja no bloquea).
+  ownerDepartmentId String?
+  reviewDueAt       DateTime?
+  /// Número de la versión vigente; null si todavía no hay ninguna publicada.
+  publishedVersion  Int?
+  createdById       String
+  createdAt         DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([workspaceId, code])
+  @@unique([nodeId, workspaceId])
+  @@index([workspaceId, ownerDepartmentId])
+}
+
+/// Cada versión de un documento controlado. Una sola PUBLISHED por documento (índice parcial en la
+/// migración); la anterior pasa a OBSOLETE y nunca se borra (es evidencia de auditoría).
+model DocumentVersion {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  nodeId        String
+  version       Int
+  status        DocStatus @default(DRAFT)
+  title         String
+  changeNote    String?
+  /// Página: instantánea del texto al enviar a revisión (null mientras es borrador).
+  content       Json?
+  /// Archivo: número de FileVersion que esta versión controla.
+  fileVersion   Int?
+  checksum      String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  submittedAt   DateTime?
+  /// Quién la envió a revisión (membresía).
+  submittedById String?
+  approvedAt    DateTime?
+  publishedAt   DateTime?
+  effectiveAt   DateTime?
+  obsoletedAt   DateTime?
+  /// PDF controlado generado al publicar (parte 5).
+  pdfKey        String?
+  /// Texto plano de la versión (páginas): lo que se indexa cuando está vigente.
+  textPlain     String?
+  /// Cambio menor: al publicarla no se pidió nueva lectura (las lecturas anteriores siguen valiendo).
+  minorChange   Boolean   @default(false)
+  /// Motivo del cambio, escrito al publicar (lo ve quien debe releer).
+  changeReason  String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, version])
+  @@index([workspaceId, nodeId, status])
+}
+
+/// Una aprobación pedida sobre una versión. `round` es el momento en que se envió a revisión: si se
+/// rechaza y se vuelve a enviar, las del envío anterior quedan como historial.
+model Approval {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  nodeId        String
+  version       Int
+  /// Membresía de quien debe aprobar (sin FK, como Mention).
+  approverId    String
+  round         DateTime
+  /// APPROVED | CHANGES_REQUESTED | REJECTED; null mientras está pendiente.
+  decision      String?
+  comment       String?
+  decidedAt     DateTime?
+  /// Lo aprobó quien también la envió (solo si el workspace lo permite).
+  selfApproved  Boolean   @default(false)
+  /// Quién envió a revisión en esta ronda (membresía).
+  submittedById String?
+  /// El texto de la página tal como se envió en esta ronda (para ver qué cambió desde su revisión).
+  snapshot      Json?
+  createdAt     DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, version, approverId, round])
+  @@index([workspaceId, approverId, decision])
+}
+
+/// Quién debe leer una versión de un documento controlado: un departamento (con o sin subáreas) o una
+/// persona. Los dos únicos parciales (por departamento y por persona) están en la migración.
+model ReadRequirement {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  nodeId          String
+  version         Int
+  departmentId    String?
+  /// Membresía (sin FK, como Mention).
+  membershipId    String?
+  includeSubareas Boolean   @default(false)
+  dueAt           DateTime?
+  createdById     String
+  createdAt       DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, nodeId, version])
+}
+
+/// «Leí y comprendo»: una por persona y versión.
+model ReadAcknowledgment {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  nodeId       String
+  version      Int
+  membershipId String
+  readAt       DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, version, membershipId])
+  @@index([workspaceId, membershipId])
+}
+
+/// Último paso de cada persona por cada documento (páginas y archivos): solo la última visita, y se
+/// conservan las 50 más recientes por persona. Es privado: nadie lee las visitas de otra persona.
+model DocumentVisit {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  /// Membresía (sin FK, como Mention).
+  membershipId String
+  nodeId       String
+  visitedAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([membershipId, nodeId])
+  @@index([workspaceId, membershipId, visitedAt])
+}
+
+/// Código QR de un documento: la URL corta /q/:token abre siempre la versión vigente. El token es
+/// aleatorio y no lleva datos del documento. Público = sin sesión, solo ese documento, solo lectura.
+model QrCode {
+  id          String    @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  token       String    @unique
+  isPublic    Boolean   @default(false)
+  /// Membresía de quien lo generó (sin FK, como Mention).
+  createdById String
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  /// Veces que se abrió. Contador a secas: no guarda quién ni desde dónde.
+  scans       Int       @default(0)
+  lastScanAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, nodeId, createdAt])
+}
+
+/// Texto extraído de un PDF o DOCX subido (para la búsqueda). Una fila por versión del archivo.
+model FileText {
+  id          String   @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  version     Int
+  text        String
+  /// OK | EMPTY (sin texto, por ejemplo un escaneo) | FAILED
+  status      String   @default("OK")
+  extractedAt DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, version])
+  @@index([workspaceId, nodeId])
+}
+
+/// Remitente de email propio de la empresa (una fila por workspace). La contraseña SMTP va cifrada
+/// (AES-256-GCM, el workspaceId como dato autenticado) y no sale nunca por la API. Para activarlo hace
+/// falta una prueba aprobada de esta misma configuración (`testedFingerprint`).
+model WorkspaceEmail {
+  id                  String       @id @default(cuid())
+  workspaceId         String       @unique
+  mode                EmailMode    @default(SMTP)
+  status              EmailStatus  @default(DRAFT)
+  fromName            String?
+  fromEmail           String?
+  replyTo             String?
+  smtpHost            String?
+  smtpPort            Int?
+  smtpSecurity        SmtpSecurity @default(STARTTLS)
+  smtpUser            String?
+  /// `v1:iv:tag:texto` en base64; null = sin contraseña.
+  smtpPassEnc         String?
+  /// Huella de la configuración que pasó la prueba y cuándo.
+  testedFingerprint   String?
+  testedAt            DateTime?
+  lastError           String?
+  lastErrorAt         DateTime?
+  /// Fallos de envío seguidos con el SMTP propio (3 lo desactivan).
+  consecutiveFailures Int          @default(0)
+  lastFallbackAlertAt DateTime?
+  /// Fase B: dominio verificado por el proveedor de email.
+  domain              String?
+  domainProviderRef   String?
+  domainStatus        String?
+  domainRecords       Json?
+  domainVerifiedAt    DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// Fragmentos de la versión vigente para el asistente Bian (búsqueda y citas). Solo texto: sin
+/// embeddings por ahora (pgvector se aprueba junto con ellos). `tsv` es una columna generada (la crea
+/// la migración) y `textNorm` también: el `@default(dbgenerated())` solo le dice a Prisma que la
+/// base les pone el valor, para que `migrate dev` no intente cambiarlas (Postgres no lo permite).
+/// Nunca se escriben desde Prisma.
+model ContentChunk {
+  id          String                   @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  /// Versión del documento controlado a la que pertenece; null en páginas y archivos sin control.
+  version     Int?
+  seq         Int
+  /// Encabezado de la sección (ancla para el enlace al fragmento); null si no hay.
+  heading     String?
+  text        String
+  contentHash String
+  tokens      Int
+  tsv         Unsupported("tsvector")? @default(dbgenerated())
+  /// Texto sin acentos y en minúsculas (columna generada) para la búsqueda por trigramas.
+  textNorm    String?                  @default(dbgenerated())
+  createdAt   DateTime                 @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, seq])
+  @@index([workspaceId, nodeId])
+  @@index([tsv], type: Gin)
+}
+
+/// Consultas a Bian por mes calendario (UTC); el total lo fija la empresa (`aiQueriesPerMonth` de Workspace.limits).
+model UsageCounter {
+  workspaceId String
+  periodStart DateTime
+  aiQueries   Int      @default(0)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, periodStart])
+}
+
+/// Consultas a Bian por persona y período (además del total de la empresa). Solo cantidades.
+/// `membershipId` sin FK, como Mention: la baja de la persona no bloquea.
+model UsageCounterMember {
+  workspaceId  String
+  membershipId String
+  periodStart  DateTime
+  aiQueries    Int      @default(0)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, periodStart])
+  @@index([workspaceId, periodStart])
+}
+
+enum BianLimitScope {
+  GENERAL
+  DEPARTMENT
+  PERSON
+}
+
+enum BianLimitMode {
+  /// Un número de consultas por mes.
+  LIMIT
+  UNLIMITED
+  /// Sin acceso a Bian (solo en excepciones por persona).
+  BLOCKED
+}
+
+/// Límite mensual de consultas a Bian por persona: uno general, excepciones por departamento (por
+/// cada persona de ese departamento) y por persona. Precedencia: persona > departamento > general,
+/// siempre dentro del total de la empresa. `departmentId` y `membershipId` sin FK, como Mention.
+model BianLimit {
+  id           String         @id @default(cuid())
+  workspaceId  String
+  scope        BianLimitScope
+  departmentId String?
+  membershipId String?
+  mode         BianLimitMode
+  /// Solo con LIMIT.
+  limit        Int?
+  updatedAt    DateTime       @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, scope])
+}
+
+/// Nodos cuyo contenido cambió y hay que reindexar para Bian. Lo llenan triggers de la base (sin tocar el
+/// código de cada módulo) y lo vacía el job `bian-index` del worker. Una fila por nodo; sin FK a propósito
+/// (el nodo puede haberse borrado cuando el job llega).
+model ContentChunkDirty {
+  nodeId      String   @id
+  workspaceId String
+  markedAt    DateTime @default(now())
+
+  @@index([markedAt])
+}
+
+/// Valoración de una respuesta de Bian (👍/👎). Guarda solo la valoración, la fecha y los ids de los
+/// documentos citados: nunca la pregunta, la respuesta ni quién la dio.
+model BianFeedback {
+  id          String   @id @default(cuid())
+  workspaceId String
+  /// UP | DOWN
+  rating      String
+  /// Solo con DOWN y opcional: INCORRECT | INCOMPLETE | WRONG_SOURCE | OTHER.
+  reason      String?
+  nodeIds     String[]
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+}
+
+// ─── Plugins (docs/spec/plugins.md) ─────────────────────────────────────────
+
+/// Licencia firmada (Ed25519) que activa plugins en el workspace. Se verifica sin conexión en cada
+/// uso: acá solo se guarda el token tal como se cargó.
+model WorkspaceLicense {
+  id           String   @id @default(cuid())
+  workspaceId  String   @unique
+  token        String
+  /// Membresía que la cargó (null si se borró).
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// Ajustes de un plugin en un workspace (clave → JSON). Se conservan aunque el plugin se desactive.
+model PluginSetting {
+  id          String   @id @default(cuid())
+  workspaceId String
+  pluginId    String
+  key         String
+  value       Json
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, pluginId, key])
+}

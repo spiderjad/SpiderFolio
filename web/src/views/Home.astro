@@ -1,0 +1,431 @@
+---
+// Portada: héroe con el comando de instalación y una captura real, cómo funciona (diagramas animados),
+// funciones, planta, comparación, código abierto, plugins, precios y FAQ.
+import Faq from "../components/Faq.astro";
+import Icon from "../components/Icon.astro";
+import PriceTag from "../components/PriceTag.astro";
+import Shot from "../components/Shot.astro";
+import BianChat from "../components/landing/BianChat.astro";
+import Lifecycle from "../components/landing/Lifecycle.astro";
+import Permissions from "../components/landing/Permissions.astro";
+import QrFloor from "../components/landing/QrFloor.astro";
+import { isPriceId, PLUGIN_FROM, PRICES } from "../config/pricing.ts";
+import { CONTACT_EMAIL, REPO_URL, SITE, SITE_URL } from "../config/site.ts";
+import { LOCALE_INFO, pageAlternates, pagePath, texts, type Locale } from "../i18n/index.ts";
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+import { formatStars, githubStars } from "../lib/github.ts";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const all = texts(locale);
+const t = all.home;
+const l = all.oss.landing;
+const oss = all.oss.openSource;
+const stars = await githubStars();
+const starsText = stars === null ? null : formatStars(stars, LOCALE_INFO[locale].hreflang);
+const tones: Record<string, string> = {
+  success: "bg-success-soft text-success-soft-foreground",
+  warning: "bg-warning-soft text-warning-soft-foreground",
+  primary: "bg-primary-soft text-primary-soft-foreground",
+  info: "bg-muted text-foreground",
+};
+const installHref = pagePath("install", locale);
+const pluginsHref = pagePath("plugins", locale);
+const mailto = (subject: string): string | null =>
+  CONTACT_EMAIL === null ? null : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
+const diagrams = [
+  { id: "lifecycle", icon: "file-check", ...l.lifecycle },
+  { id: "permissions", icon: "users", ...l.permissions },
+  { id: "qr", icon: "qr", ...l.qr },
+  { id: "bian", icon: "sparkles", ...l.bian },
+] as const;
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: SITE.name,
+    url: SITE_URL,
+    inLanguage: locale,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Linux (Docker)",
+    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    codeRepository: REPO_URL,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+    description: t.subtitle,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    inLanguage: locale,
+    mainEntity: all.faq.items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  },
+];
+const eyebrow = "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground";
+const h2 = "mt-3 max-w-3xl font-display text-4xl tracking-tight md:text-5xl";
+const primaryButton =
+  "inline-flex h-12 items-center gap-2 rounded-full bg-foreground px-7 font-medium text-background transition-[opacity,transform] hover:-translate-y-0.5 hover:opacity-90";
+const secondaryButton =
+  "inline-flex h-12 items-center gap-2 rounded-full border bg-background px-6 font-medium transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-muted";
+---
+
+<MarketingLayout
+  locale={locale}
+  title={SITE.name}
+  description={t.subtitle}
+  alternates={pageAlternates("home")}
+  jsonLd={jsonLd}
+>
+  <section class="hero-glow overflow-hidden">
+    <div class="hero-stagger mx-auto max-w-6xl px-4 pb-10 pt-16 text-center sm:px-6 md:pt-24">
+      <p class={eyebrow}>{t.eyebrow}</p>
+      <h1 class="mx-auto mt-4 max-w-4xl font-display text-5xl tracking-tight md:text-7xl">
+        {t.title}
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">{t.subtitle}</p>
+      <div class="mx-auto mt-8 flex max-w-3xl items-center gap-2 rounded-2xl border bg-background p-2 pl-4 text-left shadow-card">
+        <Icon name="terminal" size={18} class="shrink-0 text-muted-foreground" />
+        <code
+          class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap py-2 font-mono text-sm"
+          aria-label={l.commandLabel}>{l.command}</code
+        >
+        <button
+          type="button"
+          data-copy={l.command}
+          data-copied={l.copied}
+          class="copy inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-muted px-4 text-sm font-medium transition-colors hover:bg-primary-soft hover:text-primary-soft-foreground"
+        >
+          <Icon name="copy" size={16} />
+          <span data-copy-label>{l.copy}</span>
+        </button>
+      </div>
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <a href={REPO_URL} class={secondaryButton}>
+          <Icon name="github" size={18} />
+          {all.cta.github}
+          {
+            starsText !== null && (
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-sm tabular-nums"
+                aria-label={l.stars(starsText)}
+              >
+                <Icon name="star" size={14} class="text-warning" />
+                {starsText}
+              </span>
+            )
+          }
+        </a>
+        <a href={installHref} class={primaryButton}>
+          {all.cta.install}
+          <Icon name="arrow-right" size={18} />
+        </a>
+      </div>
+      <p class="mt-4 text-sm text-muted-foreground">{t.installNote}</p>
+    </div>
+    <div class="hero-shot-wrap mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+      <div class="hero-shot">
+        <Shot name="inicio" alt={l.heroAlt} eager />
+      </div>
+    </div>
+  </section>
+
+  <section id={t.featuresAnchor} class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <p class={eyebrow}>{t.featuresEyebrow}</p>
+    <h2 class={h2}>{t.featuresTitle}</h2>
+    <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {
+        t.features.map((feature) => (
+          <article class="lift reveal rounded-2xl border bg-background p-6">
+            <span
+              class:list={[
+                "inline-flex size-11 items-center justify-center rounded-lg",
+                tones[feature.tone],
+              ]}
+            >
+              <Icon name={feature.icon} />
+            </span>
+            <h3 class="mt-5 text-lg font-semibold">{feature.title}</h3>
+            <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
+              {feature.items.map((item) => (
+                <li class="flex gap-3">
+                  <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="border-y bg-surface">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <p class={eyebrow}>{l.howEyebrow}</p>
+      <h2 class={h2}>{l.howTitle}</h2>
+      <div class="mt-12 grid gap-6 lg:grid-cols-2">
+        {
+          diagrams.map((diagram) => (
+            <article class="lift reveal grid content-start gap-6 rounded-2xl border bg-background p-6 sm:p-8">
+              <div>
+                <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
+                  <Icon name={diagram.icon} />
+                </span>
+                <h3 class="mt-5 text-xl font-semibold">{diagram.title}</h3>
+                <p class="mt-2 text-muted-foreground">{diagram.text}</p>
+              </div>
+              <div class="rounded-xl bg-surface p-5">
+                {diagram.id === "lifecycle" && <Lifecycle t={l.lifecycle} />}
+                {diagram.id === "permissions" && <Permissions t={l.permissions} />}
+                {diagram.id === "qr" && <QrFloor t={l.qr} />}
+                {diagram.id === "bian" && <BianChat t={l.bian} />}
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <p class={eyebrow}>{t.plant.eyebrow}</p>
+    <h2 class={h2}>{t.plant.title}</h2>
+    <div class="mt-10 grid gap-6 md:grid-cols-3">
+      {
+        t.plant.items.map((item) => (
+          <article class="lift reveal rounded-2xl border bg-background p-6">
+            <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Icon name={item.icon} />
+            </span>
+            <h3 class="mt-5 text-lg font-semibold">{item.title}</h3>
+            <p class="mt-2 text-sm text-muted-foreground">{item.text}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section id={t.why.anchor} class="border-y bg-surface">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <p class={eyebrow}>{t.why.eyebrow}</p>
+      <h2 class={h2}>{t.why.title}</h2>
+      <div class="mt-10 grid gap-6 md:grid-cols-2">
+        <article class="reveal rounded-2xl border bg-background p-7">
+          <h3 class="text-lg font-semibold">{t.why.before.title}</h3>
+          <ul class="mt-4 space-y-3 text-muted-foreground">
+            {
+              t.why.before.items.map((item) => (
+                <li class="flex gap-3">
+                  <Icon name="x" size={18} class="mt-1 shrink-0 text-danger" />
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </article>
+        <article class="lift reveal rounded-2xl border-2 border-primary bg-background p-7">
+          <h3 class="text-lg font-semibold">{t.why.after.title}</h3>
+          <ul class="mt-4 space-y-3">
+            {
+              t.why.after.items.map((item) => (
+                <li class="flex gap-3">
+                  <Icon name="check" size={18} class="mt-1 shrink-0 text-primary" />
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <p class={eyebrow}>{oss.eyebrow}</p>
+    <h2 class={h2}>{oss.title}</h2>
+    <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {
+        oss.items.map((item) => (
+          <article class="lift reveal rounded-2xl border bg-background p-6">
+            <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
+              <Icon name={item.icon} />
+            </span>
+            <h3 class="mt-5 text-lg font-semibold">{item.title}</h3>
+            <p class="mt-2 text-sm text-muted-foreground">{item.text}</p>
+          </article>
+        ))
+      }
+    </div>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href={REPO_URL} class={secondaryButton}>
+        <Icon name="github" size={18} />
+        {all.cta.github}
+      </a>
+      <a href={installHref} class={secondaryButton}>
+        {all.cta.install}
+        <Icon name="arrow-right" size={18} />
+      </a>
+    </div>
+  </section>
+
+  <section class="border-y bg-surface">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <p class={eyebrow}>{all.oss.plugins.title}</p>
+      <h2 class={h2}>{all.oss.plugins.subtitle}</h2>
+      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {
+          all.oss.plugins.items.map((plugin) => (
+            <a
+              href={`${pluginsHref}#${plugin.id}`}
+              class="lift reveal flex flex-col gap-3 rounded-2xl border bg-background p-5"
+            >
+              <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
+                <Icon name={plugin.icon} size={20} />
+              </span>
+              <span class="font-semibold leading-snug">{plugin.title}</span>
+              <span
+                class:list={[
+                  "mt-auto w-fit rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  plugin.available
+                    ? "bg-success-soft text-success-soft-foreground"
+                    : "bg-muted text-muted-foreground",
+                ]}
+              >
+                {plugin.available ? all.oss.plugins.status.available : all.oss.plugins.status.soon}
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section id={locale === "es" ? "precios" : "pricing"} class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <p class={eyebrow}>{l.pricing.eyebrow}</p>
+    <h2 class={h2}>{l.pricing.title}</h2>
+    <p class="mt-4 max-w-2xl text-lg text-muted-foreground">{l.pricing.subtitle}</p>
+    <p class="mt-3 max-w-2xl text-sm text-muted-foreground">{l.pricing.note}</p>
+    <div class="mt-10 grid gap-6 lg:grid-cols-3">
+      {
+        l.pricing.plans.map((plan) => {
+          const featured = plan.id === "enterprise";
+          const href =
+            plan.id === "community"
+              ? installHref
+              : plan.id === "plugin"
+                ? pluginsHref
+                : mailto(l.pricing.subject(plan.name));
+          const price =
+            plan.id === "community" ? null : plan.id === "plugin" ? PLUGIN_FROM : PRICES.enterprise;
+          return (
+            <article
+              class:list={[
+                "lift reveal relative flex flex-col rounded-2xl bg-background p-7",
+                featured ? "border-2 border-primary" : "border",
+              ]}
+            >
+              {featured && (
+                <span class="absolute -top-3 left-7 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-primary-foreground">
+                  {l.pricing.popular}
+                </span>
+              )}
+              <h3 class="text-lg font-semibold">{plan.name}</h3>
+              <div class="mt-4 min-h-24">
+                {price === null ? (
+                  <p class="font-display text-5xl tracking-tight">{l.pricing.free}</p>
+                ) : (
+                  <PriceTag locale={locale} price={price} />
+                )}
+              </div>
+              <p class="mt-2 text-sm text-muted-foreground">{plan.note}</p>
+              <ul class="mt-6 flex-1 space-y-3 text-sm">
+                {plan.items.map((item) => (
+                  <li class="flex gap-3">
+                    <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {href !== null && (
+                <a
+                  href={href}
+                  class:list={[
+                    "mt-8 justify-center",
+                    featured || plan.id === "community" ? primaryButton : secondaryButton,
+                  ]}
+                >
+                  {plan.cta}
+                </a>
+              )}
+            </article>
+          );
+        })
+      }
+    </div>
+    <div class="reveal mt-10 rounded-2xl border bg-surface p-7">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 class="text-lg font-semibold">{l.pricing.servicesTitle}</h3>
+        <p class="text-sm text-muted-foreground">{l.pricing.servicesText}</p>
+      </div>
+      <ul class="mt-5 grid gap-3 md:grid-cols-2">
+        {
+          l.pricing.services.map((service) => {
+            const href = mailto(l.pricing.subject(service.name));
+            return (
+              <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3">
+                <span class="font-medium">{service.name}</span>
+                <span class="flex items-center gap-4 text-sm">
+                  {isPriceId(service.id) && (
+                    <PriceTag locale={locale} price={PRICES[service.id]} size="sm" badge={false} />
+                  )}
+                  {href !== null && (
+                    <a href={href} class="font-medium text-primary hover:underline">
+                      {l.pricing.contact}
+                    </a>
+                  )}
+                </span>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="border-t bg-surface">
+    <div class="mx-auto max-w-3xl px-4 py-20 sm:px-6">
+      <h2 class="font-display text-4xl tracking-tight">{all.faq.title}</h2>
+      <div class="mt-8"><Faq locale={locale} limit={5} /></div>
+      <a href={pagePath("faq", locale)} class="mt-6 inline-flex items-center gap-2 font-medium text-primary">
+        {all.faq.title}
+        <Icon name="arrow-right" size={18} />
+      </a>
+    </div>
+  </section>
+
+  <section class="hero-glow border-t">
+    <div class="reveal mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
+      <h2 class="font-display text-4xl tracking-tight md:text-5xl">{t.finalTitle}</h2>
+      <p class="mt-4 text-lg text-muted-foreground">{t.finalText}</p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href={installHref} class={primaryButton}>
+          {all.cta.install}
+          <Icon name="arrow-right" size={18} />
+        </a>
+        <a href={REPO_URL} class={secondaryButton}>
+          <Icon name="github" size={18} />
+          {all.cta.github}
+        </a>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<script>
+  import "../scripts/animate.ts";
+</script>

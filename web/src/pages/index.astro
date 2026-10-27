@@ -1,0 +1,38 @@
+---
+// Portada (/): elige el idioma. /lang-redirect.js (externo por la CSP) lleva al idioma guardado o al
+// del navegador; sin JavaScript se ven los enlaces a cada idioma. noindex: los buscadores indexan
+// /es y /en (x-default apunta al idioma por defecto).
+import { SITE } from "../config/site.ts";
+import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, pagePath, texts } from "../i18n/index.ts";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout locale={DEFAULT_LOCALE} title={SITE.name} description={texts(DEFAULT_LOCALE).home.subtitle} noindex>
+  <Fragment slot="head">
+    <meta name="spiderfolio-locales" content={LOCALES.join(" ")} data-default={DEFAULT_LOCALE} />
+    <script is:inline src="/lang-redirect.js"></script>
+  </Fragment>
+  <main class="hero-glow flex min-h-screen items-center justify-center px-4">
+    <div class="w-full max-w-md text-center">
+      <img src="/favicon.svg" alt="" width="56" height="56" class="mx-auto size-14" />
+      <p class="mt-4 text-2xl font-semibold tracking-tight">{SITE.name}</p>
+      <ul class="mt-8 grid gap-3">
+        {
+          LOCALES.map((locale) => (
+            <li lang={LOCALE_INFO[locale].hreflang}>
+              <p class="text-sm text-muted-foreground">{texts(locale).chooser.title}</p>
+              <a
+                href={pagePath("home", locale)}
+                hreflang={LOCALE_INFO[locale].hreflang}
+                data-locale-choice={locale}
+                class="mt-2 flex h-12 items-center justify-center rounded-full border bg-background font-medium transition-colors hover:bg-muted"
+              >
+                {texts(locale).chooser.action}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,87 @@
+/*
+ * Generado a partir de src/tokens.ts. No editar a mano: cambiá src/tokens.ts
+ * y corré npm run tokens:css -w @spiderfolio/tailwind-preset.
+ */
+
+:root {
+  --background: 0 0% 100%;
+  --surface: 240 5% 98%;
+  --foreground: 240 10% 8%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 44%;
+  --border: 240 6% 91%;
+  --input: 240 6% 88%;
+  --ring: 262 83% 58%;
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 262 100% 97%;
+  --primary-soft-foreground: 263 70% 45%;
+  --success: 160 84% 39%;
+  --success-foreground: 164 86% 10%;
+  --success-soft: 152 76% 95%;
+  --success-soft-foreground: 164 86% 22%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 26 90% 12%;
+  --warning-soft: 48 100% 94%;
+  --warning-soft-foreground: 22 78% 26%;
+  --danger: 0 72% 51%;
+  --danger-foreground: 0 0% 100%;
+  --danger-soft: 0 86% 97%;
+  --danger-soft-foreground: 0 70% 35%;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 240 10% 6%;
+  --surface: 240 8% 8%;
+  --foreground: 0 0% 96%;
+  --muted: 240 6% 12%;
+  --muted-foreground: 240 5% 64%;
+  --border: 240 5% 16%;
+  --input: 240 5% 20%;
+  --ring: 263 85% 68%;
+  --primary: 263 85% 68%;
+  --primary-foreground: 240 10% 6%;
+  --primary-soft: 263 40% 16%;
+  --primary-soft-foreground: 263 90% 80%;
+  --success: 158 64% 52%;
+  --success-foreground: 160 84% 6%;
+  --success-soft: 160 40% 12%;
+  --success-soft-foreground: 156 72% 67%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 26 90% 10%;
+  --warning-soft: 38 50% 14%;
+  --warning-soft-foreground: 46 97% 65%;
+  --danger: 0 84% 60%;
+  --danger-foreground: 240 10% 6%;
+  --danger-soft: 0 40% 14%;
+  --danger-soft-foreground: 0 94% 82%;
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-background: hsl(var(--background));
+  --color-surface: hsl(var(--surface));
+  --color-foreground: hsl(var(--foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-soft: hsl(var(--primary-soft));
+  --color-primary-soft-foreground: hsl(var(--primary-soft-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-soft: hsl(var(--success-soft));
+  --color-success-soft-foreground: hsl(var(--success-soft-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-soft: hsl(var(--warning-soft));
+  --color-warning-soft-foreground: hsl(var(--warning-soft-foreground));
+  --color-danger: hsl(var(--danger));
+  --color-danger-foreground: hsl(var(--danger-foreground));
+  --color-danger-soft: hsl(var(--danger-soft));
+  --color-danger-soft-foreground: hsl(var(--danger-soft-foreground));
+}

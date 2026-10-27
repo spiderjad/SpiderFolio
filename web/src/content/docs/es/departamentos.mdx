@@ -1,0 +1,110 @@
+---
+title: "Departamentos"
+description: "La estructura de tu empresa: áreas y subáreas, sus jefes y subjefes, quién pertenece a cada una y qué puede hacer cada cargo."
+group: administracion
+order: 3
+icon: layout
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+El **rol** define qué puede administrar una persona; el **departamento**, qué contenido ve. Por eso el acceso a
+espacios y documentos se da a departamentos y no persona por persona: cuando alguien cambia de área, sus
+accesos cambian solos.
+
+Los departamentos forman un árbol: **Finanzas** puede tener las subáreas **Contabilidad** y **Tesorería**, y
+cada subárea las suyas, sin límite de niveles.
+
+## Dónde está
+
+- **Propietario y administradores** (capacidad **Gestionar departamentos**): en **Administración ›
+  Departamentos**, con todos los departamentos.
+- **Jefes y subjefes**: en **Administración › Departamentos**, solo con los que lideran y sus subáreas.
+  Fuera de su alcance, un departamento no existe para ellos.
+- **Miembros con plaza completa**: en el menú principal, junto a **Archivos**, para consultar la estructura
+  sin cambiar nada. Lectores e invitados no la ven.
+
+<Shot name="departamentos" alt="La pantalla Departamentos, con el árbol de áreas a la izquierda y el detalle del departamento elegido" />
+
+## Dos vistas
+
+A la derecha del título eliges la **Vista**:
+
+- **Áreas**: el árbol a la izquierda y el departamento elegido a la derecha. En el móvil, el árbol queda
+  arriba y el detalle debajo.
+- **Organigrama**: toda la empresa como un árbol, con buscador. Al pulsar un departamento vuelves a
+  **Áreas** con ese departamento abierto.
+
+## El árbol
+
+- Pulsa el **nombre** para abrir ese departamento. La **flecha** solo abre o cierra la rama.
+- Cada fila muestra cuántas personas tiene. Arriba hay un buscador y, si puedes gestionar departamentos,
+  **Nuevo departamento**.
+- Con el teclado: ↑ ↓ recorren, → abre, ← cierra o sube al padre, Enter elige.
+- El departamento elegido queda en la dirección de la página: Atrás, Adelante y los enlaces directos
+  funcionan.
+
+## El detalle
+
+Arriba ves la ruta (por ejemplo **Finanzas › Contabilidad**, cada nivel es un enlace), el nombre, el **Jefe**
+(★) y los **Subjefes** (☆). Si es un área que lideras, verás la etiqueta **Tu área**. Hay dos pestañas:
+
+- **Personas**: quién pertenece. Cada fila tiene el selector de cargo (**Jefe**, **Subjefe**, **Miembro**),
+  que se guarda al instante, y un menú con **Quitar del departamento**. **Agregar personas** busca en el
+  directorio de la empresa.
+- **Subáreas**: las subáreas directas, con su jefe y su cantidad de personas. Pulsa una para abrirla. Con
+  **Gestionar departamentos** tienes además **Nueva subárea**.
+
+## Jefes y subjefes
+
+Cada departamento tiene como mucho un **jefe** y puede tener varios **subjefes**. El cargo es distinto del
+rol: un miembro puede ser jefe de su área, y un administrador también puede ser jefe (eso solo ordena el
+organigrama, porque ya gestiona toda la empresa).
+
+El cargo da alcance sobre el departamento **y todas sus subáreas**, a cualquier profundidad. Si alguien deja
+de ser jefe o subjefe, pierde ese alcance al instante.
+
+Lo que pueden hacer, siempre dentro de su área:
+
+| | Jefe | Subjefe |
+|---|---|---|
+| Ver a su gente en **Mi equipo** (email, plaza, estado, último acceso) | Sí | Sí |
+| Agregar, quitar y mover personas entre sus áreas | Sí | Sí |
+| Nombrar o relevar subjefes | Sí | No |
+| Invitar personas a su área como miembro o lector | Sí, si el propietario lo permite | Sí, si el propietario lo permite |
+| Aprobar los documentos controlados de su área | Sí | Sí |
+| Gestionar los espacios de su departamento | Sí | Sí |
+
+Lo que no pueden hacer: cambiar roles, plazas o estado de nadie, nombrar jefes, ni actuar sobre
+administradores, el propietario, otros jefes o sobre sí mismos.
+
+Para ejercer el cargo hace falta **plaza completa**. Un lector puede figurar como jefe, pero el cargo no le
+da alcance; la **Revisión de la estructura** (en **Miembros**, vista **Organigrama**) te lo marca.
+
+Nombrar a un jefe nuevo convierte al anterior en miembro del departamento. Solo el propietario y los
+administradores nombran jefes.
+
+## Crear, editar y borrar
+
+Necesitas **Gestionar departamentos**.
+
+1. Pulsa **Nuevo departamento** (o **Nueva subárea** desde la pestaña **Subáreas**).
+2. Escribe el **Nombre** (único en la empresa) y, si quieres, la **Descripción** y el **Color**.
+3. En **Dentro de**, elige el departamento padre, o **Ninguno (nivel principal)**.
+4. Elige el **Jefe**, si ya lo sabes.
+5. Pulsa **Crear**.
+
+El menú de la cabecera del detalle (los tres puntos) tiene **Editar** (también para moverlo dentro de otro
+departamento), **Crear su espacio** y **Borrar**. Antes de borrar te decimos cuántas personas dejan de
+pertenecer a él y pierden los accesos que les daba; sus subdepartamentos suben un nivel. No se puede deshacer.
+
+Cada cambio de departamento, de pertenencia y de cargo queda en el registro de auditoría.
+
+## Relacionado
+
+- [Miembros](/es/docs/miembros)
+- [Invitar personas](/es/docs/invitar-personas)
+- [Roles y permisos](/es/docs/roles-y-permisos)
+- [Archivos](/es/docs/archivos)

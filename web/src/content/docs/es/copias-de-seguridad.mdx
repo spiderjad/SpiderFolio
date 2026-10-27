@@ -1,0 +1,101 @@
+---
+title: "Copias de seguridad"
+description: "Haz copias con backup.sh, prográmalas con cron, llévalas fuera del servidor y restaura con restore.sh."
+group: autoalojamiento
+order: 5
+icon: clock
+---
+
+Una copia completa de SpiderFolio tiene tres partes:
+
+- **La base de datos**: páginas, permisos, historial, auditoría… todo lo que no es un archivo.
+- **Los archivos**: el volumen `files` (o tu bucket, si usas S3).
+- **El `.env`**: sin él no se pueden descifrar los secretos de la verificación en dos pasos ni las
+  contraseñas SMTP propias de cada empresa.
+
+`deploy/backup.sh` guarda las tres y `deploy/restore.sh` las recupera.
+
+## Hacer una copia
+
+Desde la carpeta `deploy/` (donde está `compose.yaml`), con los servicios en marcha:
+
+```sh
+./backup.sh /var/backups/spiderfolio
+```
+
+Crea una carpeta con la fecha y la hora en UTC (por ejemplo `20261026-033000/`) con:
+
+| Archivo | Qué contiene |
+| --- | --- |
+| `db.dump` | La base completa (`pg_dump` en formato custom) |
+| `files.tar.gz` | El contenido del volumen `files` |
+| `env` | Una copia de `.env`, con permisos `600` |
+
+- Sin carpeta de destino, usa `./backups`.
+- Conserva las **últimas 14 copias** y borra las más viejas. Para cambiarlo: `KEEP=30 ./backup.sh …`.
+- La app sigue funcionando mientras se hace la copia.
+
+## Programar una copia diaria
+
+Con `crontab -e`, en el usuario que maneja Docker:
+
+```cron
+30 3 * * * cd /opt/spiderfolio/deploy && ./backup.sh /var/backups/spiderfolio >> /var/log/spiderfolio-backup.log 2>&1
+```
+
+Cambia `/opt/spiderfolio/deploy` por la carpeta donde clonaste el proyecto. Revisa el log de vez en
+cuando: cada copia termina con «Copia lista en …».
+
+## Llevarlas fuera del servidor
+
+Una copia en el mismo disco no te protege si pierdes el servidor. Cópialas a otro lugar: otro servidor,
+otro proveedor o un bucket. Por ejemplo, después de la copia:
+
+```cron
+0 4 * * * rsync -a --delete /var/backups/spiderfolio/ copias@otro-servidor:/copias/spiderfolio/
+```
+
+O con `rclone` a un bucket. Las copias llevan el `.env` con todos los secretos: guárdalas cifradas o en
+un destino con acceso restringido.
+
+## Si usas S3
+
+Con `STORAGE_DRIVER=s3`, `files.tar.gz` queda vacío: los archivos no están en el servidor. Protege el
+bucket con las herramientas del proveedor: activa el **versionado** o una réplica en otro bucket. La base
+y el `.env` se siguen copiando con `backup.sh`.
+
+## Restaurar
+
+**La restauración reemplaza la base y los archivos actuales** por los de la copia.
+
+```sh
+cd /opt/spiderfolio/deploy
+docker compose up -d                                  # los servicios tienen que existir
+./restore.sh /var/backups/spiderfolio/20261026-033000
+```
+
+El script te pide que escribas `RESTAURAR` para seguir. Después detiene la app y el worker, recrea la
+base, reemplaza los archivos y vuelve a arrancar todo. Al terminar, entra a la app y revisa el registro
+de auditoría.
+
+### En un servidor nuevo
+
+1. Instala Docker y clona el proyecto como en [Instalar en tu servidor](/es/docs/instalar).
+2. Copia el `env` de la copia como `deploy/.env` (`cp …/env .env && chmod 600 .env`).
+3. Arranca los servicios: `docker compose up -d` (con los mismos perfiles que usabas).
+4. Restaura: `./restore.sh /ruta/de/la/copia`.
+5. Si cambió la dirección del servidor, actualiza el DNS y, si hace falta, `APP_URL` y `DOMAIN`.
+
+Si la copia es de una versión anterior, la app aplica las migraciones pendientes al arrancar y la pone
+al día sola.
+
+## Prueba la restauración
+
+Restaura una copia en un equipo aparte de vez en cuando, por ejemplo una vez al mes. Una copia que nunca
+se restauró no es una copia.
+
+## Relacionado
+
+- [Actualizaciones](/es/docs/actualizaciones): haz siempre una copia antes de actualizar.
+- [Almacenamiento](/es/docs/almacenamiento)
+- [Solución de problemas](/es/docs/solucion-de-problemas)

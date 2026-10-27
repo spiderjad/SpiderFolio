@@ -1,0 +1,192 @@
+---
+title: "Seguridad y verificación en dos pasos"
+description: "Las reglas de seguridad de la empresa, tu verificación en dos pasos, los códigos de recuperación, los dispositivos de confianza, las sesiones y el registro de auditoría."
+group: seguridad
+order: 1
+icon: lock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+La seguridad en SpiderFolio tiene tres partes:
+
+- **Las reglas de la empresa**, en **Administración › Seguridad**: quién ve a quién, qué pueden hacer los jefes
+  y cómo se aprueban los documentos.
+- **La seguridad de tu cuenta**, en **Mi perfil**: la verificación en dos pasos y tus sesiones abiertas.
+- **El registro de auditoría**: quién hizo qué y cuándo.
+
+Exigir la verificación en dos pasos a toda la empresa y limitar los dominios de email son parte del plugin
+**Políticas de seguridad avanzadas** (más abajo).
+
+## Las reglas de la empresa
+
+Están en **Administración › Seguridad**, pestaña **General**, y son **solo del propietario**. (Los
+administradores con **Gestionar la seguridad** ven solo la pestaña **Email**: mira
+[Email (SMTP)](/es/docs/email-smtp).) Cada cambio se guarda al instante y queda en el registro de auditoría.
+
+<Shot name="seguridad" alt="Administración › Seguridad, pestaña General, con el idioma, la visibilidad de personas, los jefes y los documentos controlados" />
+
+### Idioma de la empresa
+
+El **Idioma por defecto** lo ven quienes no eligieron uno en **Mi perfil**. Se usa también en las invitaciones
+y en los PDF de los documentos controlados.
+
+### Visibilidad de personas
+
+Decide a quién ven los miembros en el directorio de personas (al mencionar y al compartir). En **Los miembros
+ven** eliges:
+
+- **Toda la empresa** (por defecto).
+- **Solo su departamento**: ven a las personas de sus departamentos y a los jefes de las demás áreas. Siempre
+  pueden compartir con un departamento por su nombre.
+
+El propietario, los administradores y los jefes siempre ven a toda la empresa. Los lectores y los invitados no
+ven el directorio.
+
+### Jefes y subjefes
+
+**Los jefes pueden invitar a su área** (activado por defecto): permite a jefes y subjefes invitar personas a sus
+departamentos, solo como miembro o lector. Mira [Invitar personas](/es/docs/invitar-personas).
+
+### Documentos controlados
+
+**Permitir autoaprobación** (desactivado por defecto). Desactivado, quien envía un documento a revisión no
+puede aprobarlo. Si lo activas, cada autoaprobación queda en la auditoría y en el historial como «aprobado por
+el propio autor».
+
+## Tu verificación en dos pasos
+
+Además de la contraseña, al entrar se te pide un código de 6 dígitos de una app de autenticación (Google
+Authenticator, Microsoft Authenticator u otra). Si alguien consigue tu contraseña, sin tu teléfono no entra.
+
+Está en **Mi perfil**: pulsa tu nombre, abajo en el menú lateral, y luego **Mi perfil**. La sección es
+**Verificación en dos pasos**.
+
+<Shot name="perfil" alt="Mi perfil, con la sección Verificación en dos pasos y las sesiones abiertas" />
+
+### Activarla
+
+1. En **Verificación en dos pasos**, pulsa **Activar**.
+2. Escanea el código QR con tu app de autenticación. Si no puedes escanearlo, pulsa **¿No puedes escanearlo?
+   Mostrar la clave** y escríbela en la app.
+3. Escribe el código de 6 dígitos que muestra la app y pulsa **Activar**.
+4. Aparecen **Tus códigos de recuperación**: 10 códigos que sirven para entrar si pierdes el teléfono. Cada uno
+   vale una sola vez. Pulsa **Copiar** o **Descargar**, guárdalos en un lugar seguro y pulsa **Ya los guardé**.
+   No se vuelven a mostrar.
+
+Desde entonces la sección dice **Activada**, desde cuándo y cuántos códigos de recuperación te quedan. Te
+avisamos por email cada vez que se activa o se desactiva.
+
+### Códigos de recuperación
+
+Si te quedan pocos, o crees que alguien los vio, pulsa **Generar códigos nuevos**. Los anteriores dejan de
+valer al instante.
+
+### Desactivarla
+
+Pulsa **Desactivar** y escribe tu **Contraseña** y un **Código de la app o de recuperación**. Tu cuenta queda
+protegida solo con la contraseña, y los códigos de recuperación y los dispositivos de confianza dejan de valer.
+Si tu empresa exige la verificación en dos pasos, al volver a entrar tendrás que activarla de nuevo.
+
+Las personas que entran con usuario y PIN (tablets de planta) no usan la verificación en dos pasos. Si ves «La
+verificación en dos pasos todavía no está disponible», a la instalación le falta `MFA_ENCRYPTION_KEY`: avisa a
+quien administra el servidor.
+
+### Al iniciar sesión
+
+Después de la contraseña, escribe el **Código** de tu app y pulsa **Verificar**. Si no tienes el teléfono,
+escribe uno de tus códigos de recuperación en el mismo campo.
+
+Si marcas **Recordar este dispositivo 30 días**, ese navegador queda como **dispositivo de confianza** y no te
+pide el código durante 30 días. Úsalo solo en tu propio equipo. Los dispositivos de confianza se borran al
+desactivar la verificación o cuando un administrador la reinicia.
+
+### Acciones que piden confirmar que eres tú
+
+Para lo más sensible te pedimos el código aunque ya hayas entrado, si no lo confirmaste en los últimos 10
+minutos: generar códigos nuevos, desactivar la verificación, cambiar tu email, cambiar la política de la
+empresa y reiniciar la verificación de otra persona. Verás **Confirma que eres tú**: escribe el código de la
+app (o uno de recuperación) y pulsa **Confirmar**.
+
+## Si alguien pierde el teléfono
+
+Si una persona perdió el teléfono y también sus códigos, un administrador puede reiniciar su verificación:
+
+1. En **Administración › Miembros**, abre el menú de la fila de esa persona.
+2. Pulsa **Reiniciar verificación en dos pasos** y confirma.
+
+Se borran su app vinculada, sus códigos de recuperación y sus dispositivos de confianza, y se cierran sus
+sesiones. La persona recibe un aviso por email y la configura de nuevo al entrar.
+
+Para hacerlo necesitas **Gestionar miembros** y tener **tu propia** verificación en dos pasos activa (si no,
+verás «Activa tu propia verificación en dos pasos para poder reiniciar la de otros»). No puedes reiniciar la
+tuya, y un administrador no puede reiniciar la de otro administrador ni la del propietario. Queda en el
+registro de auditoría.
+
+## Sesiones abiertas
+
+En **Mi perfil › Sesiones abiertas** ves dónde tienes la cuenta abierta, con la IP, desde cuándo y el último
+uso. La tuya dice **Esta sesión**. Pulsa **Cerrar sesión** en las que no reconozcas.
+
+- Al cambiar tu contraseña se cierran tus otras sesiones.
+- Un administrador con **Suspender miembros** puede **Cerrar sus sesiones** a cualquier persona desde
+  **Miembros**; se cierran también en otras empresas de esa cuenta.
+- Suspender a alguien le quita el acceso a la empresa al instante.
+
+## Exigir la verificación en dos pasos a toda la empresa
+
+Esto, y los dominios de email permitidos, son del plugin **Políticas de seguridad avanzadas**. Hace falta que
+esté instalado en el servidor y que tu licencia lo incluya (mira [Licencia y plugins](/es/docs/licencia-y-plugins)).
+Con el plugin activo, el propietario ve **Administración › Políticas avanzadas**.
+
+### Verificación en dos pasos obligatoria
+
+En **Exigir verificación en dos pasos** eliges:
+
+- **No exigir**.
+- **A propietarios y administradores**: incluye a quien tenga un rol que gestione miembros, seguridad, ajustes
+  de la empresa o roles.
+- **A todos (salvo invitados externos)**.
+
+Para exigirla tienes que tenerla activa tú primero (si no, quedarías fuera) y confirmar tu código. Las cuentas
+de tablet (PIN) nunca quedan alcanzadas.
+
+Quien no la tenga verá, al entrar, **Activa la verificación en dos pasos** con **Activar ahora** y no podrá
+seguir hasta configurarla.
+
+### Dominios de email permitidos
+
+En **Dominios (uno por línea o separados por coma)** escribe los dominios de tu empresa, por ejemplo
+`empresa.com` (hasta 20) y pulsa **Guardar dominios**. Desde entonces solo se puede invitar a personas con email
+de esos dominios. No aplica a los invitados externos, y las personas que ya están no se ven afectadas. Vacío
+permite cualquier dominio.
+
+El inicio de sesión único (SSO) con Microsoft 365 o Google Workspace llegará más adelante.
+
+Si la licencia vence, estas políticas dejan de aplicarse y se conservan para cuando vuelvas a cargarla; quien
+ya tenía la verificación activa la sigue usando.
+
+## El registro de auditoría
+
+En **Administración › Registro de auditoría** ves quién hizo qué y cuándo en tu empresa: inicios de sesión y
+fallidos, cambios de miembros, roles y departamentos, cambios de seguridad, reinicios de la verificación, el
+remitente de email, los límites, la licencia y lo que pasa con el contenido. Los eventos no se pueden modificar.
+
+<Shot name="auditoria" alt="El Registro de auditoría, con los filtros arriba y la lista de eventos" />
+
+- Necesitas **Ver el registro de auditoría**; para descargarlo, **Exportar la auditoría**.
+- Filtra por **Persona**, **Área**, **Acción**, **Elemento** y fechas (**Desde**, **Hasta**). **Quitar filtros**
+  vuelve a la lista completa.
+- Pulsa un evento para ver el **Detalle del evento**: cuándo, quién, la acción, el elemento, la **Dirección IP**,
+  el **Dispositivo** y los datos del evento.
+- **Exportar CSV** descarga el registro con los filtros aplicados. La exportación también queda registrada.
+
+Cuánto tiempo se guarda depende de **Conservar la auditoría** en [Límites y uso](/es/docs/limites): sin límite,
+se guarda todo.
+
+## Relacionado
+
+- [Miembros](/es/docs/miembros)
+- [Email (SMTP)](/es/docs/email-smtp)
+- [Licencia y plugins](/es/docs/licencia-y-plugins)
+- [Iniciar sesión](/es/docs/iniciar-sesion)

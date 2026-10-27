@@ -1,0 +1,66 @@
+---
+title: "Lecturas obligatorias"
+description: "Pedir a departamentos o personas que lean un documento vigente, confirmar «Leí y comprendo», recordatorios y cumplimiento."
+group: uso-diario
+order: 7
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+Una **lectura obligatoria** pide a un departamento o a una persona que lea la versión vigente de un [documento controlado](/es/docs/documentos-controlados) y lo confirme con **Leí y comprendo**. Así sabes quién leyó cada versión, quién no y quién ni siquiera tiene acceso.
+
+## Quién puede pedirlas
+
+Quien tenga la capacidad **Pedir lecturas** por su rol, y los jefes y subjefes dentro de su área. Solo se pide la lectura de documentos con una versión publicada.
+
+## Pedir una lectura
+
+1. Abre **Control de documento** del documento (en una página, desde **Más acciones**; en un archivo, desde su menú).
+2. En la sección **Lectura obligatoria**, pulsa **Pedir lectura**.
+3. Elige **Departamento** (y marca **Incluir subáreas** si también deben leerlo los subdepartamentos) o **Persona**.
+4. Si quieres, pon un **Plazo (opcional)**.
+5. Pulsa **Pedir lectura**. A cada persona le llega un aviso («Debes leer «…»»).
+
+Si alguien del alcance no tiene acceso al documento, SpiderFolio te avisa antes y después («3 personas no tienen acceso a este documento»): no podrán leerlo ni confirmarlo hasta tenerlo. Si gestionas los accesos del documento, **Darles acceso de lectura** les da el nivel **Ver** con el mismo alcance de la lectura; si no, pídeselo a quien los gestiona.
+
+Para quitar una lectura pedida, usa el botón de quitar junto al departamento o la persona.
+
+## Confirmar la lectura
+
+Si te pidieron leer un documento, lo verás en [Mis documentos](/es/docs/mis-documentos) › **Por leer**, en **Mis pendientes** del Inicio y en la sección **Lectura obligatoria** del propio documento («Debes leer y confirmar la versión 3.»).
+
+1. Abre el documento y léelo.
+2. Pulsa **Leí y comprendo**.
+
+Solo tú puedes confirmar tu lectura: nadie lo hace por otra persona. Si la versión cambió desde la que leíste, verás el **Motivo del cambio** y **Qué cambió desde la versión …, que leíste**, para leer solo lo nuevo.
+
+En planta, quien entra con usuario y PIN en una tablet ve directamente los documentos que tiene que leer y, al confirmar, se cierra su sesión.
+
+## Versiones nuevas
+
+Al publicar una versión nueva, quien publica decide si pide nueva lectura (viene marcado):
+
+- **Con nueva lectura**: todos los que debían leer la versión anterior tienen que leer la nueva, con un plazo de 7 días desde la publicación.
+- **Sin nueva lectura** (cambio menor): las lecturas anteriores siguen valiendo.
+
+## Recordatorios
+
+- **Automáticos**: a las 8:00 de la zona horaria de la empresa, a quien no confirmó le llega un aviso 3 días antes del plazo, el día del plazo y uno por semana desde que venció. A los 7 días de vencida, se avisa también al jefe de su departamento.
+- **Manuales**: en el cumplimiento, **Recordar** avisa a una persona y **Recordar a todos los que faltan**, a todos los pendientes. Cada persona recibe como mucho un recordatorio manual por día.
+
+## Cumplimiento
+
+En la sección **Lectura obligatoria** del documento ves el resumen («12 leyeron · 3 pendientes · 1 sin acceso · 0 vencidas») y **Ver cumplimiento** abre el detalle por persona, con su estado (**Leído**, **Pendiente**, **Vencido**, **Sin acceso**), un filtro por estado y **Exportar CSV**. La exportación queda en la auditoría.
+
+Para ver todos los documentos a la vez, ve a **Administración** › **Documentos controlados** › **Cumplimiento**, por documento o por departamento. Los jefes ven además la tarjeta **Cumplimiento de lectura de tu área** en el [Inicio](/es/docs/inicio).
+
+<Shot name="documentos" alt="La pantalla Documentos controlados, con la pestaña Cumplimiento" />
+
+## Relacionado
+
+- [Documentos controlados](/es/docs/documentos-controlados)
+- [Mis documentos](/es/docs/mis-documentos)
+- [Códigos QR](/es/docs/codigos-qr)

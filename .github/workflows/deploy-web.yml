@@ -1,0 +1,83 @@
+# Publica la web pública (web/) en el hosting por FTP al cambiar en main, o a mano desde Actions.
+# Las credenciales viven solo en los secretos del repositorio (Settings › Secrets and variables ›
+# Actions), nunca en el código:
+#   FTP_SERVER    host del FTP (ej. ftp.spiderjad.com)
+#   FTP_USERNAME  usuario del FTP
+#   FTP_PASSWORD  contraseña del FTP
+#   FTP_DIR       carpeta remota de la web (ej. /public_html/spiderfolio)
+# Sube con lftp (sin acciones de terceros que vean las credenciales) por FTP con TLS explícito.
+name: Publicar web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "packages/tailwind-preset/**"
+      - "brand/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Compilar y subir
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Dependencias
+        run: npm ci
+
+      - name: Compilar la web
+        # URL pública: canónicas, hreflang, sitemap y robots.txt (ver docs/despliegue-web.md).
+        env:
+          WEB_SITE_URL: https://spiderfolio.spiderjad.com
+        run: npm run build:web
+
+      - name: Comprobar los secretos
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+        run: |
+          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD FTP_DIR; do
+            if [ -z "${!name}" ]; then echo "Falta el secreto $name" >&2; exit 1; fi
+          done
+
+      - name: Instalar lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Subir por FTP
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          # lftp --env-password lee la contraseña de LFTP_PASSWORD: nunca va en la línea de comandos ni
+          # en el log.
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+        # mirror --delete deja el servidor igual que dist/ (el heredoc sin comillas expande FTP_DIR).
+        run: |
+          lftp --env-password -u "$FTP_USERNAME" "$FTP_SERVER" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate true
+          set net:max-retries 3
+          set net:timeout 30
+          mirror --reverse --delete --verbose=1 --parallel=4 web/dist/ "$FTP_DIR"
+          bye
+          EOF
+        shell: bash

@@ -1,0 +1,41 @@
+// Textos de los códigos QR de documentos (9C.6), en español neutro con tuteo.
+
+export const qrTexts = {
+  menu: "Generar QR",
+  title: (name: string) => `QR de «${name}»`,
+  text: "El código abre siempre la versión vigente. Imprímelo y pégalo donde se use el documento.",
+  loadError: "No se pudieron cargar los códigos QR.",
+  empty: "Todavía no hay ningún QR para este documento.",
+  generate: "Generar QR",
+  generating: "Generando…",
+  generatePublic: "Generar QR público",
+  created: "QR generado.",
+  kind: { private: "Pide iniciar sesión", public: "Público · sin sesión" },
+  scans: (count: number) => (count === 1 ? "1 escaneo" : `${String(count)} escaneos`),
+  lastScan: (date: string) => `último ${date}`,
+  previewLabel: "Código QR con el logo",
+  downloadPng: "Descargar PNG",
+  downloadSvg: "Descargar SVG",
+  labels: "Hoja de etiquetas (A4)",
+  labelSizes: { small: "Pequeñas", medium: "Medianas", large: "Grandes" },
+  revoke: "Revocar",
+  revokeTitle: "¿Revocar este QR?",
+  revokeText:
+    "Deja de abrir de inmediato: quien lo escanee verá que ya no es válido. Los que ya imprimiste hay que reemplazarlos.",
+  revokeConfirm: "Revocar",
+  revokePending: "Revocando…",
+  revoked: "QR revocado.",
+  publicTitle: "¿Generar un QR público?",
+  publicText:
+    "Cualquiera que escanee el código podrá leer este documento sin iniciar sesión, y solo este. Úsalo para instrucciones de seguridad para contratistas o visitas. Puedes revocarlo cuando quieras.",
+  publicConfirm: "Generar QR público",
+  scan: {
+    opening: "Abriendo el documento…",
+    invalid: "Este código QR ya no es válido.",
+    invalidText: "Pudo haber sido revocado o el documento ya no está disponible.",
+    error: "No se pudo abrir el código.",
+    download: "Descargar el archivo",
+    publicNote: "Documento compartido por código QR, solo lectura.",
+    frame: "Documento",
+  },
+};

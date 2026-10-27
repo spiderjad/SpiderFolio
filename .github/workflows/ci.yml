@@ -1,0 +1,26 @@
+# Verificaciones del repositorio. El paso de secretos corre lo mismo que el hook pre-commit, pero sobre
+# todos los archivos versionados: si alguien se salta el hook (--no-verify) o commitea sin él, falla acá.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Ningún archivo versionado con forma de secreto
+        run: node scripts/check-secrets.ts
+      - name: .env.example con los secretos vacíos
+        run: npx vitest run tests/env-example.test.ts

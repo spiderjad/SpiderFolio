@@ -1,0 +1,73 @@
+---
+title: "Licencia y plugins"
+description: "Cargar la licencia de los plugins comerciales, ver cuáles están activos y qué pasa cuando una licencia vence."
+group: administracion
+order: 7
+icon: grid
+---
+
+import Shot from "../../../components/Shot.astro";
+
+SpiderFolio es open source y funciona completo sin plugins. Los plugins comerciales agregan funciones para
+empresas que las necesitan (por ejemplo, **Políticas de seguridad avanzadas**: exigir la verificación en dos
+pasos a toda la empresa y limitar las invitaciones a tus dominios). Se instalan en tu servidor y se activan
+con una licencia. El catálogo está en la página [Plugins](/es/plugins).
+
+## Dónde está
+
+En **Administración › Licencia y plugins**. Solo la ve el **propietario** de la empresa.
+
+<Shot name="licencia" alt="La pantalla Licencia y plugins, con el estado de la licencia y los plugins instalados en el servidor" />
+
+Arriba ves el estado de la licencia: **Sin licencia**, **Licencia vigente**, **Licencia vencida** o
+**Licencia no válida**, a quién se emitió y cuándo vence (o **Sin vencimiento**).
+
+## Cargar la licencia
+
+1. Pulsa **Cargar licencia** (o **Reemplazar licencia** si ya hay una).
+2. Pega el texto completo que te enviamos: empieza con `SFL1.`.
+3. Pulsa **Guardar licencia**.
+
+La licencia se verifica en tu propio servidor, sin conexión a internet. Una licencia no válida o ya vencida se
+rechaza. Es de tu empresa: si la instalación tiene varias empresas, cada una carga la suya.
+
+## Los plugins del servidor
+
+En **Plugins instalados en este servidor** ves cada plugin con su estado:
+
+- **Activo**: está instalado y tu licencia vigente lo incluye.
+- **En la licencia (vencida)**: tu licencia lo incluye, pero venció.
+- **Sin licencia**: está instalado, pero tu licencia no lo incluye.
+
+Si la lista dice «Este servidor no tiene plugins instalados», primero hay que instalarlos. Eso lo hace quien
+administra el servidor: copia el plugin a la carpeta `plugins/` y reconstruye la imagen (`docker compose build
+&& docker compose up -d`), o lo instala como paquete y lo agrega a `PLUGIN_PACKAGES`. Sus migraciones se
+aplican solas al arrancar.
+
+Un plugin activo puede sumar:
+
+- Una sección propia en **Administración** (por ejemplo, **Políticas avanzadas**, solo para el propietario).
+- Capacidades nuevas en el grupo **Plugins** de [Roles y permisos](/es/docs/roles-y-permisos). El propietario
+  las tiene todas; para que otra persona las use, dale un rol personalizado con ellas.
+
+## Si la licencia vence
+
+Los plugins de esa licencia dejan de aplicarse y SpiderFolio sigue funcionando igual. Sus ajustes se
+conservan: al cargar una licencia nueva vuelven a aplicarse tal como estaban.
+
+Por ejemplo, con **Políticas de seguridad avanzadas** vencida, la empresa deja de exigir la verificación en dos
+pasos a todos; quien ya la tenía activa la sigue usando.
+
+## Quitar la licencia
+
+Pulsa **Quitar licencia** y confirma. Los plugins dejan de aplicarse en tu empresa y sus ajustes se conservan
+por si vuelves a cargarla.
+
+Cargar y quitar la licencia queda en el registro de auditoría, con a quién se emitió, qué plugins incluye y su
+vencimiento (nunca el texto de la licencia).
+
+## Relacionado
+
+- [Roles y permisos](/es/docs/roles-y-permisos)
+- [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)
+- [Configuración](/es/docs/configuracion)

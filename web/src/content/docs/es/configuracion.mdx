@@ -1,0 +1,168 @@
+---
+title: "Configuración"
+description: "Todas las variables de deploy/.env explicadas por bloques: qué es obligatorio, cómo generar los secretos y qué activa cada opción."
+group: empezar
+order: 3
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+Toda la configuración de SpiderFolio vive en un solo archivo, `deploy/.env`, que creas copiando
+`deploy/.env.example`. La API y el worker lo leen al arrancar y lo validan: **si falta una variable
+obligatoria o tiene un formato incorrecto, la API no arranca** y el log nombra la variable (nunca su
+valor).
+
+## Reglas básicas
+
+- **Nunca subas `.env` a un repositorio** ni lo compartas por chat. Déjalo con permisos `600`
+  (`chmod 600 .env`).
+- **Guarda una copia segura** de `.env` fuera del servidor: tiene las claves con las que se cifran la
+  verificación en dos pasos y las contraseñas SMTP de cada empresa.
+- Un valor vacío o solo con espacios cuenta como no definido.
+- Después de cambiar `.env`, recrea los contenedores para que lo lean:
+
+  ```sh
+  docker compose up -d --force-recreate app worker
+  ```
+
+## Generar los secretos
+
+```sh
+openssl rand -base64 48   # JWT_ACCESS_SECRET (64 caracteres)
+openssl rand -base64 32   # EMAIL_ENCRYPTION_KEY
+openssl rand -base64 32   # MFA_ENCRYPTION_KEY
+```
+
+Ejecuta cada orden por separado y usa un valor distinto para cada variable. Las dos claves de 32 bytes
+**tienen que ser distintas entre sí**: si son iguales, la API no arranca.
+
+## Dirección
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `APP_URL` | Sí | La URL pública con la que se entra a la app, por ejemplo `https://docs.tu-empresa.com`. Se usa en los enlaces de los emails, en CORS y en las URLs de descarga. Con el perfil `https`: `https://` + `DOMAIN`. |
+| `WEB_URL` | Sí | La web informativa a la que enlazan los emails. Puede ser la misma `APP_URL`. |
+| `DOMAIN` | Con el perfil `https` | El dominio para el que Caddy pide el certificado, sin `https://`. Necesita un registro DNS `A` (y `AAAA` si usas IPv6) apuntando al servidor. |
+| `HTTP_BIND` | No (`127.0.0.1`) | Dirección donde se publica la app sin Caddy. `127.0.0.1` = solo el propio servidor (lo normal detrás de un proxy). `0.0.0.0` la expone en todas las interfaces. |
+| `HTTP_PORT` | No (`8080`) | Puerto donde se publica la app sin Caddy. |
+| `TRUST_PROXY_HOPS` | No (`1`) | Cuántos proxies hay delante de la app. `1` detrás de Caddy o de tu propio proxy; `0` si la app está expuesta directamente. Con un CDN delante de tu proxy, `2`. Máximo `5`. |
+
+`TRUST_PROXY_HOPS` importa: con él la app sabe cuál es la IP real de cada persona, que se usa en los
+límites de intentos de inicio de sesión y en la auditoría. Si pones un número mayor que el real,
+alguien podría falsear su IP; si pones uno menor, todos parecen venir de la IP del proxy. Más en
+[Proxy y HTTPS](/es/docs/proxy-y-https).
+
+## Base de datos
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `POSTGRES_USER` | No (`spiderfolio`) | Usuario de PostgreSQL. |
+| `POSTGRES_PASSWORD` | Sí | Contraseña de PostgreSQL. Usa una larga y aleatoria. |
+| `POSTGRES_DB` | No (`spiderfolio`) | Nombre de la base. |
+
+La base no tiene puerto público: solo la ven la app y el worker. `docker compose` arma la conexión
+(`DATABASE_URL`) con estos tres valores; no hace falta que la escribas.
+
+## Secretos y sesiones
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `JWT_ACCESS_SECRET` | Sí | Firma las sesiones y las URLs de descarga del disco local. **Mínimo 64 caracteres.** |
+| `JWT_ACCESS_TTL` | No (`15m`) | Duración de la sesión corta antes de renovarse sola. Un número seguido de `s`, `m` o `h`. |
+| `REFRESH_TTL_DAYS` | No (`30`) | Días que dura la sesión sin volver a escribir la contraseña (de 1 a 365). |
+| `EMAIL_ENCRYPTION_KEY` | Sí | Cifra la contraseña del SMTP propio de cada empresa. 32 bytes en base64. |
+| `MFA_ENCRYPTION_KEY` | Sí | Cifra el secreto de la verificación en dos pasos. 32 bytes en base64, distinta de la anterior. |
+
+No cambies estas claves una vez en uso. Si pierdes `MFA_ENCRYPTION_KEY`, nadie con la verificación en
+dos pasos activada podrá volver a entrar. Si pierdes `EMAIL_ENCRYPTION_KEY`, cada empresa tendrá que
+volver a cargar la contraseña de su SMTP propio. Por eso van en las
+[copias de seguridad](/es/docs/copias-de-seguridad).
+
+## Email
+
+El email es **obligatorio**: con él se envían las verificaciones de cuenta, las invitaciones, los
+restablecimientos de contraseña y los avisos.
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `SMTP_HOST` | Sí | Servidor SMTP (por ejemplo `smtp.tu-proveedor.com`). |
+| `SMTP_PORT` | Sí (`587`) | `587` usa STARTTLS; `465`, TLS directo. |
+| `SMTP_USER`, `SMTP_PASS` | Según tu servidor | Usuario y contraseña. Déjalos vacíos si tu servidor no pide autenticación. |
+| `MAIL_FROM` | Sí | Remitente, entre comillas: `"SpiderFolio <no-reply@tu-dominio.com>"`. Tiene que ser una dirección que tu SMTP te permita usar. |
+
+Para que los emails no terminen en spam, configura SPF y DKIM del dominio de `MAIL_FROM` en tu
+proveedor. Cada empresa puede además usar su propio servidor para sus avisos: ver
+[Email SMTP](/es/docs/email-smtp).
+
+## Archivos
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `STORAGE_DRIVER` | No (`local`) | `local`: los archivos van al volumen de Docker `files`. `s3`: a un bucket compatible con S3 (AWS, Cloudflare R2, MinIO…). |
+| `S3_ENDPOINT` | Con `s3`, salvo en AWS | URL del servicio S3. En AWS déjala vacía. |
+| `S3_REGION` | Con `s3` | Región del bucket (`auto` en R2). |
+| `S3_FORCE_PATH_STYLE` | No (`false`) | `true` para MinIO y otros servicios que no admiten el bucket como subdominio. |
+| `S3_BUCKET` | Con `s3` | Bucket de los archivos. |
+| `S3_SYSTEM_BUCKET` | No | Bucket de los ZIP generados para descargar. Vacío: `<S3_BUCKET>-system`. |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY` | Con `s3` | Credenciales con acceso a los dos buckets. |
+
+Cómo elegir y cómo configurar el bucket: [Almacenamiento](/es/docs/almacenamiento).
+
+## PDF de documentos controlados
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `GOTENBERG_URL` | No | Con el perfil `pdf`: `http://gotenberg:3000`. Vacía: no se genera el PDF de las páginas controladas. |
+
+Más en [Gotenberg](/es/docs/gotenberg).
+
+## Bian, el asistente IA
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `BIAN_ENABLED` | No (`false`) | `true` activa a Bian en la instalación. |
+| `ANTHROPIC_API_KEY` | Si `BIAN_ENABLED=true` | Clave de la API de Anthropic. Las consultas se cobran en esa cuenta. |
+
+Con Bian activo en el servidor, cada empresa decide si lo usa y fija su total mensual y los límites por
+persona: ver [Configurar Bian](/es/docs/configurar-bian).
+
+## Plugins
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `PLUGIN_PACKAGES` | No | Paquetes npm de plugins **ya instalados en la imagen**, separados por comas (por ejemplo `@empresa/plugin-a,@empresa/plugin-b`). Hasta 50. |
+
+Los plugins de la carpeta `plugins/` del repositorio se cargan solos; no hace falta listarlos. En ambos
+casos hay que compilar la imagen con el plugin dentro. Sus migraciones se aplican solas al arrancar.
+Después, el propietario de cada empresa carga la licencia en **Gestión › Licencia y plugins**.
+
+<Shot name="licencia" alt="La pantalla Licencia y plugins, donde se pega la licencia y se ve el estado de cada plugin" />
+
+Más en [Licencia y plugins](/es/docs/licencia-y-plugins) y [Crear un plugin](/es/docs/crear-un-plugin).
+
+## Observabilidad e imagen
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `SENTRY_DSN` | No | Envía los errores de la aplicación a un proyecto de Sentry. |
+| `SPIDERFOLIO_IMAGE` | No | La imagen de Docker. Por defecto `ghcr.io/spiderjad/spiderfolio:latest`. Fíjala a una versión concreta para controlar cuándo actualizas ([Actualizaciones](/es/docs/actualizaciones)). |
+
+## Variables que no tienes que tocar
+
+`deploy/compose.yaml` ya fija estas, y cualquier valor que pongas en `.env` se ignora o no hace falta:
+`NODE_ENV=production`, `PORT=4000`, `DATABASE_URL` (con las variables de la base) y
+`STORAGE_DIR=/data/files`.
+
+Otras opciones avanzadas, que no están en `.env.example`:
+
+- `TERMS_VERSION`: versión vigente de los Términos y la Política de privacidad. Al cambiarla, se pide a
+  todos que los acepten de nuevo.
+- `PLUGINS_DIR`: carpeta de plugins; por defecto, `plugins/` dentro de la imagen.
+- `EMAIL_ALLOW_PRIVATE_HOSTS`: solo para desarrollo. Con `true` en producción, la API no arranca.
+
+## Relacionado
+
+- [Instalar en tu servidor](/es/docs/instalar)
+- [Proxy y HTTPS](/es/docs/proxy-y-https)
+- [Solución de problemas](/es/docs/solucion-de-problemas)

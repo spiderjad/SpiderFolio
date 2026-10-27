@@ -1,0 +1,119 @@
+---
+title: "Email (SMTP)"
+description: "El servidor de email de la instalación, el remitente propio de cada empresa en Seguridad › Email, cómo probarlo y cómo evitar el spam con SPF, DKIM y DMARC."
+group: administracion
+order: 6
+icon: globe
+---
+
+import Shot from "../../../components/Shot.astro";
+
+SpiderFolio manda emails para confirmar cuentas, recuperar contraseñas, invitar personas, avisar de documentos
+y compartir enlaces. Hay dos niveles:
+
+1. **El SMTP de la instalación** (obligatorio): lo configura quien administra el servidor y lo usan todas las
+   empresas.
+2. **El remitente propio de la empresa** (opcional): cada empresa puede mandar sus emails desde su propio
+   servidor SMTP y con su propia dirección.
+
+## El SMTP de la instalación
+
+Va en `deploy/.env`. Sirve el de tu empresa o un servicio transaccional (Resend, Postmark, Amazon SES…).
+
+| Variable | Qué poner |
+|---|---|
+| `SMTP_HOST` | El servidor SMTP, por ejemplo `smtp.tu-proveedor.com`. |
+| `SMTP_PORT` | `587` (STARTTLS, el habitual) o `465` (TLS directo). |
+| `SMTP_USER`, `SMTP_PASS` | Usuario y contraseña. Déjalos vacíos si tu servidor no pide autenticación. |
+| `MAIL_FROM` | El remitente, entre comillas: `"SpiderFolio <no-reply@tu-dominio.com>"`. Tiene que ser una dirección que tu servidor te permita usar. |
+
+`SMTP_HOST`, `SMTP_PORT` y `MAIL_FROM` son obligatorias: si falta alguna, la API no arranca y el log dice cuál.
+Después de cambiarlas, aplica con `docker compose up -d` desde la carpeta `deploy`.
+
+Para comprobar que funciona, abre la pantalla de inicio de sesión, pulsa **¿Olvidaste tu contraseña?** y pide
+el enlace para tu propio email.
+
+Los emails de cuenta (confirmar el email, la contraseña, el inicio de sesión) **siempre** salen por este
+servidor, aunque la empresa tenga remitente propio. Más variables en [Configuración](/es/docs/configuracion).
+
+## El remitente propio de la empresa
+
+Con él, los emails de tu empresa (invitaciones, avisos de documentos, compartidos) salen desde tu servidor SMTP
+y con tu dirección, por ejemplo `avisos@tuempresa.com`, en lugar del remitente de la instalación.
+
+### Dónde está
+
+En **Administración › Seguridad**, pestaña **Email**. Necesitas la capacidad **Gestionar la seguridad**. El
+propietario ve las pestañas **General** y **Email**; los administradores, solo **Email**.
+
+<Shot name="seguridad" alt="Administración › Seguridad, con las pestañas General y Email" />
+
+Si ves «El remitente propio no está disponible en este servidor», a la instalación le falta
+`EMAIL_ENCRYPTION_KEY`, la clave con la que se guarda cifrada la contraseña de tu SMTP. Pídesela a quien
+administra el servidor.
+
+### Configurarlo
+
+1. Completa los datos del servidor:
+   - **Servidor SMTP**: tiene que ser una dirección pública; no se aceptan direcciones de red interna.
+   - **Puerto**: 25, 465, 587 o 2525.
+   - **Seguridad**: **STARTTLS (puerto 587)** o **TLS (puerto 465)**.
+   - **Usuario (opcional)** y **Contraseña**. La contraseña se guarda cifrada y no se vuelve a mostrar; para
+     conservar la actual, déjala vacía.
+2. Completa el remitente: **Nombre del remitente**, **Dirección del remitente** (una que tu servidor te
+   permita usar) y, si quieres, **Responder a (opcional)**.
+3. Pulsa **Guardar**.
+4. Pulsa **Enviar email de prueba**. La prueba llega a **tu** email, nunca a otra persona. Puedes enviar hasta
+   5 por hora (y 20 por hora entre toda la empresa).
+5. Si la prueba llegó bien, pulsa **Activar**.
+
+Arriba ves el estado: **Sin activar**, **Activo** o **Desactivado**, y si la configuración está **Probado** o
+**Sin probar**. Si cambias algo y guardas, vuelve a **Sin activar** hasta que envíes otra prueba. Para dejar de
+usarlo, pulsa **Desactivar**.
+
+Si la prueba falla, te decimos por qué: usuario o contraseña rechazados, no se pudo conectar (revisa servidor,
+puerto y seguridad), falló la conexión segura, el servidor rechazó el remitente, o no se encontró el servidor.
+
+### Si tu servidor falla
+
+Nadie se queda sin su aviso:
+
+- Si un envío falla, ese email sale igual por el servidor de la instalación, con el nombre «Tu empresa (vía
+  SpiderFolio)» y tu dirección como **Responder a**.
+- El propietario y los administradores con **Gestionar la seguridad** reciben un aviso en la campana y por
+  email (como mucho uno por hora). En la pestaña **Email** verás también el último error.
+- Tras **3 fallos seguidos**, el remitente propio pasa a **Desactivado**. Corrige la configuración, envía una
+  prueba y actívalo de nuevo.
+
+### Dominio verificado
+
+Debajo verás **Dominio verificado**: una forma de enviar desde tu dominio sin contraseña, creando registros
+DNS. En esta versión aparece como «El envío con dominio verificado estará disponible próximamente».
+
+## Que tus emails no caigan en spam
+
+Esto vale tanto para `MAIL_FROM` de la instalación como para el remitente propio. En el DNS del dominio de la
+dirección del remitente, crea estos registros con los valores que te dé tu proveedor de email (en la pestaña
+**Email**, el desplegable **¿Tus emails caen en spam?** tiene la misma guía con ejemplos para copiar):
+
+- **SPF**: un registro TXT que dice qué servidores pueden enviar por ti. Solo puede haber uno: si ya tienes,
+  agrega el `include` de tu proveedor. Ejemplo: `v=spf1 include:spf.tu-proveedor.com ~all`.
+- **DKIM**: tu proveedor genera una clave y te da un registro TXT o CNAME (por ejemplo,
+  `selector._domainkey.tudominio.com`). Créalo tal como te lo indica.
+- **DMARC**: un registro TXT en `_dmarc.tudominio.com`. Empieza con `p=none` (solo observa) y, cuando todo
+  llegue bien, pasa a `quarantine`. Ejemplo: `v=DMARC1; p=none; rua=mailto:dmarc@tudominio.com`.
+
+Para comprobarlo, envía el email de prueba a tu bandeja y mira que no esté en spam. Si cae en spam, revisa que
+SPF y DKIM estén bien creados (los cambios de DNS pueden tardar unas horas) y que la dirección del remitente
+sea de tu dominio.
+
+## Auditoría
+
+Guardar la configuración, enviar pruebas, activar, desactivar y cada envío que salió por el respaldo quedan en
+el registro de auditoría, en el área **Email de la empresa**. Nunca se guarda la contraseña.
+
+## Relacionado
+
+- [Configuración](/es/docs/configuracion)
+- [Invitar personas](/es/docs/invitar-personas)
+- [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)

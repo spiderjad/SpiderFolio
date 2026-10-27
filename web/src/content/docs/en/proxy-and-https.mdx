@@ -1,0 +1,159 @@
+---
+title: "Proxy and HTTPS"
+description: "Automatic HTTPS with the https profile and Caddy, or your own proxy (nginx, Traefik) with examples, TRUST_PROXY_HOPS and secure cookies."
+group: autoalojamiento
+order: 2
+icon: lock
+---
+
+SpiderFolio needs **HTTPS** to work from other devices: sessions travel in secure cookies, which the
+browser only stores over HTTPS (or on `localhost`). You have two options:
+
+- **The `https` profile**: a bundled Caddy that requests and renews the certificate on its own. It's the
+  simplest choice if the server is only for SpiderFolio.
+- **Your own proxy** (nginx, Traefik, Apache…), if you already have one or share the server with other
+  applications.
+
+Either way, the app listens on port 4000 inside its container, published on `HTTP_BIND:HTTP_PORT`
+(`127.0.0.1:8080` by default, reachable only from the server itself).
+
+## Option 1: the https profile with Caddy
+
+1. Create the DNS `A` record for your domain pointing to the server and check it resolves
+   (`dig +short docs.your-company.com`).
+2. Open ports **80 and 443** (Let's Encrypt uses port 80 to validate the domain).
+3. In `deploy/.env`:
+
+   ```sh
+   DOMAIN=docs.your-company.com
+   APP_URL=https://docs.your-company.com
+   WEB_URL=https://docs.your-company.com
+   TRUST_PROXY_HOPS=1
+   ```
+
+4. Start with the profile:
+
+   ```sh
+   docker compose --profile https up -d
+   docker compose logs -f caddy    # you'll see when it gets the certificate
+   ```
+
+Caddy compresses responses, adds HSTS (`Strict-Transport-Security`) and forwards everything to the app.
+Certificates are stored in the `caddy-data` volume and renew automatically. The Content Security Policy
+(CSP) and the other headers are set by the app itself.
+
+To avoid typing `--profile https` every time, add `COMPOSE_PROFILES=https` (or `https,pdf`) at the end
+of `.env`.
+
+`compose.yaml` publishes Caddy on ports 80 and 443: if another proxy already uses those ports on the
+server, go with option 2.
+
+## Option 2: your own proxy
+
+1. Keep the app local only (the defaults):
+
+   ```sh
+   HTTP_BIND=127.0.0.1
+   HTTP_PORT=8080
+   APP_URL=https://docs.your-company.com
+   WEB_URL=https://docs.your-company.com
+   TRUST_PROXY_HOPS=1
+   ```
+
+2. Start **without** the `https` profile: `docker compose up -d`.
+3. Set up your proxy to forward the domain to `http://127.0.0.1:8080`, with TLS and these conditions:
+   - Pass the `Host`, `X-Forwarded-For` and `X-Forwarded-Proto` headers.
+   - Accept request bodies of **at least 100 MB**: with local storage, files up to 100 MB are uploaded in
+     a single request (larger ones, in 16 MB parts).
+   - Generous timeouts, for large uploads and downloads and for Bian's answers, which arrive bit by bit.
+
+### nginx example
+
+```nginx
+server {
+    listen 80;
+    server_name docs.your-company.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name docs.your-company.com;
+
+    ssl_certificate     /etc/letsencrypt/live/docs.your-company.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/docs.your-company.com/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    client_max_body_size 110m;
+    proxy_read_timeout   300s;
+    proxy_send_timeout   300s;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+You can get the certificates with Certbot (`certbot --nginx -d docs.your-company.com`). Bian's
+responses already tell nginx not to buffer them, so nothing else is needed.
+
+### Traefik example
+
+If Traefik runs in Docker, attach the app to its network with a `deploy/compose.override.yaml` file
+(Docker Compose reads it automatically alongside `compose.yaml`):
+
+```yaml
+services:
+  app:
+    networks: [default, traefik]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.spiderfolio.rule=Host(`docs.your-company.com`)
+      - traefik.http.routers.spiderfolio.entrypoints=websecure
+      - traefik.http.routers.spiderfolio.tls.certresolver=letsencrypt
+      - traefik.http.services.spiderfolio.loadbalancer.server.port=4000
+
+networks:
+  traefik:
+    external: true
+```
+
+Replace `traefik`, `websecure` and `letsencrypt` with the network, entry point and certificate resolver
+names from your Traefik setup. Traefik doesn't limit request size by default.
+
+## TRUST_PROXY_HOPS
+
+It says how many proxies sit between the internet and the app. With it, the app reads each person's real
+IP from the `X-Forwarded-For` header, and that IP is used for attempt limits (sign-in, for example) and
+the audit log.
+
+| Situation | Value |
+| --- | --- |
+| Behind Caddy (`https` profile) or your own proxy | `1` |
+| A CDN (for example Cloudflare) in front of your proxy | `2` |
+| The app exposed directly, without a proxy | `0` |
+
+A value higher than the real one lets someone spoof their IP and dodge the limits. A lower one makes
+everyone share the proxy's IP, so they lock each other out when the limit is reached.
+
+## Secure cookies
+
+- The session is stored in an `HttpOnly`, `Secure`, `SameSite=Strict` cookie. Over HTTP (except on
+  `localhost`), the browser doesn't keep it: you can sign in, but when you reload the page or after a
+  few minutes you're back at the sign-in screen.
+- `APP_URL` must be exactly the address people use, with `https://` and no trailing slash. If it doesn't
+  match, email links and file uploads and downloads point elsewhere and fail.
+- The app and the API share the same domain (the API lives under `/api`): you don't need to set up CORS
+  on the proxy.
+
+## Related
+
+- [Configuration](/en/docs/configuration)
+- [Storage](/en/docs/storage)
+- [Troubleshooting](/en/docs/troubleshooting)

@@ -1,0 +1,564 @@
+---
+title: "Create a plugin"
+description: "Full tutorial: structure, manifest, backend with routes, jobs and migrations, app part, installation, licensing and isolation between companies."
+group: desarrolladores
+order: 3
+icon: grid
+---
+
+A plugin adds features to SpiderFolio without touching the core. It can have a **backend** part (API
+routes, jobs, its own tables, capabilities and hooks) and an **app** part (menu, screens, Administration
+sections and menu actions). The core works the same without it.
+
+In this guide we build an example plugin, **Shift checklist**: the company defines a list of checks (for
+example, "Cold room temperature checked") and each shift ticks them off.
+
+It's worth reading [Architecture](/en/docs/architecture) first. The full contract is in
+`packages/plugin-sdk` and in `docs/spec/plugins.md`.
+
+## How it works
+
+- The plugin is a **package** with a `package.json` that declares the `spiderfolio` field.
+- The API and the worker discover it **on startup**, apply its migrations and load it.
+- The app part is included **at build time**.
+- It's only **active** in the companies that enable it: a commercial plugin, with a license that
+  includes it; a **community** plugin, when the owner activates it (see [Licensing](#7-licensing)). If it
+  isn't active, its routes answer 404, its jobs don't run, its hooks aren't called and the app doesn't
+  show it.
+- The plugin **never gets the Prisma client**: it works with a context the core gives it.
+
+## 1. Folder structure
+
+```text
+plugins/shift-checklist/
+├── package.json
+├── tsconfig.json
+├── migrations/
+│   └── 0001_checks.sql
+├── backend/
+│   └── index.ts
+└── frontend/
+    ├── index.tsx
+    ├── checklist-page.tsx
+    └── items-page.tsx
+```
+
+Both parts are optional: a plugin can have only a backend or only an app part.
+
+## 2. The manifest (`package.json`)
+
+```json
+{
+  "name": "@my-company/spiderfolio-shift-checklist",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "spiderfolio": {
+    "id": "shift-checklist",
+    "name": "Checklist de turno",
+    "description": "Controles diarios por turno, marcados por el equipo de planta.",
+    "backend": "./backend/index.ts",
+    "frontend": "./frontend/index.tsx",
+    "migrations": "./migrations",
+    "distribution": "community"
+  },
+  "dependencies": {
+    "@spiderfolio/plugin-sdk": "0.1.0",
+    "zod": "4.6.5"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "5.104.1",
+    "lucide-react": "1.52.0",
+    "react": "18.3.1"
+  }
+}
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Lowercase letters, digits and hyphens, 2 to 40 characters. It prefixes everything: routes, capabilities, queues and schema. |
+| `name`, `description` | What **License and plugins** shows (by convention, in Spanish). |
+| `backend`, `frontend` | Entry file of each part, relative to the package. |
+| `migrations` | Folder with the plugin's own SQL migrations. |
+| `distribution` | `"community"` for a third-party plugin installed without a license, or `"commercial"` (the default) for plugins activated by a signed license. See [Licensing](#7-licensing). |
+
+So the typecheck can find the app components, the plugin's `tsconfig.json` points `@/` to
+`frontend/src`:
+
+```json
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"],
+    "paths": { "@/*": ["../../frontend/src/*"] }
+  },
+  "include": ["backend", "frontend", "../../frontend/src/plugins/virtual.d.ts"]
+}
+```
+
+## 3. Migrations in its own schema
+
+Each plugin has its own PostgreSQL schema: `plugin_` plus the id with underscores (here,
+`plugin_shift_checklist`). It lives outside Prisma, so the core migrations don't see it.
+
+`migrations/0001_checks.sql`:
+
+```sql
+-- Every table has workspace_id and every query filters by it.
+CREATE TABLE checks (
+    id TEXT PRIMARY KEY,
+    workspace_id TEXT NOT NULL REFERENCES public."Workspace"("id") ON DELETE CASCADE,
+    shift_date DATE NOT NULL,
+    item TEXT NOT NULL,
+    done_by TEXT NOT NULL,
+    done_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (workspace_id, shift_date, item)
+);
+CREATE INDEX checks_workspace_date_idx ON checks (workspace_id, shift_date);
+```
+
+- The file name is `NNNN_name.sql` (four digits, lowercase letters and underscores). They run in order.
+- They're applied automatically when the API or the worker starts, each one in its own transaction, and
+  recorded with their checksum. A PostgreSQL lock keeps the API and the worker from clashing.
+- A migration that was already applied **doesn't run again**, even if you change it: the log warns you.
+  To change a table, add a new migration.
+- If a migration fails, the plugin isn't loaded and the core starts anyway.
+
+## 4. The backend
+
+The entry file exports by default a plugin defined with `defineBackendPlugin`. Its `id` must match the
+manifest.
+
+The backend runs directly on Node (uncompiled TypeScript): use only type syntax that can be erased (no
+`enum` or `namespace`), `import type` for types and the `.ts` extension in relative imports.
+
+`backend/index.ts`:
+
+```ts
+import { randomUUID } from "node:crypto";
+import {
+  defineBackendPlugin,
+  definePluginJob,
+  PluginError,
+  type PluginWorkspaceContext,
+} from "@spiderfolio/plugin-sdk/backend";
+import { z } from "zod";
+
+const ItemsSchema = z.array(z.string().trim().min(1).max(120)).max(50);
+const DayQuery = z.object({ date: z.iso.date() });
+const CheckBody = z.strictObject({ date: z.iso.date(), item: z.string().min(1).max(120) });
+const ItemsBody = z.strictObject({ items: ItemsSchema });
+
+/** The company's checks, stored in the plugin settings. */
+async function itemsOf(ctx: PluginWorkspaceContext): Promise<string[]> {
+  return (await ctx.settings.get("items", ItemsSchema)) ?? [];
+}
+
+export default defineBackendPlugin({
+  id: "shift-checklist",
+  version: "0.1.0",
+  capabilities: [
+    {
+      id: "shift-checklist:manage",
+      label: "Gestionar el checklist de turno",
+      description: "Definir los controles que se revisan en cada turno.",
+    },
+  ],
+  routes: [
+    {
+      // GET /api/v1/w/:slug/plugins/shift-checklist/day?date=2026-10-26
+      method: "get",
+      path: "/day",
+      async handler(req, res, ctx) {
+        const { date } = DayQuery.parse(req.query);
+        const rows = await ctx.sql.query<{ item: string; done_by: string; done_at: Date }>(
+          `SELECT item, done_by, done_at FROM checks
+            WHERE workspace_id = $1 AND shift_date = $2::date`,
+          [ctx.workspaceId, date],
+        );
+        const items = await itemsOf(ctx);
+        res.json({
+          items: items.map((item) => {
+            const row = rows.find((r) => r.item === item);
+            return {
+              item,
+              doneAt: row?.done_at ?? null,
+              doneByMe: row?.done_by === ctx.membershipId,
+            };
+          }),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/checks",
+      async handler(req, res, ctx) {
+        const { date, item } = CheckBody.parse(req.body);
+        if (!(await itemsOf(ctx)).includes(item)) {
+          throw new PluginError("BAD_REQUEST", "Ese control no está en la lista.");
+        }
+        const inserted = await ctx.sql.query<{ id: string }>(
+          `INSERT INTO checks (id, workspace_id, shift_date, item, done_by)
+           VALUES ($1, $2, $3::date, $4, $5)
+           ON CONFLICT (workspace_id, shift_date, item) DO NOTHING
+           RETURNING id`,
+          [randomUUID(), ctx.workspaceId, date, item, ctx.membershipId],
+        );
+        const check = inserted[0];
+        if (check === undefined) throw new PluginError("CONFLICT", "Ya está marcado.");
+        await ctx.audit({
+          action: "check",
+          entityType: "ShiftCheck",
+          entityId: check.id,
+          metadata: { date, item },
+        });
+        res.status(201).json({ id: check.id });
+      },
+    },
+    {
+      method: "put",
+      path: "/items",
+      capability: "shift-checklist:manage",
+      async handler(req, res, ctx) {
+        const { items } = ItemsBody.parse(req.body);
+        await ctx.settings.set("items", items);
+        await ctx.audit({
+          action: "items.update",
+          entityType: "ShiftChecklist",
+          entityId: ctx.workspaceId,
+          metadata: { count: items.length },
+        });
+        res.json({ items });
+      },
+    },
+  ],
+  jobs: [
+    definePluginJob({
+      // Queue "plugin.shift-checklist.cleanup". Every day at 6:00.
+      name: "cleanup",
+      cron: "0 6 * * *",
+      schema: z.object({ workspaceId: z.string() }),
+      async handler(jobCtx, { workspaceId }) {
+        const ctx = await jobCtx.forWorkspace(workspaceId);
+        if (ctx === null) return; // the plugin is no longer active in that company
+        const deleted = await ctx.sql.query<{ id: string }>(
+          `DELETE FROM checks
+            WHERE workspace_id = $1 AND shift_date < CURRENT_DATE - 90
+            RETURNING id`,
+          [workspaceId],
+        );
+        ctx.logger.info({ deleted: deleted.length }, "Old checks deleted");
+      },
+    }),
+  ],
+});
+```
+
+### Routes
+
+- They live under `/api/v1/w/:slug/plugins/<id>` plus their `path`, behind the same chain as the core
+  routes: session, company, required 2FA and capabilities. On top of that, they answer 404 if the plugin
+  isn't active in that company.
+- `capability` requires every capability you list (core ones, such as `members.view`, or the plugin's
+  own); `anyCapability` requires at least one; `ownerOnly: true` only lets the owner through. With none
+  of these, any member of the company gets in.
+- Validate with Zod **everything** that comes in (`req.body`, `req.query`, `req.params`). A Zod error is
+  returned as `VALIDATION_ERROR` in the single shared format.
+- To answer with an error, throw `PluginError` with `BAD_REQUEST`, `FORBIDDEN`, `NOT_FOUND` or `CONFLICT`
+  and, optionally, a message for the person. The core translates it into the shared format. Any other
+  error comes out as an internal error, with no details.
+
+### The context
+
+Each handler gets `ctx` (`PluginRequestContext`):
+
+| Field | What for |
+|---|---|
+| `workspaceId`, `pluginId` | The request's company and your plugin. |
+| `userId`, `membershipId`, `roleBase`, `capabilities` | Who makes the request, their base role (`OWNER`, `ADMIN`, `MEMBER`, `GUEST`) and their capabilities. |
+| `settings` | Plugin settings for that company (key → JSON). `get(key, zodSchema)` returns `undefined` if there's nothing or it doesn't validate; there's also `set` and `delete`. |
+| `sql` | `query(text, values)`: parameterised SQL (`$1`, `$2`…) inside your schema. |
+| `audit` | Records an entry in the company's audit log. The action is stored as `plugin.<id>.<action>`. |
+| `requireRecentMfa()` | Fails if the person hasn't confirmed their 2FA code recently. Use it before a sensitive action. |
+| `hasOwnMfa()` | Whether the person has two-step verification turned on. |
+| `enqueue(job, payload)` | Enqueues one of your jobs for this company. |
+| `logger` | Logger tagged with the plugin id. Never log secrets or personal data. |
+
+### Jobs
+
+- Each job is a `plugin.<id>.<name>` queue in the worker (the name in lowercase letters, digits and
+  hyphens).
+- With `cron`, it runs once **for every company with a valid license** (Europe/Madrid time zone) and
+  gets `{ workspaceId }`.
+- Without `cron`, you enqueue it yourself with `ctx.enqueue("name", payload)`; the core adds the
+  `workspaceId`. If the plugin is no longer active in that company when the job's turn comes, the job is
+  dropped.
+- `options` tunes retries and expiry (`retryLimit`, `retryDelay`, `expireInSeconds`).
+- In the handler, `jobCtx.forWorkspace(id)` gives you the company's context, or `null` if the plugin
+  isn't active there. `jobCtx.activeWorkspaces()` lists the companies where it is.
+
+### Capabilities
+
+- They're named `<id>:<name>` (for example, `shift-checklist:manage`); core capabilities use a dot, so
+  they never clash. The loader rejects a capability that doesn't start with the plugin id.
+- They appear in the role editor, in the **Plugins** group, with their `label` and `description`. The
+  owner has all of them.
+
+### Features and hooks
+
+- `features`: names of the features your plugin adds. The core asks about them with
+  `hasFeature(workspaceId, feature)`.
+- `i18n`: the texts of the plugin's backend (notices, audit labels).
+- `hooks`: the core only calls them in companies where the plugin is active.
+
+```ts
+hooks: {
+  // Does this person have to use two-step verification?
+  async mfaRequired(ctx, subject) {
+    return subject.capabilities.includes("shift-checklist:manage");
+  },
+  // Before inviting or importing someone: a message if the email isn't allowed, or null.
+  async checkMemberEmail(ctx, email) {
+    return email.toLowerCase().endsWith("@my-company.com")
+      ? null
+      : "Only company emails are allowed.";
+  },
+},
+```
+
+- `mfaRequired` gets the user type (`STANDARD` or `PIN`), the base role and the capabilities. If any
+  active plugin requires it, the app asks the person to turn it on.
+- `checkMemberEmail` isn't called for external guests. The first rejection wins.
+
+## 5. The app part
+
+The entry file exports by default a plugin defined with `defineFrontendPlugin`, with the same `id`.
+
+`frontend/index.tsx`:
+
+```tsx
+import { defineFrontendPlugin } from "@spiderfolio/plugin-sdk/frontend";
+import { ClipboardCheck } from "lucide-react";
+
+export default defineFrontendPlugin({
+  id: "shift-checklist",
+  navItems: [{ to: "", label: "Checklist de turno", icon: ClipboardCheck }],
+  screens: [
+    { path: "", title: "Checklist de turno", component: () => import("./checklist-page.tsx") },
+  ],
+  adminSections: [
+    {
+      id: "items",
+      label: "Checklist de turno",
+      icon: ClipboardCheck,
+      anyCapability: ["shift-checklist:manage"],
+      component: () => import("./items-page.tsx"),
+    },
+  ],
+});
+```
+
+| Field | Where it shows up |
+|---|---|
+| `navItems` | Side menu. `to` is one of the plugin's screens; with `anyCapability`, only people with one of them see it. |
+| `screens` | `/app/:slug/p/<id>/<path>`. `path: ""` is the main screen. |
+| `adminSections` | **Administration** panel, at `/app/:slug/admin/p/<id>/<section>`. Requires `anyCapability`; with `ownerOnly`, only the owner. |
+| `documentActions` | "…" menu of an open page. |
+| `explorerActions` | Menu of each row in the **Files** explorer. |
+| `folderActions` | The explorer's **New** button, in the open folder. |
+
+Screens and dialogs are loaded on demand (`() => import(...)`). Each screen gets `slug` (the company) and
+`subpath` (whatever follows in the route).
+
+### Importing app components
+
+A plugin imports components **only from `@/plugins/ui`** (plus the SDK and its own dependencies, such as
+React, TanStack Query or lucide-react). It has the same ones the core uses: `Button`, `Card`, `CardTitle`,
+`Badge`, `Banner`, `EmptyState`, `Skeleton`, `Input`, `Textarea`, `Checkbox`, `Switch`, `FormField`,
+`Dialog`, `DialogContent`, `ConfirmDialog`, `Combobox`, `ConfirmCodeDialog`, as well as `api`,
+`ApiError`, `errorText`, `useMembership` and `toast`. Nothing else from the app: that way the plugin keeps
+working even if the core changes internally.
+
+`frontend/checklist-page.tsx`:
+
+```tsx
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PluginScreenProps } from "@spiderfolio/plugin-sdk/frontend";
+import { ClipboardCheck } from "lucide-react";
+import { api, Card, CardTitle, Checkbox, EmptyState, errorText, Skeleton, toast } from "@/plugins/ui";
+
+interface Day {
+  items: { item: string; doneAt: string | null; doneByMe: boolean }[];
+}
+
+export default function ChecklistPage({ slug }: PluginScreenProps) {
+  const date = new Date().toISOString().slice(0, 10);
+  const base = `/w/${slug}/plugins/shift-checklist`;
+  const queryClient = useQueryClient();
+  const day = useQuery({
+    queryKey: ["shift-checklist", slug, date],
+    queryFn: () => api<Day>(`${base}/day?date=${date}`),
+  });
+  const check = useMutation({
+    mutationFn: (item: string) => api(`${base}/checks`, { method: "POST", body: { date, item } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["shift-checklist", slug] }),
+    onError: (error) => toast.error(errorText(error)),
+  });
+
+  if (day.isPending) return <Skeleton className="h-48 w-full" />;
+  if (day.isError) return <p>{errorText(day.error)}</p>;
+  if (day.data.items.length === 0) {
+    return (
+      <EmptyState icon={ClipboardCheck} title="Todavía no hay controles">
+        Un administrador los define en Administración.
+      </EmptyState>
+    );
+  }
+  return (
+    <Card className="p-6">
+      <CardTitle>Checklist de hoy</CardTitle>
+      <ul className="mt-4 grid gap-3">
+        {day.data.items.map(({ item, doneAt }) => (
+          <li key={item}>
+            <Checkbox
+              label={item}
+              checked={doneAt !== null}
+              disabled={doneAt !== null || check.isPending}
+              onChange={() => check.mutate(item)}
+            />
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+```
+
+`items-page.tsx` follows the same idea: a `Textarea` with one check per line and a `Button` that calls
+`PUT …/items`.
+
+### Menu actions
+
+An action in the menu of an explorer row, only for PDF files:
+
+```tsx
+explorerActions: [
+  {
+    id: "attach-to-shift",
+    label: "Adjuntar al turno",
+    icon: ClipboardCheck,
+    visible: (ctx) => ctx.node.type === "FILE" && ctx.node.mimeType === "application/pdf",
+    dialog: () => import("./attach-dialog.tsx"),
+  },
+],
+```
+
+- `visible(ctx)` decides whether it shows. `ctx` carries `slug`, `person` (role and capabilities) and
+  `node` (`id`, `spaceId`, `type`, `name`, `mimeType` and the person's access level).
+- With `dialog`, the app opens the component with `{ ctx, onClose }`. Without a dialog, use
+  `onSelect(ctx)`.
+- `folderActions` work the same, but their `ctx` carries the open folder's `spaceId` and `folderId`, and
+  they always open a dialog.
+
+**Hiding isn't protecting**: an action that isn't shown prevents nothing. Every plugin route checks
+permissions in the backend.
+
+## 6. Install the plugin
+
+Plugins are loaded from two places:
+
+| Source | Variable | Default |
+|---|---|---|
+| A folder: each subfolder is a plugin | `PLUGINS_DIR` | `plugins/` at the root (`/app/plugins` in the image) |
+| npm packages (can be private), comma-separated | `PLUGIN_PACKAGES` | empty |
+
+- **Backend**: the API and the worker discover them on startup. Restart both after installing or
+  updating a plugin. A plugin that fails to load is left out with a warning in the log.
+- **App**: the app part is included **at build time**. Installing, removing or updating that part means
+  building the app again; with Docker, **rebuilding the image**.
+
+In development, copy the folder into `plugins/` and restart `npm run dev`.
+
+On a Docker install, the published image doesn't include your plugin. Build your own from the
+repository, with the plugin in `plugins/`, and use it in `deploy/.env`:
+
+```sh
+docker build -t my-company/spiderfolio:1 .
+# in deploy/.env: SPIDERFOLIO_IMAGE=my-company/spiderfolio:1
+docker compose up -d
+```
+
+Rebuild it for every SpiderFolio update. See [Updates](/en/docs/updates).
+
+## 7. Licensing
+
+There are two kinds of plugin, set by the manifest's `distribution` field:
+
+| Kind | How it's activated | In **License and plugins** |
+|---|---|---|
+| **Commercial** (`"commercial"`, the default) | With a signed license that includes its `id`. All SpiderJAD plugins are commercial. | Active or “No license”. |
+| **Community** (`"community"`) | No license: the **owner** activates it in their company. | Marked **“Unverified”**, with an Activate button. |
+
+### Community plugins
+
+To publish your own or a third-party plugin without a license, declare `"distribution": "community"` in
+the manifest.
+
+- It's installed like any plugin, but it **doesn't activate on its own**: in each company, the owner
+  activates it in **Administration** › **License and plugins**.
+- On activation, the app asks to **confirm** a warning: the plugin is unverified and runs inside the
+  server, with access to its data and to every company on the installation. The API rejects activation
+  without that confirmation (`acceptRisk`).
+- Activating and deactivating are recorded in the audit log (`plugin.community.enable` and
+  `plugin.community.disable`). When deactivated, it behaves like an unlicensed plugin and keeps its data.
+- It can't use the `id` of a SpiderJAD commercial plugin (`security-policies`, `onedrive-import`,
+  `mcp-connector`, `templates`, `audit-rooms`): the server won't load it.
+- **Whoever installs a community plugin takes on the risk.** Review its code before installing it on your
+  server, as you would with any dependency.
+
+### Commercial plugins
+
+A commercial plugin is **active** in a company only if it's installed **and** listed in a valid,
+unexpired license for that company.
+
+- The license is a text in the format `SFL1.<payload>.<signature>`: the payload is base64url JSON and the
+  signature is Ed25519 over `SFL1.<payload>`.
+- The payload has `id`, `customer` (the company), `plugins` (the ids it activates), `issuedAt` and
+  `expiresAt` (or `null`, no expiry).
+- It's verified **offline**, on your server, with the public key fixed in the code. No environment
+  variable replaces it, and the API and the worker remember the license they read for 30 seconds.
+- The **owner** loads it in **Administration** › **License and plugins**. See
+  [License and plugins](/en/docs/license-and-plugins).
+
+Without a license, or with an expired one, the plugin behaves as if it weren't there: its routes answer
+404, its jobs don't run, its hooks aren't called and the app doesn't show it. **Its data and settings are
+kept**: with a new license it works again exactly as before.
+
+To distribute a commercial plugin with a SpiderJAD license, write to us at contacto@spiderjad.com. If
+you don't need a license, publish it as community.
+
+## 8. Isolation between companies
+
+The core isolates companies with `forTenant`, but **inside your schema, isolation is your
+responsibility**. `ctx.sql` runs in your schema and doesn't add any filter on its own.
+
+- **Every table** has `workspace_id`, with a foreign key to `public."Workspace"` and `ON DELETE CASCADE`.
+- **Every query** filters by `ctx.workspaceId`: reads, updates and deletes.
+- **Always** take the `workspaceId` from the context, never from the body, the query or a request's
+  payload.
+- If you look up a record by id and it doesn't belong to that company, answer `NOT_FOUND` (not
+  `FORBIDDEN`): a resource from another company doesn't exist for whoever is asking.
+- Always use parameters (`$1`, `$2`…); never build SQL by concatenating request data.
+- Settings (`ctx.settings`) are already separated per company.
+
+Write tests that create data in two companies and check that one can't see or touch the other's.
+
+## Related guides
+
+- [Architecture](/en/docs/architecture)
+- [Contributing](/en/docs/contributing)
+- [License and plugins](/en/docs/license-and-plugins)

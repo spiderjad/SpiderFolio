@@ -1,0 +1,274 @@
+// Textos de las páginas del proyecto open source (Inicio, Instalación, Plugins) en español neutro.
+import { SITE } from "../../config/site.ts";
+
+export const oss = {
+  cta: {
+    install: "Instalar",
+    github: "Ver en GitHub",
+    contact: "Contactar",
+    docs: "Ver la guía completa",
+  },
+  prices: {
+    launch: "Precio de lanzamiento",
+    from: "desde",
+    billing: { once: "pago único", year: "al año", day: "por día" },
+    spain: "España, sin IVA",
+    latam: "Latinoamérica",
+  },
+  openSource: {
+    eyebrow: "Open source",
+    title: "Tuyo de verdad: tu servidor, tus datos, tu código",
+    items: [
+      {
+        icon: "shield",
+        title: "Licencia AGPLv3",
+        text: "El código es abierto: lo puedes leer, auditar, modificar e instalar donde quieras. Si ofreces una versión modificada como servicio, compartes los cambios.",
+      },
+      {
+        icon: "folder",
+        title: "En tu servidor",
+        text: "Los documentos, la base de datos y las copias quedan en tu infraestructura. Archivos en disco local o en el S3 que elijas.",
+      },
+      {
+        icon: "users",
+        title: "Sin límites por usuario",
+        text: "No hay planes ni precios por persona. Invita a toda la planta: los límites, si quieres alguno, los fijas tú.",
+      },
+      {
+        icon: "sparkles",
+        title: "IA con tu propia clave",
+        text: "Bian, el asistente, usa tu clave de la API de Anthropic. Fijas el total mensual y los límites por persona.",
+      },
+    ],
+  },
+  screenshots: {
+    eyebrow: "Así se ve",
+    title: "Capturas",
+    items: [
+      { file: "inicio", caption: "Inicio: lo pendiente de cada persona y el estado de la empresa" },
+      { file: "explorador", caption: "Espacios y carpetas, con quién accede a cada cosa" },
+      {
+        file: "documento-controlado",
+        caption: "Documento controlado: versión vigente y aprobaciones",
+      },
+      { file: "permisos", caption: "Permisos que se explican: quién accede y por qué" },
+      { file: "bian", caption: "Bian responde con el contenido vigente y cita la fuente" },
+      { file: "planta", caption: "Vista de planta: lecturas pendientes en una tablet" },
+    ],
+  },
+  install: {
+    title: "Instalación",
+    subtitle: `${SITE.name} corre en tu servidor con Docker. En una tarde tienes la empresa funcionando.`,
+    requirementsTitle: "Qué necesitas",
+    requirements: [
+      "Un servidor Linux con Docker y Docker Compose v2",
+      "2 vCPU y 4 GB de RAM (hasta ~200 personas)",
+      "Un servidor de email SMTP (el de tu empresa o uno transaccional)",
+      "Un dominio apuntando al servidor, para entrar con HTTPS desde cualquier equipo",
+    ],
+    steps: [
+      {
+        title: "Descarga",
+        text: "Clona el repositorio y copia el ejemplo de configuración.",
+        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy\ncp .env.example .env",
+      },
+      {
+        title: "Configura",
+        text: "Completa la URL, la contraseña de la base, los secretos y tu servidor de email. Los secretos se generan con openssl.",
+        code: "openssl rand -base64 48   # JWT_ACCESS_SECRET\nopenssl rand -base64 32   # EMAIL_ENCRYPTION_KEY y MFA_ENCRYPTION_KEY (una distinta para cada una)",
+      },
+      {
+        title: "Arranca",
+        text: "Un comando levanta la base, la app y el worker. Las migraciones se aplican solas. Con un dominio, el perfil https pide el certificado automáticamente.",
+        code: "docker compose --profile https up -d\ndocker compose logs -f app",
+      },
+      {
+        title: "Crea tu empresa",
+        text: "Entra a tu dominio, regístrate y quedas como propietario. Después invita a tu equipo desde Administración.",
+        code: "https://tu-dominio/register",
+      },
+    ],
+    optionalTitle: "Opcional",
+    optional: [
+      {
+        title: "PDF controlado",
+        text: "Agrega el perfil pdf (Gotenberg) para generar el PDF de los documentos controlados.",
+      },
+      {
+        title: "Archivos en S3",
+        text: "Por defecto van al disco del servidor. También puedes usar S3, R2 o MinIO.",
+      },
+      { title: "Bian, el asistente IA", text: "Activa Bian con tu clave de la API de Anthropic." },
+      {
+        title: "Plugins",
+        text: "Funciones comerciales que se activan con una licencia, sin conexión.",
+      },
+    ],
+    maintenanceTitle: "Mantenimiento",
+    maintenance: [
+      {
+        title: "Actualizar",
+        text: "docker compose pull && docker compose up -d, después de una copia.",
+      },
+      {
+        title: "Copias de seguridad",
+        text: "backup.sh guarda la base, los archivos y la configuración; restore.sh los recupera.",
+      },
+    ],
+  },
+  plugins: {
+    title: "Plugins",
+    subtitle: `${SITE.name} funciona completo sin plugins. Los plugins comerciales suman funciones para empresas que las necesitan, se instalan en tu servidor y se activan con una licencia que se verifica sin conexión.`,
+    howTitle: "Cómo funcionan",
+    how: [
+      "Se instalan en tu servidor, junto a tu instalación.",
+      "El propietario carga la licencia en Administración › Licencia y plugins.",
+      "Si la licencia vence, el plugin se desactiva y todo lo demás sigue igual. Sus ajustes se conservan.",
+    ],
+    status: { available: "Disponible", soon: "Próximamente" },
+    items: [
+      {
+        id: "security-policies",
+        icon: "shield",
+        title: "Políticas de seguridad avanzadas",
+        text: "Exige la verificación en dos pasos a toda la empresa o solo a quienes administran, limita las invitaciones a los dominios de email de la empresa y, próximamente, inicio de sesión único (SSO) con Microsoft 365 o Google Workspace.",
+        available: true,
+      },
+      {
+        id: "onedrive-import",
+        icon: "folder",
+        title: "Importación desde OneDrive y SharePoint",
+        text: "Trae carpetas y bibliotecas enteras a un espacio, con su estructura, sin descargarlas a mano.",
+        available: false,
+      },
+      {
+        id: "mcp-connector",
+        icon: "sparkles",
+        title: "Conector MCP para Claude",
+        text: "Claude lee y, con permiso, crea o edita la documentación de la empresa, con los permisos de cada persona y todo en la auditoría.",
+        available: false,
+      },
+      {
+        id: "templates",
+        icon: "file-check",
+        title: "Plantillas propias y por rubro",
+        text: "Guarda páginas como plantilla de la empresa y usa colecciones listas para alimentación, industria o servicios.",
+        available: false,
+      },
+      {
+        id: "audit-rooms",
+        icon: "clipboard",
+        title: "Salas de auditoría",
+        text: "Comparte con el auditor externo solo lo que pide, por tiempo limitado, con marca de agua y registro de todo lo que consultó.",
+        available: false,
+      },
+    ],
+    pricesNote:
+      "Precios de lanzamiento. España: euros sin IVA. Latinoamérica: dólares estadounidenses (USD).",
+    pricesLink: "Ver el paquete Enterprise y los servicios",
+    contactTitle: "¿Te interesa algún plugin?",
+    contactText: `Escríbenos con el nombre de tu empresa y cuántas personas usarían ${SITE.name}.`,
+    contactSubject: (plugin: string) => `Plugin: ${plugin}`,
+  },
+  landing: {
+    command:
+      "git clone https://github.com/spiderjad/SpiderFolio.git && cd SpiderFolio/deploy && cp .env.example .env",
+    commandLabel: "Comando de instalación",
+    copy: "Copiar",
+    copied: "Copiado",
+    stars: (count: string) => `${count} estrellas en GitHub`,
+    heroAlt:
+      "El Inicio de SpiderFolio con los documentos vigentes, lo pendiente y la actividad de la empresa",
+    howEyebrow: "Cómo funciona",
+    howTitle: "Lo importante, de un vistazo",
+    lifecycle: {
+      title: "Un documento controlado, de principio a fin",
+      text: "Cada versión pasa por revisión y aprobación. Solo una está vigente; al publicar la nueva, la anterior queda obsoleta y archivada.",
+      code: "PRC-001",
+      name: "Control de documentos",
+      steps: ["Borrador", "En revisión", "Vigente", "Obsoleto"],
+      approved: "Aprobado por Calidad",
+    },
+    permissions: {
+      title: "Permisos por departamento que se explican solos",
+      text: "El acceso se da a departamentos y roles. Si alguien cambia de área, sus accesos cambian con él, y cada carpeta dice quién entra y por qué.",
+      departments: ["Calidad", "Producción", "Mantenimiento"],
+      space: "/Procedimientos/Planta",
+      why: "Producción · puede editar",
+      people: ["Carmen", "Jorge", "Ana"],
+    },
+    qr: {
+      title: "Un QR en el puesto, siempre la versión vigente",
+      text: "Pega el código junto a la máquina: al escanearlo se abre la versión vigente del procedimiento, aunque se haya publicado una nueva ayer.",
+      label: "INS-001 · Cortadora",
+      version: "v3 · vigente",
+      read: "Lectura confirmada",
+    },
+    bian: {
+      title: "Bian responde con lo vigente y cita la fuente",
+      text: "El asistente solo usa los documentos vigentes que cada persona puede ver, y siempre dice de dónde sacó la respuesta.",
+      question: "¿Cada cuánto se limpia la sala de elaboración?",
+      answer:
+        "Al terminar cada turno y siempre que se cambie de producto: detergente alcalino 10 minutos, aclarar, desinfectar y registrar la limpieza.",
+      source: "PRC-002 · Limpieza y desinfección · v2",
+    },
+    pricing: {
+      eyebrow: "Precios",
+      title: "Gratis para siempre, con extras si los necesitas",
+      subtitle:
+        "El núcleo es open source y completo. Pagas solo por lo que suma: plugins, el paquete Enterprise o ayuda para ponerlo en marcha.",
+      note: "Precios de lanzamiento. España: euros sin IVA. Latinoamérica: dólares estadounidenses (USD).",
+      free: "Gratis",
+      contact: "Contactar",
+      popular: "Para empresas",
+      plans: [
+        {
+          id: "community",
+          name: "Community",
+          note: "AGPLv3 · para siempre",
+          items: [
+            "Todo el núcleo: archivos, páginas, permisos, documentos controlados, lecturas, QR y auditoría",
+            "Bian con tu clave de Anthropic",
+            "Sin límites por usuario",
+            "Autoinstalable con Docker",
+            "Soporte de la comunidad en GitHub",
+          ],
+          cta: "Instalar",
+        },
+        {
+          id: "plugin",
+          name: "Plugins",
+          note: "por plugin y por instalación; pago único o anual según el plugin",
+          items: [
+            "Elige solo los que necesitas",
+            "Licencia verificada sin conexión",
+            "Actualizaciones mientras dure la licencia",
+            "Soporte por email del plugin",
+          ],
+          cta: "Ver plugins",
+        },
+        {
+          id: "enterprise",
+          name: "Enterprise",
+          note: "todos los plugins, por instalación",
+          items: [
+            "Todos los plugins, presentes y futuros",
+            "Soporte prioritario",
+            "Licencia única para toda la instalación",
+            "Condiciones a medida para varias empresas",
+          ],
+          cta: "Contactar",
+        },
+      ],
+      servicesTitle: "Servicios",
+      servicesText: "Si prefieres no hacerlo solo, te ayudamos.",
+      services: [
+        { id: "installation", name: "Instalación en tu servidor" },
+        { id: "support", name: "Soporte anual" },
+        { id: "consulting", name: "Consultoría o formación" },
+        { id: "erp-connector", name: "Conector con SAP o Business Central" },
+      ],
+      subject: (plan: string) => `SpiderFolio: ${plan}`,
+    },
+  },
+} as const;

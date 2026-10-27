@@ -1,0 +1,71 @@
+---
+title: "Gotenberg (PDF)"
+description: "Activa el perfil pdf para generar el PDF de las páginas controladas, y qué pasa si no lo activas."
+group: autoalojamiento
+order: 4
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+[Gotenberg](https://gotenberg.dev) es un servicio que convierte HTML en PDF. SpiderFolio lo usa para un
+solo fin: generar el **PDF controlado** de las páginas que son documentos controlados. Es opcional.
+
+## Qué genera
+
+Cuando una página controlada se publica, el worker arma su PDF con una cabecera (logo, código, título,
+versión, fecha de entrada en vigor y quién la elaboró, revisó y aprobó) y el pie «Página X de Y». En cada
+descarga se le agrega la marca de agua de copia no controlada, con quién la descargó y cuándo; las
+versiones obsoletas llevan además la marca «OBSOLETO».
+
+- Los **archivos PDF** subidos como documento controlado **no necesitan Gotenberg**: su hoja de control
+  y su marca de agua se agregan igual.
+- Las imágenes de la página viajan dentro del HTML: Gotenberg no necesita salir a Internet.
+- El PDF sale en el **idioma de la empresa** (en **Gestión › Seguridad**).
+
+Más sobre el flujo en [Documentos controlados](/es/docs/documentos-controlados).
+
+## Activarlo
+
+1. En `deploy/.env`:
+
+   ```sh
+   GOTENBERG_URL=http://gotenberg:3000
+   ```
+
+2. Arranca con el perfil `pdf` (junto al `https` si lo usas):
+
+   ```sh
+   docker compose --profile https --profile pdf up -d
+   ```
+
+   O agrega `COMPOSE_PROFILES=https,pdf` a `.env` y usa `docker compose up -d` a secas.
+
+3. Comprueba que el contenedor está en marcha: `docker compose ps gotenberg`.
+
+Gotenberg suma alrededor de **1 GB de RAM**. Su puerto no se publica: solo lo ven la app y el worker
+dentro de la red de Docker. **No lo expongas a Internet**: convierte cualquier HTML que reciba.
+
+Si ya tienes un Gotenberg propio en tu red interna, puedes apuntar `GOTENBERG_URL` a él (versión 8) en
+lugar de usar el perfil.
+
+## Qué pasa sin Gotenberg
+
+Todo SpiderFolio funciona igual, salvo el PDF de las páginas controladas:
+
+- Al publicar, el PDF no se genera.
+- En el diálogo del documento controlado, bajo **Historial de versiones**, aparece el aviso: «Este servidor no
+  genera el PDF de las páginas controladas (falta Gotenberg); el de los archivos PDF, sí. Quien
+  administra la instalación puede activarlo.»
+- Las aprobaciones, las lecturas obligatorias, el QR y la versión vigente en la app no cambian.
+
+<Shot name="control" alt="El diálogo de documento controlado, con su historial de versiones" />
+
+Si lo activas más tarde, no hace falta volver a publicar nada: el PDF de cada versión se genera la
+primera vez que alguien lo descarga.
+
+## Relacionado
+
+- [Configuración](/es/docs/configuracion)
+- [Requisitos del servidor](/es/docs/requisitos-del-servidor)
+- [Solución de problemas](/es/docs/solucion-de-problemas)

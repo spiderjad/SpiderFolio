@@ -1,0 +1,57 @@
+---
+title: "Límites y uso"
+description: "Cuánto usa la empresa y los límites opcionales: almacenamiento, tamaño de archivo, versiones guardadas, auditoría y consultas a Bian."
+group: administracion
+order: 8
+icon: folder
+---
+
+import Shot from "../../../components/Shot.astro";
+
+Por defecto **no hay límites**. Si quieres alguno (por ejemplo, para cuidar el disco del servidor o el gasto
+en Bian), lo fijas en **Administración › Límites y uso**. Los límites se aplican a toda la empresa y puedes
+cambiarlos cuando quieras.
+
+## Quién la ve
+
+- Ver el uso y los límites: quien tiene **Ajustes de la empresa** o **Ver almacenamiento**.
+- Cambiar los límites: solo **Ajustes de la empresa**. Los demás ven «Solo quien tiene «Ajustes de la
+  empresa» puede cambiarlos».
+
+<Shot name="limites" alt="La pantalla Límites y uso, con el uso de la empresa arriba y los límites debajo" />
+
+## El uso
+
+Arriba, en **Uso**, ves:
+
+- **Almacenamiento**: cuánto ocupan los archivos, y de cuánto, si hay límite.
+- **Personas**: cuántas tienen plaza completa y cuántas son lectores.
+- **Consultas a Bian este mes**: las usadas, y el total del mes si hay uno.
+
+## Los límites
+
+| Límite | Unidad | Qué pasa al llegar |
+|---|---|---|
+| **Almacenamiento total** | GB | No se pueden subir más archivos hasta liberar espacio o ampliar el límite. |
+| **Tamaño máximo de un archivo** | MB (mínimo 1) | Los archivos más grandes no se suben. |
+| **Versiones guardadas por archivo** | versiones | Las más antiguas pasan a la papelera de versiones. Nunca afecta la versión vigente ni a los documentos controlados. |
+| **Conservar la auditoría** | días (mínimo 30) | Los eventos más viejos se eliminan una vez por semana. Sin límite, se guarda todo. |
+| **Consultas a Bian por mes (toda la empresa)** | consultas | Bian se pausa para todos hasta el mes siguiente. |
+
+Para fijar un límite, escribe el número. Para quitarlo, marca **Sin límite**. Luego pulsa **Guardar límites**.
+Cada cambio queda en el registro de auditoría.
+
+Cuando alguien choca con un límite, ve el aviso «Se alcanzó un límite de la empresa», con cuánto se usa y que
+lo puede cambiar quien tenga **Ajustes de la empresa**.
+
+## Bian
+
+El total de consultas a Bian es el mismo que **Total por mes de toda la empresa** en **Administración › Bian**:
+si lo cambias en un lugar, cambia en el otro. Allí además repartes las consultas con límites por persona y por
+departamento. Mira [Configurar Bian](/es/docs/configurar-bian).
+
+## Relacionado
+
+- [Configurar Bian](/es/docs/configurar-bian)
+- [Archivos](/es/docs/archivos)
+- [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)

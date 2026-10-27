@@ -1,0 +1,62 @@
+---
+import Icon from "../components/Icon.astro";
+import RichText from "../components/RichText.astro";
+import { pageAlternates, texts, type Locale } from "../i18n/index.ts";
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = texts(locale).security;
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t.title}
+  description={t.description}
+  alternates={pageAlternates("security")}
+>
+  <section class="hero-glow">
+    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {t.eyebrow}
+      </p>
+      <h1 class="mt-3 max-w-3xl font-display text-5xl tracking-tight md:text-6xl">
+        {t.heading}
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-muted-foreground">{t.intro}</p>
+      <div class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {
+          t.blocks.map((block) => (
+            <article class="rounded-2xl border bg-background p-6">
+              <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Icon name={block.icon} />
+              </span>
+              <h2 class="mt-5 text-lg font-semibold">{block.title}</h2>
+              <p class="mt-2 text-sm text-muted-foreground">{block.text}</p>
+            </article>
+          ))
+        }
+      </div>
+
+      <h2 class="mt-16 font-display text-4xl tracking-tight">{t.yourPartTitle}</h2>
+      <ul class="mt-6 grid max-w-3xl gap-2">
+        {
+          t.yourPart.map((item) => (
+            <li class="flex gap-3">
+              <Icon name="check" size={18} class="mt-1 shrink-0 text-primary" />
+              <span>{item}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-4 max-w-3xl text-sm text-muted-foreground">{t.dataNote}</p>
+
+      <h2 class="mt-16 font-display text-4xl tracking-tight">{t.reportTitle}</h2>
+      <p class="mt-3 max-w-3xl text-muted-foreground">
+        <RichText value={t.report} linkClass="text-primary underline" />
+      </p>
+    </div>
+  </section>
+</MarketingLayout>

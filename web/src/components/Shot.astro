@@ -1,0 +1,48 @@
+---
+// Captura real de la app en las guías y en la web, en el idioma de la página y con el tema del
+// visitante (claro u oscuro). Las genera web/scripts/capturas.ts en public/capturas/<idioma>/.
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { DEFAULT_LOCALE, type Locale } from "../i18n/index.ts";
+
+interface Props {
+  /** Nombre de la captura (CAPTURES en web/scripts/capturas.ts). */
+  name: string;
+  alt: string;
+  /** Texto bajo la imagen; por defecto, ninguno. */
+  caption?: string;
+  /** La primera imagen visible de la página: se carga sin esperar. */
+  eager?: boolean;
+  class?: string;
+}
+
+const { name, alt, caption, eager = false, class: className } = Astro.props;
+const locale = (Astro.currentLocale ?? DEFAULT_LOCALE) as Locale;
+const src = (theme: "light" | "dark") => `/capturas/${locale}/${name}-${theme}.webp`;
+const missing = !existsSync(join(process.cwd(), "public", "capturas", locale, `${name}-light.webp`));
+if (missing) throw new Error(`Falta la captura ${locale}/${name}: corré web/scripts/capturas.ts`);
+const loading = eager ? "eager" : "lazy";
+---
+
+<figure class:list={["shot not-prose", className]}>
+  <img
+    src={src("light")}
+    alt={alt}
+    width="1600"
+    height="1000"
+    loading={loading}
+    decoding="async"
+    fetchpriority={eager ? "high" : "auto"}
+    class="shot-light"
+  />
+  <img
+    src={src("dark")}
+    alt={alt}
+    width="1600"
+    height="1000"
+    loading={loading}
+    decoding="async"
+    class="shot-dark"
+  />
+  {caption !== undefined && <figcaption>{caption}</figcaption>}
+</figure>

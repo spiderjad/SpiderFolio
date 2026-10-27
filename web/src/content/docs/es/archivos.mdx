@@ -1,0 +1,85 @@
+---
+title: "Archivos"
+description: "Espacios, carpetas y archivos: quién accede y por qué, subir, mover, descargar en ZIP, versiones y papelera."
+group: uso-diario
+order: 2
+icon: folder
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Espacios
+
+Todo el contenido vive en **espacios**: cada uno es la raíz de un árbol de carpetas, páginas y archivos. Están en **Archivos**, en el menú lateral.
+
+<Shot name="espacios" alt="La lista de espacios con favoritos, recientes y el motivo del acceso de cada uno" />
+
+- Un espacio puede ser **de la empresa** o **de un departamento**. En el de un departamento, su jefe y subjefes lo gestionan y las personas del departamento entran con el nivel que se elija: **Pueden editar** o **Solo pueden ver**.
+- La lista tiene **Favoritos** (la estrella), **Recientes**, filtros (**Todos**, **Mis departamentos**, **Favoritos**, **Privados**), orden por nombre, departamento o fecha, y vista de **Tarjetas** o **Lista**. Carga más al llegar al final.
+- Cada espacio te dice **por qué tienes acceso**: «Jefe de Finanzas», «Subjefe de Finanzas (área superior)», «Miembro de Contabilidad · incluye subáreas», «Administrador», «Acceso dado a ti».
+- **Nuevo espacio** (si tienes permiso) pide nombre, descripción, emoji, color, departamento y visibilidad.
+
+## Quién ve cada espacio
+
+Hay tres niveles de visibilidad:
+
+- **Normal**: lo ve todo el equipo (en solo lectura, salvo quien tenga más acceso).
+- **Privado**: solo lo ven quienes tengan acceso dado, las personas de su departamento y los administradores. Se marca con un candado.
+- **Confidencial**: además, **los administradores no entran solos**. Solo el propietario del workspace, el jefe y subjefe del departamento (y de áreas superiores), sus miembros y quien se agregue de forma explícita. Se marca con otro candado y el texto «Confidencial».
+
+En un espacio de departamento, **Incluir subáreas** (desactivada por defecto) extiende el acceso de los miembros a los subdepartamentos. Los jefes y subjefes de departamentos superiores gestionan siempre los espacios de sus subáreas.
+
+**Miembros**, en las acciones del espacio, da acceso a departamentos (lo recomendado: si alguien cambia de área, sus accesos cambian solos) o a personas, con nivel (**Ver**, **Comentar**, **Editar**, **Gestionar**) y vencimiento opcional. Lectores e invitados nunca pasan de **Comentar**. Funciona igual que compartir un elemento: ver [Compartir](/es/docs/compartir).
+
+## Carpetas y archivos
+
+Al abrir un espacio ves el explorador: el árbol de carpetas a un lado y el contenido de la carpeta al otro, con la ruta (migas de pan) arriba y **Tu acceso** con el motivo.
+
+<Shot name="explorador" alt="El explorador de un espacio con el árbol de carpetas, la lista de archivos y el menú Nuevo" />
+
+- **Nuevo** crea una **Nueva carpeta** o una **Nueva página** (ver [Páginas](/es/docs/paginas)), y permite **Subir archivos**, **Subir carpeta** o **Importar ZIP**. También puedes **arrastrar archivos y carpetas** desde tu equipo. Los archivos grandes se suben en partes y se reanudan.
+- Se comprueba el tipo real del archivo, no solo la extensión. No se admiten ejecutables ni HTML o SVG.
+- Si ya hay un archivo con ese nombre, eliges **Reemplazar (nueva versión)**, **Conservar ambos** u **Omitir**.
+- **Ver** abre una vista previa sin descargar. **Descargar** baja el archivo.
+- La lista filtra por tipo (**Todo**, **Páginas**, **Archivos**), admite **selección múltiple**, orden y búsqueda, y muestra quién modificó cada elemento y el tamaño total de cada carpeta.
+
+## Versiones
+
+Cada archivo guarda sus versiones. En el menú del archivo, **Versiones** muestra el historial: puedes **Subir una versión nueva**, descargar cualquiera o pulsar **Volver a esta** para que una anterior pase a ser la vigente. Si el archivo es un documento controlado, las versiones siguen las reglas de [Documentos controlados](/es/docs/documentos-controlados).
+
+## Importar un ZIP
+
+Con **Importar ZIP** (o **Importar el contenido del ZIP** en el menú de un ZIP ya subido) se descomprime conservando sus carpetas, si quieres dentro de una carpeta nueva. Si el ZIP trae una sola carpeta en la raíz, su contenido entra directo, sin repetir un nivel. Lo que no se pueda importar se omite y se explica al final. Después puedes **Eliminar el ZIP original** para liberar espacio.
+
+## Mover
+
+Se mueve igual que en Google Drive, con cualquiera de estos caminos:
+
+- **Mover**, en el menú del elemento o en la barra de selección: un diálogo con el árbol de carpetas, que permite cambiar de espacio y crear una carpeta nueva. Termina con **Mover aquí**.
+- **Arrastrar y soltar** sobre una carpeta de la lista, del árbol o de la ruta.
+- **Cortar y pegar**: Ctrl+X corta lo seleccionado y Ctrl+V lo pega en la carpeta que estás viendo.
+
+Hace falta poder **editar** en el origen y en el destino. No se puede mover una carpeta dentro de sí misma. Si ya existe un elemento con ese nombre, eliges **Reemplazar** o **Conservar ambos**. Al terminar puedes **Deshacer** o **Ir a la carpeta**.
+
+## Descargar en ZIP
+
+Selecciona archivos y carpetas y pulsa **Descargar ZIP** (o elígelo en el menú de una carpeta).
+
+- Hasta **500 MB**: la descarga empieza al momento. El enlace es de un solo uso y dura unos minutos; al canjearlo se vuelven a comprobar tus permisos.
+- Más de 500 MB: se prepara en segundo plano y te llega un **email con un enlace temporal** (7 días). No cuenta para tu almacenamiento.
+- Solo entra lo que puedes ver.
+
+## Compartidos
+
+**Compartidos**, en el menú lateral, tiene dos pestañas: **Conmigo** (lo que te compartieron en espacios donde no tienes acceso completo, con lo nuevo marcado) y **Por mí** (los accesos que diste, para quitarlos o cambiar su vencimiento). Ver [Compartir](/es/docs/compartir).
+
+## Papelera
+
+**Mover a la papelera** manda el elemento (y, si es una carpeta, todo su contenido) a la **Papelera** del espacio. Ahí se guarda **30 días** y se puede **Restaurar**. **Eliminar** lo borra para siempre, con todas sus versiones; pasados los 30 días se elimina solo.
+
+## Relacionado
+
+- [Páginas](/es/docs/paginas)
+- [Compartir](/es/docs/compartir)
+- [Documentos controlados](/es/docs/documentos-controlados)
+- [Búsqueda](/es/docs/busqueda)

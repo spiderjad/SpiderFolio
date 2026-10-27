@@ -1,0 +1,339 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import { docGroups } from "../content.config.ts";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import Icon from "../components/Icon.astro";
+import { interpolateSite } from "../config/site.ts";
+import { docAlternates, docPath, texts, type DocKey, type Locale } from "../i18n/index.ts";
+import { docRef } from "../lib/docs.ts";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  entry: CollectionEntry<"docs">;
+  headings: { depth: number; slug: string; text: string }[];
+  locale: Locale;
+  docKey: DocKey;
+}
+
+const { entry, headings, locale, docKey } = Astro.props;
+const t = texts(locale);
+const alternates = docAlternates(docKey);
+// Solo las guías de este idioma, cada una con su ruta.
+const all = (await getCollection("docs"))
+  .flatMap((doc) => {
+    const ref = docRef(doc.id);
+    return ref?.locale === locale ? [{ doc, href: docPath(ref.key, locale) }] : [];
+  })
+  .sort((a, b) => a.doc.data.order - b.doc.data.order);
+const current = docPath(docKey, locale);
+const toc = headings
+  .filter((heading) => heading.depth === 2)
+  .map((heading) => ({ ...heading, text: interpolateSite(heading.text) }));
+---
+
+<BaseLayout locale={locale} title={entry.data.title} description={entry.data.description} alternates={alternates}>
+  <Header locale={locale} alternates={alternates} />
+  <div class="mx-auto flex max-w-[88rem] gap-0 px-4 sm:px-6 lg:px-8">
+    <aside class="sticky top-16 hidden h-[calc(100vh-4rem)] w-72 shrink-0 overflow-y-auto py-8 pr-6 lg:block">
+      <nav aria-label={t.docs.nav}>
+        {
+          docGroups.map((group) => {
+            const items = all.filter((item) => item.doc.data.group === group);
+            return items.length > 0 ? (
+              <div class="mb-8">
+                <p class="mb-3 px-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.docs.groups[group]}
+                </p>
+                <ul class="space-y-1">
+                  {items.map(({ doc, href }) => (
+                    <li>
+                      <a
+                        href={href}
+                        aria-current={href === current ? "page" : undefined}
+                        class="flex h-10 items-center gap-3 rounded-lg border border-transparent px-3 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:border-primary/30 aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary-soft-foreground"
+                      >
+                        <Icon name={doc.data.icon} size={18} />
+                        {doc.data.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null;
+          })
+        }
+      </nav>
+    </aside>
+
+    <main class="hero-glow min-w-0 flex-1 border-l px-0 py-8 lg:px-12" data-pagefind-body>
+      <div class="mx-auto max-w-3xl">
+        <div class="flex items-center justify-between gap-4" data-pagefind-ignore>
+          <a href={docPath("intro", locale)} class="text-sm text-muted-foreground hover:text-foreground">
+            {t.docs.breadcrumb}
+          </a>
+          <button
+            type="button"
+            data-search-open
+            class="flex h-11 w-72 max-w-full items-center gap-3 rounded-lg border bg-background px-3 text-sm text-muted-foreground"
+          >
+            <Icon name="search" size={16} />
+            <span class="flex-1 text-left">{t.docs.search}</span>
+            <kbd class="rounded border px-1.5 py-0.5 font-mono text-xs">⌘K</kbd>
+          </button>
+        </div>
+
+        <div class="mt-10 flex items-center gap-3">
+          <span class="inline-flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+            <Icon name={entry.data.icon} />
+          </span>
+          <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {t.docs.groups[entry.data.group]}
+          </p>
+        </div>
+        <h1 class="mt-5 font-display text-5xl tracking-tight md:text-6xl">{entry.data.title}</h1>
+        <p class="mt-5 text-xl text-muted-foreground">{entry.data.description}</p>
+
+        <div class="prose mt-10 max-w-none">
+          <slot />
+        </div>
+      </div>
+    </main>
+
+    <aside class="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 py-8 pl-6 xl:block">
+      {
+        toc.length > 0 && (
+          <nav aria-label={t.docs.toc}>
+            <p class="mb-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {t.docs.toc}
+            </p>
+            <ul class="border-l">
+              {toc.map((heading) => (
+                <li>
+                  <a
+                    href={`#${heading.slug}`}
+                    data-toc-link
+                    class="-ml-px block border-l-2 border-transparent py-1.5 pl-4 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:border-primary aria-[current=true]:text-primary"
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a href="#top" class="mt-6 flex items-center gap-2 pl-4 text-sm text-muted-foreground hover:text-foreground">
+              <Icon name="arrow-up" size={16} />
+              {t.docs.top}
+            </a>
+          </nav>
+        )
+      }
+    </aside>
+  </div>
+  <Footer locale={locale} />
+
+  <dialog
+    data-search-dialog
+    class="m-auto w-[min(40rem,calc(100vw-2rem))] rounded-2xl border bg-background p-0 text-foreground shadow-pop backdrop:bg-foreground/40"
+  >
+    <div class="flex items-center gap-3 border-b px-4">
+      <Icon name="search" size={18} class="text-muted-foreground" />
+      <input
+        type="search"
+        data-search-input
+        placeholder={t.docs.search}
+        aria-label={t.docs.search}
+        class="h-14 flex-1 bg-transparent text-base outline-none"
+      />
+    </div>
+    <ul data-search-results class="max-h-96 overflow-y-auto p-2"></ul>
+    <p data-search-empty hidden class="p-6 text-center text-sm text-muted-foreground">
+      {t.docs.searchEmpty}
+    </p>
+  </dialog>
+</BaseLayout>
+
+<script>
+  // Con View Transitions el script se ejecuta una sola vez: lo que depende de la página
+  // se inicia en astro:page-load (también se dispara en la carga inicial).
+  let observer: IntersectionObserver | null = null;
+
+  // Marcador violeta en la sección visible de "En esta página".
+  function initToc(): void {
+    observer?.disconnect();
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]"));
+    const targets = links
+      .map((link) => document.getElementById(link.hash.slice(1)))
+      .filter((el): el is HTMLElement => el !== null);
+    if (targets.length === 0) return;
+    observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.find((entry) => entry.isIntersecting);
+        if (!visible) return;
+        links.forEach((link) =>
+          link.setAttribute("aria-current", String(link.hash === `#${visible.target.id}`)),
+        );
+      },
+      { rootMargin: "-80px 0px -70% 0px" },
+    );
+    targets.forEach((target) => observer?.observe(target));
+  }
+
+  // Búsqueda con Pagefind (índice generado en el build; no existe en desarrollo).
+  interface PagefindResult {
+    data: () => Promise<{ url: string; meta: { title?: string }; excerpt: string }>;
+  }
+  interface Pagefind {
+    search: (query: string) => Promise<{ results: PagefindResult[] }>;
+  }
+  let dialog: HTMLDialogElement | null = null;
+  let input: HTMLInputElement | null = null;
+  let list: HTMLUListElement | null = null;
+  let empty: HTMLElement | null = null;
+  let pagefind: Pagefind | null = null;
+
+  async function load(): Promise<Pagefind | null> {
+    if (pagefind) return pagefind;
+    try {
+      const url = "/pagefind/pagefind.js";
+      pagefind = (await import(/* @vite-ignore */ url)) as Pagefind;
+    } catch {
+      pagefind = null;
+    }
+    return pagefind;
+  }
+
+  function open(): void {
+    if (!dialog || dialog.open) return;
+    dialog.showModal();
+    input?.focus();
+    void load();
+  }
+
+  interface Hit {
+    url: string;
+    title: string;
+    excerpt: string;
+  }
+  interface IndexedDoc {
+    url: string;
+    title: string;
+    description: string;
+    text: string;
+  }
+  // Un índice por idioma; el de la página es el de <html lang>.
+  const fallbackIndex = new Map<string, IndexedDoc[]>();
+
+  /** Sin mayúsculas ni tildes: «configuracion» encuentra «Configuración». */
+  const fold = (value: string): string =>
+    value
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase();
+
+  // Sin Pagefind (desarrollo, o antes del primer build): busca en /<idioma>/docs-index.json.
+  async function loadIndex(lang: string): Promise<IndexedDoc[]> {
+    const cached = fallbackIndex.get(lang);
+    if (cached) return cached;
+    let docs: IndexedDoc[] = [];
+    try {
+      const response = await fetch(`/${lang}/docs-index.json`);
+      if (response.ok) docs = (await response.json()) as IndexedDoc[];
+    } catch {
+      docs = [];
+    }
+    fallbackIndex.set(lang, docs);
+    return docs;
+  }
+
+  async function searchIndex(query: string): Promise<Hit[]> {
+    const docs = await loadIndex(document.documentElement.lang);
+    const terms = fold(query).split(/\s+/).filter(Boolean);
+    const hits: (Hit & { score: number })[] = [];
+    for (const doc of docs) {
+      const title = fold(doc.title);
+      const description = fold(doc.description);
+      const text = fold(doc.text);
+      if (!terms.every((term) => title.includes(term) || description.includes(term) || text.includes(term)))
+        continue;
+      const score = terms.reduce(
+        (sum, term) =>
+          sum + (title.includes(term) ? 10 : 0) + (description.includes(term) ? 4 : 0) + (text.includes(term) ? 1 : 0),
+        0,
+      );
+      // fold() no cambia el largo del texto salvo en casos raros: sirve para ubicar el extracto.
+      const at = text.indexOf(terms[0] ?? "");
+      const from = Math.max(0, at - 50);
+      const excerpt = at < 0 ? doc.description : `${from > 0 ? "…" : ""}${doc.text.slice(from, from + 150)}…`;
+      hits.push({ url: doc.url, title: doc.title, excerpt, score });
+    }
+    return hits.sort((a, b) => b.score - a.score).slice(0, 8);
+  }
+
+  async function searchPagefind(engine: Pagefind, query: string): Promise<Hit[]> {
+    const found = await engine.search(query);
+    // Pagefind ya usa el índice del idioma de <html lang>; el filtro por prefijo lo garantiza aunque
+    // el módulo se haya cargado en una página de otro idioma.
+    const prefix = `/${document.documentElement.lang}/`;
+    const top = (await Promise.all(found.results.slice(0, 16).map((result) => result.data())))
+      .filter((item) => item.url.startsWith(prefix))
+      .slice(0, 8);
+    // El extracto trae <mark>; se pasa a texto plano para no insertar HTML.
+    return top.map((item) => ({
+      // Sin ".html": son las URLs canónicas (build.format "file").
+      url: item.url.replace(/\.html$/, ""),
+      title: item.meta.title ?? item.url,
+      excerpt: new DOMParser().parseFromString(item.excerpt, "text/html").body.textContent ?? "",
+    }));
+  }
+
+  async function run(query: string): Promise<void> {
+    if (!list || !empty) return;
+    list.replaceChildren();
+    empty.hidden = true;
+    if (query.trim().length < 2) return;
+    const engine = await load();
+    let hits = engine ? await searchPagefind(engine, query) : [];
+    if (hits.length === 0) hits = await searchIndex(query);
+    empty.hidden = hits.length > 0;
+    for (const item of hits) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = item.url;
+      a.className = "block rounded-lg px-3 py-2 hover:bg-muted";
+      const title = document.createElement("span");
+      title.className = "block font-medium";
+      title.textContent = item.title;
+      const excerpt = document.createElement("span");
+      excerpt.className = "block text-sm text-muted-foreground";
+      excerpt.textContent = item.excerpt;
+      a.append(title, excerpt);
+      li.append(a);
+      list.append(li);
+    }
+  }
+
+  function initSearch(): void {
+    dialog = document.querySelector<HTMLDialogElement>("[data-search-dialog]");
+    input = document.querySelector<HTMLInputElement>("[data-search-input]");
+    list = document.querySelector<HTMLUListElement>("[data-search-results]");
+    empty = document.querySelector<HTMLElement>("[data-search-empty]");
+    document.querySelector("[data-search-open]")?.addEventListener("click", open);
+    input?.addEventListener("input", () => {
+      if (input) void run(input.value);
+    });
+    dialog?.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog?.close();
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      open();
+    }
+  });
+  document.addEventListener("astro:page-load", () => {
+    initToc();
+    initSearch();
+  });
+</script>

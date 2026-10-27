@@ -1,0 +1,41 @@
+---
+// Precio en euros (España, sin IVA) y en dólares (Latinoamérica), con la marca de precio de lanzamiento.
+import { formatEur, formatUsd, type Price } from "../config/pricing.ts";
+import { texts, type Locale } from "../i18n/index.ts";
+
+interface Props {
+  locale: Locale;
+  price: Price;
+  /** lg: tarjeta de plan; sm: fila de una lista. */
+  size?: "lg" | "sm";
+  /** Muestra la etiqueta «Precio de lanzamiento». */
+  badge?: boolean;
+}
+const { locale, price, size = "lg", badge = true } = Astro.props;
+const t = texts(locale).oss.prices;
+const from = price.from ? `${t.from} ` : "";
+const billing = t.billing[price.billing];
+---
+
+<div class:list={["flex flex-col", size === "lg" ? "gap-1" : "gap-0.5 sm:items-end"]}>
+  {
+    badge && (
+      <span class="mb-1 w-fit rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning-soft-foreground">
+        {t.launch}
+      </span>
+    )
+  }
+  <p class="flex flex-wrap items-baseline gap-x-2">
+    {from && <span class="text-sm text-muted-foreground">{from}</span>}
+    <strong
+      class:list={[
+        "font-semibold tabular-nums",
+        size === "lg" ? "font-display text-4xl font-normal tracking-tight" : "text-base",
+      ]}>{formatEur(price.eur, locale)}</strong
+    >
+    <span class="text-sm text-muted-foreground">{billing}</span>
+  </p>
+  <p class="text-xs text-muted-foreground">
+    {t.spain} · {t.latam}: <span class="tabular-nums">{from}{formatUsd(price.usd, locale)}</span>
+  </p>
+</div>
