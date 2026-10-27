@@ -1,7 +1,8 @@
 ---
 // Captura real de la app en las guías y en la web, en el idioma de la página y con el tema del
 // visitante (claro u oscuro). Las genera web/scripts/capturas.ts en public/capturas/<idioma>/.
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/index.ts";
 
@@ -18,9 +19,16 @@ interface Props {
 
 const { name, alt, caption, eager = false, class: className } = Astro.props;
 const locale = (Astro.currentLocale ?? DEFAULT_LOCALE) as Locale;
-const src = (theme: "light" | "dark") => `/capturas/${locale}/${name}-${theme}.webp`;
-const missing = !existsSync(join(process.cwd(), "public", "capturas", locale, `${name}-light.webp`));
+const file = (theme: "light" | "dark") =>
+  join(process.cwd(), "public", "capturas", locale, `${name}-${theme}.webp`);
+const missing = !existsSync(file("light"));
 if (missing) throw new Error(`Falta la captura ${locale}/${name}: corré web/scripts/capturas.ts`);
+// The file name doesn't change when a capture is regenerated and the server caches captures for a
+// week: a content hash in the URL makes browsers fetch the new image.
+const src = (theme: "light" | "dark") => {
+  const version = createHash("sha256").update(readFileSync(file(theme))).digest("hex").slice(0, 10);
+  return `/capturas/${locale}/${name}-${theme}.webp?v=${version}`;
+};
 const loading = eager ? "eager" : "lazy";
 ---
 
