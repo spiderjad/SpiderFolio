@@ -22,7 +22,12 @@ import {
   SessionIdSchema,
   TokenSchema,
 } from "./auth.schemas.ts";
-import { createAuthService, type AuthContext, type IssuedAuth } from "./auth.service.ts";
+import {
+  createAuthService,
+  RefreshRaceError,
+  type AuthContext,
+  type IssuedAuth,
+} from "./auth.service.ts";
 import { createMfaService } from "./mfa.service.ts";
 import {
   clearRefreshCookie,
@@ -128,7 +133,8 @@ export function authRouter(deps: AppDeps): Router {
       setRefreshCookie(res, env, result.refresh.refreshToken, result.refresh.expiresAt);
       res.json({ accessToken: result.accessToken, expiresIn: result.expiresIn });
     } catch (error) {
-      clearRefreshCookie(res, env);
+      // A tab race keeps the cookie: clearing it could erase the one the other tab just received.
+      if (!(error instanceof RefreshRaceError)) clearRefreshCookie(res, env);
       throw error;
     }
   });
@@ -220,11 +226,7 @@ export function authRouter(deps: AppDeps): Router {
       const input = ChangeEmailSchema.parse(req.body);
       // Con 2FA activa, cambiar el email pide haber confirmado el código hace poco.
       await mfa.requireRecent(authOf(req));
-      await auth.requestEmailChange(
-        authOf(req),
-        input,
-        requestInfo(req),
-      );
+      await auth.requestEmailChange(authOf(req), input, requestInfo(req));
       res.status(204).end();
     },
   );

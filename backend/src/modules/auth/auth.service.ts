@@ -2,7 +2,13 @@
 // AuthToken son globales. Las transacciones que envían emails encolan dentro de la misma
 // transacción, así nunca sale un email de algo que se revirtió.
 import type { z } from "zod";
-import { invitationMessages, pinMessages, specificErrorMessages, accountMessages, mfaLoginMessages } from "../../i18n/index.ts";
+import {
+  invitationMessages,
+  pinMessages,
+  specificErrorMessages,
+  accountMessages,
+  mfaLoginMessages,
+} from "../../i18n/index.ts";
 import { AppError } from "../../lib/errors.ts";
 import { signAccessToken } from "../../lib/jwt.ts";
 import { violatedUniqueIndex } from "../../lib/prisma-errors.ts";
@@ -35,12 +41,17 @@ import {
   type RequestInfo,
   type SessionPolicy,
 } from "./sessions.service.ts";
-import {
-  currentLocale,
-  isLocale,
-  readWorkspaceLocale,
-  type Locale,
-} from "../../i18n/locales.ts";
+import { currentLocale, isLocale, readWorkspaceLocale, type Locale } from "../../i18n/locales.ts";
+
+/**
+ * Refresh with a token another tab rotated less than 5 s ago: 401 without closing the session. The
+ * route keeps the cookie, because the browser may already hold the new one from the other tab.
+ */
+export class RefreshRaceError extends AppError {
+  constructor() {
+    super("UNAUTHENTICATED");
+  }
+}
 
 /** Bloqueo tras fallos seguidos (7.3). */
 export const MAX_FAILED_LOGINS = 10;
@@ -649,7 +660,9 @@ export function createAuthService(deps: AppDeps) {
     async refresh(refreshToken: string | undefined, info: RequestInfo) {
       if (refreshToken === undefined) throw new AppError("UNAUTHENTICATED");
       const result = await rotateSession(prisma, refreshToken, info, policy);
-      if (!result.ok) throw new AppError("UNAUTHENTICATED");
+      if (!result.ok) {
+        throw result.reason === "race" ? new RefreshRaceError() : new AppError("UNAUTHENTICATED");
+      }
       return {
         accessToken: accessToken(
           result.userId,

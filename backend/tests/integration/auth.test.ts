@@ -433,7 +433,17 @@ describe("refresh", () => {
     const race = await refresh(cookie);
     expect(race.status).toBe(401);
     expect(errorOf(race).code).toBe("UNAUTHENTICATED");
+    // The race keeps the cookie: clearing it would erase the new one the other tab just got.
+    const cleared = (res: { headers: Record<string, unknown> }) =>
+      ((res.headers["set-cookie"] as string[] | undefined) ?? []).some((c) =>
+        c.startsWith("spiderfolio_rt="),
+      );
+    expect(cleared(race)).toBe(false);
     expect((await refresh(next)).status).toBe(200);
+    // Any other failure (unknown token) still clears it.
+    const unknown = await refresh("spiderfolio_rt=no-es-un-token");
+    expect(unknown.status).toBe(401);
+    expect(cleared(unknown)).toBe(true);
   });
 
   it("el access token de otra pestaña sigue valiendo después de una rotación, en la sesión activa", async () => {
