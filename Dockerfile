@@ -12,6 +12,8 @@ COPY frontend/package.json frontend/
 COPY web/package.json web/
 COPY packages/ packages/
 COPY plugins/ plugins/
+# The root "prepare" script runs on npm ci; without .git it does nothing, but it has to exist.
+COPY scripts/install-hooks.ts scripts/
 # npm ci respeta allowScripts del package.json: solo lo aprobado ejecuta scripts de instalación.
 RUN npm ci --no-audit --no-fund
 
