@@ -11,6 +11,7 @@ export const PAGE_KEYS = [
   "plugins",
   "security",
   "faq",
+  "legalNotice",
   "privacy",
   "terms",
   "cookies",

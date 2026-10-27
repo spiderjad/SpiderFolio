@@ -1,6 +1,6 @@
 ---
-import { REPO_URL, SITE } from "../config/site.ts";
-import { docPath, pagePath, texts, type Locale } from "../i18n/index.ts";
+import { LEGAL_UPDATED, REPO_URL, SITE } from "../config/site.ts";
+import { docPath, LOCALE_INFO, pagePath, texts, type Locale } from "../i18n/index.ts";
 
 interface Props {
   locale: Locale;
@@ -8,6 +8,9 @@ interface Props {
 const { locale } = Astro.props;
 const t = texts(locale);
 const l = t.footer.links;
+const legalUpdated = t.footer.legalUpdated(
+  LEGAL_UPDATED.toLocaleDateString(LOCALE_INFO[locale].hreflang, { dateStyle: "long", timeZone: "UTC" }),
+);
 const columns = [
   {
     title: t.footer.columns.product,
@@ -28,7 +31,9 @@ const columns = [
   },
   {
     title: t.footer.columns.legal,
+    note: legalUpdated,
     links: [
+      { label: l.legalNotice, href: pagePath("legalNotice", locale) },
       { label: l.privacy, href: pagePath("privacy", locale) },
       { label: l.terms, href: pagePath("terms", locale) },
       { label: l.cookies, href: pagePath("cookies", locale) },
@@ -58,6 +63,7 @@ const columns = [
               </li>
             ))}
           </ul>
+          {"note" in column && <p class="mt-4 text-xs text-muted-foreground">{column.note}</p>}
         </div>
       ))
     }

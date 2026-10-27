@@ -46,7 +46,7 @@ Ve las empresas de la instalación con su uso, sus límites y si tienen licencia
 No puede ver contenido de documentos ni archivos ni hacerse pasar por un usuario.
 12A.4 Observabilidad y entornos
 Errores de backend y frontend en Sentry (o GlitchTip autoalojado), sin datos personales ni contenido en los eventos. Sentry 11 recolecta por defecto usuario, cookies, cabeceras, cuerpos HTTP y query params: se apaga todo con dataCollection (backend/src/lib/sentry.ts y frontend/src/lib/sentry.ts). Solo se inicializa si hay SENTRY_DSN (en la app, VITE_SENTRY_DSN; sin DSN el SDK ni se descarga). En la app, además: sin Replay ni trazas, las URLs viajan sin query ni fragmento (ahí van los tokens) y los breadcrumbs de consola e interfaz se descartan.
-Analítica de la web pública sin cookies (Plausible o Umami), por lo que no hace falta banner de cookies para eso.
+La web pública no tiene analítica ni cookies (la política de privacidad lo declara): si algún día se agrega analítica, tiene que ser sin cookies (Plausible o Umami) y actualizar las páginas legales.
 Monitor externo de disponibilidad para tudominio.com, app. y /api/health.
 Entornos: local y la instalación de cada empresa (docs/instalacion/). Para probar una actualización conviene una copia aparte antes de producción.
 Bucket de R2 con versionado de objetos activado (protege contra borrados por error durante 30 días).

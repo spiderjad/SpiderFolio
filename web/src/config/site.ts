@@ -34,3 +34,6 @@ export const CONTACT_EMAIL: string | null = /^[^\s@[\]]+@[^\s@[\]]+\.[^\s@[\]]+$
 export function interpolateSite(text: string): string {
   return text.replaceAll("SITE.name", SITE.name).replaceAll("SITE.domain", SITE.domain);
 }
+
+/** Last update of the legal pages (legal notice, privacy, terms and cookies), shown on each one and in the footer. */
+export const LEGAL_UPDATED = new Date("2026-10-27T00:00:00Z");

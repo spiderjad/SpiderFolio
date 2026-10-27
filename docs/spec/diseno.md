@@ -109,7 +109,7 @@ Inicio (una sola página con anclas, más páginas propias si crecen):
 Héroe: etiqueta en mayúsculas, título grande en font-display, subtítulo, CTA principal + secundario ("Ver documentación"), captura del panel dentro de un marco con borde y sombra suave.
 Funciones: grilla de tarjetas rounded-2xl con ícono en cuadrado de color tintado (verde, ámbar, violeta, azul), título y lista con checks violetas (Archivos y carpetas, Permisos por departamento, Documentos controlados, Auditoría, Asistente IA, Administración).
 Por qué: comparación "Carpetas compartidas vs. SpiderFolio" (el dolor de OneDrive), en bloques sobrios.
-Precios: Community (gratis), Plugins (desde) y Enterprise, el recomendado con borde primario, más los servicios. Son precios de lanzamiento, marcados como tales: España en euros sin IVA y Latinoamérica en USD, los dos a la vista. Importes en una sola fuente (`web/src/config/pricing.ts`), usada por los dos idiomas, por la página Plugins y por la FAQ.
+Ediciones: Community, Plugins y Enterprise (el recomendado, con borde primario), más un bloque de servicios que lleva a la página Plugins y servicios. La web no publica precios: la página Plugins y servicios es un catálogo con descripción y un botón «Contactar» (email de contacto con el asunto del plugin o servicio).
 FAQ: acordeón (Radix vía isla React o <details> estilizado).
 CTA final y footer con columnas (Producto, Recursos, Legal, Contacto).
 Documentación (/docs), tres columnas:
@@ -118,7 +118,7 @@ Centro: breadcrumb "Docs", buscador con atajo ⌘K (Pagefind), etiqueta con íco
 Derecha: "EN ESTA PÁGINA" con la tabla de contenidos, marcador violeta en la sección visible y "↑ Volver arriba".
 Fondo con degradado violeta tenue arriba.
 Seguridad y Plantillas: ver 9C.10.
-Legales: privacidad (RGPD y Ley 25.326), términos, cookies, encargo de tratamiento (DPA). Banner de cookies solo si se usan cookies no esenciales.
+Legales, en español e inglés y enlazadas desde el pie con su fecha de última actualización (`LEGAL_UPDATED` en web/src/config/site.ts): aviso legal, privacidad (RGPD), términos de uso y cookies. La web no usa cookies (solo guarda en el navegador el tema y el idioma elegidos), así que no hay banner de cookies.
 SEO: título y descripción por página, Open Graph con imagen, sitemap, robots.txt, datos estructurados SoftwareApplication y FAQPage, URLs limpias en español, Lighthouse ≥ 95 en todo.
 10.8 Movimiento
 
@@ -137,9 +137,8 @@ App (sutil y rápida):
 Web pública (más expresiva):
 
 - Entre páginas: View Transitions con la integración nativa de Astro (ClientRouter).
-- Aparición de todo lo que entra en pantalla (títulos, textos, listas, tarjetas, tablas, FAQ, precios, imágenes): 600 ms, desplazamiento de 20 px y escalonado de 90 ms entre hermanos (--reveal-duration, --reveal-distance y --reveal-step en web/src/styles/global.css; con reduced-motion valen 0). Scroll-driven animations (animation-timeline: view()) dentro de @supports; sin soporte, IntersectionObserver (web/src/scripts/reveal.ts) con la clase html.reveal-fallback, marcada antes del primer pintado. Sin JavaScript el contenido se ve de entrada.
+- Aparición de todo lo que entra en pantalla (títulos, textos, listas, tarjetas, tablas, FAQ, imágenes): 600 ms, desplazamiento de 20 px y escalonado de 90 ms entre hermanos (--reveal-duration, --reveal-distance y --reveal-step en web/src/styles/global.css; con reduced-motion valen 0). Scroll-driven animations (animation-timeline: view()) dentro de @supports; sin soporte, IntersectionObserver (web/src/scripts/reveal.ts) con la clase html.reveal-fallback, marcada antes del primer pintado. Sin JavaScript el contenido se ve de entrada.
 - Héroe con entrada escalonada al cargar, con los mismos tokens.
-- Números del selector mensual/anual de precios animados con JavaScript, con el precio final siempre en el HTML.
 - Captura del panel con efecto sutil de profundidad (transform en 3D leve ligado al scroll).
 - CSP: nada de scripts ni estilos en línea nuevos; el JavaScript va en módulos propios (ver 12).
 

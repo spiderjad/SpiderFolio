@@ -1,15 +1,13 @@
 ---
 // Portada: héroe con el comando de instalación y una captura real, cómo funciona (diagramas animados),
-// funciones, planta, comparación, código abierto, plugins, precios y FAQ.
+// funciones, planta, comparación, código abierto, plugins, ediciones y FAQ.
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
-import PriceTag from "../components/PriceTag.astro";
 import Shot from "../components/Shot.astro";
 import BianChat from "../components/landing/BianChat.astro";
 import Lifecycle from "../components/landing/Lifecycle.astro";
 import Permissions from "../components/landing/Permissions.astro";
 import QrFloor from "../components/landing/QrFloor.astro";
-import { isPriceId, PLUGIN_FROM, PRICES } from "../config/pricing.ts";
 import { CONTACT_EMAIL, REPO_URL, SITE, SITE_URL } from "../config/site.ts";
 import { LOCALE_INFO, pageAlternates, pagePath, texts, type Locale } from "../i18n/index.ts";
 import MarketingLayout from "../layouts/MarketingLayout.astro";
@@ -33,6 +31,7 @@ const tones: Record<string, string> = {
 };
 const installHref = pagePath("install", locale);
 const pluginsHref = pagePath("plugins", locale);
+const servicesHref = pagePath("plugins", locale, all.oss.plugins.servicesAnchor);
 const mailto = (subject: string): string | null =>
   CONTACT_EMAIL === null ? null : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
 const diagrams = [
@@ -305,43 +304,33 @@ const secondaryButton =
     </div>
   </section>
 
-  <section id={locale === "es" ? "precios" : "pricing"} class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-    <p class={eyebrow}>{l.pricing.eyebrow}</p>
-    <h2 class={h2}>{l.pricing.title}</h2>
-    <p class="mt-4 max-w-2xl text-lg text-muted-foreground">{l.pricing.subtitle}</p>
-    <p class="mt-3 max-w-2xl text-sm text-muted-foreground">{l.pricing.note}</p>
-    <div class="mt-10 grid gap-6 lg:grid-cols-3">
+  <section id={l.editions.anchor} class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <p class={eyebrow}>{l.editions.eyebrow}</p>
+    <h2 class={h2}>{l.editions.title}</h2>
+    <p class="mt-4 max-w-2xl text-lg text-muted-foreground">{l.editions.subtitle}</p>
+    <div class="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
       {
-        l.pricing.plans.map((plan) => {
+        l.editions.plans.map((plan) => {
           const featured = plan.id === "enterprise";
           const href =
             plan.id === "community"
               ? installHref
               : plan.id === "plugin"
                 ? pluginsHref
-                : mailto(l.pricing.subject(plan.name));
-          const price =
-            plan.id === "community" ? null : plan.id === "plugin" ? PLUGIN_FROM : PRICES.enterprise;
+                : mailto(l.editions.subject(plan.name));
           return (
             <article
               class:list={[
-                "lift reveal relative flex flex-col rounded-2xl bg-background p-7",
+                "lift reveal relative flex min-w-0 flex-col rounded-2xl bg-background p-7",
                 featured ? "border-2 border-primary" : "border",
               ]}
             >
               {featured && (
                 <span class="absolute -top-3 left-7 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-primary-foreground">
-                  {l.pricing.popular}
+                  {l.editions.popular}
                 </span>
               )}
               <h3 class="text-lg font-semibold">{plan.name}</h3>
-              <div class="mt-4 min-h-24">
-                {price === null ? (
-                  <p class="font-display text-5xl tracking-tight">{l.pricing.free}</p>
-                ) : (
-                  <PriceTag locale={locale} price={price} />
-                )}
-              </div>
               <p class="mt-2 text-sm text-muted-foreground">{plan.note}</p>
               <ul class="mt-6 flex-1 space-y-3 text-sm">
                 {plan.items.map((item) => (
@@ -367,33 +356,15 @@ const secondaryButton =
         })
       }
     </div>
-    <div class="reveal mt-10 rounded-2xl border bg-surface p-7">
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 class="text-lg font-semibold">{l.pricing.servicesTitle}</h3>
-        <p class="text-sm text-muted-foreground">{l.pricing.servicesText}</p>
+    <div class="reveal mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-surface p-7">
+      <div class="min-w-0">
+        <h3 class="text-lg font-semibold">{l.editions.servicesTitle}</h3>
+        <p class="mt-1 text-sm text-muted-foreground">{l.editions.servicesText}</p>
       </div>
-      <ul class="mt-5 grid gap-3 md:grid-cols-2">
-        {
-          l.pricing.services.map((service) => {
-            const href = mailto(l.pricing.subject(service.name));
-            return (
-              <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3">
-                <span class="font-medium">{service.name}</span>
-                <span class="flex items-center gap-4 text-sm">
-                  {isPriceId(service.id) && (
-                    <PriceTag locale={locale} price={PRICES[service.id]} size="sm" badge={false} />
-                  )}
-                  {href !== null && (
-                    <a href={href} class="font-medium text-primary hover:underline">
-                      {l.pricing.contact}
-                    </a>
-                  )}
-                </span>
-              </li>
-            );
-          })
-        }
-      </ul>
+      <a href={servicesHref} class="inline-flex items-center gap-2 font-medium text-primary hover:underline">
+        {l.editions.servicesLink}
+        <Icon name="arrow-right" size={18} />
+      </a>
     </div>
   </section>
 

@@ -1,15 +1,20 @@
 ---
 import RichText from "../components/RichText.astro";
-import { pageAlternates, texts, type Locale } from "../i18n/index.ts";
+import { LEGAL_UPDATED } from "../config/site.ts";
+import { LOCALE_INFO, pageAlternates, texts, type Locale } from "../i18n/index.ts";
 import MarketingLayout from "../layouts/MarketingLayout.astro";
 
 interface Props {
   locale: Locale;
-  page: "privacy" | "terms" | "cookies";
+  page: "legalNotice" | "privacy" | "terms" | "cookies";
 }
 const { locale, page } = Astro.props;
 const legal = texts(locale).legal;
 const t = legal[page];
+const updated = LEGAL_UPDATED.toLocaleDateString(LOCALE_INFO[locale].hreflang, {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
 ---
 
 <MarketingLayout
@@ -21,10 +26,8 @@ const t = legal[page];
   <article class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
     <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{legal.eyebrow}</p>
     <h1 class="mt-3 font-display text-5xl tracking-tight">{t.title}</h1>
-    <p
-      class="mt-6 rounded-2xl border border-warning/40 bg-warning-soft p-4 text-sm text-warning-soft-foreground"
-    >
-      {legal.draft}
+    <p class="mt-4 text-sm text-muted-foreground">
+      <time datetime={LEGAL_UPDATED.toISOString().slice(0, 10)}>{legal.updated(updated)}</time>
     </p>
     <div class="prose mt-8 max-w-none">
       {

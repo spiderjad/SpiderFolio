@@ -3,43 +3,105 @@ import { REPO_URL, SITE } from "../../config/site.ts";
 import type { pages as esPages } from "../es/pages.ts";
 import type { Catalog, LegalPage } from "../types.ts";
 
+const mail = (address: string) => ({ text: address, href: `mailto:${address}` });
+
+const legalNotice: LegalPage = {
+  title: "Legal notice",
+  description: `Owner of ${SITE.domain} and terms of this informational website.`,
+  sections: [
+    {
+      heading: "Owner",
+      paragraphs: [
+        `This website (${SITE.domain}) belongs to ${SITE.owner}, owner of the ${SITE.name} project.`,
+        ["Contact: ", mail(SITE.contactEmail), "."],
+      ],
+    },
+    {
+      heading: "Purpose",
+      paragraphs: [
+        `It is the informational website of ${SITE.name}, an open source project: it explains what the software does, how to install it and which optional plugins and services exist. It has no shop, user accounts or forms.`,
+      ],
+    },
+    {
+      heading: "Intellectual property",
+      paragraphs: [
+        [
+          `The ${SITE.name} code is published under the `,
+          { text: "AGPLv3 license", href: "https://www.gnu.org/licenses/agpl-3.0.html" },
+          `. The texts, design and ${SITE.name} brand on this website belong to the owner, unless stated otherwise.`,
+        ],
+      ],
+    },
+    {
+      heading: "Liability",
+      paragraphs: [
+        "The content is provided for information purposes and is reviewed with care, but it may contain errors or omissions. Links to third-party sites (for example, GitHub) are provided for convenience: the owner is not responsible for their content.",
+      ],
+    },
+    {
+      heading: "Governing law",
+      paragraphs: ["This website is governed by Spanish law."],
+    },
+  ],
+};
+
 const privacy: LegalPage = {
   title: "Privacy policy",
   description:
-    "What data this website processes and who is responsible for the data in each installation.",
+    "What data this website processes, why, for how long and how to exercise your rights.",
   sections: [
     {
-      heading: "This website",
+      heading: "Controller",
       paragraphs: [
-        `${SITE.domain} is the informational website of ${SITE.name}, run by ${SITE.owner}, its owner and data controller. It has no accounts or forms: it does not collect personal data, except what you send us by email (for example, when asking about a plugin), which we use only to reply to you. Analytics, if any, are cookieless and contain no personal data.`,
+        ["The data controller is ", SITE.owner, ". Contact: ", mail(SITE.contactEmail), "."],
+      ],
+    },
+    {
+      heading: "What data we process",
+      paragraphs: [
+        [
+          "Emails you send to ",
+          mail(SITE.contactEmail),
+          " or ",
+          mail(SITE.securityEmail),
+          ": your address, your name and whatever you write. We use them only to reply to you and keep them until your request is resolved. Legal basis: your consent when you write to us and our legitimate interest in answering your request.",
+        ],
+        "Hosting technical logs: the provider that hosts the website (Hostinger) logs data from each visit, such as the IP address, the date and the page requested, for the security and operation of the service. It keeps them according to its own policy. Legal basis: legitimate interest in keeping the website secure.",
+        "The website has no forms, accounts or analytics, and it doesn't use cookies.",
       ],
     },
     {
       heading: `${SITE.name} installations`,
       paragraphs: [
-        `${SITE.name} is installed on each company's own server. The data in each installation (accounts, documents, logs) is processed by the company that runs it, which is the data controller: it does not go through our servers and we have no access to it. Privacy requests about that data should be sent to that company.`,
-      ],
-    },
-    {
-      heading: "Plugin licenses",
-      paragraphs: [
-        "Plugin licenses are verified offline: the software does not send us any usage data. When you purchase a plugin we process the billing and contact details of the customer company. [LEGAL BASIS AND RETENTION PERIODS]",
+        `Self-hosted ${SITE.name} sends no data to the owner. Each company that installs it on its server is the controller of the data it processes with it (accounts, documents and logs), and privacy requests about that data go to that company.`,
+        "If a company turns on Bian, the assistant, the document excerpts in each question are sent to Anthropic with that company's own key: that transfer is also the company's responsibility.",
       ],
     },
     {
       heading: "Your rights",
       paragraphs: [
-        "You can request access to, correction of or deletion of the data you have sent us. Applicable framework: GDPR (EU) and Law 25,326 (Argentina).",
+        [
+          "You can exercise your rights of access, rectification, erasure, objection, restriction of processing and portability by writing to ",
+          mail(SITE.contactEmail),
+          ". If you think we didn't handle your request properly, you can file a complaint with the ",
+          { text: "Spanish Data Protection Agency (AEPD)", href: "https://www.aepd.es" },
+          ".",
+        ],
       ],
     },
-    { heading: "Contact", paragraphs: [SITE.contactEmail] },
   ],
 };
 
 const terms: LegalPage = {
-  title: "License and terms",
-  description: "Software license, commercial plugins and use of this website.",
+  title: "Terms of use",
+  description: "Terms of use of this website, software license and brand.",
   sections: [
+    {
+      heading: "Use of the website",
+      paragraphs: [
+        `${SITE.domain} is an informational website. You can browse it freely; you may not use it for unlawful purposes or try to disrupt it.`,
+      ],
+    },
     {
       heading: "The software",
       paragraphs: [
@@ -53,39 +115,37 @@ const terms: LegalPage = {
           { text: "repository", href: `${REPO_URL}/blob/main/LICENSE` },
           ".",
         ],
-        "It is provided “as is”, without warranty, under the terms of the license. Each installation is operated by whoever installs it, who is responsible for its data, its security and its backups.",
+        'It is provided "as is", without warranties of any kind, under the terms of the license. Each installation is operated by whoever installs it, who is responsible for its data, security and backups.',
       ],
     },
     {
-      heading: "Commercial plugins",
+      heading: "Brand",
       paragraphs: [
-        "Commercial plugins are not part of the free software: they are governed by their own license agreement, signed when you purchase them. [PLUGIN TERMS: PRICE, TERM, RENEWAL, SUPPORT AND GOVERNING LAW]",
+        `The ${SITE.name} name and logo belong to the owner and identify the project. The software license grants no right to use them: a modified version that is distributed or offered as a service cannot present itself as the official one.`,
       ],
     },
     {
-      heading: "Trademark",
+      heading: "Plugins and services",
       paragraphs: [
-        `The ${SITE.name} name and logo identify the project. A modified version that is distributed or offered as a service may not present itself as the official one. [TRADEMARK POLICY]`,
+        "Commercial plugins and services are not part of the free software: they are governed by their own terms, agreed when you purchase them.",
       ],
     },
     {
-      heading: "This website",
-      paragraphs: [
-        `${SITE.domain} is the project's informational website, run by ${SITE.owner}. Its content is provided for information only. [GOVERNING LAW AND JURISDICTION]`,
-      ],
+      heading: "Governing law",
+      paragraphs: ["These terms are governed by Spanish law."],
     },
   ],
 };
 
 const cookies: LegalPage = {
   title: "Cookie policy",
-  description: "Which cookies this website uses.",
+  description: "This website doesn't use cookies.",
   sections: [
     {
       heading: "",
       paragraphs: [
-        `The ${SITE.name} public website only uses essential storage: it saves your light or dark theme preference and the language you chose in your browser. It does not use tracking or advertising cookies, which is why it does not show a consent banner.`,
-        "If non-essential cookies are added in the future, this policy will be updated and your consent will be requested before using them.",
+        `The ${SITE.name} website doesn't use cookies: neither its own nor third-party, neither analytics nor advertising. That's why it shows no consent banner.`,
+        "It only stores two preferences you choose in your browser (local storage): light or dark theme and language. They don't identify you or leave your browser, and they are exempt from consent because they only remember what you asked for. You can delete them at any time from your browser settings.",
       ],
     },
   ],
@@ -149,7 +209,8 @@ export const pages: Catalog<typeof esPages> = {
   },
   legal: {
     eyebrow: "Legal",
-    draft: "Draft pending professional review. This is not the final legal text.",
+    updated: (date: string) => `Last updated: ${date}`,
+    legalNotice,
     privacy,
     terms,
     cookies,

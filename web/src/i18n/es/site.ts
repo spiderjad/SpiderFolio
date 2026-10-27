@@ -1,5 +1,4 @@
 // Textos generales de la web pública en español neutro (tuteo): navegación, inicio, FAQ, pie y docs.
-import { formatEur, formatUsd, PLUGIN_FROM } from "../../config/pricing.ts";
 import { SITE } from "../../config/site.ts";
 
 export const site = {
@@ -147,7 +146,7 @@ export const site = {
     items: [
       {
         q: "¿Cuánto cuesta?",
-        a: `${SITE.name} es gratis y open source (AGPLv3), sin límites por usuario. Pagas solo tu servidor y, si usas a Bian, las consultas en tu cuenta de Anthropic. Algunas funciones para empresas son plugins comerciales opcionales, desde ${formatEur(PLUGIN_FROM.eur, "es")} sin IVA en España o ${formatUsd(PLUGIN_FROM.usd, "es")} en Latinoamérica (precio de lanzamiento).`,
+        a: `${SITE.name} es gratis y open source (AGPLv3), sin límites por usuario. Pagas solo tu servidor y, si usas a Bian, las consultas en tu cuenta de Anthropic. Algunas funciones para empresas son plugins comerciales opcionales: escríbenos a ${SITE.contactEmail} y te contamos las condiciones.`,
       },
       {
         q: "¿Qué necesito para instalarlo?",
@@ -186,14 +185,16 @@ export const site = {
   footer: {
     tagline: "Documentación interna ordenada para pymes. Open source (AGPLv3).",
     columns: { product: "Producto", resources: "Recursos", legal: "Legal" },
+    legalUpdated: (date: string) => `Actualizado el ${date}`,
     links: {
       features: "Funciones",
       install: "Instalación",
-      plugins: "Plugins",
+      plugins: "Plugins y servicios",
       security: "Seguridad",
       docs: "Documentación",
       faq: "Preguntas frecuentes",
       github: "GitHub",
+      legalNotice: "Aviso legal",
       privacy: "Privacidad",
       terms: "Términos",
       cookies: "Cookies",

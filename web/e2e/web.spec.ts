@@ -78,10 +78,33 @@ test("con prefers-reduced-motion nada queda oculto ni se anima", async ({ page }
   await expect(page.locator(".hero-stagger > *").first()).toHaveCSS("animation-name", "none");
 });
 
-test("plugins: catálogo con los cinco plugins", async ({ page }) => {
+test("plugins y servicios: catálogo sin precios, con contacto en cada uno", async ({ page }) => {
   await page.goto("/es/plugins");
-  await expect(page.getByRole("heading", { level: 1, name: "Plugins" })).toBeVisible();
-  await expect(page.locator("article")).toHaveCount(5);
+  await expect(page.getByRole("heading", { level: 1, name: "Plugins y servicios" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Plugins" }).locator("article")).toHaveCount(5);
+  await expect(page.getByRole("region", { name: "Servicios" }).getByRole("listitem")).toHaveCount(
+    4,
+  );
+  // Five plugins, the Enterprise bundle, four services and the closing call to action.
+  await expect(page.locator('a[href^="mailto:contacto@spiderjad.com"]')).toHaveCount(11);
+  await expect(page.locator("main")).not.toContainText(/€|USD|[Pp]recio/);
+});
+
+test("legales: las cuatro páginas, enlazadas desde el pie, con fecha y sin banner de cookies", async ({
+  page,
+}) => {
+  for (const [lang, names] of [
+    ["es", ["Aviso legal", "Privacidad", "Términos", "Cookies"]],
+    ["en", ["Legal notice", "Privacy", "Terms", "Cookies"]],
+  ] as const) {
+    for (const name of names) {
+      await page.goto(`/${lang}`);
+      await page.getByRole("contentinfo").getByRole("link", { name, exact: true }).click();
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.locator("main time")).toBeVisible();
+    }
+  }
+  expect(await page.context().cookies()).toEqual([]);
 });
 
 test("docs: navegación y búsqueda con Ctrl+K", async ({ page }) => {

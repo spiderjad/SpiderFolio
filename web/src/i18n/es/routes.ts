@@ -7,6 +7,7 @@ export const routes: LocaleRoutes = {
     plugins: "plugins",
     security: "seguridad",
     faq: "faq",
+    legalNotice: "legal/aviso-legal",
     privacy: "legal/privacidad",
     terms: "legal/terminos",
     cookies: "legal/cookies",

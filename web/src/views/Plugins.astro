@@ -1,9 +1,8 @@
 ---
+// Plugins and services: a catalog with descriptions and a "Contact" button, no prices.
 import Icon from "../components/Icon.astro";
-import PriceTag from "../components/PriceTag.astro";
-import { isPriceId, PRICES } from "../config/pricing.ts";
 import { CONTACT_EMAIL } from "../config/site.ts";
-import { pageAlternates, pagePath, texts, type Locale } from "../i18n/index.ts";
+import { pageAlternates, texts, type Locale } from "../i18n/index.ts";
 import MarketingLayout from "../layouts/MarketingLayout.astro";
 
 interface Props {
@@ -12,12 +11,15 @@ interface Props {
 const { locale } = Astro.props;
 const oss = texts(locale).oss;
 const t = oss.plugins;
-/** mailto con el asunto del plugin; sin email configurado, no hay botón. */
+/** mailto with the item as the subject; without a contact email, there's no button. */
 const contact = (title: string): string | null =>
   CONTACT_EMAIL === null
     ? null
     : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t.contactSubject(title))}`;
-const pricingHref = pagePath("home", locale, locale === "es" ? "precios" : "pricing");
+const enterpriseHref = contact(t.enterprise.title);
+const h2 = "font-display text-4xl tracking-tight";
+const contactLink =
+  "mt-6 inline-flex h-10 w-fit items-center gap-2 rounded-full border px-5 text-sm font-medium transition-colors hover:bg-muted";
 ---
 
 <MarketingLayout
@@ -43,20 +45,14 @@ const pricingHref = pagePath("home", locale, locale === "es" ? "precios" : "pric
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-    <div class="mb-8 flex flex-wrap items-baseline justify-between gap-3">
-      <p class="text-sm text-muted-foreground">{t.pricesNote}</p>
-      <a href={pricingHref} class="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
-        {t.pricesLink}
-        <Icon name="arrow-right" size={16} />
-      </a>
-    </div>
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <section aria-labelledby="plugins-title" class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+    <h2 id="plugins-title" class={h2}>{t.pluginsTitle}</h2>
+    <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {
         t.items.map((plugin) => {
           const href = contact(plugin.title);
           return (
-            <article id={plugin.id} class="reveal flex flex-col rounded-2xl border bg-background p-6">
+            <article id={plugin.id} class="reveal flex min-w-0 flex-col rounded-2xl border bg-background p-6">
               <div class="flex items-center justify-between gap-3">
                 <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                   <Icon name={plugin.icon} />
@@ -72,18 +68,10 @@ const pricingHref = pagePath("home", locale, locale === "es" ? "precios" : "pric
                   {plugin.available ? t.status.available : t.status.soon}
                 </span>
               </div>
-              <h2 class="mt-5 text-lg font-semibold">{plugin.title}</h2>
+              <h3 class="mt-5 text-lg font-semibold">{plugin.title}</h3>
               <p class="mt-2 flex-1 text-sm text-muted-foreground">{plugin.text}</p>
-              {isPriceId(plugin.id) && (
-                <div class="mt-5 border-t pt-5">
-                  <PriceTag locale={locale} price={PRICES[plugin.id]} />
-                </div>
-              )}
               {href !== null && (
-                <a
-                  href={href}
-                  class="mt-6 inline-flex h-10 w-fit items-center gap-2 rounded-full border px-5 text-sm font-medium transition-colors hover:bg-muted"
-                >
+                <a href={href} class={contactLink}>
                   {oss.cta.contact}
                   <Icon name="arrow-right" size={16} />
                 </a>
@@ -93,11 +81,72 @@ const pricingHref = pagePath("home", locale, locale === "es" ? "precios" : "pric
         })
       }
     </div>
+
+    <div id="enterprise" class="reveal mt-10 grid gap-6 rounded-2xl border-2 border-primary bg-background p-7 md:grid-cols-[1fr_1fr]">
+      <div class="min-w-0">
+        <h3 class="text-2xl font-semibold">{t.enterprise.title}</h3>
+        <p class="mt-2 text-muted-foreground">{t.enterprise.text}</p>
+        {
+          enterpriseHref !== null && (
+            <a
+              href={enterpriseHref}
+              class="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              {oss.cta.contact}
+              <Icon name="arrow-right" size={16} />
+            </a>
+          )
+        }
+      </div>
+      <ul class="min-w-0 space-y-3 text-sm">
+        {
+          t.enterprise.items.map((item) => (
+            <li class="flex gap-3">
+              <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+              <span>{item}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
   </section>
 
-  <section class="border-t bg-surface">
+  <section
+    id={t.servicesAnchor}
+    aria-labelledby="services-title"
+    class="border-t bg-surface"
+  >
+    <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <h2 id="services-title" class={h2}>{t.servicesTitle}</h2>
+      <p class="mt-4 max-w-2xl text-muted-foreground">{t.servicesText}</p>
+      <ul class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        {
+          t.services.map((service) => {
+            const href = contact(service.title);
+            return (
+              <li id={service.id} class="reveal flex min-w-0 flex-col rounded-2xl border bg-background p-6">
+                <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
+                  <Icon name={service.icon} />
+                </span>
+                <h3 class="mt-5 text-lg font-semibold">{service.title}</h3>
+                <p class="mt-2 flex-1 text-sm text-muted-foreground">{service.text}</p>
+                {href !== null && (
+                  <a href={href} class={contactLink}>
+                    {oss.cta.contact}
+                    <Icon name="arrow-right" size={16} />
+                  </a>
+                )}
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="border-t">
     <div class="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
-      <h2 class="font-display text-4xl tracking-tight">{t.contactTitle}</h2>
+      <h2 class={h2}>{t.contactTitle}</h2>
       <p class="mt-4 text-muted-foreground">{t.contactText}</p>
       {
         CONTACT_EMAIL !== null && (

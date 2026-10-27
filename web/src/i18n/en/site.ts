@@ -1,5 +1,4 @@
 // General texts of the public website in English: navigation, home, FAQ, footer and docs.
-import { formatEur, formatUsd, PLUGIN_FROM } from "../../config/pricing.ts";
 import { SITE } from "../../config/site.ts";
 import type { site as esSite } from "../es/site.ts";
 import type { Catalog } from "../types.ts";
@@ -149,7 +148,7 @@ export const site: Catalog<typeof esSite> = {
     items: [
       {
         q: "How much does it cost?",
-        a: `${SITE.name} is free and open source (AGPLv3), with no per-user limits. You only pay for your server and, if you use Bian, the requests on your own Anthropic account. Some business features are optional commercial plugins, from ${formatEur(PLUGIN_FROM.eur, "en")} excl. VAT in Spain or ${formatUsd(PLUGIN_FROM.usd, "en")} in Latin America (launch price).`,
+        a: `${SITE.name} is free and open source (AGPLv3), with no per-user limits. You only pay for your server and, if you use Bian, the requests on your own Anthropic account. Some business features are optional commercial plugins: write to ${SITE.contactEmail} and we'll tell you the terms.`,
       },
       {
         q: "What do I need to install it?",
@@ -188,14 +187,16 @@ export const site: Catalog<typeof esSite> = {
   footer: {
     tagline: "Organized internal documentation for small businesses. Open source (AGPLv3).",
     columns: { product: "Product", resources: "Resources", legal: "Legal" },
+    legalUpdated: (date: string) => `Updated ${date}`,
     links: {
       features: "Features",
       install: "Install",
-      plugins: "Plugins",
+      plugins: "Plugins and services",
       security: "Security",
       docs: "Documentation",
       faq: "FAQ",
       github: "GitHub",
+      legalNotice: "Legal notice",
       privacy: "Privacy",
       terms: "Terms",
       cookies: "Cookies",

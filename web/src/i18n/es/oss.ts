@@ -8,13 +8,6 @@ export const oss = {
     contact: "Contactar",
     docs: "Ver la guía completa",
   },
-  prices: {
-    launch: "Precio de lanzamiento",
-    from: "desde",
-    billing: { once: "pago único", year: "al año", day: "por día" },
-    spain: "España, sin IVA",
-    latam: "Latinoamérica",
-  },
   openSource: {
     eyebrow: "Open source",
     title: "Tuyo de verdad: tu servidor, tus datos, tu código",
@@ -117,8 +110,9 @@ export const oss = {
     ],
   },
   plugins: {
-    title: "Plugins",
-    subtitle: `${SITE.name} funciona completo sin plugins. Los plugins comerciales suman funciones para empresas que las necesitan, se instalan en tu servidor y se activan con una licencia que se verifica sin conexión.`,
+    title: "Plugins y servicios",
+    subtitle: `${SITE.name} funciona completo sin plugins. Los plugins comerciales suman funciones para empresas que las necesitan, se instalan en tu servidor y se activan con una licencia que se verifica sin conexión. Si prefieres no hacerlo solo, también te ayudamos a ponerlo en marcha.`,
+    pluginsTitle: "Plugins",
     howTitle: "Cómo funcionan",
     how: [
       "Se instalan en tu servidor, junto a tu instalación.",
@@ -163,12 +157,48 @@ export const oss = {
         available: false,
       },
     ],
-    pricesNote:
-      "Precios de lanzamiento. España: euros sin IVA. Latinoamérica: dólares estadounidenses (USD).",
-    pricesLink: "Ver el paquete Enterprise y los servicios",
-    contactTitle: "¿Te interesa algún plugin?",
-    contactText: `Escríbenos con el nombre de tu empresa y cuántas personas usarían ${SITE.name}.`,
-    contactSubject: (plugin: string) => `Plugin: ${plugin}`,
+    enterprise: {
+      title: "Paquete Enterprise",
+      text: "Todos los plugins en una sola licencia para tu instalación, con soporte prioritario.",
+      items: [
+        "Todos los plugins, presentes y futuros",
+        "Soporte prioritario",
+        "Licencia única para toda la instalación",
+        "Condiciones a medida para varias empresas",
+      ],
+    },
+    servicesAnchor: "servicios",
+    servicesTitle: "Servicios",
+    servicesText: "Si prefieres no hacerlo solo, te ayudamos.",
+    services: [
+      {
+        id: "installation",
+        icon: "terminal",
+        title: "Instalación en tu servidor",
+        text: `Dejamos ${SITE.name} funcionando en tu servidor, con HTTPS, email y copias de seguridad configurados.`,
+      },
+      {
+        id: "support",
+        icon: "message",
+        title: "Soporte anual",
+        text: "Ayuda por email con dudas, actualizaciones y problemas de tu instalación durante todo el año.",
+      },
+      {
+        id: "consulting",
+        icon: "book",
+        title: "Consultoría o formación",
+        text: "Organizamos contigo los espacios, departamentos y permisos, y formamos a quienes van a administrar.",
+      },
+      {
+        id: "erp-connector",
+        icon: "grid",
+        title: "Conector con SAP o Business Central",
+        text: "Integración a medida para enlazar la documentación con los datos de tu ERP.",
+      },
+    ],
+    contactTitle: "¿Te interesa algún plugin o servicio?",
+    contactText: `Escríbenos con el nombre de tu empresa y cuántas personas usarían ${SITE.name}, y te contamos las condiciones.`,
+    contactSubject: (item: string) => `${SITE.name}: ${item}`,
   },
   landing: {
     command:
@@ -212,14 +242,12 @@ export const oss = {
         "Al terminar cada turno y siempre que se cambie de producto: detergente alcalino 10 minutos, aclarar, desinfectar y registrar la limpieza.",
       source: "PRC-002 · Limpieza y desinfección · v2",
     },
-    pricing: {
-      eyebrow: "Precios",
+    editions: {
+      anchor: "ediciones",
+      eyebrow: "Ediciones",
       title: "Gratis para siempre, con extras si los necesitas",
       subtitle:
-        "El núcleo es open source y completo. Pagas solo por lo que suma: plugins, el paquete Enterprise o ayuda para ponerlo en marcha.",
-      note: "Precios de lanzamiento. España: euros sin IVA. Latinoamérica: dólares estadounidenses (USD).",
-      free: "Gratis",
-      contact: "Contactar",
+        "El núcleo es open source y completo. Si lo necesitas, suma plugins, el paquete Enterprise o ayuda para ponerlo en marcha.",
       popular: "Para empresas",
       plans: [
         {
@@ -238,7 +266,7 @@ export const oss = {
         {
           id: "plugin",
           name: "Plugins",
-          note: "por plugin y por instalación; pago único o anual según el plugin",
+          note: "por plugin y por instalación",
           items: [
             "Elige solo los que necesitas",
             "Licencia verificada sin conexión",
@@ -261,14 +289,10 @@ export const oss = {
         },
       ],
       servicesTitle: "Servicios",
-      servicesText: "Si prefieres no hacerlo solo, te ayudamos.",
-      services: [
-        { id: "installation", name: "Instalación en tu servidor" },
-        { id: "support", name: "Soporte anual" },
-        { id: "consulting", name: "Consultoría o formación" },
-        { id: "erp-connector", name: "Conector con SAP o Business Central" },
-      ],
-      subject: (plan: string) => `SpiderFolio: ${plan}`,
+      servicesText:
+        "Instalación en tu servidor, soporte anual, consultoría o formación y conectores con tu ERP.",
+      servicesLink: "Ver los servicios",
+      subject: (plan: string) => `${SITE.name}: ${plan}`,
     },
   },
 } as const;

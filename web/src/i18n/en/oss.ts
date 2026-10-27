@@ -10,13 +10,6 @@ export const oss: Catalog<typeof esOss> = {
     contact: "Contact us",
     docs: "Read the full guide",
   },
-  prices: {
-    launch: "Launch price",
-    from: "from",
-    billing: { once: "one-time", year: "per year", day: "per day" },
-    spain: "Spain, excl. VAT",
-    latam: "Latin America",
-  },
   openSource: {
     eyebrow: "Open source",
     title: "Truly yours: your server, your data, your code",
@@ -116,8 +109,9 @@ export const oss: Catalog<typeof esOss> = {
     ],
   },
   plugins: {
-    title: "Plugins",
-    subtitle: `${SITE.name} is complete without plugins. Commercial plugins add features for companies that need them, are installed on your server and are enabled with a license that is verified offline.`,
+    title: "Plugins and services",
+    subtitle: `${SITE.name} is complete without plugins. Commercial plugins add features for companies that need them, are installed on your server and are enabled with a license that is verified offline. If you would rather not do it alone, we can also help you get started.`,
+    pluginsTitle: "Plugins",
     howTitle: "How they work",
     how: [
       "They are installed on your server, alongside your installation.",
@@ -162,11 +156,48 @@ export const oss: Catalog<typeof esOss> = {
         available: false,
       },
     ],
-    pricesNote: "Launch prices. Spain: euros excl. VAT. Latin America: US dollars (USD).",
-    pricesLink: "See the Enterprise bundle and services",
-    contactTitle: "Interested in a plugin?",
-    contactText: `Write to us with your company's name and how many people would use ${SITE.name}.`,
-    contactSubject: (plugin: string) => `Plugin: ${plugin}`,
+    enterprise: {
+      title: "Enterprise bundle",
+      text: "Every plugin in a single license for your installation, with priority support.",
+      items: [
+        "Every plugin, current and future",
+        "Priority support",
+        "A single license for the whole installation",
+        "Custom terms for several companies",
+      ],
+    },
+    servicesAnchor: "services",
+    servicesTitle: "Services",
+    servicesText: "If you would rather not do it alone, we can help.",
+    services: [
+      {
+        id: "installation",
+        icon: "terminal",
+        title: "Installation on your server",
+        text: `We get ${SITE.name} running on your server, with HTTPS, email and backups set up.`,
+      },
+      {
+        id: "support",
+        icon: "message",
+        title: "Annual support",
+        text: "Email help with questions, updates and issues on your installation all year round.",
+      },
+      {
+        id: "consulting",
+        icon: "book",
+        title: "Consulting or training",
+        text: "We organize spaces, departments and permissions with you, and train the people who will administer it.",
+      },
+      {
+        id: "erp-connector",
+        icon: "grid",
+        title: "SAP or Business Central connector",
+        text: "A custom integration that links your documentation with your ERP data.",
+      },
+    ],
+    contactTitle: "Interested in a plugin or service?",
+    contactText: `Write to us with your company's name and how many people would use ${SITE.name}, and we'll tell you the terms.`,
+    contactSubject: (item: string) => `${SITE.name}: ${item}`,
   },
   landing: {
     command:
@@ -209,14 +240,12 @@ export const oss: Catalog<typeof esOss> = {
         "At the end of every shift and whenever the product changes: alkaline detergent for 10 minutes, rinse, disinfect and record the cleaning.",
       source: "PRC-002 · Cleaning and disinfection · v2",
     },
-    pricing: {
-      eyebrow: "Pricing",
+    editions: {
+      anchor: "editions",
+      eyebrow: "Editions",
       title: "Free forever, with extras when you need them",
       subtitle:
-        "The core is open source and complete. You only pay for what adds to it: plugins, the Enterprise bundle or help getting started.",
-      note: "Launch prices. Spain: euros excl. VAT. Latin America: US dollars (USD).",
-      free: "Free",
-      contact: "Contact us",
+        "The core is open source and complete. If you need them, add plugins, the Enterprise bundle or help getting started.",
       popular: "For companies",
       plans: [
         {
@@ -235,7 +264,7 @@ export const oss: Catalog<typeof esOss> = {
         {
           id: "plugin",
           name: "Plugins",
-          note: "per plugin and per installation; one-time or yearly depending on the plugin",
+          note: "per plugin and per installation",
           items: [
             "Pick only the ones you need",
             "License verified offline",
@@ -258,14 +287,10 @@ export const oss: Catalog<typeof esOss> = {
         },
       ],
       servicesTitle: "Services",
-      servicesText: "If you would rather not do it alone, we can help.",
-      services: [
-        { id: "installation", name: "Installation on your server" },
-        { id: "support", name: "Annual support" },
-        { id: "consulting", name: "Consulting or training" },
-        { id: "erp-connector", name: "SAP or Business Central connector" },
-      ],
-      subject: (plan: string) => `SpiderFolio: ${plan}`,
+      servicesText:
+        "Installation on your server, annual support, consulting or training, and ERP connectors.",
+      servicesLink: "See the services",
+      subject: (plan: string) => `${SITE.name}: ${plan}`,
     },
   },
 };

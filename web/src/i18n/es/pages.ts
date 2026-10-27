@@ -2,42 +2,111 @@
 import { REPO_URL, SITE } from "../../config/site.ts";
 import type { LegalPage } from "../types.ts";
 
-const privacy: LegalPage = {
-  title: "Política de privacidad",
-  description: "Qué datos trata esta web y quién es responsable de los datos de cada instalación.",
+const mail = (address: string) => ({ text: address, href: `mailto:${address}` });
+
+const legalNotice: LegalPage = {
+  title: "Aviso legal",
+  description: `Titular de ${SITE.domain} y condiciones de esta web informativa.`,
   sections: [
     {
-      heading: "Esta web",
+      heading: "Titular",
       paragraphs: [
-        `${SITE.domain} es la web informativa de ${SITE.name}, de ${SITE.owner}, su titular y responsable del tratamiento. No tiene cuentas ni formularios: no recoge datos personales, salvo los que nos envíes por email (por ejemplo, al consultar por un plugin), que usamos solo para responderte. La analítica, si la hay, es sin cookies y sin datos personales.`,
+        `Esta web (${SITE.domain}) es de ${SITE.owner}, titular del proyecto ${SITE.name}.`,
+        ["Contacto: ", mail(SITE.contactEmail), "."],
+      ],
+    },
+    {
+      heading: "Objeto",
+      paragraphs: [
+        `Es la web informativa de ${SITE.name}, un proyecto de código abierto: explica qué hace el software, cómo instalarlo y qué plugins y servicios opcionales existen. No tiene tienda, cuentas de usuario ni formularios.`,
+      ],
+    },
+    {
+      heading: "Propiedad intelectual",
+      paragraphs: [
+        [
+          `El código de ${SITE.name} se publica bajo la `,
+          { text: "licencia AGPLv3", href: "https://www.gnu.org/licenses/agpl-3.0.html" },
+          `. Los textos, el diseño y la marca ${SITE.name} de esta web son del titular, salvo que se indique otra cosa.`,
+        ],
+      ],
+    },
+    {
+      heading: "Responsabilidad",
+      paragraphs: [
+        "El contenido se ofrece a título informativo y se revisa con cuidado, pero puede contener errores u omisiones. Los enlaces a sitios de terceros (por ejemplo, GitHub) se ofrecen por comodidad: el titular no responde de su contenido.",
+      ],
+    },
+    {
+      heading: "Legislación aplicable",
+      paragraphs: ["Esta web se rige por la legislación española."],
+    },
+  ],
+};
+
+const privacy: LegalPage = {
+  title: "Política de privacidad",
+  description:
+    "Qué datos trata esta web, para qué, durante cuánto tiempo y cómo ejercer tus derechos.",
+  sections: [
+    {
+      heading: "Responsable",
+      paragraphs: [
+        [
+          "El responsable del tratamiento es ",
+          SITE.owner,
+          ". Contacto: ",
+          mail(SITE.contactEmail),
+          ".",
+        ],
+      ],
+    },
+    {
+      heading: "Qué datos tratamos",
+      paragraphs: [
+        [
+          "Emails que nos envías a ",
+          mail(SITE.contactEmail),
+          " o a ",
+          mail(SITE.securityEmail),
+          ": tu dirección, tu nombre y lo que escribas. Los usamos solo para responderte y los conservamos hasta resolver tu consulta. Base legal: tu consentimiento al escribirnos y nuestro interés legítimo en atender tu consulta.",
+        ],
+        "Registros técnicos del hosting: el proveedor que aloja la web (Hostinger) registra datos de cada visita, como la dirección IP, la fecha y la página pedida, para la seguridad y el funcionamiento del servicio. Los conserva según su propia política. Base legal: interés legítimo en mantener la web segura.",
+        "La web no tiene formularios, cuentas ni analítica, y no usa cookies.",
       ],
     },
     {
       heading: `Las instalaciones de ${SITE.name}`,
       paragraphs: [
-        `${SITE.name} se instala en el servidor de cada empresa. Los datos de cada instalación (cuentas, documentos, registros) los trata la empresa que la opera, que es la responsable del tratamiento: no pasan por nuestros servidores ni tenemos acceso a ellos. Las consultas de privacidad sobre esos datos se dirigen a esa empresa.`,
-      ],
-    },
-    {
-      heading: "Licencias de plugins",
-      paragraphs: [
-        "Las licencias de los plugins se verifican sin conexión: el software no nos envía datos de uso. Al contratar un plugin tratamos los datos de facturación y contacto de la empresa cliente. [BASE LEGAL Y PLAZOS]",
+        `${SITE.name} autoinstalado no envía datos al titular. Cada empresa que lo instala en su servidor es la responsable de los datos que trata con él (cuentas, documentos y registros), y las consultas de privacidad sobre esos datos se dirigen a esa empresa.`,
+        "Si una empresa activa a Bian, el asistente, los fragmentos de documentos de cada consulta se envían a Anthropic con la clave de esa empresa: ese envío también es responsabilidad de la empresa.",
       ],
     },
     {
       heading: "Tus derechos",
       paragraphs: [
-        "Puedes pedir acceso, rectificación o supresión de los datos que nos hayas enviado. Marco aplicable: RGPD (UE) y Ley 25.326 (Argentina).",
+        [
+          "Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad escribiendo a ",
+          mail(SITE.contactEmail),
+          ". Si crees que no atendimos bien tu solicitud, puedes presentar una reclamación ante la ",
+          { text: "Agencia Española de Protección de Datos", href: "https://www.aepd.es" },
+          ".",
+        ],
       ],
     },
-    { heading: "Contacto", paragraphs: ["contacto@spiderjad.com"] },
   ],
 };
 
 const terms: LegalPage = {
-  title: "Licencia y términos",
-  description: "Licencia del software, plugins comerciales y uso de esta web.",
+  title: "Términos de uso",
+  description: "Condiciones de uso de esta web, licencia del software y marca.",
   sections: [
+    {
+      heading: "Uso de la web",
+      paragraphs: [
+        `${SITE.domain} es una web informativa. Puedes consultarla libremente; no está permitido usarla para fines ilícitos ni intentar dañar su funcionamiento.`,
+      ],
+    },
     {
       heading: "El software",
       paragraphs: [
@@ -51,39 +120,37 @@ const terms: LegalPage = {
           { text: "repositorio", href: `${REPO_URL}/blob/main/LICENSE` },
           ".",
         ],
-        "Se entrega «tal cual», sin garantías, en los términos de la licencia. Cada instalación la opera quien la instala, que es responsable de sus datos, su seguridad y sus copias.",
-      ],
-    },
-    {
-      heading: "Plugins comerciales",
-      paragraphs: [
-        "Los plugins comerciales no son parte del software libre: se rigen por su propio contrato de licencia, que se firma al contratarlos. [CONDICIONES DE LOS PLUGINS: PRECIO, DURACIÓN, RENOVACIÓN, SOPORTE Y LEY APLICABLE]",
+        "Se entrega «tal cual», sin garantías de ningún tipo, en los términos de la licencia. Cada instalación la opera quien la instala, que es responsable de sus datos, su seguridad y sus copias.",
       ],
     },
     {
       heading: "Marca",
       paragraphs: [
-        `El nombre y el logo de ${SITE.name} identifican al proyecto. Una versión modificada que se distribuya o se ofrezca como servicio no puede presentarse como la oficial. [POLÍTICA DE MARCA]`,
+        `El nombre y el logo de ${SITE.name} son del titular e identifican al proyecto. La licencia del software no da derecho a usarlos: una versión modificada que se distribuya o se ofrezca como servicio no puede presentarse como la oficial.`,
       ],
     },
     {
-      heading: "Esta web",
+      heading: "Plugins y servicios",
       paragraphs: [
-        `${SITE.domain} es la web informativa del proyecto, de ${SITE.owner}. Su contenido se ofrece a título informativo. [LEY APLICABLE Y JURISDICCIÓN]`,
+        "Los plugins comerciales y los servicios no forman parte del software libre: se rigen por sus propias condiciones, que se acuerdan al contratarlos.",
       ],
+    },
+    {
+      heading: "Legislación aplicable",
+      paragraphs: ["Estos términos se rigen por la legislación española."],
     },
   ],
 };
 
 const cookies: LegalPage = {
   title: "Política de cookies",
-  description: "Qué cookies usa la web.",
+  description: "Esta web no usa cookies.",
   sections: [
     {
       heading: "",
       paragraphs: [
-        `La web pública de ${SITE.name} solo usa almacenamiento esencial: guarda en tu navegador la preferencia de tema claro u oscuro y el idioma que elegiste. No usa cookies de seguimiento ni de publicidad, por eso no muestra un banner de consentimiento.`,
-        "Si en el futuro se incorporan cookies no esenciales, esta política se actualizará y se pedirá tu consentimiento antes de usarlas.",
+        `La web de ${SITE.name} no usa cookies: ni propias ni de terceros, ni de análisis ni de publicidad. Por eso no muestra un banner de consentimiento.`,
+        "Solo guarda en tu navegador (almacenamiento local) dos preferencias que eliges tú: el tema claro u oscuro y el idioma. No sirven para identificarte ni salen de tu navegador, y están exentas de consentimiento porque solo recuerdan lo que pediste. Puedes borrarlas cuando quieras desde la configuración del navegador.",
       ],
     },
   ],
@@ -147,7 +214,8 @@ export const pages = {
   },
   legal: {
     eyebrow: "Legal",
-    draft: "Borrador pendiente de revisión por un profesional. No es el texto legal definitivo.",
+    updated: (date: string) => `Última actualización: ${date}`,
+    legalNotice,
     privacy,
     terms,
     cookies,

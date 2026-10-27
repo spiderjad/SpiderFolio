@@ -30,4 +30,6 @@ const { locale, key } = Astro.props;
 {key === "plugins" && <Plugins locale={locale} />}
 {key === "security" && <Security locale={locale} />}
 {key === "faq" && <Faq locale={locale} />}
-{(key === "privacy" || key === "terms" || key === "cookies") && <Legal locale={locale} page={key} />}
+{(key === "legalNotice" || key === "privacy" || key === "terms" || key === "cookies") && (
+  <Legal locale={locale} page={key} />
+)}
