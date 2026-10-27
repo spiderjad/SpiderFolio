@@ -96,6 +96,7 @@ export interface TenantDb {
   qrCode: TenantDelegate<PrismaClient["qrCode"], Op>;
   workspaceEmail: TenantDelegate<PrismaClient["workspaceEmail"], Op>;
   contentChunk: TenantDelegate<PrismaClient["contentChunk"], Op>;
+  contentChunkDirty: TenantDelegate<PrismaClient["contentChunkDirty"], Op>;
   usageCounter: TenantDelegate<PrismaClient["usageCounter"], Op>;
   usageCounterMember: TenantDelegate<PrismaClient["usageCounterMember"], Op>;
   bianLimit: TenantDelegate<PrismaClient["bianLimit"], Op>;
@@ -171,6 +172,7 @@ const delegates = {
   qrCode: { model: "QrCode", ops: [...readOps, ...writeOps] },
   workspaceEmail: { model: "WorkspaceEmail", ops: [...readOps, ...writeOps] },
   contentChunk: { model: "ContentChunk", ops: [...readOps, ...writeOps] },
+  contentChunkDirty: { model: "ContentChunkDirty", ops: [...readOps, ...writeOps] },
   usageCounter: { model: "UsageCounter", ops: [...readOps, ...writeOps] },
   usageCounterMember: { model: "UsageCounterMember", ops: [...readOps, ...writeOps] },
   bianLimit: { model: "BianLimit", ops: [...readOps, ...writeOps] },

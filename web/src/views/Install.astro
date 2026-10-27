@@ -40,10 +40,10 @@ const t = oss.install;
   </section>
 
   <section class="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
-    <ol class="grid gap-6">
+    <ol class="grid grid-cols-1 gap-6">
       {
         t.steps.map((step, index) => (
-          <li class="reveal rounded-2xl border bg-background p-6">
+          <li class="reveal min-w-0 rounded-2xl border bg-background p-6">
             <div class="flex items-center gap-3">
               <span class="inline-flex size-9 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground">
                 {index + 1}

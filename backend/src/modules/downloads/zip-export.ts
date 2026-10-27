@@ -7,7 +7,7 @@ import type { Jobs } from "../../jobs/boss.ts";
 import { AppError } from "../../lib/errors.ts";
 import type { PrismaClient } from "../../lib/prisma.ts";
 import { randomToken } from "../../lib/crypto.ts";
-import type { Storage } from "../../lib/storage.ts";
+import { isMissingObject, type Storage } from "../../lib/storage.ts";
 import { loadTenantContext } from "../../middleware/tenant.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { planZipDownload } from "../nodes/nodes-zip.service.ts";
@@ -83,9 +83,16 @@ export async function runZipExport(deps: ZipExportDeps, payload: unknown): Promi
     await deps.jobs.enqueue("email-send", { kind: "export-ready", exportId: job.id });
     return true;
   } catch (error) {
-    deps.logger.error({ err: error, exportId }, "Falló la generación de un ZIP");
-    const message =
-      error instanceof AppError ? error.message : fileMessages.zipFailed;
+    // A file that's no longer in the bucket isn't a system failure: the requester is notified.
+    const missing = isMissingObject(error);
+    if (missing)
+      deps.logger.warn({ err: error, exportId }, "ZIP: falta un archivo en el almacenamiento");
+    else deps.logger.error({ err: error, exportId }, "Falló la generación de un ZIP");
+    const message = missing
+      ? fileMessages.zipFileMissing
+      : error instanceof AppError
+        ? error.message
+        : fileMessages.zipFailed;
     await deps.prisma.zipExport.update({
       where: { id: job.id },
       data: { status: "FAILED", finishedAt: new Date(), error: message },

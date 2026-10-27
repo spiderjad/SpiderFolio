@@ -72,12 +72,8 @@ export async function updateSecuritySettings(
     entityId: workspace.id,
     metadata: {
       before: { ...before },
-      after: {
-        memberVisibility: after.memberVisibility,
-        leadersCanInvite: after.leadersCanInvite,
-        allowSelfApproval: after.allowSelfApproval,
-        locale: after.locale,
-      },
+      // Before and after carry every SecuritySettings field: none is left out of the log.
+      after: { ...after },
     },
   });
   return after;

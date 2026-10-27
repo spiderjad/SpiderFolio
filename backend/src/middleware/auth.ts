@@ -17,19 +17,29 @@ async function resolveAuth(
   const claims = token === "" ? null : verifyAccessToken(token, env.JWT_ACCESS_SECRET);
   if (claims === null) return null;
 
+  const now = new Date();
   const session = await prisma.session.findUnique({
     where: { id: claims.sessionId },
-    select: { userId: true, revokedAt: true, expiresAt: true },
+    select: { userId: true, revokedAt: true, replacedAt: true, expiresAt: true, familyId: true },
   });
-  if (
-    session === null ||
-    session.userId !== claims.userId ||
-    session.revokedAt !== null ||
-    session.expiresAt <= new Date()
-  ) {
-    return null;
+  if (session === null || session.userId !== claims.userId) return null;
+  if (session.revokedAt === null) {
+    return session.expiresAt > now ? { userId: claims.userId, sessionId: claims.sessionId } : null;
   }
-  return { userId: claims.userId, sessionId: claims.sessionId };
+  // Rotated by another tab (not revoked by logout or reuse): the access token stays valid until it
+  // expires while the family is alive, and the request is bound to the family's active session.
+  // Logout, reuse detection and "sign out sessions" revoke the whole family, leaving none active.
+  if (session.replacedAt === null) return null;
+  const active = await prisma.session.findFirst({
+    where: {
+      familyId: session.familyId,
+      userId: claims.userId,
+      revokedAt: null,
+      expiresAt: { gt: now },
+    },
+    select: { id: true },
+  });
+  return active === null ? null : { userId: claims.userId, sessionId: active.id };
 }
 
 export function authMiddleware(deps: AuthDeps): RequestHandler {

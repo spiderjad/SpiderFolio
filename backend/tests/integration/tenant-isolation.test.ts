@@ -638,6 +638,12 @@ const cases: IsolationCase[] = [
     body: { token: "SFL1.no-es-una-licencia.firma" },
   },
   { method: "delete", path: "/admin/license", url: () => "/admin/license" },
+  {
+    method: "put",
+    path: "/admin/plugins/:pluginId/activation",
+    url: () => "/admin/plugins/plugin-de-prueba/activation",
+    body: { enabled: true, acceptRisk: true },
+  },
   { method: "get", path: "/admin/limits", url: () => "/admin/limits" },
   {
     method: "patch",

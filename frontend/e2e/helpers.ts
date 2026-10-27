@@ -62,9 +62,10 @@ export async function login(page: Page, email: string): Promise<void> {
   await expect(page.getByText("Documentos vigentes")).toBeVisible();
 }
 
-/** Cierra sesión desde el menú lateral, confirmando en el diálogo. */
+/** Signs out from the person menu (at the foot of the sidebar), confirming in the dialog. */
 export async function logout(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Cerrar sesión" }).first().click();
+  await page.getByRole("complementary").locator('button[aria-haspopup="menu"]').last().click();
+  await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
   await page
     .getByRole("alertdialog", { name: "¿Cerrar sesión?" })
     .getByRole("button", { name: "Cerrar sesión" })

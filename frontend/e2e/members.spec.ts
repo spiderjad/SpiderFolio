@@ -66,7 +66,8 @@ test("invitar, aceptar desde el email, ver y suspender a la persona", async ({ p
   await expect(page.getByText("Invitación enviada.")).toBeVisible();
   await expect(page.getByText(guestEmail)).toBeVisible();
   // Ocupa una plaza completa: el dueño y la invitación.
-  await expect(page.getByText("2 de 30")).toBeVisible();
+  // No plans: each company sets its own limit, and by default there's none.
+  await expect(page.getByText("2 (sin límite)")).toBeVisible();
 
   // La persona acepta desde el enlace del email, en otro navegador.
   const invitee = await browser.newContext({ baseURL: E2E_WEB_URL });
@@ -79,9 +80,11 @@ test("invitar, aceptar desde el email, ver y suspender a la persona", async ({ p
   expect(new URL(guestPage.url()).hash).toBe("");
   await guestPage.getByLabel("Nombre y apellido").fill("Nora E2E");
   await guestPage.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
+  await guestPage.getByRole("checkbox", { name: /^Acepto los/ }).check();
   await guestPage.getByRole("button", { name: "Aceptar y entrar" }).click();
   await expect(guestPage).toHaveURL(new RegExp(`/app/${slug}$`));
-  await expect(guestPage.getByText("Documentos vigentes")).toBeVisible();
+  // A member gets their own home (the company overview is for admins).
+  await expect(guestPage.getByText(/^Hola, Nora./)).toBeVisible();
   // Un miembro sin capacidades no ve el menú de gestión.
   await expect(guestPage.getByText("Gestión")).toHaveCount(0);
   await guestPage.goto(`/app/${slug}/admin/members`);
@@ -94,13 +97,13 @@ test("invitar, aceptar desde el email, ver y suspender a la persona", async ({ p
   await expect(row.getByText("Miembro", { exact: true })).toBeVisible();
   await expect(row.getByText("Activo")).toBeVisible();
   await expect(page.getByText("No hay invitaciones pendientes.")).toBeVisible();
-  await expect(page.getByText("2 de 30")).toBeVisible();
+  await expect(page.getByText("2 (sin límite)")).toBeVisible();
 
   // La suspende: pierde el acceso al instante y libera la plaza.
   await page.getByRole("button", { name: "Acciones para Nora E2E" }).click();
   await page.getByRole("menuitem", { name: "Suspender" }).click();
   await page
-    .getByRole("alertdialog", { name: "¿Suspender a esta persona?" })
+    .getByRole("alertdialog", { name: "¿Suspender a Nora E2E?" })
     .getByRole("button", { name: "Suspender" })
     .click();
   await expect(page.getByRole("row", { name: /Nora E2E/ }).getByText("Suspendido")).toBeVisible();
@@ -126,37 +129,40 @@ test("departamentos y roles: crear, listar y borrar", async ({ page }) => {
 
   // Departamento.
   await page.goto(`/app/${slug}/admin/departments`);
-  await expect(page.getByText("Todavía no hay departamentos")).toBeVisible();
+  // The empty text shows in both the tree and the panel: the first one is enough.
+  await expect(page.getByText("Todavía no hay departamentos").first()).toBeVisible();
   await page.getByRole("button", { name: "Nuevo departamento" }).click();
   const department = page.getByRole("dialog", { name: "Nuevo departamento" });
   await department.getByLabel("Nombre", { exact: true }).fill("Calidad");
   await department.getByRole("button", { name: "#059669" }).click();
   await department.getByRole("button", { name: "Crear" }).click();
-  await expect(page.getByRole("link", { name: "Calidad" })).toBeVisible();
-  await page.getByRole("link", { name: "Calidad" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Calidad" })).toBeVisible();
-  await expect(page.getByText("Este departamento todavía no tiene miembros.")).toBeVisible();
+  await page.getByRole("treeitem", { name: /^Calidad/ }).click();
+  await expect(page.getByRole("heading", { level: 2, name: "Calidad" })).toBeVisible();
+  await expect(page.getByText("Este departamento todavía no tiene personas.")).toBeVisible();
 
-  // Agrega a la dueña (única persona) como miembro y la quita.
-  await page.getByRole("button", { name: "Agregar miembros" }).click();
+  // Adds the owner (the only person). Nobody can remove themselves from a department.
+  await page.getByRole("button", { name: "Agregar personas" }).click();
   const add = page.getByRole("dialog", { name: "Agregar miembros" });
-  await add.getByRole("checkbox", { name: /Ana E2E/ }).check();
+  await add.getByRole("combobox", { name: "Miembros" }).click();
+  await page.getByRole("option", { name: /Ana E2E/ }).click();
+  // Multiple selection: the list stays open until closed.
+  await page.keyboard.press("Escape");
   await add.getByRole("button", { name: "Agregar miembros" }).click();
-  await expect(
-    page.getByRole("button", { name: "Quitar a Ana E2E del departamento" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Quitar a Ana E2E del departamento" }).click();
-  await expect(page.getByText("Este departamento todavía no tiene miembros.")).toBeVisible();
+  await expect(page.getByText("1 persona agregada.")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Personas" }).getByText("Ana E2E")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Quitar a Ana E2E del departamento" })).toHaveCount(
+    0,
+  );
 
   // Borra el departamento.
-  await page.getByRole("link", { name: "Volver a departamentos" }).click();
-  await page.getByRole("button", { name: "Acciones: Calidad" }).click();
+  await page.getByRole("button", { name: "Acciones del departamento" }).click();
   await page.getByRole("menuitem", { name: "Borrar" }).click();
-  await page
-    .getByRole("alertdialog", { name: "¿Borrar el departamento?" })
-    .getByRole("button", { name: "Borrar" })
-    .click();
-  await expect(page.getByText("Todavía no hay departamentos")).toBeVisible();
+  const confirmDelete = page.getByRole("alertdialog", {
+    name: "¿Eliminar el departamento Calidad?",
+  });
+  await confirmDelete.getByLabel("Escribe «Calidad» para confirmar").fill("Calidad");
+  await confirmDelete.getByRole("button", { name: "Eliminar departamento" }).click();
+  await expect(page.getByText("Todavía no hay departamentos").first()).toBeVisible();
 
   // Rol personalizado.
   await page.goto(`/app/${slug}/admin/roles`);
@@ -174,8 +180,8 @@ test("departamentos y roles: crear, listar y borrar", async ({ page }) => {
   await page.getByRole("button", { name: "Lista" }).click();
   await page.getByRole("button", { name: "Borrar: Responsable de Calidad" }).click();
   await page
-    .getByRole("alertdialog", { name: "¿Borrar el rol?" })
-    .getByRole("button", { name: "Borrar" })
+    .getByRole("alertdialog", { name: "¿Eliminar el rol Responsable de Calidad?" })
+    .getByRole("button", { name: "Eliminar rol" })
     .click();
   await expect(page.getByText("Todavía no hay roles personalizados.")).toBeVisible();
 

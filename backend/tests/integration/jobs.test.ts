@@ -4,9 +4,14 @@ import { cleanupExpired } from "../../src/jobs/handlers.ts";
 import { createLogger } from "../../src/lib/logger.ts";
 import { createMailer } from "../../src/lib/mailer.ts";
 import { startWorker } from "../../src/worker.ts";
-import { createBoss } from "../../src/jobs/boss.ts";
 import { forTenant, TenantViolation } from "../../src/db/tenant.ts";
-import { createTestContext, createUser, createWorkspace, type TestContext } from "./helpers.ts";
+import {
+  createTestBoss,
+  createTestContext,
+  createUser,
+  createWorkspace,
+  type TestContext,
+} from "./helpers.ts";
 
 const MAILPIT_API = process.env.MAILPIT_API ?? "http://localhost:8025/api/v1";
 
@@ -119,7 +124,7 @@ describe("encolado dentro de una transacción", () => {
 
 describe("worker", () => {
   it("procesa el email y llega a Mailpit con HTML escapado y texto plano", async () => {
-    const worker = createBoss(ctx.deps.env.DATABASE_URL, "worker");
+    const worker = createTestBoss(ctx.deps.env.DATABASE_URL, "worker");
     await worker.start();
     try {
       await startWorker(worker, {
@@ -165,7 +170,7 @@ describe("rendimiento y aislamiento de fallos del worker", () => {
     );
     const failing = users[0];
     if (failing === undefined) throw new Error("sin usuarios");
-    const worker = createBoss(ctx.deps.env.DATABASE_URL, "worker");
+    const worker = createTestBoss(ctx.deps.env.DATABASE_URL, "worker");
     await worker.start();
     try {
       await startWorker(worker, {

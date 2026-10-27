@@ -366,6 +366,7 @@ describe("forTenant: transacciones", () => {
           "comment",
           "commentThread",
           "contentChunk",
+          "contentChunkDirty",
           "controlledDocument",
           "department",
           "departmentMember",

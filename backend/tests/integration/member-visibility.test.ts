@@ -646,7 +646,14 @@ describe("Seguridad: solo el propietario", () => {
   it("el administrador, la jefa y el miembro con capacidades no la ven ni la cambian", async () => {
     const w = await setup("Matriz seguridad");
     expect((await w.owner.get("/admin/security")).body).toEqual({
-      settings: { memberVisibility: "company", leadersCanInvite: true },
+      settings: {
+        memberVisibility: "company",
+        leadersCanInvite: true,
+        allowSelfApproval: false,
+        bianEnabled: true,
+        bianGuests: false,
+        locale: "es",
+      },
     });
     for (const who of [w.admin, w.boss, w.ana, w.gestor]) {
       const a = api(w.ws, who.token);
@@ -666,7 +673,14 @@ describe("Seguridad: solo el propietario", () => {
     ).toBe(200);
     expect((await w.owner.patch("/admin/security", { leadersCanInvite: false })).status).toBe(200);
     expect((await w.owner.get("/admin/security")).body).toEqual({
-      settings: { memberVisibility: "department", leadersCanInvite: false },
+      settings: {
+        memberVisibility: "department",
+        leadersCanInvite: false,
+        allowSelfApproval: false,
+        bianEnabled: true,
+        bianGuests: false,
+        locale: "es",
+      },
     });
     // Cada cambio de configuración queda auditado.
     expect(
@@ -674,6 +688,24 @@ describe("Seguridad: solo el propietario", () => {
         where: { workspaceId: w.ws.workspaceId, action: "security.visibility.update" },
       }),
     ).toBe(2);
+    // Before and after log every field on the screen, Bian included.
+    const fields = [
+      "allowSelfApproval",
+      "bianEnabled",
+      "bianGuests",
+      "leadersCanInvite",
+      "locale",
+      "memberVisibility",
+    ];
+    const logs = await ctx.prisma.auditLog.findMany({
+      where: { workspaceId: w.ws.workspaceId, action: "security.visibility.update" },
+      select: { metadata: true },
+    });
+    for (const { metadata } of logs) {
+      const { before, after } = metadata as { before: object; after: object };
+      expect(Object.keys(before).sort()).toEqual(fields);
+      expect(Object.keys(after).sort()).toEqual(fields);
+    }
   });
 });
 

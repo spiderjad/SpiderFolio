@@ -54,6 +54,23 @@ test("con «A todos», un miembro sin 2FA tiene que activarla", async ({ page, b
   await page.goto(`/verify-email#token=${await verificationToken(ownerEmail)}`);
   await expect(page.getByText("Listo, tu email quedó confirmado.")).toBeVisible();
 
+  // The policy belongs to the security-policies plugin, which doesn't ship with the core: skip without it.
+  // Ask the server with the session cookie (the app only fetches it when it bundles plugins).
+  const refreshed = await page.request.post("/api/v1/auth/refresh", {
+    headers: { "X-Requested-With": "spiderfolio", Origin: E2E_WEB_URL },
+  });
+  expect(refreshed.ok()).toBe(true);
+  const { accessToken } = (await refreshed.json()) as { accessToken: string };
+  const pluginsResponse = await page.request.get(`/api/v1/w/${slug}/plugins`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(pluginsResponse.ok()).toBe(true);
+  const { plugins } = (await pluginsResponse.json()) as { plugins: { id: string }[] };
+  test.skip(
+    !plugins.some((plugin) => plugin.id === "security-policies"),
+    "Requiere el plugin security-policies activo.",
+  );
+
   // Invita a un miembro, que entra antes de que exista la política.
   const memberEmail = uniqueEmail("jan");
   await page.goto(`/app/${slug}/admin/members`);

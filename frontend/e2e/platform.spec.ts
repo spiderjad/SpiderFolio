@@ -11,8 +11,9 @@ test("CSP estricta en el HTML y sin violaciones en el recorrido", async ({ page 
 
   await register(page, uniqueEmail());
   // Radix (menú y panel lateral) y sonner inyectan estilos: tienen que convivir con la CSP.
-  await page.getByRole("button", { name: "Tema" }).click();
-  await page.getByRole("menuitemradio", { name: "Oscuro" }).click();
+  // The theme is changed from the person menu, at the foot of the sidebar.
+  await page.getByRole("complementary").locator('button[aria-haspopup="menu"]').last().click();
+  await page.getByRole("menuitem", { name: "Tema oscuro" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.getByRole("button", { name: "Abrir menú" }).click();

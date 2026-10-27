@@ -13,7 +13,7 @@ const { t } = Astro.props;
   <ul class="column">
     {
       t.departments.map((department, index) => (
-        <li class:list={["chip", index === 1 && "active"]} style={`--i: ${String(index)}`}>
+        <li class:list={["chip", index === 1 && "active"]}>
           <Icon name="users" size={16} />
           {department}
         </li>
@@ -31,8 +31,8 @@ const { t } = Astro.props;
     <span class="why">{t.why}</span>
     <span class="people">
       {
-        t.people.map((person, index) => (
-          <span class="avatar" style={`--i: ${String(index)}`} title={person}>
+        t.people.map((person) => (
+          <span class="avatar" title={person}>
             {person.charAt(0)}
           </span>
         ))
@@ -42,6 +42,43 @@ const { t } = Astro.props;
 </div>
 
 <style>
+  /* Each item's order, to stagger the animation (no inline style: strict CSP). */
+  .chip:nth-child(1) {
+    --i: 0;
+  }
+  .chip:nth-child(2) {
+    --i: 1;
+  }
+  .chip:nth-child(3) {
+    --i: 2;
+  }
+  .chip:nth-child(4) {
+    --i: 3;
+  }
+  .chip:nth-child(5) {
+    --i: 4;
+  }
+  .chip:nth-child(6) {
+    --i: 5;
+  }
+  .avatar:nth-child(1) {
+    --i: 0;
+  }
+  .avatar:nth-child(2) {
+    --i: 1;
+  }
+  .avatar:nth-child(3) {
+    --i: 2;
+  }
+  .avatar:nth-child(4) {
+    --i: 3;
+  }
+  .avatar:nth-child(5) {
+    --i: 4;
+  }
+  .avatar:nth-child(6) {
+    --i: 5;
+  }
   .permissions {
     display: grid;
     grid-template-columns: auto minmax(2rem, 1fr) minmax(0, 1.4fr);

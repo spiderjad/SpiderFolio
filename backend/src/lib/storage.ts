@@ -77,6 +77,11 @@ function isNotFound(error: unknown): boolean {
   return meta?.httpStatusCode === 404 || (error as { name?: string } | null)?.name === "NotFound";
 }
 
+/** The object doesn't exist: S3 404 (NoSuchKey/NotFound) or ENOENT on local disk. */
+export function isMissingObject(error: unknown): boolean {
+  return isNotFound(error) || (error as NodeJS.ErrnoException | null)?.code === "ENOENT";
+}
+
 /** Origen de las URLs prefirmadas: el endpoint (estilo de ruta) o el bucket como parte del host. */
 export function storageOriginOf(config: S3Config): string {
   if (config.endpoint === undefined) {
@@ -204,15 +209,29 @@ export function createStorageFromClient(client: S3Client, config: S3Config): Sto
       return result.Body as Readable;
     },
     putStream: async (key, body, { size, contentType }) => {
-      await client.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: key,
-          Body: body,
-          ContentLength: size,
-          ContentType: contentType,
-        }),
-      );
+      // If the source stream fails midway (e.g. a file inside the ZIP is missing from the bucket), the
+      // upload is aborted and that error is rethrown: without the listener it would go uncaught and
+      // crash the process.
+      const abort = new AbortController();
+      let sourceError: unknown = null;
+      body.on("error", (error) => {
+        sourceError = error;
+        abort.abort(error);
+      });
+      try {
+        await client.send(
+          new PutObjectCommand({
+            Bucket: bucket,
+            Key: key,
+            Body: body,
+            ContentLength: size,
+            ContentType: contentType,
+          }),
+          { abortSignal: abort.signal },
+        );
+      } catch (error) {
+        throw sourceError ?? error;
+      }
     },
     delete: async (key) => {
       await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));

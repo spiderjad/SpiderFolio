@@ -406,6 +406,8 @@ export const fileMessages = {
   zipNothing: "No hay archivos para descargar.",
   zipRequesterGone: "Quien pidió el ZIP ya no es parte del equipo.",
   zipFailed: "No se pudo generar el ZIP. Inténtalo de nuevo.",
+  zipFileMissing:
+    "Uno de los archivos ya no está disponible y no se pudo generar el ZIP. Vuelve a pedirlo.",
   importUnreadable: "No se pudo leer el archivo ZIP. ¿Está dañado?",
   importSpaceGone: "El espacio ya no está disponible.",
   importZipGone: "El ZIP ya no está disponible.",

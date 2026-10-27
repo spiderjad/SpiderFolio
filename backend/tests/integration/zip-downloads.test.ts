@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import * as yauzl from "yauzl";
 import { createApp } from "../../src/app.ts";
 import { sha256 } from "../../src/lib/crypto.ts";
+import { fileMessages } from "../../src/i18n/index.ts";
 import { createLogger } from "../../src/lib/logger.ts";
 import {
   DIRECT_ZIP_MAX_BYTES,
@@ -374,6 +375,41 @@ describe("ZIP grande en segundo plano", () => {
     const row = await ctx.prisma.zipExport.findUniqueOrThrow({ where: { id: exportRow.id } });
     expect(row.status).toBe("FAILED");
     expect(row.storageKey).toBeNull();
+    expect(enqueue).toHaveBeenCalledWith("email-send", {
+      kind: "export-failed",
+      exportId: exportRow.id,
+    });
+  });
+
+  it("si un archivo ya no está en el bucket, el trabajo falla sin romper nada y avisa", async () => {
+    const w = await world();
+    const enqueue = vi.fn(() => Promise.resolve());
+    const exportRow = await ctx.prisma.zipExport.create({
+      data: {
+        workspaceId: w.ws.workspaceId,
+        spaceId: w.spaceId,
+        membershipId: w.ownerMembershipId,
+        // "Enorme.bin" only exists in the database: its GetObject fails with NoSuchKey mid-upload.
+        nodeIds: [w.small.id, w.huge.id],
+        status: "PENDING",
+        fileName: "Calidad.zip",
+      },
+    });
+    const ok = await runZipExport(
+      {
+        prisma: ctx.prisma,
+        logger: createLogger(ctx.deps.env),
+        storage: ctx.deps.storage,
+        systemStorage: ctx.deps.systemStorage,
+        jobs: { enqueue },
+      },
+      { exportId: exportRow.id },
+    );
+    expect(ok).toBe(false);
+    const row = await ctx.prisma.zipExport.findUniqueOrThrow({ where: { id: exportRow.id } });
+    expect(row.status).toBe("FAILED");
+    expect(row.storageKey).toBeNull();
+    expect(row.error).toBe(fileMessages.zipFileMissing);
     expect(enqueue).toHaveBeenCalledWith("email-send", {
       kind: "export-failed",
       exportId: exportRow.id,

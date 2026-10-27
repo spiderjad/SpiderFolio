@@ -23,7 +23,7 @@ const { t } = Astro.props;
   <ol class="steps">
     {
       t.steps.map((step, index) => (
-        <li style={`--i: ${String(index)}`} class:list={[index === 3 && "last"]}>
+        <li class:list={[index === 3 && "last"]}>
           <span class="dot" />
           <span class="label">{step}</span>
         </li>
@@ -37,6 +37,25 @@ const { t } = Astro.props;
 </div>
 
 <style>
+  /* Each step's order, to stagger the animation (no inline style: strict CSP). */
+  .steps li:nth-child(1) {
+    --i: 0;
+  }
+  .steps li:nth-child(2) {
+    --i: 1;
+  }
+  .steps li:nth-child(3) {
+    --i: 2;
+  }
+  .steps li:nth-child(4) {
+    --i: 3;
+  }
+  .steps li:nth-child(5) {
+    --i: 4;
+  }
+  .steps li:nth-child(6) {
+    --i: 5;
+  }
   .lifecycle {
     display: grid;
     gap: 1.25rem;

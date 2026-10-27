@@ -5,7 +5,7 @@ import type { BackendPlugin } from "@spiderfolio/plugin-sdk/backend";
 import type { LimitKey } from "@spiderfolio/limits";
 import type { PgBoss } from "pg-boss";
 import { loadEnv, type Env } from "../../src/config/env.ts";
-import { createBoss, createJobs, ensureQueues } from "../../src/jobs/boss.ts";
+import { createBoss, createJobs, ensureQueues, type BossRole } from "../../src/jobs/boss.ts";
 import { signAccessToken } from "../../src/lib/jwt.ts";
 import { createLogger } from "../../src/lib/logger.ts";
 import { createStorage, createSystemStorage } from "../../src/lib/storage.ts";
@@ -26,10 +26,26 @@ export interface TestContext {
   close(): Promise<void>;
 }
 
+/**
+ * pg-boss for tests, with an error listener like server.ts and worker.ts: a LISTEN/NOTIFY heartbeat
+ * timeout under load is reported as an "error" event (pg-boss reconnects on its own), and without a
+ * listener it would surface as an unhandled rejection.
+ */
+export function createTestBoss(
+  connectionString: string,
+  role: BossRole,
+): ReturnType<typeof createBoss> {
+  const boss = createBoss(connectionString, role);
+  boss.on("error", () => {
+    // Reconnection is handled by pg-boss; the tests assert on job outcomes, not on the connection.
+  });
+  return boss;
+}
+
 export async function createTestContext(): Promise<TestContext> {
   const env: Env = loadEnv(process.env);
   const prisma = createPrismaClient(env.DATABASE_URL);
-  const boss = createBoss(env.DATABASE_URL, "api");
+  const boss = createTestBoss(env.DATABASE_URL, "api");
   await boss.start();
   await ensureQueues(boss);
   const logger = createLogger(env);

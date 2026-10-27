@@ -5,7 +5,6 @@ import type { PgBoss } from "pg-boss";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
-import { createBoss } from "../../src/jobs/boss.ts";
 import { createLogger } from "../../src/lib/logger.ts";
 import { createMailer } from "../../src/lib/mailer.ts";
 import { MAX_FAILED_LOGINS } from "../../src/modules/auth/auth.service.ts";
@@ -14,6 +13,7 @@ import { startWorker } from "../../src/worker.ts";
 import { errorOf } from "../http.ts";
 import {
   countEmails,
+  createTestBoss,
   createTestContext,
   tokenFromEmail,
   uniqueEmail,
@@ -54,7 +54,7 @@ beforeAll(async () => {
     },
   };
   app = createApp(ctx.deps);
-  worker = createBoss(ctx.deps.env.DATABASE_URL, "worker");
+  worker = createTestBoss(ctx.deps.env.DATABASE_URL, "worker");
   await worker.start();
   await startWorker(worker, {
     prisma: ctx.prisma,
@@ -436,6 +436,48 @@ describe("refresh", () => {
     expect((await refresh(next)).status).toBe(200);
   });
 
+  it("el access token de otra pestaña sigue valiendo después de una rotación, en la sesión activa", async () => {
+    const { cookie, body } = await register();
+    // Tab A: its token belongs to the session that tab B rotates twice in a row.
+    const first = await refresh(cookie);
+    const tabA = (first.body as { accessToken: string }).accessToken;
+    const next = cookieValue(refreshCookie(first));
+    const second = await refresh(next);
+    expect(second.status).toBe(200);
+    const after = cookieValue(refreshCookie(second));
+    expect((await refresh(after)).status).toBe(200);
+    expect((await me(tabA)).status).toBe(200);
+    expect((await me(body.accessToken)).status).toBe(200);
+    // The request is bound to the active session: the list marks the only live one as current.
+    const list = await request(app)
+      .get("/api/v1/auth/sessions")
+      .set("Authorization", `Bearer ${tabA}`);
+    const sessions = (list.body as { sessions: { current: boolean }[] }).sessions;
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.current).toBe(true);
+  });
+
+  it("logout y reuso cortan también los access tokens de sesiones ya rotadas", async () => {
+    const out = await register();
+    const outNext = cookieValue(refreshCookie(await refresh(out.cookie)));
+    const logout = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("Cookie", outNext)
+      .set("X-Requested-With", "spiderfolio")
+      .set("Origin", ORIGIN);
+    expect(logout.status).toBe(204);
+    expect((await me(out.body.accessToken)).status).toBe(401);
+
+    const reused = await register();
+    cookieValue(refreshCookie(await refresh(reused.cookie)));
+    await ctx.prisma.session.updateMany({
+      where: { userId: reused.body.user.id, replacedAt: { not: null } },
+      data: { replacedAt: new Date(Date.now() - 10_000) },
+    });
+    expect((await refresh(reused.cookie)).status).toBe(401);
+    expect((await me(reused.body.accessToken)).status).toBe(401);
+  });
+
   it("reuso pasado el margen: revoca toda la familia y lo registra", async () => {
     const { cookie, body } = await register();
     const next = cookieValue(refreshCookie(await refresh(cookie)));
@@ -614,7 +656,7 @@ describe("seed demo", () => {
     expect(res.status).toBe(200);
     expect(authBody(res).user.emailVerified).toBe(true);
     expect(authBody(res).memberships[0]).toMatchObject({
-      workspace: { slug: "demo-industrias" },
+      workspace: { slug: "embutidos-demo-s-l" },
       role: { base },
       seatType: seat,
     });

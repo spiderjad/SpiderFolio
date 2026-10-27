@@ -432,6 +432,8 @@ export const fileMessages: Catalog<typeof Es.fileMessages> = {
   zipNothing: "There are no files to download.",
   zipRequesterGone: "Whoever requested the ZIP is no longer part of the team.",
   zipFailed: "The ZIP couldn't be generated. Try again.",
+  zipFileMissing:
+    "One of the files is no longer available, so the ZIP couldn't be generated. Request it again.",
   importUnreadable: "The ZIP file couldn't be read. Is it damaged?",
   importSpaceGone: "The space is no longer available.",
   importZipGone: "The ZIP is no longer available.",

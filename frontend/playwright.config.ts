@@ -12,7 +12,8 @@ export default defineConfig({
   workers: 1,
   timeout: 60_000,
   reporter: [["list"]],
-  use: { baseURL: E2E_WEB_URL, trace: "retain-on-failure" },
+  // Test texts are in Spanish: the app takes its language from the browser.
+  use: { baseURL: E2E_WEB_URL, locale: "es-ES", trace: "retain-on-failure" },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },

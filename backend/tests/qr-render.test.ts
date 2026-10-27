@@ -93,14 +93,21 @@ describe("QR con logo", () => {
     const scale = 10;
     const { width, pixels } = renderPixels(URLS[0] ?? "", scale);
     const margin = QUIET_MODULES * scale;
+    // One assertion over every non-white pixel: thousands of expect calls time out under load.
+    const notWhite: number[] = [];
     for (let i = 0; i < width; i += 1) {
       for (let k = 0; k < margin; k += 1) {
-        expect(pixels[k * width + i]).toBe(255);
-        expect(pixels[(width - 1 - k) * width + i]).toBe(255);
-        expect(pixels[i * width + k]).toBe(255);
-        expect(pixels[i * width + (width - 1 - k)]).toBe(255);
+        for (const index of [
+          k * width + i,
+          (width - 1 - k) * width + i,
+          i * width + k,
+          i * width + (width - 1 - k),
+        ]) {
+          if (pixels[index] !== 255) notWhite.push(index);
+        }
       }
     }
+    expect(notWhite).toEqual([]);
   });
 
   it("el SVG trae el logo y la zona de silencio", () => {
