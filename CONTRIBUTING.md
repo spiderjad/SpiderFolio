@@ -66,4 +66,7 @@ npm run test:integration      # requires the docker compose services
 
 - One pull request per topic, explaining what changes and why.
 - If you touch permissions or isolation between companies, add tests.
-- Commit messages in Spanish, in the present tense («agrega…», «corrige…»).
+- Commit messages in English, following Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`,
+  `chore:`, `refactor:`), e.g. `fix: return 404 for folders of another company`.
+- New code comments in English. Existing comments in Spanish are translated only when you touch that
+  file.

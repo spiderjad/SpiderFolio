@@ -71,6 +71,8 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 - Verificación y tests: ver «Pruebas» al principio (solo typecheck y lint).
 - Tests solo para backend, seguridad, permisos, tenancy y lógica pura. En el frontend no se escriben tests de pantallas ni componentes.
 - Preguntar solo si algo toca seguridad o borra datos.
+- Commits en inglés con formato Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, `refactor:`).
+- Comentarios nuevos del código en inglés; los existentes en español se traducen solo al tocar cada archivo.
 - Textos de interfaz en español, centralizados en `i18n/`.
 - Cada cambio que toque una pantalla actualiza su guía en `web/src/content/docs/` en los dos idiomas (es y en). Si cambia lo que se ve, regenerar las capturas con `web/scripts/capturas.ts` (base propia `*_capturas`, nunca la de desarrollo).
 - Respuestas cortas.
