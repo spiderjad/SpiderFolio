@@ -34,7 +34,7 @@
     "helmet": "8.3.0",
     "jsonwebtoken": "9.0.3",
     "mammoth": "1.13.0",
-    "nodemailer": "10.0.14",
+    "nodemailer": "10.2.1",
     "pdf-lib": "1.17.1",
     "pdf-parse": "2.4.5",
     "pg": "8.23.1",
@@ -44,7 +44,7 @@
     "prisma": "7.10.1",
     "qrcode": "1.5.4",
     "yauzl": "3.4.0",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/cookie-parser": "1.4.10",

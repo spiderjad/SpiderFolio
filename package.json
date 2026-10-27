@@ -52,7 +52,7 @@
     "react-dom": "18.3.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "allowScripts": {
     "@prisma/engines": false,
@@ -61,5 +61,10 @@
     "fsevents": false,
     "prisma": false,
     "sharp": false
+  },
+  "overrides": {
+    "@tailwindcss/typography": {
+      "postcss-selector-parser": "6.1.5"
+    }
   }
 }
