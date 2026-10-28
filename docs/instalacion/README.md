@@ -43,28 +43,32 @@ docker compose version
 
 ### 2. Descarga SpiderFolio
 
+Se descarga el paquete de instalación de la última versión publicada (Release).
+
 **Windows (PowerShell)**
 
-En PowerShell (no hace falta Git):
+En PowerShell:
 
 ```powershell
 cd $HOME
 $ProgressPreference = "SilentlyContinue"
-$repo = "https://github.com/spiderjad/SpiderFolio"
-Invoke-WebRequest "$repo/archive/refs/heads/main.zip" `
-  -OutFile spiderfolio.zip
+$url = "https://github.com/spiderjad/SpiderFolio" +
+  "/releases/latest/download/spiderfolio-deploy.zip"
+Invoke-WebRequest $url -OutFile spiderfolio.zip
 Expand-Archive spiderfolio.zip -DestinationPath .
-cd SpiderFolio-main\deploy
+cd spiderfolio
 ```
 
 **Linux**
 
 ```sh
-git clone https://github.com/spiderjad/SpiderFolio.git
-cd SpiderFolio/deploy
+url=https://github.com/spiderjad/SpiderFolio
+url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+curl -fsSL $url | tar -xz
+cd spiderfolio
 ```
 
-Todos los comandos siguientes se escriben en esa carpeta, `deploy`.
+Todos los comandos siguientes se escriben en esa carpeta, `spiderfolio`.
 
 ### 3. Crea la configuración (`.env`)
 
@@ -258,12 +262,16 @@ docker compose version
 
 ### 2. Descarga SpiderFolio
 
+Se descarga el paquete de instalación de la última versión publicada (Release).
+
 ```sh
-git clone https://github.com/spiderjad/SpiderFolio.git
-cd SpiderFolio/deploy
+url=https://github.com/spiderjad/SpiderFolio
+url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+curl -fsSL $url | tar -xz
+cd spiderfolio
 ```
 
-Todos los comandos siguientes se escriben en esa carpeta, `deploy`.
+Todos los comandos siguientes se escriben en esa carpeta, `spiderfolio`.
 
 ### 3. Crea la configuración (`.env`)
 
@@ -391,12 +399,16 @@ docker compose version
 
 ### 2. Descarga SpiderFolio
 
+Se descarga el paquete de instalación de la última versión publicada (Release).
+
 ```sh
-git clone https://github.com/spiderjad/SpiderFolio.git
-cd SpiderFolio/deploy
+url=https://github.com/spiderjad/SpiderFolio
+url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+curl -fsSL $url | tar -xz
+cd spiderfolio
 ```
 
-Todos los comandos siguientes se escriben en esa carpeta, `deploy`.
+Todos los comandos siguientes se escriben en esa carpeta, `spiderfolio`.
 
 ### 3. Crea la configuración (`.env`)
 
@@ -658,7 +670,10 @@ servidor; copia la carpeta de copias fuera de la máquina virtual.
      WHERE email = 'tu@email.com';"
   ```
 
-- **Compilar la imagen tú mismo** (por ejemplo, con plugins): desde la carpeta `deploy`,
+- **Una versión concreta**: cambia `latest/download` por `download/vX.Y.Z` en la dirección de
+  descarga (las versiones están en las [Releases](https://github.com/spiderjad/SpiderFolio/releases)).
+- **Compilar la imagen tú mismo** (por ejemplo, con plugins): clona el repositorio
+  (`git clone https://github.com/spiderjad/SpiderFolio.git`) y, desde su carpeta `deploy`,
   `docker compose build` y después `docker compose up -d`.
 
 ## Después de instalar

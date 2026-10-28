@@ -17,6 +17,8 @@ export const site = {
   },
   cta: { install: "Instalar", github: "Ver en GitHub", docs: "Ver documentación" },
   theme: { toggle: "Cambiar tema", menu: "Abrir menú", close: "Cerrar menú" },
+  /** Botón de los bloques de código (src/scripts/code-copy.ts). */
+  code: { copy: "Copiar", copied: "Copiado ✓" },
   home: {
     eyebrow: "Open source · Documentación interna para pymes",
     title: "La documentación de tu empresa, por fin en orden.",

@@ -9,12 +9,18 @@ la versión (pueden pedir pasos manuales).
    [copias-de-seguridad.md](copias-de-seguridad.md)).
 2. **Baja la imagen nueva y reinicia**:
 
+   Desde la carpeta que contiene `spiderfolio`, descarga el paquete nuevo encima (no trae `.env`, así
+   que el tuyo se conserva). Si clonaste el repositorio, usa `git pull` en su carpeta `deploy`.
+
    ```sh
-   cd spiderfolio/deploy
-   git pull                     # trae compose.yaml y .env.example nuevos
+   url=https://github.com/spiderjad/SpiderFolio
+   url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+   curl -fsSL $url | tar -xz
+   cd spiderfolio
    docker compose pull
    docker compose up -d
-   docker compose logs -f app   # las migraciones corren solas; espera «API lista»
+   # las migraciones corren solas; espera «API lista»
+   docker compose logs -f app
    ```
 
 3. Compara `.env.example` con tu `.env`: una versión puede agregar variables (las obligatorias nuevas se

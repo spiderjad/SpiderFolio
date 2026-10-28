@@ -5,7 +5,14 @@ import "@fontsource/instrument-serif";
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
 import { SITE } from "../config/site.ts";
-import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, type Alternates, type Locale } from "../i18n/index.ts";
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  LOCALE_INFO,
+  texts,
+  type Alternates,
+  type Locale,
+} from "../i18n/index.ts";
 
 interface Props {
   locale: Locale;
@@ -64,11 +71,16 @@ const jsonLdText = (data: object): string => JSON.stringify(data).replace(/</g, 
     <ClientRouter fallback="none" />
     {jsonLd.map((data) => <script type="application/ld+json" set:html={jsonLdText(data)} />)}
   </head>
-  <body class="min-h-screen bg-background font-sans text-foreground antialiased">
+  <body
+    class="min-h-screen bg-background font-sans text-foreground antialiased"
+    data-copy-label={texts(locale).code.copy}
+    data-copied-label={texts(locale).code.copied}
+  >
     <slot />
   </body>
 </html>
 
 <script>
   import "../scripts/reveal.ts";
+  import "../scripts/code-copy.ts";
 </script>

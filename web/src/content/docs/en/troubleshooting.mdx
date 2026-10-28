@@ -53,7 +53,7 @@ Check each variable it names:
 | `EMAIL_ALLOW_PRIVATE_HOSTS` | Set to `true`: not allowed in production. |
 
 If `docker compose` refuses to start before creating the containers, with a message about
-`POSTGRES_PASSWORD`, it's empty or `.env` isn't in the `deploy` folder (on Windows, check it wasn't
+`POSTGRES_PASSWORD`, it's empty or `.env` isn't in the installation folder (on Windows, check it wasn't
 saved as `.env.txt`). If the `caddy` container stops with a message about `DOMAIN`, set `DOMAIN` in
 `.env` (it's only required with the `https` profile).
 

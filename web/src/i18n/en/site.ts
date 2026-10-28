@@ -19,6 +19,8 @@ export const site: Catalog<typeof esSite> = {
   },
   cta: { install: "Install", github: "View on GitHub", docs: "Read the docs" },
   theme: { toggle: "Toggle theme", menu: "Open menu", close: "Close menu" },
+  /** Code block button (src/scripts/code-copy.ts). */
+  code: { copy: "Copy", copied: "Copied ✓" },
   home: {
     eyebrow: "Open source · Internal documentation for small businesses",
     title: "Your company's documentation, finally in order.",

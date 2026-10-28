@@ -23,6 +23,12 @@ export const SITE_URL = `https://${SITE.domain}`;
 export const REPO_URL = `https://github.com/${SITE.githubOrg}/${SITE.githubRepo}`;
 export const DOCS_REPO_URL = `${REPO_URL}/tree/main/docs/instalacion`;
 
+/**
+ * Installation bundle of the latest Release, without a version number: GitHub resolves "latest" and
+ * .github/workflows/release-bundle.yml attaches the bundle to every Release. Add .zip or .tar.gz.
+ */
+export const LATEST_BUNDLE_URL = `${REPO_URL}/releases/latest/download/spiderfolio-deploy`;
+
 /** Email de contacto, o null mientras sea un marcador. */
 export const CONTACT_EMAIL: string | null = /^[^\s@[\]]+@[^\s@[\]]+\.[^\s@[\]]+$/.test(
   SITE.contactEmail,

@@ -304,3 +304,42 @@ details > summary::-webkit-details-marker {
 .os-tab-panel > :first-child {
   margin-top: 0.75rem;
 }
+
+/* "Copy" button on code blocks (src/scripts/code-copy.ts). */
+.code-block {
+  position: relative;
+}
+.code-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--background) / 0.92);
+  padding: 0 0.625rem;
+  font-family: var(--font-sans, inherit);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration-fast, 150ms) ease,
+    color var(--motion-duration-fast, 150ms) ease;
+}
+.code-copy:hover {
+  background: hsl(var(--primary-soft));
+  color: hsl(var(--primary-soft-foreground));
+}
+.code-copy:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.code-copy.is-copied {
+  background: hsl(var(--success-soft));
+  color: hsl(var(--success-soft-foreground));
+}

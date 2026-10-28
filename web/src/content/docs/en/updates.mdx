@@ -32,11 +32,18 @@ SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:1.5.0
    ./backup.sh /var/backups/spiderfolio
    ```
 
-2. **Fetch the new `deploy/` files** (`compose.yaml`, `Caddyfile`, scripts and `.env.example`):
+2. **Fetch the new files** (`compose.yaml`, `Caddyfile`, scripts and `.env.example`). If you installed
+   with the Release bundle, download the new one on top, from the folder that contains `spiderfolio`
+   (the bundle has no `.env`, so yours is kept):
 
    ```sh
-   git pull
+   url=https://github.com/spiderjad/SpiderFolio
+   url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+   curl -fsSL $url | tar -xz
+   cd spiderfolio
    ```
+
+   If you cloned the repository, from its `deploy` folder: `git pull`.
 
 3. **Compare `.env.example` with your `.env`**: a release may add variables. This command lists the ones
    in the example that aren't in your `.env`:

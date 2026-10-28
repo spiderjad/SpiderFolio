@@ -1,5 +1,5 @@
 // Texts of the open source project pages (Home, Install, Plugins) in English.
-import { SITE } from "../../config/site.ts";
+import { LATEST_BUNDLE_URL, SITE } from "../../config/site.ts";
 import type { oss as esOss } from "../es/oss.ts";
 import type { Catalog } from "../types.ts";
 
@@ -64,8 +64,8 @@ export const oss: Catalog<typeof esOss> = {
     steps: [
       {
         title: "Download",
-        text: "Clone the repository. On Windows, the guide shows how to download it without Git.",
-        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy",
+        text: "Download the installation bundle of the latest version. On Windows, the guide has the PowerShell commands.",
+        code: `curl -fsSL ${LATEST_BUNDLE_URL}.tar.gz | tar -xz\ncd spiderfolio`,
       },
       {
         title: "Configure",
@@ -201,7 +201,7 @@ export const oss: Catalog<typeof esOss> = {
   },
   landing: {
     command:
-      "git clone https://github.com/spiderjad/SpiderFolio.git && cd SpiderFolio/deploy && cp .env.example .env",
+      `curl -fsSL ${LATEST_BUNDLE_URL}.tar.gz | tar -xz && cd spiderfolio && ./setup.sh`,
     commandLabel: "Install command",
     copy: "Copy",
     copied: "Copied",

@@ -8,12 +8,18 @@ require manual steps).
 1. **Make a backup** (always, before upgrading): `./backup.sh` (see [backups.md](backups.md)).
 2. **Pull the new image and restart**:
 
+   From the folder that contains `spiderfolio`, download the new bundle on top (it has no `.env`, so
+   yours is kept). If you cloned the repository, run `git pull` in its `deploy` folder instead.
+
    ```sh
-   cd spiderfolio/deploy
-   git pull                     # brings the new compose.yaml and .env.example
+   url=https://github.com/spiderjad/SpiderFolio
+   url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+   curl -fsSL $url | tar -xz
+   cd spiderfolio
    docker compose pull
    docker compose up -d
-   docker compose logs -f app   # migrations run automatically; wait for "API lista"
+   # migrations run automatically; wait for "API lista"
+   docker compose logs -f app
    ```
 
 3. Compare `.env.example` with your `.env`: a version may add variables (new required ones are listed in

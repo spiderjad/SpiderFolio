@@ -57,17 +57,18 @@ the [installation guide](docs/install/README.md):
 Windows Server: an Ubuntu virtual machine in Hyper-V is recommended
 ([Windows](docs/install/README.md#windows)).
 
-The setup script asks the minimum, generates the secrets and writes `deploy/.env`.
+These commands download the installation bundle of the latest Release. The setup script asks the
+minimum, generates the secrets and writes `.env`.
 
 **Windows (PowerShell)**, with Docker Desktop running:
 
 ```powershell
 cd $HOME
-$repo = "https://github.com/spiderjad/SpiderFolio"
-Invoke-WebRequest "$repo/archive/refs/heads/main.zip" `
-  -OutFile spiderfolio.zip
+$url = "https://github.com/spiderjad/SpiderFolio" +
+  "/releases/latest/download/spiderfolio-deploy.zip"
+Invoke-WebRequest $url -OutFile spiderfolio.zip
 Expand-Archive spiderfolio.zip -DestinationPath .
-cd SpiderFolio-main\deploy
+cd spiderfolio
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 docker compose up -d
 ```
@@ -75,8 +76,10 @@ docker compose up -d
 **Linux**:
 
 ```sh
-git clone https://github.com/spiderjad/SpiderFolio.git
-cd SpiderFolio/deploy
+url=https://github.com/spiderjad/SpiderFolio
+url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+curl -fsSL $url | tar -xz
+cd spiderfolio
 ./setup.sh
 docker compose up -d
 ```

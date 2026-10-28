@@ -56,17 +56,18 @@ Con Docker Compose. Elige dónde lo vas a instalar; cada opción tiene su paso a
 Windows Server: lo recomendado es una máquina virtual Ubuntu en Hyper-V
 ([Windows](docs/instalacion/README.md#windows)).
 
-El script de instalación pregunta lo mínimo, genera los secretos y escribe `deploy/.env`.
+Estos comandos descargan el paquete de instalación de la última Release. El script de instalación
+pregunta lo mínimo, genera los secretos y escribe `.env`.
 
 **Windows (PowerShell)**, con Docker Desktop en marcha:
 
 ```powershell
 cd $HOME
-$repo = "https://github.com/spiderjad/SpiderFolio"
-Invoke-WebRequest "$repo/archive/refs/heads/main.zip" `
-  -OutFile spiderfolio.zip
+$url = "https://github.com/spiderjad/SpiderFolio" +
+  "/releases/latest/download/spiderfolio-deploy.zip"
+Invoke-WebRequest $url -OutFile spiderfolio.zip
 Expand-Archive spiderfolio.zip -DestinationPath .
-cd SpiderFolio-main\deploy
+cd spiderfolio
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 docker compose up -d
 ```
@@ -74,8 +75,10 @@ docker compose up -d
 **Linux**:
 
 ```sh
-git clone https://github.com/spiderjad/SpiderFolio.git
-cd SpiderFolio/deploy
+url=https://github.com/spiderjad/SpiderFolio
+url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
+curl -fsSL $url | tar -xz
+cd spiderfolio
 ./setup.sh
 docker compose up -d
 ```

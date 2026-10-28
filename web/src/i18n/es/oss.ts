@@ -1,5 +1,5 @@
 // Textos de las páginas del proyecto open source (Inicio, Instalación, Plugins) en español neutro.
-import { SITE } from "../../config/site.ts";
+import { LATEST_BUNDLE_URL, SITE } from "../../config/site.ts";
 
 export const oss = {
   cta: {
@@ -62,8 +62,8 @@ export const oss = {
     steps: [
       {
         title: "Descarga",
-        text: "Clona el repositorio. En Windows, la guía explica cómo bajarlo sin Git.",
-        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy",
+        text: "Descarga el paquete de instalación de la última versión. En Windows, la guía tiene los comandos de PowerShell.",
+        code: `curl -fsSL ${LATEST_BUNDLE_URL}.tar.gz | tar -xz\ncd spiderfolio`,
       },
       {
         title: "Configura",
@@ -202,7 +202,7 @@ export const oss = {
   },
   landing: {
     command:
-      "git clone https://github.com/spiderjad/SpiderFolio.git && cd SpiderFolio/deploy && cp .env.example .env",
+      `curl -fsSL ${LATEST_BUNDLE_URL}.tar.gz | tar -xz && cd spiderfolio && ./setup.sh`,
     commandLabel: "Comando de instalación",
     copy: "Copiar",
     copied: "Copiado",
