@@ -37,8 +37,14 @@ export const envSchema = z
     STORAGE_DRIVER: z.preprocess(emptyToUndefined, z.enum(["s3", "local"]).default("s3")),
     /** Carpeta de los archivos con STORAGE_DRIVER=local. */
     STORAGE_DIR: optionalString,
-    // Las de S3 solo se exigen con STORAGE_DRIVER=s3 (ver superRefine).
-    ...s3EnvSchema.partial().shape,
+    // S3 variables are only required with STORAGE_DRIVER=s3 (see superRefine). Empty counts as
+    // unset, so the empty S3_* lines of a .env don't break STORAGE_DRIVER=local.
+    S3_ENDPOINT: s3EnvSchema.shape.S3_ENDPOINT,
+    S3_REGION: z.preprocess(emptyToUndefined, s3EnvSchema.shape.S3_REGION.optional()),
+    S3_FORCE_PATH_STYLE: s3EnvSchema.shape.S3_FORCE_PATH_STYLE,
+    S3_BUCKET: z.preprocess(emptyToUndefined, s3EnvSchema.shape.S3_BUCKET.optional()),
+    S3_ACCESS_KEY: z.preprocess(emptyToUndefined, s3EnvSchema.shape.S3_ACCESS_KEY.optional()),
+    S3_SECRET_KEY: z.preprocess(emptyToUndefined, s3EnvSchema.shape.S3_SECRET_KEY.optional()),
     /** La app compilada (frontend/dist) que sirve la propia API; vacío: la sirve otro (Vite, Caddy). */
     APP_STATIC_DIR: optionalString,
     /** Saltos de proxy de confianza para la IP del cliente (1 detrás de Caddy; 0 expuesta directo). */

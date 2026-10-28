@@ -642,7 +642,7 @@ virtual machine.
   example, `COMPOSE_PROFILES=https,pdf`) and set `GOTENBERG_URL=http://gotenberg:3000`. Then run
   `docker compose up -d`. Without Gotenberg everything works the same, except that PDF. See
   [Gotenberg](https://spiderfolio.spiderjad.com/en/docs/gotenberg).
-- **Files on S3** (R2, MinIO, AWS…): `STORAGE_DRIVER=s3` and the `S3_*` variables. By default files
+- **Files on S3** (R2, MinIO, AWS…): `STORAGE_DRIVER=s3` and the `S3_*` variables (remove their `#`). By default files
   go to the `files` volume. See [Storage](https://spiderfolio.spiderjad.com/en/docs/storage).
 - **Bian, the AI assistant**: `BIAN_ENABLED=true` and `ANTHROPIC_API_KEY` (queries are billed to your
   Anthropic account).

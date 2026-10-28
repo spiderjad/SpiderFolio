@@ -679,7 +679,7 @@ servidor; copia la carpeta de copias fuera de la máquina virtual.
   (por ejemplo, `COMPOSE_PROFILES=https,pdf`) y pon `GOTENBERG_URL=http://gotenberg:3000`. Después,
   `docker compose up -d`. Sin Gotenberg todo funciona igual, salvo ese PDF. Ver
   [Gotenberg](/es/docs/gotenberg).
-- **Archivos en S3** (R2, MinIO, AWS…): `STORAGE_DRIVER=s3` y las variables `S3_*`. Por defecto los
+- **Archivos en S3** (R2, MinIO, AWS…): `STORAGE_DRIVER=s3` y las variables `S3_*` (quítales el `#`). Por defecto los
   archivos van al volumen `files`. Ver [Almacenamiento](/es/docs/almacenamiento).
 - **Bian, el asistente IA**: `BIAN_ENABLED=true` y `ANTHROPIC_API_KEY` (las consultas se cobran en tu
   cuenta de Anthropic).
