@@ -1,0 +1,77 @@
+# SpiderFolio
+
+> SpiderFolio is a free, open-source (AGPLv3), self-hosted internal documentation and document management system for small and mid-sized businesses (roughly 10–250 people), including factories, workshops and other shop-floor teams. It combines a Notion-style wiki, a file library with versions, and controlled documents (codes, approvals, a single current version, read confirmation, audit log) on one server the company owns. It installs with Docker Compose and is available in English and Spanish.
+
+SpiderFolio is built to replace shared folders on OneDrive, SharePoint, Google Drive or a file server, where nobody knows which version is current or who can see what. Access is granted to departments and roles instead of person by person, and every folder, file and page shows who has access and why (for example: "Quality department · inherited from /Procedures").
+
+Key facts:
+
+- License: GNU AGPL v3.0. The core is complete and free, with no per-user limits. Optional commercial plugins add specific business features; without them the core works the same.
+- Deployment: self-hosted only, Docker Compose on any Linux server (Windows via an Ubuntu VM). Recommended: 2 vCPUs and 4 GB RAM for up to about 200 people.
+- Languages: English and Spanish, per user, with a company default.
+- Author: Diego Pennisi. Source: https://github.com/spiderjad/SpiderFolio
+
+## Features
+
+- Pages and files: Notion-style pages (block editor), a file library with spaces, folders and versions, and full-text search including inside PDF and Word files.
+- Permissions by department and role: inherited access, broken inheritance when needed, and an explanation of every access.
+- Controlled documents: document codes, approvals, one current version, obsolete versions archived, required reading with read confirmation, controlled PDF and an exportable audit log. Useful for document-control processes such as those required by ISO 9001.
+- Shop floor: QR codes that always open the current version of a document, expiry dates with reminders, and a simple tablet view with username and PIN.
+- Bian, the built-in AI assistant (optional): answers only from current content the person is allowed to see and cites the source. Uses the company's own Anthropic API key.
+- Security: two-step verification (2FA), session and trusted-device management, audit log, strict isolation between companies (multi-tenant).
+
+## Commercial plugins (optional)
+
+Activated with a license verified offline: advanced security policies (enforced 2FA, allowed domains, SSO), import from OneDrive and SharePoint, an MCP connector for Claude, industry templates and audit rooms for external auditors.
+
+## Tech stack
+
+Node.js 24, TypeScript, Express 5, Prisma 7, PostgreSQL 16, pg-boss (job queue on Postgres), React 18, Vite, Tailwind CSS 4, Radix UI, Tiptap, Astro (website and docs), Gotenberg (HTML to PDF), S3-compatible storage (RustFS, MinIO, Cloudflare R2) or local disk.
+
+## Docs: getting started
+
+- [Documentation home](https://spiderfolio.spiderjad.com/en/docs): overview of all guides
+- [Server requirements](https://spiderfolio.spiderjad.com/en/docs/server-requirements): hardware, software, domain and network
+- [Install](https://spiderfolio.spiderjad.com/en/docs/install): Docker Compose installation step by step
+- [First administrator](https://spiderfolio.spiderjad.com/en/docs/first-administrator): first account and initial setup
+- [Proxy and HTTPS](https://spiderfolio.spiderjad.com/en/docs/proxy-and-https): Caddy, nginx, Traefik or an existing proxy
+- [SMTP email](https://spiderfolio.spiderjad.com/en/docs/smtp-email): outgoing email configuration
+- [Storage](https://spiderfolio.spiderjad.com/en/docs/storage): local disk or S3-compatible bucket
+
+## Docs: daily use
+
+- [Pages](https://spiderfolio.spiderjad.com/en/docs/pages): the block editor
+- [Files](https://spiderfolio.spiderjad.com/en/docs/files): folders, uploads and versions
+- [Search](https://spiderfolio.spiderjad.com/en/docs/search): full-text search
+- [Sharing](https://spiderfolio.spiderjad.com/en/docs/sharing): giving access and seeing why someone has it
+- [Controlled documents](https://spiderfolio.spiderjad.com/en/docs/controlled-documents): codes, versions and lifecycle
+- [Approvals](https://spiderfolio.spiderjad.com/en/docs/approvals): review and approval workflow
+- [Required reading](https://spiderfolio.spiderjad.com/en/docs/required-reading): read confirmation per version
+- [QR codes](https://spiderfolio.spiderjad.com/en/docs/qr-codes): QR codes that open the current version
+- [My documents](https://spiderfolio.spiderjad.com/en/docs/my-documents): the simple view for operators
+- [Bian](https://spiderfolio.spiderjad.com/en/docs/bian): the AI assistant
+
+## Docs: administration
+
+- [Members](https://spiderfolio.spiderjad.com/en/docs/members) and [inviting people](https://spiderfolio.spiderjad.com/en/docs/invite-people)
+- [Departments](https://spiderfolio.spiderjad.com/en/docs/departments)
+- [Roles and permissions](https://spiderfolio.spiderjad.com/en/docs/roles-and-permissions)
+- [Security and 2FA](https://spiderfolio.spiderjad.com/en/docs/security-and-2fa)
+- [Configuration](https://spiderfolio.spiderjad.com/en/docs/configuration)
+- [Backups](https://spiderfolio.spiderjad.com/en/docs/backups) and [updates](https://spiderfolio.spiderjad.com/en/docs/updates)
+- [License and plugins](https://spiderfolio.spiderjad.com/en/docs/license-and-plugins)
+
+## Developers
+
+- [Architecture](https://spiderfolio.spiderjad.com/en/docs/architecture): monorepo, processes, tenant isolation, permissions, queues
+- [Create a plugin](https://spiderfolio.spiderjad.com/en/docs/create-a-plugin): plugin SDK
+- [Contributing](https://spiderfolio.spiderjad.com/en/docs/contributing)
+- [Source code on GitHub](https://github.com/spiderjad/SpiderFolio)
+
+## Optional
+
+- [Security page](https://spiderfolio.spiderjad.com/en/security)
+- [Plugins and services](https://spiderfolio.spiderjad.com/en/plugins)
+- [FAQ](https://spiderfolio.spiderjad.com/en/faq)
+- [Troubleshooting](https://spiderfolio.spiderjad.com/en/docs/troubleshooting)
+- [Documentación en español](https://spiderfolio.spiderjad.com/es/docs)
