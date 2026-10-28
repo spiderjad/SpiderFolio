@@ -75,6 +75,7 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 - Comentarios nuevos del código en inglés; los existentes en español se traducen solo al tocar cada archivo.
 - Textos de interfaz en español, centralizados en `i18n/`.
 - Cada cambio que toque una pantalla actualiza su guía en `web/src/content/docs/` en los dos idiomas (es y en). Si cambia lo que se ve, regenerar las capturas con `web/scripts/capturas.ts` (base propia `*_capturas`, nunca la de desarrollo).
+- Clips de demo (`web/scripts/clips.ts`): se regeneran solo cuando cambia algo visible en esas pantallas (documento controlado, QR, Bian, compartir), nunca en cada commit. Los MP4 de la web van en `web/public/clips/`; los GIF del README no se versionan: se suben a la Release con `CLIPS_RELEASE=vX.Y.Z` y el README los enlaza desde ahí.
 - Respuestas cortas.
 
 ## Índice de docs/spec (leer solo si la tarea lo necesita)

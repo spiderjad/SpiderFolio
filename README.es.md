@@ -19,7 +19,7 @@
   <a href="CONTRIBUTING.md">Contribuir</a>
 </p>
 
-![SpiderFolio en acción: documentos controlados, códigos QR, Bian y accesos explicados](docs/clips/demo-es.gif)
+![SpiderFolio en acción: documentos controlados, códigos QR, Bian y accesos explicados](https://github.com/spiderjad/SpiderFolio/releases/download/v0.1.3/demo-es.gif)
 
 ## Funciones
 
@@ -28,25 +28,25 @@
 Historial de versiones, qué cambió entre dos versiones, la aprobación y el PDF controlado con su marca
 de agua.
 
-![Documento controlado: historial, qué cambió, aprobación y PDF con marca de agua](docs/clips/control-es.gif)
+![Documento controlado: historial, qué cambió, aprobación y PDF con marca de agua](https://github.com/spiderjad/SpiderFolio/releases/download/v0.1.3/control-es.gif)
 
 ### Códigos QR para la planta
 
 Generas el QR de un documento: al escanearlo, abre siempre la versión vigente.
 
-![Generar un código QR y abrirlo](docs/clips/qr-es.gif)
+![Generar un código QR y abrirlo](https://github.com/spiderjad/SpiderFolio/releases/download/v0.1.3/qr-es.gif)
 
 ### Bian, el asistente IA
 
 Responde con los documentos vigentes que cada persona puede ver y cita la fuente.
 
-![Pregunta a Bian, con la respuesta y su fuente](docs/clips/bian-es.gif)
+![Pregunta a Bian, con la respuesta y su fuente](https://github.com/spiderjad/SpiderFolio/releases/download/v0.1.3/bian-es.gif)
 
 ### Quién accede y por qué
 
 Cada documento explica quién puede entrar y por qué motivo.
 
-![Diálogo de compartir: quién puede entrar y por qué](docs/clips/compartir-es.gif)
+![Diálogo de compartir: quién puede entrar y por qué](https://github.com/spiderjad/SpiderFolio/releases/download/v0.1.3/compartir-es.gif)
 
 ## Qué es
 

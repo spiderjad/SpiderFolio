@@ -6,18 +6,24 @@
 //   bian       ask Bian and watch the answer being written, with its citations
 //   compartir  Share › "Who can get in and why"
 // Each one is exported as MP4 (web/public/clips/<lang>/<name>.mp4, with a .webp poster) and as a light
-// GIF (docs/clips/<name>-<lang>.gif, under 5 MB); docs/clips/demo-<lang>.gif joins the four.
+// GIF (<name>-<lang>.gif, under 5 MB, plus demo-<lang>.gif joining the four) in clips-gif/, which is
+// not versioned: the README links the GIFs attached to a Release.
 //
 //   1. The capture database with the seed, migrated (see capturas.ts) and the app built.
 //   2. ffmpeg on the PATH (not an npm dependency).
 //   3. node web/scripts/clips.ts   (CAPTURAS_DATABASE_URL and SEED_DEMO_PASSWORD in the environment)
 //      CLIPS_SOLO=qr,bian and CLIPS_IDIOMA=es record only those.
+//      CLIPS_RELEASE=v0.1.3 also uploads the GIFs to that Release (gh, replacing the old ones).
+//
+// The browser opens an example address (APP_URL below), mapped to the local API with
+// --host-resolver-rules, so the screens (the QR's short URL) never show localhost. The API runs with
+// that APP_URL, so its origin checks pass as they are.
 //
 // Every run works on a fresh copy of the capture database (<name>_clips_capturas, dropped at the end):
 // approving a document changes data, and the clips have to come out the same every time. Bian never
 // calls the Anthropic API: the page gets a recorded answer, streamed at a fixed pace.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -39,6 +45,9 @@ import {
 
 const PORT = 4110;
 const BASE = `http://localhost:${String(PORT)}`;
+/** What the browser shows; Chromium resolves it to the local API (see the launch below). */
+const APP_HOST = "docs.empresa-demo.test";
+const APP_URL = `http://${APP_HOST}`;
 const WIDTH = 1280;
 const HEIGHT = 800;
 /** GIFs over this size get smaller (width, frame rate, colors) until they fit. */
@@ -54,7 +63,8 @@ if (password === "") throw new Error("Falta SEED_DEMO_PASSWORD (la misma del see
 if (spawnSync("ffmpeg", ["-version"]).status !== 0) throw new Error("Falta ffmpeg en el PATH");
 
 const webOut = join(root, "web", "public", "clips");
-const gifOut = join(root, "docs", "clips");
+const gifOut = join(root, "clips-gif");
+const release = process.env.CLIPS_RELEASE;
 
 /** Texts of the app (frontend/src/i18n/<lang>) and of the recorded Bian answer. */
 const TEXT: Record<
@@ -306,7 +316,8 @@ async function apiAs(
   const headers = {
     "Content-Type": "application/json",
     "X-Requested-With": "spiderfolio",
-    Origin: BASE,
+    // The API checks the origin against APP_URL.
+    Origin: APP_URL,
   };
   const login = await fetch(`${BASE}/api/v1/auth/login`, {
     method: "POST",
@@ -527,11 +538,18 @@ async function record(
     }),
   );
   await signIn(context, BASE, PEOPLE[ctx.locale][clip.who], password);
+  // The session cookie was set for localhost (Node can't resolve the example host): the same one for
+  // the address the page uses.
+  // All of them: the refresh cookie lives under /api/v1/auth, not under the root URL.
+  const cookies = (await context.cookies()).filter((cookie) => cookie.domain === "localhost");
+  await context.addCookies(
+    cookies.map((cookie) => ({ ...cookie, domain: APP_HOST, secure: false })),
+  );
   const page = await context.newPage();
   const opened = Date.now();
-  await page.goto(`${BASE}/app`);
+  await page.goto(`${APP_URL}/app`);
   await waitUntilReady(page);
-  await page.goto(`${BASE}${clip.path(ctx.ids)}`);
+  await page.goto(`${APP_URL}${clip.path(ctx.ids)}`);
   await waitUntilReady(page);
   await sleep(500);
   const start = (Date.now() - opened) / 1000;
@@ -618,9 +636,12 @@ mkdirSync(gifOut, { recursive: true });
 const db = new pg.Client({ connectionString: clipsUrl });
 await db.connect();
 await db.query(`DELETE FROM "RateLimitBucket"`);
-const server = await startServer({ port: PORT, databaseUrl: clipsUrl });
+const server = await startServer({ port: PORT, databaseUrl: clipsUrl, env: { APP_URL } });
 // Full Chromium (not the headless shell): it has the PDF viewer the control clip ends with.
-const browser = await chromium.launch({ channel: "chromium" });
+const browser = await chromium.launch({
+  channel: "chromium",
+  args: [`--host-resolver-rules=MAP ${APP_HOST}:80 127.0.0.1:${String(PORT)}`],
+});
 try {
   for (const locale of ["es", "en"] as const) {
     if (onlyLocale !== undefined && onlyLocale !== locale) continue;
@@ -635,6 +656,16 @@ try {
       await sleep(1500);
     }
     if (only === null) demoGif(locale, work);
+  }
+  if (release !== undefined) {
+    const gifs = readdirSync(gifOut)
+      .filter((file) => file.endsWith(".gif"))
+      .map((file) => join(gifOut, file));
+    const upload = spawnSync("gh", ["release", "upload", release, ...gifs, "--clobber"], {
+      stdio: "inherit",
+    });
+    if (upload.status !== 0)
+      throw new Error(`No se pudieron subir los GIF a la Release ${release}`);
   }
 } finally {
   await browser.close();

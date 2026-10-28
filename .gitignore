@@ -29,3 +29,6 @@ Thumbs.db
 # Instalación propia (deploy/)
 deploy/.env
 deploy/backups/
+
+# Demo GIFs (web/scripts/clips.ts): attached to a Release, never versioned.
+clips-gif/
