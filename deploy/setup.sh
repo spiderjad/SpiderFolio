@@ -55,12 +55,31 @@ if [ "$MODE" != 1 ]; then
   SMTP_HOST="$(ask "SMTP host (smtp.example.com)" "")"
   SMTP_PORT="$(ask "SMTP port" 587)"
   SMTP_USER="$(ask "SMTP user" "")"
-  printf 'SMTP password: ' >&2
-  stty -echo 2> /dev/null || true
-  read -r SMTP_PASS || SMTP_PASS=""
-  stty echo 2> /dev/null || true
-  echo >&2
-  FROM="$(ask "Remitente / Sender (no-reply@example.com)" "no-reply@${DOMAIN:-example.com}")"
+  # .env keeps the password between one pair of single quotes, read literally: a single quote can't
+  # go inside, and quotes or spaces at either end are usually a copy mistake.
+  while :; do
+    printf 'SMTP password: ' >&2
+    stty -echo 2> /dev/null || true
+    IFS= read -r SMTP_PASS || SMTP_PASS=""
+    stty echo 2> /dev/null || true
+    echo >&2
+    case "$SMTP_PASS" in
+      *"'"*)
+        echo "La contraseña tiene una comilla simple ('), que .env no admite. Escríbela de nuevo." >&2
+        echo "The password has a single quote ('), which .env can't hold. Type it again." >&2
+        continue
+        ;;
+      \"* | *\" | " "* | *" ")
+        echo "La contraseña empieza o termina con comillas o espacios: escríbela sin comillas." >&2
+        echo "The password starts or ends with quotes or spaces: type it without quotes." >&2
+        [ "$(ask "¿Usarla igual? / Use it anyway? (s/n)" n)" = s ] || continue
+        ;;
+    esac
+    break
+  done
+  case "$SMTP_USER" in *@*) FROM_DEFAULT="$SMTP_USER" ;; *) FROM_DEFAULT="no-reply@${DOMAIN:-example.com}" ;; esac
+  # MAIL_FROM has to be the same mailbox as SMTP_USER: most servers reject any other sender.
+  FROM="$(ask "Remitente (igual a SMTP user) / Sender (same as SMTP user)" "$FROM_DEFAULT")"
   MAIL_FROM="SpiderFolio <$FROM>"
 fi
 

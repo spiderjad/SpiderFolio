@@ -63,12 +63,30 @@ if ($mode -ne "1") {
   $smtpHost = Read-Answer "SMTP host (smtp.example.com)" ""
   $smtpPort = Read-Answer "SMTP port" "587"
   $smtpUser = Read-Answer "SMTP user" ""
-  $secure = Read-Host "SMTP password" -AsSecureString
-  $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-  $smtpPass = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
-  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+  # .env keeps the password between one pair of single quotes, read literally: a single quote
+  # can't go inside, and quotes or spaces at either end are usually a copy mistake.
+  while ($true) {
+    $secure = Read-Host "SMTP password" -AsSecureString
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    $smtpPass = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+    if ($smtpPass.Contains("'")) {
+      Write-Host "La contraseña tiene una comilla simple ('), que .env no admite. Escríbela de nuevo."
+      Write-Host "The password has a single quote ('), which .env can't hold. Type it again."
+      continue
+    }
+    if ($smtpPass -match '^["\s]|["\s]$') {
+      Write-Host "La contraseña empieza o termina con comillas o espacios: escríbela sin comillas."
+      Write-Host "The password starts or ends with quotes or spaces: type it without quotes."
+      $anyway = Read-Answer "¿Usarla igual? / Use it anyway? (s/n)" "n"
+      if ($anyway -notmatch '^(s|si|sí|y|yes)$') { continue }
+    }
+    break
+  }
+  # MAIL_FROM has to be the same mailbox as SMTP_USER: most servers reject any other sender.
   $fromDomain = if ($domain -ne "") { $domain } else { "example.com" }
-  $from = Read-Answer "Remitente / Sender (no-reply@example.com)" "no-reply@$fromDomain"
+  $fromDefault = if ($smtpUser -match "@") { $smtpUser } else { "no-reply@$fromDomain" }
+  $from = Read-Answer "Remitente (igual a SMTP user) / Sender (same as SMTP user)" $fromDefault
   $mailFrom = "SpiderFolio <$from>"
 }
 
