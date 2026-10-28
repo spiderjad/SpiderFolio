@@ -68,21 +68,21 @@ floor.
   between companies.
 - **In Spanish and English**: each person picks their language; the company sets the default one.
 
-|                                                |                                                                |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| ![File explorer](docs/capturas/explorador.png) | ![Controlled document](docs/capturas/documento-controlado.png) |
-| ![Permissions](docs/capturas/permisos.png)     | ![Bian](docs/capturas/bian.png)                                |
+|                                                                |                                                                                |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| ![File explorer](web/public/capturas/en/explorador-light.webp) | ![Controlled document](web/public/capturas/en/documento-controlado-light.webp) |
+| ![Permissions](web/public/capturas/en/accesos-light.webp)      | ![Bian](web/public/capturas/en/bian-admin-light.webp)                          |
 
 ## Install
 
 With Docker Compose. Pick where you'll install it; each option has its own complete step by step in
 the [installation guide](docs/install/README.md):
 
-| Option | What for | Guide |
-| --- | --- | --- |
-| Try it on your PC | See it working (Windows, macOS or Linux), with a test inbox | [Try it on your PC](docs/install/README.md#try-it-on-your-pc) |
-| Server with your own domain | Real use, with automatic HTTPS | [Server with your own domain](docs/install/README.md#server-with-your-own-domain) |
-| Server behind your own proxy | You already have nginx, Traefik, IIS… | [Server behind your own proxy](docs/install/README.md#server-behind-your-own-proxy) |
+| Option                       | What for                                                    | Guide                                                                               |
+| ---------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Try it on your PC            | See it working (Windows, macOS or Linux), with a test inbox | [Try it on your PC](docs/install/README.md#try-it-on-your-pc)                       |
+| Server with your own domain  | Real use, with automatic HTTPS                              | [Server with your own domain](docs/install/README.md#server-with-your-own-domain)   |
+| Server behind your own proxy | You already have nginx, Traefik, IIS…                       | [Server behind your own proxy](docs/install/README.md#server-behind-your-own-proxy) |
 
 Windows Server: an Ubuntu virtual machine in Hyper-V is recommended
 ([Windows](docs/install/README.md#windows)).
@@ -142,13 +142,13 @@ npm run db:seed               # demo company "Embutidos Demo S.L." (@demo.local 
 npm run dev                   # API :4000 + worker + app :5173 + web :4321
 ```
 
-| Command                    | What it does                                                          |
-| -------------------------- | --------------------------------------------------------------------- |
-| `npm run typecheck`        | TypeScript at the root and in every workspace                         |
-| `npm run lint`             | ESLint, no warnings allowed                                           |
-| `npm run test`             | Unit tests                                                            |
-| `npm run test:integration` | Tests against real Postgres and Mailpit (`docker compose up -d`)      |
-| `npm run check:secrets`    | No secrets in versioned files (also run in the hook and in CI)        |
+| Command                    | What it does                                                     |
+| -------------------------- | ---------------------------------------------------------------- |
+| `npm run typecheck`        | TypeScript at the root and in every workspace                    |
+| `npm run lint`             | ESLint, no warnings allowed                                      |
+| `npm run test`             | Unit tests                                                       |
+| `npm run test:integration` | Tests against real Postgres and Mailpit (`docker compose up -d`) |
+| `npm run check:secrets`    | No secrets in versioned files (also run in the hook and in CI)   |
 
 Structure, rules and specification (in Spanish): [CLAUDE.md](CLAUDE.md) and [docs/spec/](docs/spec/).
 To contribute: [CONTRIBUTING.md](CONTRIBUTING.md) (requires accepting the [CLA](CLA.md)).

@@ -67,21 +67,21 @@ corresponde. Pensado para pymes de habla hispana, también en planta.
   y aislamiento estricto entre empresas.
 - **En español y en inglés**: cada persona elige su idioma; la empresa fija el idioma por defecto.
 
-|                                             |                                                                 |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| ![Explorador](docs/capturas/explorador.png) | ![Documento controlado](docs/capturas/documento-controlado.png) |
-| ![Permisos](docs/capturas/permisos.png)     | ![Bian](docs/capturas/bian.png)                                 |
+|                                                             |                                                                                 |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| ![Explorador](web/public/capturas/es/explorador-light.webp) | ![Documento controlado](web/public/capturas/es/documento-controlado-light.webp) |
+| ![Permisos](web/public/capturas/es/accesos-light.webp)      | ![Bian](web/public/capturas/es/bian-admin-light.webp)                           |
 
 ## Instalar
 
 Con Docker Compose. Elige dónde lo vas a instalar; cada opción tiene su paso a paso completo en la
 [guía de instalación](docs/instalacion/README.md):
 
-| Opción | Para qué | Guía |
-| --- | --- | --- |
-| Probar en tu PC | Verlo funcionando (Windows, macOS o Linux), con una bandeja de email de prueba | [Probar en tu PC](docs/instalacion/README.md#probar-en-tu-pc) |
-| Servidor con dominio propio | Uso real, con HTTPS automático | [Servidor con dominio propio](docs/instalacion/README.md#servidor-con-dominio-propio) |
-| Servidor con proxy propio | Ya tienes nginx, Traefik, IIS… | [Servidor con proxy propio](docs/instalacion/README.md#servidor-con-proxy-propio) |
+| Opción                      | Para qué                                                                       | Guía                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Probar en tu PC             | Verlo funcionando (Windows, macOS o Linux), con una bandeja de email de prueba | [Probar en tu PC](docs/instalacion/README.md#probar-en-tu-pc)                         |
+| Servidor con dominio propio | Uso real, con HTTPS automático                                                 | [Servidor con dominio propio](docs/instalacion/README.md#servidor-con-dominio-propio) |
+| Servidor con proxy propio   | Ya tienes nginx, Traefik, IIS…                                                 | [Servidor con proxy propio](docs/instalacion/README.md#servidor-con-proxy-propio)     |
 
 Windows Server: lo recomendado es una máquina virtual Ubuntu en Hyper-V
 ([Windows](docs/instalacion/README.md#windows)).

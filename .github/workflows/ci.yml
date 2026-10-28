@@ -24,3 +24,14 @@ jobs:
         run: node scripts/check-secrets.ts
       - name: .env.example con los secretos vacíos
         run: npx vitest run tests/env-example.test.ts
+
+  readme-links:
+    name: Enlaces de los README
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Imágenes y enlaces locales que existen en el repositorio
+        run: node scripts/check-readme-links.ts
