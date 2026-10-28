@@ -1,27 +1,44 @@
-# Publica la imagen de Docker en GitHub Container Registry al crear una etiqueta de versión (v1.2.3):
-# ghcr.io/spiderjad/spiderfolio:1.2.3, :1.2, :1 y :latest. Usa el GITHUB_TOKEN del propio workflow
-# (sin secretos extra). La imagen es la del núcleo, sin plugins.
+# Publishes the Docker image to GitHub Container Registry when a version tag (v1.2.3) is pushed:
+# ghcr.io/spiderjad/spiderfolio:1.2.3, :1.2, :1 and :latest. Uses the workflow's own GITHUB_TOKEN (no
+# extra secrets). The image is the core one, without plugins.
+# Each platform builds on its own native runner (arm64 under QEMU took over 45 minutes) and a last job
+# joins both into one multi-platform tag. Run it by hand with a tag to (re)publish that version, or
+# without one to publish the branch (tagged with the branch and the commit).
 name: Publicar imagen
 
 on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to publish (vX.Y.Z); empty: the branch"
+        required: false
 
 permissions:
   contents: read
   packages: write
 
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/spiderfolio
+
 jobs:
-  image:
-    name: Compilar y publicar
-    runs-on: ubuntu-latest
+  build:
+    name: Compilar (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
-
-      # arm64 stages run under emulation on the amd64 runner.
-      - uses: docker/setup-qemu-action@v3
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: docker/setup-buildx-action@v3
 
@@ -31,25 +48,76 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Labels only: the tags are set when the platforms are joined.
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/spiderfolio
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            # Run by hand on a branch: tag it with the branch and the commit, never with no tag at all.
-            type=ref,event=branch
-            type=sha
+          images: ${{ env.IMAGE }}
 
-      - uses: docker/build-push-action@v6
+      # Pushed by digest, without a tag, so nobody pulls a single-platform image.
+      - id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
+          platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+
+      - name: Keep the digest
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          digest="${{ steps.build.outputs.digest }}"
+          touch "$RUNNER_TEMP/digests/${digest#sha256:}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Publicar
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # With a tag (pushed or given by hand): its version, minor, major and latest. Without one: the
+      # branch and the commit, never no tag at all.
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ inputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }}
+            type=semver,pattern={{major}},value=${{ inputs.tag }}
+            type=raw,value=latest,enable=${{ inputs.tag != '' || startsWith(github.ref, 'refs/tags/v') }}
+            type=ref,event=branch,enable=${{ inputs.tag == '' }}
+            type=sha,enable=${{ inputs.tag == '' }}
+
+      - name: Join the platforms under the tags
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
+
+      - name: Check
+        run: docker buildx imagetools inspect "$IMAGE:${{ steps.meta.outputs.version }}"

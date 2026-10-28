@@ -1,0 +1,42 @@
+# Attaches the installation bundle (the deploy/ folder, as spiderfolio/) to every published Release:
+# spiderfolio-deploy.zip (Windows) and spiderfolio-deploy.tar.gz (Linux). The install guides download it
+# from /releases/latest/download/…, so they never name a version and need no change per release.
+# Run it by hand with a tag to attach the bundle to an existing Release.
+name: Paquete de instalación
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (vX.Y.Z)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    name: Adjuntar paquete
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      # Only tracked files (git archive); the scripts are made executable whatever their mode in Git.
+      - name: Build the bundle
+        run: |
+          git archive --prefix=spiderfolio/ HEAD:deploy | tar -x
+          chmod +x spiderfolio/*.sh
+          tar -czf spiderfolio-deploy.tar.gz spiderfolio
+          zip -qr spiderfolio-deploy.zip spiderfolio
+
+      - name: Upload to the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" spiderfolio-deploy.tar.gz spiderfolio-deploy.zip --clobber
