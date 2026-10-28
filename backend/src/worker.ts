@@ -82,7 +82,9 @@ export async function startWorker(boss: PgBoss, deps: WorkerDeps): Promise<void>
       }),
     ),
   );
-  await boss.work("email-failed", async (jobs) => {
+  // In batches: after an SMTP outage many emails fail together, and one job every 2 s (pg-boss's
+  // default) would delay the administrators' notice by minutes.
+  await boss.work("email-failed", { batchSize: 20, pollingIntervalSeconds: 1 }, async (jobs) => {
     for (const job of jobs) await reportFailedEmail(deps, job.data);
   });
   await boss.work("maintenance-cleanup", async (jobs) => {
