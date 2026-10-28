@@ -117,6 +117,16 @@ const CAPTURES: Capture[] = [
   { name: "departamentos", who: "owner", path: (i) => `/app/${i.slug}/admin/departments` },
   { name: "roles", who: "owner", path: (i) => `/app/${i.slug}/admin/roles` },
   { name: "seguridad", who: "owner", path: (i) => `/app/${i.slug}/admin/security` },
+  {
+    name: "seguridad-email",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/admin/security?tab=email`,
+    then: (page, locale) =>
+      page
+        .getByText(locale === "es" ? "Email del servidor" : "Server email", { exact: true })
+        .first()
+        .waitFor(),
+  },
   { name: "bian-admin", who: "owner", path: (i) => `/app/${i.slug}/admin/bian` },
   { name: "limites", who: "owner", path: (i) => `/app/${i.slug}/admin/limits` },
   { name: "licencia", who: "owner", path: (i) => `/app/${i.slug}/admin/license` },
@@ -337,6 +347,12 @@ const db = new pg.Client({ connectionString: databaseUrl });
 await db.connect();
 // Los límites de intentos de login viven en la base: entre corridas, se limpian (solo en esta base).
 await db.query(`DELETE FROM "RateLimitBucket"`);
+// The server email card shows "Working": a recent successful send (only in this database).
+await db.query(
+  `INSERT INTO "SystemEmailHealth" ("id", "lastSuccessAt", "updatedAt") VALUES ('system', now(), now())
+   ON CONFLICT ("id") DO UPDATE
+   SET "lastSuccessAt" = now(), "lastErrorAt" = NULL, "lastErrorCode" = NULL, "updatedAt" = now()`,
+);
 const server = await startServer();
 const failed: string[] = [];
 // CAPTURAS_SOLO=compartir,qr: rehace solo esas (y CAPTURAS_IDIOMA=es, solo un idioma).
