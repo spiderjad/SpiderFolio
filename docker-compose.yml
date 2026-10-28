@@ -1,8 +1,10 @@
-# Servicios de desarrollo. La API, la app y la web corren fuera de Docker (npm run dev).
-# Requiere un .env (copiado de .env.example) con S3_ACCESS_KEY y S3_SECRET_KEY completos.
-# Los puertos se publican solo en 127.0.0.1.
+# Development services. The API, the app and the website run outside Docker (npm run dev).
+# Needs a .env (copied from .env.example) with S3_ACCESS_KEY and S3_SECRET_KEY filled in.
+# Ports are published on 127.0.0.1 only.
 
-name: spiderfolio
+# Its own project name: "spiderfolio" is the self-hosted installation (deploy/compose.yaml), and
+# sharing it made each one recreate the other's containers on the same machine.
+name: spiderfolio-dev
 
 services:
   postgres:
@@ -25,7 +27,7 @@ services:
     image: axllent/mailpit:v1.31.5
     ports:
       - "127.0.0.1:1025:1025" # SMTP
-      - "127.0.0.1:8025:8025" # interfaz web
+      - "127.0.0.1:8025:8025" # web UI
 
   rustfs:
     image: rustfs/rustfs:1.0.3
@@ -38,11 +40,11 @@ services:
       RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
     ports:
       - "127.0.0.1:9000:9000" # API S3
-      - "127.0.0.1:9001:9001" # consola
+      - "127.0.0.1:9001:9001" # console
     volumes:
       - rustfs-data:/data
 
-  # Crea el bucket privado y su CORS; es idempotente y termina al acabar.
+  # Creates the private bucket and its CORS; idempotent, exits when done.
   rustfs-init:
     image: amazon/aws-cli:2.38.1
     depends_on:
@@ -77,12 +79,16 @@ services:
         echo "Bucket de sistema $$SYSTEM_BUCKET listo"
     restart: "no"
 
-  # HTML → PDF para el PDF controlado. Solo en 127.0.0.1 en desarrollo; en producción, sin ports (sección 15).
+  # HTML → PDF for the controlled PDF. On 127.0.0.1 in development; no ports in production.
   gotenberg:
     image: gotenberg/gotenberg:8.38.0
     ports:
       - "127.0.0.1:3000:3000"
 
+# Explicit names: the volumes keep the names they had under the old "spiderfolio" project, so
+# existing development data stays.
 volumes:
   postgres-data:
+    name: spiderfolio_postgres-data
   rustfs-data:
+    name: spiderfolio_rustfs-data
