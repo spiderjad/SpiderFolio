@@ -2,40 +2,143 @@ Versión en español: [docs/instalacion/copias-de-seguridad.md](../instalacion/c
 
 # Backups and restore
 
-A full backup has three parts: the database, the files (the `files` volume, or your bucket if you use
-S3) and `.env` (without it, the 2FA secrets and custom SMTP settings cannot be decrypted).
+A full SpiderFolio backup has three parts:
 
-## Make a backup
+- **The database**: pages, permissions, history, audit log… everything that isn't a file.
+- **The files**: the `files` volume (or your bucket, if you use S3).
+- **The `.env`**: without it, the two-step verification secrets and each company's own SMTP passwords
+  can't be decrypted.
+
+The installation folder (`spiderfolio`) has two pairs of scripts that do the same thing: `backup.ps1`
+and `restore.ps1` for Windows (PowerShell 5.1 or 7), and `backup.sh` and `restore.sh` for Linux. The
+copies have the same format: a copy made on Linux restores on Windows and the other way round.
+
+## Take a backup
+
+From the installation folder, with the services running:
+
+**Windows (PowerShell)**
+
+```powershell
+cd $HOME\spiderfolio
+powershell -ExecutionPolicy Bypass -File .\backup.ps1 D:\Backups
+```
+
+**Linux**
 
 ```sh
-cd spiderfolio/deploy
-./backup.sh /path/to/backups     # ./backups by default; keeps the last 14 (KEEP=30 ./backup.sh …)
+cd ~/spiderfolio
+./backup.sh ~/backups
 ```
 
-It creates `YYYYMMDD-HHMMSS/` with `db.dump` (pg_dump), `files.tar.gz` and `env` (permissions 600).
+It creates a folder named with the UTC date and time (for example `20261026-033000`) with:
 
-Schedule a daily backup with cron (`crontab -e`):
+| File | What it holds |
+| --- | --- |
+| `db.dump` | The whole database (`pg_dump` in custom format) |
+| `files.tar.gz` | The contents of the `files` volume |
+| `env` | A copy of `.env`, readable only by your user |
+
+- Without a destination folder, it uses `backups` inside the installation.
+- It keeps the **last 14 copies** and deletes older ones. To change it: `-Keep 30` at the end of the
+  command on Windows, or `KEEP=30 ./backup.sh …` on Linux.
+- The app keeps working while the backup runs.
+
+## Schedule a daily backup
+
+**Windows (PowerShell)**
+
+With Task Scheduler, from PowerShell (replace `D:\Backups` with your backup folder):
+
+```powershell
+$dir = "$HOME\spiderfolio"
+$arguments = "-NoProfile -ExecutionPolicy Bypass" +
+  " -File `"$dir\backup.ps1`" D:\Backups"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" `
+  -Argument $arguments -WorkingDirectory $dir
+$trigger = New-ScheduledTaskTrigger -Daily -At 3:30am
+Register-ScheduledTask -TaskName "SpiderFolio backup" `
+  -Action $action -Trigger $trigger
+```
+
+The task runs as your user while you're signed in, which is when Docker Desktop works. To check it
+without waiting: `Start-ScheduledTask -TaskName "SpiderFolio backup"`.
+
+**Linux**
+
+With `crontab -e`, as the user that runs Docker:
 
 ```cron
-30 3 * * * cd /opt/spiderfolio/deploy && ./backup.sh /var/backups/spiderfolio >> /var/log/spiderfolio-backup.log 2>&1
+# Every day at 3:30, in your user's backups folder
+30 3 * * * cd ~/spiderfolio && ./backup.sh ~/backups
 ```
 
-And keep the backups **off the server** (another disk, another provider): a backup on the same disk does
-not protect you from losing the server.
+Check now and then that new copies appear: each backup ends with "Copia lista en …" (backup ready in…).
 
-With `STORAGE_DRIVER=s3`, `files.tar.gz` is empty: turn on bucket versioning or copy the bucket with your
-provider's tools.
+## Keep copies off the server
+
+A copy on the same disk doesn't protect you if you lose the server. Copy them somewhere else: another
+disk, another server, another provider or a bucket. On Linux, for example, after the backup:
+
+```cron
+# Every day at 4:00, to another server
+0 4 * * * rsync -a --delete ~/backups/ backups@server2:/backups/
+```
+
+On Windows, keep the copies on a network drive or in a folder synced with another computer. The copies
+include `.env` with every secret: keep them encrypted or somewhere with restricted access.
+
+## If you use S3
+
+With `STORAGE_DRIVER=s3`, `files.tar.gz` is empty: the files aren't on the server. Protect the bucket
+with your provider's tools: turn on **versioning** or a replica in another bucket. The database and
+`.env` are still backed up by the scripts.
 
 ## Restore
 
-```sh
-cd spiderfolio/deploy
-docker compose up -d                     # the services must exist
-./restore.sh /path/to/backups/20261026-033000
+**Restoring replaces the current database and files** with the ones in the copy. The services have to
+exist (`docker compose up -d`):
+
+**Windows (PowerShell)**
+
+```powershell
+cd $HOME\spiderfolio
+docker compose up -d
+powershell -ExecutionPolicy Bypass -File .\restore.ps1 `
+  D:\Backups\20261026-033000
 ```
 
-It asks you to confirm by typing `RESTAURAR`, stops the app, replaces the database and the files and
-starts again. If you restore on a new server, first copy the backup's `env` as `.env`.
+**Linux**
 
-**Test the restore** on a separate machine from time to time: a backup that was never restored is not a
-backup.
+```sh
+cd ~/spiderfolio
+docker compose up -d
+./restore.sh ~/backups/20261026-033000
+```
+
+The script asks you to type `RESTAURAR` (restore, in capitals) to go on; any other answer cancels
+without touching anything. Then it stops the app and the worker, recreates the database, replaces the
+files and starts everything again. When it's done, open the app and check the audit log.
+
+### On a new server
+
+1. Install SpiderFolio as in [Install on your server](https://spiderfolio.spiderjad.com/en/docs/install), without creating a new `.env`.
+2. Copy the backup's `env` as `.env` into the installation folder (on Windows,
+   `copy D:\Backups\20261026-033000\env .env`; on Linux, `cp …/env .env && chmod 600 .env`).
+3. Start the services: `docker compose up -d`.
+4. Restore with `restore.ps1` or `restore.sh`, as above.
+5. If the server's address changed, update the DNS and, if needed, `APP_URL` and `DOMAIN`.
+
+You can move from Windows to Linux or the other way round: the copy format is the same. If the copy is
+from an older version, the app applies the pending migrations on startup and brings it up to date.
+
+## Test your restores
+
+Restore a copy on a separate machine every now and then, for example once a month. A backup that has
+never been restored isn't a backup.
+
+## Related
+
+- [Updates](https://spiderfolio.spiderjad.com/en/docs/updates): always take a backup before updating.
+- [Storage](https://spiderfolio.spiderjad.com/en/docs/storage)
+- [Troubleshooting](https://spiderfolio.spiderjad.com/en/docs/troubleshooting)

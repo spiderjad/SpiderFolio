@@ -1,97 +1,161 @@
 ---
 title: "Backups"
-description: "Back up with backup.sh, schedule it with cron, keep copies off the server and restore with restore.sh."
+description: "Back up on Windows or Linux, schedule it, keep copies off the server and restore them."
 group: autoalojamiento
 order: 5
 icon: clock
 ---
 
-A complete SpiderFolio backup has three parts:
+import OsTabs from "../../../components/OsTabs.astro";
+
+A full SpiderFolio backup has three parts:
 
 - **The database**: pages, permissions, history, audit log… everything that isn't a file.
 - **The files**: the `files` volume (or your bucket, if you use S3).
-- **The `.env` file**: without it, two-step verification secrets and each company's own SMTP passwords
+- **The `.env`**: without it, the two-step verification secrets and each company's own SMTP passwords
   can't be decrypted.
 
-`deploy/backup.sh` saves all three and `deploy/restore.sh` brings them back.
+The installation folder (`spiderfolio`) has two pairs of scripts that do the same thing: `backup.ps1`
+and `restore.ps1` for Windows (PowerShell 5.1 or 7), and `backup.sh` and `restore.sh` for Linux. The
+copies have the same format: a copy made on Linux restores on Windows and the other way round.
 
 ## Take a backup
 
-From the `deploy/` folder (where `compose.yaml` lives), with the services running:
+From the installation folder, with the services running:
 
-```sh
-./backup.sh /var/backups/spiderfolio
+<OsTabs>
+<Fragment slot="windows">
+
+```powershell
+cd $HOME\spiderfolio
+powershell -ExecutionPolicy Bypass -File .\backup.ps1 D:\Backups
 ```
 
-It creates a folder named after the UTC date and time (for example `20261026-033000/`) with:
+</Fragment>
+<Fragment slot="linux">
 
-| File | Contents |
+```sh
+cd ~/spiderfolio
+./backup.sh ~/backups
+```
+
+</Fragment>
+</OsTabs>
+
+It creates a folder named with the UTC date and time (for example `20261026-033000`) with:
+
+| File | What it holds |
 | --- | --- |
-| `db.dump` | The full database (`pg_dump` in custom format) |
+| `db.dump` | The whole database (`pg_dump` in custom format) |
 | `files.tar.gz` | The contents of the `files` volume |
-| `env` | A copy of `.env`, with `600` permissions |
+| `env` | A copy of `.env`, readable only by your user |
 
-- Without a destination folder, it uses `./backups`.
-- It keeps the **last 14 backups** and deletes older ones. To change that: `KEEP=30 ./backup.sh …`.
+- Without a destination folder, it uses `backups` inside the installation.
+- It keeps the **last 14 copies** and deletes older ones. To change it: `-Keep 30` at the end of the
+  command on Windows, or `KEEP=30 ./backup.sh …` on Linux.
 - The app keeps working while the backup runs.
 
 ## Schedule a daily backup
 
+<OsTabs>
+<Fragment slot="windows">
+
+With Task Scheduler, from PowerShell (replace `D:\Backups` with your backup folder):
+
+```powershell
+$dir = "$HOME\spiderfolio"
+$arguments = "-NoProfile -ExecutionPolicy Bypass" +
+  " -File `"$dir\backup.ps1`" D:\Backups"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" `
+  -Argument $arguments -WorkingDirectory $dir
+$trigger = New-ScheduledTaskTrigger -Daily -At 3:30am
+Register-ScheduledTask -TaskName "SpiderFolio backup" `
+  -Action $action -Trigger $trigger
+```
+
+The task runs as your user while you're signed in, which is when Docker Desktop works. To check it
+without waiting: `Start-ScheduledTask -TaskName "SpiderFolio backup"`.
+
+</Fragment>
+<Fragment slot="linux">
+
 With `crontab -e`, as the user that runs Docker:
 
 ```cron
-30 3 * * * cd /opt/spiderfolio/deploy && ./backup.sh /var/backups/spiderfolio >> /var/log/spiderfolio-backup.log 2>&1
+# Every day at 3:30, in your user's backups folder
+30 3 * * * cd ~/spiderfolio && ./backup.sh ~/backups
 ```
 
-Replace `/opt/spiderfolio/deploy` with the folder where you cloned the project. Check the log now and
-then: each backup ends with "Copia lista en …" (backup ready in …).
+</Fragment>
+</OsTabs>
+
+Check now and then that new copies appear: each backup ends with "Copia lista en …" (backup ready in…).
 
 ## Keep copies off the server
 
-A backup on the same disk doesn't protect you if you lose the server. Copy them elsewhere: another
-server, another provider or a bucket. For example, after the backup:
+A copy on the same disk doesn't protect you if you lose the server. Copy them somewhere else: another
+disk, another server, another provider or a bucket. On Linux, for example, after the backup:
 
 ```cron
-0 4 * * * rsync -a --delete /var/backups/spiderfolio/ backups@other-server:/backups/spiderfolio/
+# Every day at 4:00, to another server
+0 4 * * * rsync -a --delete ~/backups/ backups@server2:/backups/
 ```
 
-Or with `rclone` to a bucket. Backups include `.env` with every secret: store them encrypted or in a
-destination with restricted access.
+On Windows, keep the copies on a network drive or in a folder synced with another computer. The copies
+include `.env` with every secret: keep them encrypted or somewhere with restricted access.
 
 ## If you use S3
 
 With `STORAGE_DRIVER=s3`, `files.tar.gz` is empty: the files aren't on the server. Protect the bucket
-with your provider's tools: turn on **versioning** or replication to another bucket. The database and
-`.env` are still backed up by `backup.sh`.
+with your provider's tools: turn on **versioning** or a replica in another bucket. The database and
+`.env` are still backed up by the scripts.
 
 ## Restore
 
-**Restoring replaces the current database and files** with those from the backup.
+**Restoring replaces the current database and files** with the ones in the copy. The services have to
+exist (`docker compose up -d`):
 
-```sh
-cd /opt/spiderfolio/deploy
-docker compose up -d                                  # the services must exist
-./restore.sh /var/backups/spiderfolio/20261026-033000
+<OsTabs>
+<Fragment slot="windows">
+
+```powershell
+cd $HOME\spiderfolio
+docker compose up -d
+powershell -ExecutionPolicy Bypass -File .\restore.ps1 `
+  D:\Backups\20261026-033000
 ```
 
-The script asks you to type `RESTAURAR` to continue. It then stops the app and the worker, recreates the
-database, replaces the files and starts everything again. When it's done, sign in to the app and check
-the audit log.
+</Fragment>
+<Fragment slot="linux">
+
+```sh
+cd ~/spiderfolio
+docker compose up -d
+./restore.sh ~/backups/20261026-033000
+```
+
+</Fragment>
+</OsTabs>
+
+The script asks you to type `RESTAURAR` (restore, in capitals) to go on; any other answer cancels
+without touching anything. Then it stops the app and the worker, recreates the database, replaces the
+files and starts everything again. When it's done, open the app and check the audit log.
 
 ### On a new server
 
-1. Install Docker and clone the project as in [Install on your server](/en/docs/install).
-2. Copy the backup's `env` as `deploy/.env` (`cp …/env .env && chmod 600 .env`).
-3. Start the services: `docker compose up -d` (with the same profiles you used before).
-4. Restore: `./restore.sh /path/to/backup`.
-5. If the server's address changed, update DNS and, if needed, `APP_URL` and `DOMAIN`.
+1. Install SpiderFolio as in [Install on your server](/en/docs/install), without creating a new `.env`.
+2. Copy the backup's `env` as `.env` into the installation folder (on Windows,
+   `copy D:\Backups\20261026-033000\env .env`; on Linux, `cp …/env .env && chmod 600 .env`).
+3. Start the services: `docker compose up -d`.
+4. Restore with `restore.ps1` or `restore.sh`, as above.
+5. If the server's address changed, update the DNS and, if needed, `APP_URL` and `DOMAIN`.
 
-If the backup comes from an older version, the app applies pending migrations on startup and brings it
-up to date automatically.
+You can move from Windows to Linux or the other way round: the copy format is the same. If the copy is
+from an older version, the app applies the pending migrations on startup and brings it up to date.
 
 ## Test your restores
 
-Restore a backup on a separate machine from time to time, for example once a month. A backup that has
+Restore a copy on a separate machine every now and then, for example once a month. A backup that has
 never been restored isn't a backup.
 
 ## Related

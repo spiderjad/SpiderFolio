@@ -5,7 +5,7 @@ English version: [docs/install/upgrading.md](../install/upgrading.md)
 Las versiones siguen [SemVer](https://semver.org/lang/es/). Antes de una versión mayor, lee las notas de
 la versión (pueden pedir pasos manuales).
 
-1. **Haz una copia** (siempre, antes de actualizar): `./backup.sh` (ver
+1. **Haz una copia** (siempre, antes de actualizar): `./backup.sh` en Linux o `backup.ps1` en Windows (ver
    [copias-de-seguridad.md](copias-de-seguridad.md)).
 2. **Baja la imagen nueva y reinicia**:
 

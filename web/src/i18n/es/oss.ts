@@ -105,7 +105,7 @@ export const oss = {
       },
       {
         title: "Copias de seguridad",
-        text: "backup.sh guarda la base, los archivos y la configuración; restore.sh los recupera.",
+        text: "backup.sh (Linux) o backup.ps1 (Windows) guardan la base, los archivos y la configuración; restore.sh o restore.ps1 los recuperan.",
       },
     ],
   },

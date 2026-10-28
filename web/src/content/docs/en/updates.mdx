@@ -25,12 +25,9 @@ SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:1.5.0
 
 ## Update
 
-1. **Take a backup** (always, before updating):
-
-   ```sh
-   cd /opt/spiderfolio/deploy
-   ./backup.sh /var/backups/spiderfolio
-   ```
+1. **Take a backup** (always, before updating), from the installation folder: on Linux,
+   `./backup.sh ~/backups`; on Windows, `powershell -ExecutionPolicy Bypass -File .\backup.ps1 D:\Backups`
+   (see [Backups](/en/docs/backups)).
 
 2. **Fetch the new files** (`compose.yaml`, `Caddyfile`, scripts and `.env.example`). If you installed
    with the Release bundle, download the new one on top, from the folder that contains `spiderfolio`
@@ -96,7 +93,7 @@ Migrations aren't undone automatically: an older version of the app doesn't alwa
 migrated database. To go back to the previous version:
 
 1. Pin `SPIDERFOLIO_IMAGE` to the previous tag in `.env`.
-2. **Restore the backup** you took before updating: `./restore.sh /var/backups/spiderfolio/<folder>`.
+2. **Restore the backup** you took before updating: `./restore.sh ~/backups/<folder>` (on Windows, `restore.ps1`).
    The script stops the app, brings back the database and files and starts again with the previous image.
 
 Anything added between the backup and the rollback is lost. See [Backups](/en/docs/backups).

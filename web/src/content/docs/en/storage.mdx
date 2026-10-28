@@ -15,7 +15,7 @@ with `STORAGE_DRIVER`:
 | Where | The `files` Docker volume, on the server's disk | An AWS S3, Cloudflare R2, MinIO or other compatible bucket |
 | Setup | None | Bucket, credentials and CORS |
 | Uploads and downloads | Go through the app (and your proxy) | Go straight between the browser and the bucket |
-| Backups | Included by `backup.sh` | With your provider's tools |
+| Backups | Included by `backup.sh` and `backup.ps1` | With your provider's tools |
 | Best when | You have few files or a server with plenty of disk | You have lots of files or want to keep them off the server's disk |
 
 Decide before loading real data: changing `STORAGE_DRIVER` doesn't move files that are already stored.
@@ -105,7 +105,7 @@ out a **signed URL** for that specific operation.
 
 ## Backups
 
-- With `local`, `backup.sh` saves the `files` volume into `files.tar.gz`.
+- With `local`, `backup.sh` and `backup.ps1` save the `files` volume into `files.tar.gz`.
 - With `s3`, `files.tar.gz` is empty: turn on bucket **versioning** or copy it with your provider's tools.
 
 See [Backups](/en/docs/backups).

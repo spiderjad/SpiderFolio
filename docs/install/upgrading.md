@@ -5,7 +5,7 @@ Versión en español: [docs/instalacion/actualizar.md](../instalacion/actualizar
 Versions follow [SemVer](https://semver.org/). Before a major version, read the release notes (they may
 require manual steps).
 
-1. **Make a backup** (always, before upgrading): `./backup.sh` (see [backups.md](backups.md)).
+1. **Make a backup** (always, before upgrading): `./backup.sh` on Linux or `backup.ps1` on Windows (see [backups.md](backups.md)).
 2. **Pull the new image and restart**:
 
    From the folder that contains `spiderfolio`, download the new bundle on top (it has no `.env`, so

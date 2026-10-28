@@ -27,12 +27,9 @@ SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:1.5.0
 
 ## Actualizar
 
-1. **Haz una copia** (siempre, antes de actualizar):
-
-   ```sh
-   cd /opt/spiderfolio/deploy
-   ./backup.sh /var/backups/spiderfolio
-   ```
+1. **Haz una copia** (siempre, antes de actualizar), desde la carpeta de la instalación: en Linux,
+   `./backup.sh ~/copias`; en Windows, `powershell -ExecutionPolicy Bypass -File .\backup.ps1 D:\Copias`
+   (ver [Copias de seguridad](/es/docs/copias-de-seguridad)).
 
 2. **Trae los archivos nuevos** (`compose.yaml`, `Caddyfile`, scripts y `.env.example`). Si
    instalaste con el paquete de la Release, descarga el nuevo encima desde la carpeta que contiene
@@ -101,7 +98,7 @@ ya migrada. Para volver a la versión anterior:
 
 1. Fija `SPIDERFOLIO_IMAGE` a la etiqueta anterior en `.env`.
 2. **Restaura la copia** que hiciste antes de actualizar:
-   `./restore.sh /var/backups/spiderfolio/<carpeta>`. El script detiene la app, recupera la base y los
+   `./restore.sh ~/copias/<carpeta>` (en Windows, `restore.ps1`). El script detiene la app, recupera la base y los
    archivos y vuelve a arrancar con la imagen anterior.
 
 Lo que se haya cargado entre la copia y la vuelta atrás se pierde. Ver

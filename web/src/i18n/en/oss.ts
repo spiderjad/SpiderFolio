@@ -104,7 +104,7 @@ export const oss: Catalog<typeof esOss> = {
       },
       {
         title: "Backups",
-        text: "backup.sh saves the database, the files and the configuration; restore.sh brings them back.",
+        text: "backup.sh (Linux) or backup.ps1 (Windows) save the database, the files and the configuration; restore.sh or restore.ps1 bring them back.",
       },
     ],
   },
