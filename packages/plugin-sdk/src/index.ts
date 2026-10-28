@@ -19,6 +19,7 @@ export const COMMERCIAL_PLUGIN_IDS: readonly string[] = [
   "mcp-connector",
   "templates",
   "audit-rooms",
+  "corporate-directory",
 ];
 
 /**
@@ -30,10 +31,45 @@ export const PluginDistributionSchema = z.enum(["commercial", "community"]);
 export type PluginDistribution = z.infer<typeof PluginDistributionSchema>;
 
 /**
- * Lo que declara el package.json del plugin en el campo «spiderfolio». Las rutas son relativas al
- * paquete. `backend` y `frontend` son opcionales: un plugin puede tener solo una de las dos partes.
+ * Version of the plugin contract this core offers. It goes up when the SDK gains extension points; a
+ * plugin declares the one it needs (`pluginApi`) and a core older than that doesn't load it.
  */
-export const PluginManifestSchema = z.strictObject({
+export const PLUGIN_API_VERSION = 1;
+
+/**
+ * Modules the app shares with built plugins (frontendBundle): the plugin marks them as external and
+ * imports them from PLUGIN_SHARED_PATH + <file>.js, so it uses the app's own React, React Query, router
+ * and components (one instance of each). Anything else the plugin bundles itself.
+ */
+export const PLUGIN_SHARED_MODULES = {
+  react: "react",
+  "react/jsx-runtime": "react-jsx-runtime",
+  "@tanstack/react-query": "react-query",
+  "react-router": "react-router",
+  "@/plugins/ui": "ui",
+  "@/plugins/locale": "locale",
+} as const satisfies Record<string, string>;
+
+/** Where the app serves the shared modules (same origin, not cached: they change with the core). */
+export const PLUGIN_SHARED_PATH = "/plugin-shared/";
+
+/** A path relative to the plugin package that stays inside it (no absolute paths, no «..»). */
+const PackagePathSchema = z
+  .string()
+  .min(1)
+  .max(200)
+  .refine(
+    (path) => !/^([a-zA-Z]:)?[\\/]/u.test(path) && !path.split(/[\\/]/u).includes(".."),
+    "Path inside the plugin package",
+  );
+
+/**
+ * What the plugin's package.json declares in its «spiderfolio» field. Paths are relative to the
+ * package. `backend` and `frontend` are optional: a plugin can have only one of the two parts.
+ * Unknown fields are ignored, so a newer manifest doesn't break an older core (`pluginApi` decides
+ * whether it can load).
+ */
+export const PluginManifestSchema = z.object({
   id: PluginIdSchema,
   /** Nombre visible en español (el idioma de referencia). */
   name: z.string().min(1).max(80),
@@ -48,10 +84,21 @@ export const PluginManifestSchema = z.strictObject({
       }),
     )
     .default({}),
-  backend: z.string().min(1).optional(),
-  frontend: z.string().min(1).optional(),
+  /** Contract version the plugin needs (PLUGIN_API_VERSION); 1 if missing. */
+  pluginApi: z.number().int().min(1).default(1),
+  /** Backend entry: TypeScript source while developing, or the built ESM bundle (index.js). */
+  backend: PackagePathSchema.optional(),
+  /** App source (index.tsx), included when the app is built (development, own image). */
+  frontend: PackagePathSchema.optional(),
+  /**
+   * App already built (ESM, docs/spec/plugins.md «Paquetes compilados»): the app loads it at runtime,
+   * without rebuilding. Its folder is served as is, so it holds only what the browser needs.
+   */
+  frontendBundle: PackagePathSchema.optional(),
+  /** Styles of the built app (CSS next to frontendBundle). */
+  frontendStyles: PackagePathSchema.optional(),
   /** Carpeta con migraciones SQL propias (NNNN_nombre.sql), en el esquema plugin_<id>. */
-  migrations: z.string().min(1).optional(),
+  migrations: PackagePathSchema.optional(),
   distribution: PluginDistributionSchema.default("commercial"),
 });
 export type PluginManifest = z.infer<typeof PluginManifestSchema>;
@@ -61,7 +108,9 @@ export function manifestText(
   manifest: Pick<PluginManifest, "name" | "description" | "translations">,
   locale: string,
 ): { name: string; description: string } {
-  return manifest.translations[locale] ?? { name: manifest.name, description: manifest.description };
+  return (
+    manifest.translations[locale] ?? { name: manifest.name, description: manifest.description }
+  );
 }
 
 /** Esquema de Postgres de un plugin: plugin_<id con guiones bajos>. Fuera de Prisma. */

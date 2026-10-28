@@ -1,13 +1,14 @@
-// Descubre y carga los plugins instalados (docs/spec/plugins.md): cada subcarpeta de PLUGINS_DIR con un
-// package.json que declare «spiderfolio», y cada paquete npm listado en PLUGIN_PACKAGES. Un plugin que
-// no carga se registra en el log y se salta: el núcleo sigue funcionando sin él.
+// Finds and loads the installed plugins (docs/spec/plugins.md): every subfolder of the PLUGINS_DIR
+// folders with a package.json declaring «spiderfolio», and every npm package listed in PLUGIN_PACKAGES.
+// A plugin that doesn't load is logged and skipped: the core keeps working without it.
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   COMMERCIAL_PLUGIN_IDS,
+  PLUGIN_API_VERSION,
   PluginCapabilitySchema,
   PluginManifestSchema,
   type BackendPlugin,
@@ -16,22 +17,33 @@ import {
 import type { Logger } from "pino";
 import type { PluginMigration } from "../db/raw/plugins.ts";
 
-/** Carpeta por defecto: plugins/ en la raíz del repositorio (o /app/plugins en la imagen). */
+/** Default folder: plugins/ at the repository root (or /app/plugins in the image). */
 export const DEFAULT_PLUGINS_DIR = fileURLToPath(new URL("../../../plugins/", import.meta.url));
+
+/** The built app of a plugin (frontendBundle): its folder is served at /plugin-assets/<id>/. */
+export interface PluginFrontendBundle {
+  /** Folder that holds the bundle; only this folder is served. */
+  dir: string;
+  /** Bundle file, relative to `dir` (forward slashes). */
+  script: string;
+  styles: string | null;
+}
 
 export interface InstalledPlugin {
   manifest: PluginManifest;
-  /** Carpeta del paquete. */
+  /** Package folder. */
   dir: string;
-  /** Versión del package.json. */
+  /** Version from package.json. */
   version: string;
   backend: BackendPlugin | null;
   migrations: PluginMigration[];
+  frontendBundle: PluginFrontendBundle | null;
 }
 
 export interface DiscoverOptions {
-  dir?: string | undefined;
-  /** Nombres de paquetes npm instalados con node_modules (privados). */
+  /** Folders with plugins (each subfolder is one); the default folder if empty. */
+  dirs?: readonly string[];
+  /** Names of npm packages installed in node_modules (private). */
   packages?: readonly string[];
   logger: Pick<Logger, "info" | "warn" | "error">;
 }
@@ -48,11 +60,13 @@ function readPackage(dir: string): PackageJson | null {
   return JSON.parse(readFileSync(file, "utf8")) as PackageJson;
 }
 
-/** Carpetas de paquetes candidatos (sin importar nada todavía). */
+/** Candidate package folders (nothing imported yet), in order: folders first, then npm packages. */
 export function pluginDirectories(options: Omit<DiscoverOptions, "logger">): string[] {
   const dirs: string[] = [];
-  const root = resolve(options.dir ?? DEFAULT_PLUGINS_DIR);
-  if (existsSync(root)) {
+  const roots =
+    options.dirs !== undefined && options.dirs.length > 0 ? options.dirs : [DEFAULT_PLUGINS_DIR];
+  for (const root of roots.map((dir) => resolve(dir))) {
+    if (!existsSync(root)) continue;
     for (const entry of readdirSync(root, { withFileTypes: true })) {
       if (entry.isDirectory() && !entry.name.startsWith(".")) dirs.push(join(root, entry.name));
     }
@@ -64,9 +78,19 @@ export function pluginDirectories(options: Omit<DiscoverOptions, "logger">): str
   return dirs;
 }
 
+/** A manifest path resolved inside the package; fails if it points outside. */
+function inside(dir: string, path: string): string {
+  const full = resolve(dir, path);
+  const rel = relative(dir, full);
+  if (rel === "" || rel.startsWith(`..${sep}`) || rel === ".." || isAbsolute(rel)) {
+    throw new Error(`Ruta fuera del plugin: ${path}`);
+  }
+  return full;
+}
+
 function readMigrations(dir: string, manifest: PluginManifest): PluginMigration[] {
   if (manifest.migrations === undefined) return [];
-  const folder = resolve(dir, manifest.migrations);
+  const folder = inside(dir, manifest.migrations);
   if (!existsSync(folder)) return [];
   return readdirSync(folder)
     .filter((file) => /^\d{4}_[a-z0-9_]+\.sql$/u.test(file))
@@ -79,6 +103,25 @@ function readMigrations(dir: string, manifest: PluginManifest): PluginMigration[
         sql,
       };
     });
+}
+
+/** The built app: the bundle and its styles have to exist, in the same folder. */
+function readFrontendBundle(dir: string, manifest: PluginManifest): PluginFrontendBundle | null {
+  if (manifest.frontendBundle === undefined) return null;
+  const script = inside(dir, manifest.frontendBundle);
+  if (!/\.m?js$/u.test(script) || !statSync(script).isFile()) {
+    throw new Error(`frontendBundle no es un archivo .js: ${manifest.frontendBundle}`);
+  }
+  const folder = dirname(script);
+  let styles: string | null = null;
+  if (manifest.frontendStyles !== undefined) {
+    const css = inside(dir, manifest.frontendStyles);
+    if (dirname(css) !== folder || !css.endsWith(".css") || !statSync(css).isFile()) {
+      throw new Error("frontendStyles tiene que ser un .css en la carpeta de frontendBundle");
+    }
+    styles = basename(css);
+  }
+  return { dir: folder, script: basename(script), styles };
 }
 
 function validateBackend(manifest: PluginManifest, value: unknown): BackendPlugin {
@@ -101,7 +144,7 @@ function validateBackend(manifest: PluginManifest, value: unknown): BackendPlugi
   return plugin;
 }
 
-/** Carga los plugins instalados. Nunca falla: lo que no carga queda afuera con un aviso. */
+/** Loads the installed plugins. Never fails: what doesn't load stays out with a warning. */
 export async function discoverPlugins(options: DiscoverOptions): Promise<InstalledPlugin[]> {
   const { logger } = options;
   const found = new Map<string, InstalledPlugin>();
@@ -120,16 +163,23 @@ export async function discoverPlugins(options: DiscoverOptions): Promise<Install
       if (manifest.distribution === "community" && COMMERCIAL_PLUGIN_IDS.includes(manifest.id)) {
         throw new Error(`«${manifest.id}» es un plugin comercial: no puede declararse community`);
       }
+      if (manifest.pluginApi > PLUGIN_API_VERSION) {
+        throw new Error(
+          `«${manifest.id}» necesita la versión ${String(manifest.pluginApi)} de la API de plugins y ` +
+            `este núcleo ofrece la ${String(PLUGIN_API_VERSION)}: actualiza SpiderFolio`,
+        );
+      }
       if (found.has(manifest.id)) {
         logger.warn({ plugin: manifest.id, dir }, "Plugin repetido: se usa el primero");
         continue;
       }
+      const frontendBundle = readFrontendBundle(dir, manifest);
       const backend =
         manifest.backend === undefined
           ? null
           : validateBackend(
               manifest,
-              await import(pathToFileURL(resolve(dir, manifest.backend)).href),
+              await import(pathToFileURL(inside(dir, manifest.backend)).href),
             );
       found.set(manifest.id, {
         manifest,
@@ -137,6 +187,7 @@ export async function discoverPlugins(options: DiscoverOptions): Promise<Install
         version: typeof pkg.version === "string" ? pkg.version : "0.0.0",
         backend,
         migrations: readMigrations(dir, manifest),
+        frontendBundle,
       });
       logger.info({ plugin: manifest.id }, "Plugin instalado");
     } catch (error) {

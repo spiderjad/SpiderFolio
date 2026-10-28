@@ -34,7 +34,7 @@ import { resolve } from "node:path";
 import { tenantRoutes, type AppDeps } from "./routes.ts";
 import { createTokenSigner, LOCAL_STORAGE_PATH } from "./lib/local-storage.ts";
 import { localStorageRouter } from "./modules/storage/local-storage.routes.ts";
-import { staticAppRouter } from "./static-app.ts";
+import { pluginAssetsRouter, staticAppRouter } from "./static-app.ts";
 import { localeFromHeader, withLocale } from "./i18n/locales.ts";
 import { registerPluginCapabilities } from "./modules/roles/capabilities.ts";
 
@@ -98,11 +98,7 @@ export function createApp(deps: AppDeps): Express {
   app.use("/api/v1/internal", internalRouter(deps));
 
   const tenant = express.Router({ mergeParams: true });
-  tenant.use(
-    authMiddleware(deps),
-    tenantMiddleware(prisma),
-    mfaSetupGuard(prisma, deps.plugins),
-  );
+  tenant.use(authMiddleware(deps), tenantMiddleware(prisma), mfaSetupGuard(prisma, deps.plugins));
   for (const route of tenantRoutes(deps)) {
     const required =
       route.capability === undefined
@@ -128,7 +124,18 @@ export function createApp(deps: AppDeps): Express {
   }
   app.use("/api/v1/w/:workspaceSlug", tenant);
 
-  // Instalación propia: la API sirve también la app compilada (con su CSP).
+  // Built plugins' app (frontendBundle), with or without the built app (in development, Vite proxies it).
+  app.use(
+    pluginAssetsRouter(
+      deps.plugins.installed.flatMap((plugin) =>
+        plugin.frontendBundle === null
+          ? []
+          : [{ id: plugin.manifest.id, dir: plugin.frontendBundle.dir }],
+      ),
+    ),
+  );
+
+  // Self-hosted install: the API also serves the built app (with its CSP).
   if (env.APP_STATIC_DIR !== undefined) {
     const sameOrigin = deps.storage.origin === new URL(env.APP_URL).origin;
     app.use(

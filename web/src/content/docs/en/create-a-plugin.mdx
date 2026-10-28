@@ -473,18 +473,26 @@ Plugins are loaded from two places:
 
 | Source | Variable | Default |
 |---|---|---|
-| A folder: each subfolder is a plugin | `PLUGINS_DIR` | `plugins/` at the root (`/app/plugins` in the image) |
+| Comma-separated folders: each subfolder is a plugin | `PLUGINS_DIR` | `plugins/` at the root (`/app/plugins,/data/plugins` in the image) |
 | npm packages (can be private), comma-separated | `PLUGIN_PACKAGES` | empty |
 
 - **Backend**: the API and the worker discover them on startup. Restart both after installing or
   updating a plugin. A plugin that fails to load is left out with a warning in the log.
-- **App**: the app part is included **at build time**. Installing, removing or updating that part means
-  building the app again; with Docker, **rebuilding the image**.
+- **App**: from source (`frontend`), the app part is included **when the app is built**. Already built
+  (`frontendBundle`), the app loads it when it opens, without rebuilding.
 
 In development, copy the folder into `plugins/` and restart `npm run dev`.
 
-On a Docker install, the published image doesn't include your plugin. Build your own from the
-repository, with the plugin in `plugins/`, and use it in `deploy/.env`:
+On a Docker install there are two ways:
+
+- **Built plugin** (no image rebuild): put together a folder with the `package.json`, the backend in a
+  single `backend/index.js` with its dependencies inside, the app in `app/index.js` and `app/index.css`
+  (`frontendBundle` and `frontendStyles` in the manifest) and the migrations. The app shares React, React
+  Query, React Router and `@/plugins/ui` with the plugin: mark them as external and import them from
+  `/plugin-shared/<file>.js` (`PLUGIN_SHARED_MODULES` in the SDK). Copy it into the `plugins` volume and
+  restart the app and the worker (see [License and plugins](/en/docs/license-and-plugins)).
+- **Your own image**: build it from the repository, with the plugin's source in `plugins/`, and use it in
+  `deploy/.env`:
 
 ```sh
 docker build -t my-company/spiderfolio:1 .
@@ -493,6 +501,9 @@ docker compose up -d
 ```
 
 Rebuild it for every SpiderFolio update. See [Updates](/en/docs/updates).
+
+The manifest can declare `pluginApi`: the version of the plugin contract it needs (1 by default). An older
+SpiderFolio doesn't load it and says so in the log.
 
 ## 7. Licensing
 

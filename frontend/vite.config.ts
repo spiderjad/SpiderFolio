@@ -20,7 +20,11 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { "/api": { target: "http://localhost:4000", xfwd: true } },
+    proxy: {
+      "/api": { target: "http://localhost:4000", xfwd: true },
+      // Built plugins' app (docs/spec/plugins.md), served by the API.
+      "/plugin-assets": { target: "http://localhost:4000" },
+    },
   },
   build: {
     sourcemap: true,

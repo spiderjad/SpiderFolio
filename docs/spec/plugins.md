@@ -22,6 +22,7 @@ Un plugin es un paquete con `package.json` que declara el campo `spiderfolio`:
     "frontend": "./frontend/index.tsx",
     "migrations": "./migrations",
     "distribution": "commercial",
+    "pluginApi": 1,
     "translations": {
       "en": { "name": "Sample plugin", "description": "What the plugin adds." }
     }
@@ -36,15 +37,56 @@ Se cargan de dos lugares:
 
 | Origen | Variable | Por defecto |
 |---|---|---|
-| Carpeta (cada subcarpeta es un plugin) | `PLUGINS_DIR` | `plugins/` en la raíz |
+| Carpetas separadas por comas (cada subcarpeta es un plugin) | `PLUGINS_DIR` | `plugins/` en la raíz; en la imagen, `/app/plugins,/data/plugins` |
 | Paquetes npm (privados), separados por comas | `PLUGIN_PACKAGES` | vacío |
 
 - **Backend**: la API y el worker los descubren al arrancar (`backend/src/plugins/loader.ts`). El
   código corre con Node (TypeScript con tipos borrables). Un plugin que no carga o cuya migración falla
   queda fuera con un aviso en el log; el núcleo arranca igual.
-- **App**: se incluyen al compilar con el módulo virtual `virtual:spiderfolio-plugins`
-  (`frontend/plugins.vite.ts`). Instalar o quitar la parte de app de un plugin requiere volver a compilar
-  la app (en Docker: reconstruir la imagen).
+- **App**: dos formas. Desde su código (`frontend`), se incluyen al compilar con el módulo virtual
+  `virtual:spiderfolio-plugins` (`frontend/plugins.vite.ts`): desarrollo o imagen propia, y cambiarlos
+  requiere volver a compilar. Ya compilados (`frontendBundle`, ver «Paquetes compilados»), la app los
+  carga al abrirse, sin recompilar: es lo que se instala en la imagen publicada. Si un plugin trae las
+  dos, gana la compilada en la app.
+- Un manifiesto ignora los campos que no conoce, así un plugin nuevo no rompe un núcleo viejo. Lo que
+  decide si carga es `pluginApi` (por defecto 1): la versión del contrato que necesita. Si es mayor que
+  `PLUGIN_API_VERSION` del núcleo, queda fuera con un aviso en el log («actualiza SpiderFolio»). Sube
+  cuando el SDK gana puntos de extensión.
+- Las rutas del manifiesto son relativas al paquete y no pueden salir de él (sin rutas absolutas ni `..`).
+
+## Paquetes compilados
+
+Lo que se instala en un servidor con la imagen publicada (`deploy/compose.yaml`): el plugin ya compilado,
+sin código fuente ni `node_modules`. En el servidor nunca se corre `npm install` ni se compila nada.
+
+```
+mi-plugin/
+  package.json        manifiesto: backend, frontendBundle, frontendStyles, migrations, pluginApi
+  backend/index.js    un solo módulo ESM con todas sus dependencias adentro (solo módulos de Node afuera)
+  app/index.js        la parte de app (ESM), y los fragmentos que importe, en la misma carpeta
+  app/index.css       sus estilos: solo las utilidades que usa, sin el reset base (ya lo pone la app)
+  migrations/         NNNN_nombre.sql
+```
+
+- **Dónde va**: en el volumen `plugins` (`/data/plugins` en la API y el worker, la misma carpeta para
+  los dos). Se carga al reiniciar: `docker compose restart app worker`.
+- **Backend**: la API importa `backend/index.js` como cualquier otro. Sin `node_modules` en el volumen,
+  un import que no sea de Node falla y el plugin queda fuera.
+- **App**: la API sirve la carpeta de `frontendBundle` en `/plugin-assets/<id>/` (mismo origen: la CSP no
+  cambia; sin caché, la URL lleva `?v=<versión>`). `GET /api/v1/w/:slug/plugins` devuelve, por cada
+  plugin activo, `bundle: { script, styles }`; la app agrega la hoja de estilos e importa el módulo, que
+  tiene que exportar por defecto un `FrontendPlugin` con el id del manifiesto. Uno que falla queda fuera
+  (aviso en la consola) y la app sigue. Esos archivos son públicos como el resto de la app: no llevan
+  secretos; lo que protege es el backend (404 sin licencia).
+- **Módulos compartidos**: el plugin no trae su propia copia de React, React Query, React Router ni de
+  `@/plugins/ui` y `@/plugins/locale`: los marca como externos y los importa de
+  `/plugin-shared/<archivo>.js` (`PLUGIN_SHARED_MODULES` y `PLUGIN_SHARED_PATH` del SDK). La app los
+  genera en el mismo build (`dist/plugin-shared/`), así son las mismas instancias que usa ella. Lo demás
+  (íconos, zod…) lo empaqueta el plugin.
+- **Cómo se arma**: con cualquier empaquetador que respete lo anterior (por ejemplo, esbuild).
+- En desarrollo (`npm run dev`) también cargan: Vite pasa `/plugin-assets` a la API y responde
+  `/plugin-shared/<archivo>.js` con los mismos módulos que usa la app. Para trabajar en un plugin, lo
+  cómodo sigue siendo su código fuente en `plugins/` (se recarga al guardar).
 
 ## Licencia
 
@@ -66,7 +108,7 @@ Payload (`LicensePayloadSchema` en `@spiderfolio/plugin-sdk`):
   licencia leída 30 s.
 - Al vencer, el plugin se desactiva solo: sus rutas responden 404, sus jobs no corren, sus ganchos no se
   consultan y la app deja de mostrarlo. Sus datos y ajustes se conservan.
-- Emisión: `plugins/tools/license.ts` (herramienta privada, no se publica). La clave privada vive fuera
+- Emisión: con una herramienta privada de SpiderJAD (no se publica). La clave privada vive fuera
   de cualquier repositorio.
 
 ## Plugins community
@@ -138,7 +180,8 @@ apuntar `PLUGINS_DIR` o `PLUGIN_PACKAGES` a donde queden instalados.
 
 | Plugin | Qué agrega | Estado |
 |---|---|---|
-| `security-policies` | Exigir 2FA a la empresa (gancho `mfaRequired`), dominios permitidos para invitar e importar (gancho `checkMemberEmail`), SSO (próximamente). Sección «Políticas avanzadas» del propietario. | Hecho, salvo SSO |
+| `security-policies` | Exigir 2FA a la empresa (gancho `mfaRequired`) y dominios permitidos para invitar e importar (gancho `checkMemberEmail`). Sección «Políticas avanzadas» del propietario. | Hecho |
+| `corporate-directory` | Directorio corporativo: inicio de sesión con Active Directory o Microsoft Entra ID, altas y sincronización de grupos. | En desarrollo |
 | `onedrive-import` | Importar de OneDrive y SharePoint (botón Nuevo, job `sync`). | Esqueleto |
 | `mcp-connector` | Conector MCP para Claude (spec en `plugins/mcp-connector/SPEC.md`). | Esqueleto |
 | `templates` | Plantillas propias y por rubro (migración propia `plugin_templates`). | Esqueleto |

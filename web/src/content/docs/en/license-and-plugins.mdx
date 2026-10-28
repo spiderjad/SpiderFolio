@@ -41,9 +41,16 @@ Under **Plugins installed on this server** you see each plugin with its status:
 - **No license**: it's installed, but your license doesn't include it.
 
 If the list says "This server has no plugins installed," they need to be installed first. That's done by
-whoever runs the server: copy the plugin into the `plugins/` folder and rebuild the image (`docker compose
-build && docker compose up -d`), or install it as a package and add it to `PLUGIN_PACKAGES`. Its migrations
-run on their own at startup.
+whoever runs the server. The plugin arrives already built: its folder is copied into the plugins volume and the
+app and the worker are restarted, with nothing to build (from the `deploy/` folder):
+
+```sh
+docker compose cp ./my-plugin app:/data/plugins/
+docker compose restart app worker
+```
+
+Its migrations run on their own at startup. With your own image, you can also put the plugin's source in
+`plugins/` and rebuild the image (`docker compose build && docker compose up -d`).
 
 An active plugin can add:
 

@@ -83,8 +83,23 @@ export const envSchema = z
         .transform((value) => value === "true"),
     ),
     ANTHROPIC_API_KEY: optionalString,
-    /** Carpeta con los plugins instalados (por defecto, plugins/ en la raíz). */
-    PLUGINS_DIR: optionalString,
+    /**
+     * Folders with the installed plugins, comma-separated (default: plugins/ at the root). In Docker,
+     * the ones built into the image and the plugins volume (docs/spec/plugins.md).
+     */
+    PLUGINS_DIR: z.preprocess(
+      emptyToUndefined,
+      z
+        .string()
+        .optional()
+        .transform((value) =>
+          (value ?? "")
+            .split(",")
+            .map((dir) => dir.trim())
+            .filter((dir) => dir !== ""),
+        )
+        .pipe(z.array(z.string()).max(10)),
+    ),
     /** Paquetes npm de plugins (privados), separados por comas. */
     PLUGIN_PACKAGES: z.preprocess(
       emptyToUndefined,

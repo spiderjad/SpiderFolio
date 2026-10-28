@@ -108,11 +108,13 @@ export async function testPluginRuntime(
         description: "",
         distribution: community.includes(backend.id) ? "community" : "commercial",
         translations: {},
+        pluginApi: 1,
       },
       dir: "",
       version: backend.version,
       backend,
       migrations: [],
+      frontendBundle: null,
     })),
   });
 }

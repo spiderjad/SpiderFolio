@@ -124,7 +124,7 @@ export const oss: Catalog<typeof esOss> = {
         id: "security-policies",
         icon: "shield",
         title: "Advanced security policies",
-        text: "Require two-step verification for the whole company or only for admins, restrict invitations to your company's email domains and, coming soon, single sign-on (SSO) with Microsoft 365 or Google Workspace.",
+        text: "Require two-step verification for the whole company or only for admins, and restrict invitations to your company's email domains.",
         available: true,
       },
       {

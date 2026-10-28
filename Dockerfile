@@ -31,12 +31,13 @@ FROM ${NODE_IMAGE} AS runtime
 ENV NODE_ENV=production \
     PORT=4000 \
     APP_STATIC_DIR=/app/frontend/dist \
-    PLUGINS_DIR=/app/plugins \
+    PLUGINS_DIR=/app/plugins,/data/plugins \
     STORAGE_DRIVER=local \
     STORAGE_DIR=/data/files
 WORKDIR /app
 COPY --from=build --chown=node:node /app /app
-RUN mkdir -p /data/files && chown node:node /data/files
+# /data/plugins: the plugins volume (built plugins installed without rebuilding the image).
+RUN mkdir -p /data/files /data/plugins && chown node:node /data/files /data/plugins
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \

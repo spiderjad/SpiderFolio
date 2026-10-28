@@ -125,7 +125,7 @@ export const oss = {
         id: "security-policies",
         icon: "shield",
         title: "Políticas de seguridad avanzadas",
-        text: "Exige la verificación en dos pasos a toda la empresa o solo a quienes administran, limita las invitaciones a los dominios de email de la empresa y, próximamente, inicio de sesión único (SSO) con Microsoft 365 o Google Workspace.",
+        text: "Exige la verificación en dos pasos a toda la empresa o solo a quienes administran, y limita las invitaciones a los dominios de email de la empresa.",
         available: true,
       },
       {

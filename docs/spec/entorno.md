@@ -36,7 +36,7 @@ EMAIL_ALLOW_PRIVATE_HOSTS=false    # solo desarrollo y tests (Mailpit); prohibid
 EMAIL_DOMAIN_PROVIDER=             # proveedor de email para dominios verificados; vacío = «próximamente»; `memory` solo en pruebas
 BIAN_ENABLED=false                 # asistente IA Bian; si es true, exige ANTHROPIC_API_KEY (validada al arrancar)
 ANTHROPIC_API_KEY=                 # clave de la API de Anthropic; nunca en el frontend ni en logs
-PLUGINS_DIR=                       # carpeta de plugins; vacío = plugins/ en la raíz (docs/spec/plugins.md)
+PLUGINS_DIR=                       # carpetas de plugins separadas por comas; vacío = plugins/ en la raíz (en Docker: /app/plugins,/data/plugins)
 PLUGIN_PACKAGES=                   # paquetes npm de plugins, separados por comas
 SEED_DEMO_PASSWORD=                     # solo local: contraseña de los usuarios demo (mínimo 10)
 

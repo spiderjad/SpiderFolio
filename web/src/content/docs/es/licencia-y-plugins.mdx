@@ -40,9 +40,16 @@ En **Plugins instalados en este servidor** ves cada plugin con su estado:
 - **Sin licencia**: está instalado, pero tu licencia no lo incluye.
 
 Si la lista dice «Este servidor no tiene plugins instalados», primero hay que instalarlos. Eso lo hace quien
-administra el servidor: copia el plugin a la carpeta `plugins/` y reconstruye la imagen (`docker compose build
-&& docker compose up -d`), o lo instala como paquete y lo agrega a `PLUGIN_PACKAGES`. Sus migraciones se
-aplican solas al arrancar.
+administra el servidor. El plugin llega ya compilado: se copia su carpeta al volumen de plugins y se reinician
+la app y el worker, sin compilar nada (desde la carpeta `deploy/`):
+
+```sh
+docker compose cp ./mi-plugin app:/data/plugins/
+docker compose restart app worker
+```
+
+Sus migraciones se aplican solas al arrancar. Con una imagen propia, también se puede poner el código del
+plugin en `plugins/` y reconstruir la imagen (`docker compose build && docker compose up -d`).
 
 Un plugin activo puede sumar:
 

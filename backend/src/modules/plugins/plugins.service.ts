@@ -43,19 +43,39 @@ function viewOf(status: LicenseStatus): LicenseView {
   }
 }
 
-/** Lo que cualquiera del workspace necesita: los plugins activos (la app muestra solo esos). */
+export interface ActivePluginView {
+  id: string;
+  name: string;
+  version: string;
+  /** Built app to load at runtime (same origin); null if the app part is compiled in, or none. */
+  bundle: { script: string; styles: string | null } | null;
+}
+
+/** What anyone in the workspace needs: the active plugins (the app shows only those). */
 export async function activePlugins(
   plugins: PluginRuntime,
   workspaceId: string,
-): Promise<{ id: string; name: string; version: string }[]> {
+): Promise<ActivePluginView[]> {
   const active = await plugins.activeIds(workspaceId);
   return plugins.installed
     .filter((plugin) => active.has(plugin.manifest.id))
-    .map((plugin) => ({
-      id: plugin.manifest.id,
-      name: manifestText(plugin.manifest, currentLocale()).name,
-      version: plugin.version,
-    }));
+    .map((plugin) => {
+      const { frontendBundle: bundle } = plugin;
+      const url = (file: string) =>
+        `/plugin-assets/${plugin.manifest.id}/${file}?v=${encodeURIComponent(plugin.version)}`;
+      return {
+        id: plugin.manifest.id,
+        name: manifestText(plugin.manifest, currentLocale()).name,
+        version: plugin.version,
+        bundle:
+          bundle === null
+            ? null
+            : {
+                script: url(bundle.script),
+                styles: bundle.styles === null ? null : url(bundle.styles),
+              },
+      };
+    });
 }
 
 export async function licenseOverview(

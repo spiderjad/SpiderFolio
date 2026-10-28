@@ -20,7 +20,7 @@ export async function setupPlugins(input: {
   // Los textos de los plugins siguen el idioma de la petición o del job (docs/spec/plugins.md).
   providePluginLocale(currentLocale);
   const discovered = await discoverPlugins({
-    dir: env.PLUGINS_DIR,
+    dirs: env.PLUGINS_DIR,
     packages: env.PLUGIN_PACKAGES,
     logger,
   });

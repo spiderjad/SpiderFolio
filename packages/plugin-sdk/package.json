@@ -4,6 +4,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "description": "Contrato de los plugins de SpiderFolio: manifiesto, licencias y puntos de extensión",
   "exports": {
     ".": "./src/index.ts",

@@ -472,18 +472,26 @@ Los plugins se cargan de dos lugares:
 
 | Origen | Variable | Por defecto |
 |---|---|---|
-| Una carpeta: cada subcarpeta es un plugin | `PLUGINS_DIR` | `plugins/` en la raíz (`/app/plugins` en la imagen) |
+| Carpetas separadas por comas: cada subcarpeta es un plugin | `PLUGINS_DIR` | `plugins/` en la raíz (`/app/plugins,/data/plugins` en la imagen) |
 | Paquetes npm (pueden ser privados), separados por comas | `PLUGIN_PACKAGES` | vacío |
 
 - **Backend**: la API y el worker los descubren al arrancar. Reinícialos después de instalar o actualizar
   un plugin. Un plugin que no carga queda fuera con un aviso en el log.
-- **App**: la parte de app se incluye **al compilar**. Instalar, quitar o actualizar esa parte requiere
-  volver a compilar la app; en Docker, **reconstruir la imagen**.
+- **App**: desde el código fuente (`frontend`), la parte de app se incluye **al compilar** la app. Ya
+  compilada (`frontendBundle`), la app la carga al abrirse, sin recompilar.
 
 En desarrollo, copia la carpeta en `plugins/` y reinicia `npm run dev`.
 
-En una instalación con Docker, la imagen publicada no trae tu plugin. Compila una propia desde el
-repositorio, con el plugin en `plugins/`, y úsala en `deploy/.env`:
+En una instalación con Docker hay dos caminos:
+
+- **Plugin compilado** (sin recompilar la imagen): arma una carpeta con el `package.json`, el backend en un
+  solo `backend/index.js` con sus dependencias adentro, la app en `app/index.js` y `app/index.css`
+  (`frontendBundle` y `frontendStyles` en el manifiesto) y las migraciones. La app comparte con el plugin
+  React, React Query, React Router y `@/plugins/ui`: márcalos como externos e impórtalos de
+  `/plugin-shared/<archivo>.js` (`PLUGIN_SHARED_MODULES` del SDK). Cópiala al volumen `plugins` y reinicia
+  la app y el worker (ver [Licencia y plugins](/es/docs/licencia-y-plugins)).
+- **Imagen propia**: compílala desde el repositorio, con el código del plugin en `plugins/`, y úsala en
+  `deploy/.env`:
 
 ```sh
 docker build -t mi-empresa/spiderfolio:1 .
@@ -492,6 +500,9 @@ docker compose up -d
 ```
 
 Repite la compilación en cada actualización de SpiderFolio. Ver [Actualizaciones](/es/docs/actualizaciones).
+
+El manifiesto puede declarar `pluginApi`: la versión del contrato de plugins que necesita (por defecto 1).
+Un SpiderFolio más viejo no lo carga y lo avisa en el log.
 
 ## 7. Licencias
 

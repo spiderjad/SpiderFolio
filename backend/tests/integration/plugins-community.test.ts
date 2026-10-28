@@ -94,8 +94,9 @@ describe("activar un plugin community", () => {
 
     const on = await activation(app, ws, ws.token, COMMUNITY, { enabled: true, acceptRisk: true });
     expect(on.status).toBe(200);
-    const listed = (on.body as { installed: { id: string; distribution: string; active: boolean }[] })
-      .installed;
+    const listed = (
+      on.body as { installed: { id: string; distribution: string; active: boolean }[] }
+    ).installed;
     expect(listed.find((plugin) => plugin.id === COMMUNITY)).toMatchObject({
       distribution: "community",
       active: true,
@@ -148,7 +149,7 @@ describe("cargar plugins community", () => {
       write("falso", "security-policies");
       write("propio", "checklist-turno");
       const silent = { info: () => undefined, warn: () => undefined, error: () => undefined };
-      const found = await discoverPlugins({ dir, logger: silent });
+      const found = await discoverPlugins({ dirs: [dir], logger: silent });
       expect(found.map((plugin) => plugin.manifest.id)).toEqual(["checklist-turno"]);
       expect(found[0]?.manifest.distribution).toBe("community");
     } finally {

@@ -22,7 +22,7 @@ corre en TypeScript directo (Node quita los tipos): no hay paso de tsc.
 backend/scripts/start.ts: prisma migrate deploy con reintentos mientras la base arranca y después la
 API. Las migraciones de los plugins las aplican la API y el worker al cargarlos (con lock).
 deploy/compose.yaml: db, app (publicada en HTTP_BIND:HTTP_PORT), worker (espera a que la app esté
-sana, o sea, migrada), caddy (perfil https) y gotenberg (perfil pdf); volúmenes db-data, files,
+sana, o sea, migrada), caddy (perfil https) y gotenberg (perfil pdf); volúmenes db-data, files, plugins (paquetes compilados en /data/plugins, para la API y el worker),
 caddy-data y caddy-config; restart: unless-stopped; logs con rotación.
 deploy/.env.example: todas las variables, con los secretos vacíos y cómo generarlos.
 deploy/Caddyfile: HTTPS para {$DOMAIN}, HSTS y reverse_proxy a app:4000 (la CSP la pone la app).
