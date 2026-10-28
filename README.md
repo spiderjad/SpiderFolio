@@ -6,6 +6,9 @@
 
 <p align="center">
   <strong>Your company's internal documentation, organized and on your own server.</strong><br>
+  <strong>SpiderFolio is an open-source, self-hosted internal documentation and document management
+  system (wiki + file library + controlled documents) for small and mid-sized businesses, including
+  factories and workshops. AGPLv3, Docker Compose, English and Spanish.</strong><br>
   Pages, files and controlled documents with permissions that make sense. Open source (AGPLv3).
 </p>
 
@@ -130,3 +133,71 @@ modified version to other people over a network, you must also offer them its so
 licenses: [docs/licencias-dependencias.md](docs/licencias-dependencias.md).
 
 Vulnerabilities: [SECURITY.md](SECURITY.md). Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Use cases
+
+- **Replace shared folders**: move documents from a file server or a shared drive into spaces and
+  folders, uploading folders or importing a ZIP that keeps its structure. Access is given to
+  departments, so it follows people when they change teams.
+- **Document control**: procedures and instructions with a code (PRC-001…), approvals before
+  publishing, a single current version, a next review date, a controlled PDF and an exportable audit
+  log.
+- **Required reading**: ask departments or people to read a current document and confirm it, with a
+  due date, automatic reminders and a compliance view you can export to CSV.
+- **The shop floor**: a QR code next to a machine always opens the current version of its instruction.
+  Operators can sign in on a shared tablet with a username and PIN and see what they have to read.
+- **Internal wiki**: Notion-style pages for know-how, onboarding and policies, with comments and
+  mentions, next to the files they refer to.
+- **Questions about your documents**: with Bian turned on, people ask in plain language and get answers
+  only from the current content they can see, with the source.
+- **Several companies on one server**: one installation can host several companies, each with its data
+  isolated.
+
+## FAQ
+
+### Is it free?
+
+Yes. The core is complete and free under the AGPLv3, with no plans and no per-user prices. Some
+business features are optional commercial plugins; without them SpiderFolio works the same.
+
+### What do I need to install it?
+
+Docker Compose. For real use, a Linux server with 2 vCPUs and 4 GB of RAM for up to about 200
+people, a domain (or your own HTTPS proxy) and an email (SMTP) server. See the
+[installation guide](docs/install/README.md).
+
+### Can I use Windows?
+
+To try it, yes: Docker Desktop on Windows 10/11 with the PowerShell setup script. For a server that runs
+24/7 on Windows Server, the guide recommends an Ubuntu virtual machine in Hyper-V.
+
+### Where is my data?
+
+On your server: the PostgreSQL database and the files on its disk, or in the S3-compatible bucket you
+choose (S3, R2, MinIO…).
+
+### Do I need an email server?
+
+Yes, to send verifications, invitations and notices. To try it on your PC, the `mail` profile adds a
+test inbox (Mailpit) so you don't need one. See [email (SMTP)](docs/install/email.md).
+
+### Is the AI assistant required?
+
+No. Bian is off by default. If you turn it on, it uses your own Anthropic API key, and each company sets
+its monthly total and per-person limits.
+
+### Are there user or storage limits?
+
+None by default. Each company can set its own limits (storage, file size, kept versions, audit
+retention) in Administration › Limits and usage.
+
+### Which languages does it support?
+
+English and Spanish. Each person picks their language and the company sets the default one.
+
+### How do I back up and update it?
+
+`backup.sh` (Linux) or `backup.ps1` (Windows) save the database, the files and `.env`; `restore.sh` or
+`restore.ps1` bring them back. Updating is downloading the new release bundle and running
+`docker compose pull` and `docker compose up -d`; migrations run on their own. See
+[backups](docs/install/backups.md) and [updating](docs/install/upgrading.md).

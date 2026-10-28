@@ -6,6 +6,9 @@
 
 <p align="center">
   <strong>La documentación interna de tu empresa, ordenada y en tu propio servidor.</strong><br>
+  <strong>SpiderFolio es un sistema open source y autoalojado de documentación interna y gestión
+  documental (wiki + biblioteca de archivos + documentos controlados) para pequeñas y medianas
+  empresas, incluidas fábricas y talleres. AGPLv3, Docker Compose, español e inglés.</strong><br>
   Páginas, archivos y documentos controlados con permisos que se entienden. Open source (AGPLv3).
 </p>
 
@@ -130,3 +133,70 @@ versión modificada a otras personas a través de una red, tienes que ofrecerles
 Licencias de las dependencias: [docs/licencias-dependencias.md](docs/licencias-dependencias.md).
 
 Vulnerabilidades: [SECURITY.md](SECURITY.md). Conducta: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Casos de uso
+
+- **Dejar las carpetas compartidas**: lleva los documentos de un servidor de archivos o una unidad
+  compartida a espacios y carpetas, subiendo carpetas o importando un ZIP que conserva su estructura. El
+  acceso se da por departamentos, así sigue a las personas cuando cambian de equipo.
+- **Control de documentos**: procedimientos e instructivos con código (PRC-001…), aprobaciones antes de
+  publicar, una única versión vigente, fecha de próxima revisión, PDF controlado y auditoría exportable.
+- **Lecturas obligatorias**: pide a departamentos o personas que lean un documento vigente y lo
+  confirmen, con fecha límite, recordatorios automáticos y un cumplimiento que se exporta a CSV.
+- **La planta**: un código QR junto a una máquina abre siempre la versión vigente de su instructivo. Los
+  operarios pueden entrar en una tablet compartida con usuario y PIN y ver lo que tienen que leer.
+- **Wiki interna**: páginas tipo Notion para el saber hacer, la incorporación de personas y las
+  políticas, con comentarios y menciones, junto a los archivos a los que se refieren.
+- **Preguntas sobre tus documentos**: con Bian activado, las personas preguntan con sus palabras y
+  reciben respuestas solo con el contenido vigente que pueden ver, con la fuente.
+- **Varias empresas en un servidor**: una instalación puede alojar varias empresas, cada una con sus
+  datos aislados.
+
+## Preguntas frecuentes
+
+### ¿Es gratis?
+
+Sí. El núcleo es completo y gratuito bajo la AGPLv3, sin planes ni precios por persona. Algunas
+funciones para empresas son plugins comerciales opcionales; sin ellos SpiderFolio funciona igual.
+
+### ¿Qué necesito para instalarlo?
+
+Docker Compose. Para uso real, un servidor Linux con 2 vCPU y 4 GB de RAM para hasta unas 200 personas,
+un dominio (o tu propio proxy con HTTPS) y un servidor de email (SMTP). Ver la
+[guía de instalación](docs/instalacion/README.md).
+
+### ¿Puedo usar Windows?
+
+Para probarlo, sí: Docker Desktop en Windows 10/11 con el script de instalación de PowerShell. Para un
+servidor que funcione 24/7 con Windows Server, la guía recomienda una máquina virtual Ubuntu en Hyper-V.
+
+### ¿Dónde quedan mis datos?
+
+En tu servidor: la base PostgreSQL y los archivos en su disco, o en el bucket compatible con S3 que
+elijas (S3, R2, MinIO…).
+
+### ¿Necesito un servidor de email?
+
+Sí, para enviar verificaciones, invitaciones y avisos. Para probarlo en tu PC, el perfil `mail` agrega
+una bandeja de prueba (Mailpit) y no hace falta. Ver [email (SMTP)](docs/instalacion/email.md).
+
+### ¿El asistente IA es obligatorio?
+
+No. Bian viene desactivado. Si lo activas, usa tu propia clave de la API de Anthropic, y cada empresa
+fija su total mensual y los límites por persona.
+
+### ¿Hay límites de usuarios o de espacio?
+
+Por defecto, ninguno. Cada empresa puede fijar sus propios límites (almacenamiento, tamaño de archivo,
+versiones guardadas, retención de la auditoría) en Administración › Límites y uso.
+
+### ¿En qué idiomas está?
+
+Español e inglés. Cada persona elige su idioma y la empresa fija el idioma por defecto.
+
+### ¿Cómo hago copias y actualizo?
+
+`backup.sh` (Linux) o `backup.ps1` (Windows) guardan la base, los archivos y el `.env`; `restore.sh` o
+`restore.ps1` los recuperan. Para actualizar, se descarga el paquete de la nueva versión y se ejecutan
+`docker compose pull` y `docker compose up -d`; las migraciones se aplican solas. Ver
+[copias de seguridad](docs/instalacion/copias-de-seguridad.md) y [actualizar](docs/instalacion/actualizar.md).
