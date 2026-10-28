@@ -17,24 +17,113 @@ share links. There are two levels:
 
 ## The installation's SMTP
 
-It goes in `deploy/.env`. Your company's server works, or a transactional service (Resend, Postmark, Amazon
-SES…).
+It goes in the installation's `.env` (the `spiderfolio` folder). Your company's server or a
+transactional service (Resend, Postmark, Amazon SES…) works.
 
-| Variable | What to put |
+| Variable | What to set |
 |---|---|
 | `SMTP_HOST` | The SMTP server, for example `smtp.your-provider.com`. |
-| `SMTP_PORT` | `587` (STARTTLS, the usual one) or `465` (direct TLS). |
-| `SMTP_USER`, `SMTP_PASS` | Username and password. Leave them empty if your server doesn't require authentication. |
-| `MAIL_FROM` | The sender, in quotes: `"SpiderFolio <no-reply@your-domain.com>"`. It must be an address your server lets you use. |
+| `SMTP_PORT` | `465` (direct TLS) or `587` (STARTTLS). Use the one your provider gives you. |
+| `SMTP_USER` | The full mailbox you sign in to email with, for example `no-reply@your-company.com`. |
+| `SMTP_PASS` | Its password, **in single quotes**: `SMTP_PASS='your-password'`. One quote on each side, with no spaces before or after. |
+| `MAIL_FROM` | The sender: `"SpiderFolio <no-reply@your-company.com>"`. The address **must be the same mailbox as `SMTP_USER`**: almost every server rejects any other. |
 
 `SMTP_HOST`, `SMTP_PORT` and `MAIL_FROM` are required: if one is missing, the API doesn't start and the log
-says which one. After changing them, apply with `docker compose up -d` from the `deploy` folder.
+says which. Account emails (email confirmation, password, sign-in) are **always** sent through this server,
+even if the company has a custom sender. More variables in [Configuration](/en/docs/configuration).
 
-To check it works, open the sign-in screen, click **Forgot your password?** and request the link for your own
-email.
+### After changing `.env`
 
-Account emails (confirming the email, the password, signing in) are **always** sent through this server, even
-if the company has a custom sender. More variables in [Configuration](/en/docs/configuration).
+From the installation folder, recreate the app and the worker so they read the new values:
+
+```sh
+docker compose up -d --force-recreate app worker
+```
+
+A `docker compose restart` isn't enough: it restarts the containers with the `.env` they already had.
+
+### Examples by provider
+
+**Hostinger.** Depending on your plan, email is Hostinger's or Titan's. Check in hPanel › Emails which SMTP
+server it gives you:
+
+```ini
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=no-reply@your-company.com
+SMTP_PASS='that-mailbox-password'
+MAIL_FROM="SpiderFolio <no-reply@your-company.com>"
+```
+
+With Titan, set `SMTP_HOST=smtp.titan.email` (also port 465).
+
+**Gmail or Google Workspace.** Gmail doesn't accept your normal password: turn on 2-Step Verification for the
+account and create an **app password** (Google Account › Security › App passwords). Paste it without spaces:
+
+```ini
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-account@gmail.com
+SMTP_PASS='abcdefghijklmnop'
+MAIL_FROM="SpiderFolio <your-account@gmail.com>"
+```
+
+**Microsoft 365.** The mailbox needs **Authenticated SMTP** turned on (Microsoft 365 admin center › Users ›
+the mailbox › Mail › Manage email apps):
+
+```ini
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=no-reply@your-company.com
+SMTP_PASS='that-mailbox-password'
+MAIL_FROM="SpiderFolio <no-reply@your-company.com>"
+```
+
+Microsoft is retiring user-and-password sign-in for SMTP. If the server replies `535 5.7.139` (basic
+authentication disabled), use a transactional service (Resend, Postmark, Amazon SES…) instead of the
+Microsoft 365 mailbox.
+
+### Check that it works
+
+In **Administration › Security**, **Email** tab, the **Server email** card shows whether the installation's
+SMTP works, the server and the sender. Click **Send test email**: it goes to your own email and, if it fails,
+shows the exact error (the reason, the code such as `EAUTH · 535` and the server's reply, with the user and
+password masked).
+
+### If email isn't working
+
+- If the server rejects the user or the password (`EAUTH`, `535`) or the sender, that email **isn't retried**:
+  it's marked as failed. Connection failures are retried a few times before they're marked as failed.
+- The owner and the administrators get a bell notice: "Email isn't working: check the SMTP settings", with the
+  reason (at most one per hour).
+- Fix `.env`, recreate the app and the worker, and use **Send test email** until it arrives. Failed emails
+  aren't resent on their own: ask again for what you need (for example, **Resend** an invitation or the
+  verification email).
+
+### Troubleshooting
+
+From the installation folder (the same commands in PowerShell and on Linux):
+
+```sh
+docker compose logs --tail 100 worker
+```
+
+Look for the `Email no enviado` (email not sent) lines: the `code` field gives the reason (`AUTH`,
+`CONNECTION`, `TLS`, `SENDER_REJECTED`).
+
+To check that the password arrived intact without showing it, see how many characters it has:
+
+```sh
+docker compose exec worker sh -c 'echo ${#SMTP_PASS}'
+```
+
+It must be the exact length of your password. If it's 2 more, extra quotes slipped in (for example,
+`SMTP_PASS=''secret''`); if it's 0, `.env` has no `SMTP_PASS` or the worker wasn't recreated. Also check the
+server and port it's using:
+
+```sh
+docker compose exec worker sh -c 'echo $SMTP_HOST:$SMTP_PORT'
+```
 
 ## The company's custom sender
 
@@ -109,7 +198,8 @@ domain.
 ## Audit log
 
 Saving the settings, sending tests, turning the sender on or off and every email that went out through the
-fallback are recorded in the audit log, under the **Company email** area. The password is never stored there.
+fallback are recorded in the audit log, under the **Company email** area, and so is every test of the server
+email (with its result). The password is never stored there.
 
 ## Related
 

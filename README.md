@@ -87,7 +87,7 @@ docker compose up -d
 Check: `curl http://localhost:8080/api/health` answers `{"status":"ok"}`. Then open the address
 you chose (on your PC, `http://localhost:8080`; test emails at `http://localhost:8025`).
 
-More: [updating](docs/install/upgrading.md), [backups](docs/install/backups.md) and the
+More: [email (SMTP)](docs/install/email.md), [updating](docs/install/upgrading.md), [backups](docs/install/backups.md) and the
 [web guide](https://spiderfolio.spiderjad.com/en/docs/install). In Spanish:
 [docs/instalacion](docs/instalacion/README.md).
 

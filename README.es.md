@@ -87,7 +87,7 @@ Comprueba: `curl http://localhost:8080/api/health` responde `{"status":"ok"}`. D
 dirección que elegiste (en tu PC, `http://localhost:8080`; los emails de prueba, en
 `http://localhost:8025`).
 
-Más: [actualizar](docs/instalacion/actualizar.md), [copias de seguridad](docs/instalacion/copias-de-seguridad.md)
+Más: [email (SMTP)](docs/instalacion/email.md), [actualizar](docs/instalacion/actualizar.md), [copias de seguridad](docs/instalacion/copias-de-seguridad.md)
 y la [guía en la web](https://spiderfolio.spiderjad.com/es/docs/instalar). In English:
 [docs/install](docs/install/README.md).
 

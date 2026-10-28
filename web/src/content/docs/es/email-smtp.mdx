@@ -18,23 +18,115 @@ y compartir enlaces. Hay dos niveles:
 
 ## El SMTP de la instalación
 
-Va en `deploy/.env`. Sirve el de tu empresa o un servicio transaccional (Resend, Postmark, Amazon SES…).
+Va en el `.env` de la instalación (la carpeta `spiderfolio`). Sirve el de tu empresa o un servicio
+transaccional (Resend, Postmark, Amazon SES…).
 
 | Variable | Qué poner |
 |---|---|
 | `SMTP_HOST` | El servidor SMTP, por ejemplo `smtp.tu-proveedor.com`. |
-| `SMTP_PORT` | `587` (STARTTLS, el habitual) o `465` (TLS directo). |
-| `SMTP_USER`, `SMTP_PASS` | Usuario y contraseña. Déjalos vacíos si tu servidor no pide autenticación. |
-| `MAIL_FROM` | El remitente, entre comillas: `"SpiderFolio <no-reply@tu-dominio.com>"`. Tiene que ser una dirección que tu servidor te permita usar. |
+| `SMTP_PORT` | `465` (TLS directo) o `587` (STARTTLS). Usa el que indique tu proveedor. |
+| `SMTP_USER` | La casilla completa con la que entras al correo, por ejemplo `no-reply@tu-empresa.com`. |
+| `SMTP_PASS` | Su contraseña, **entre comillas simples**: `SMTP_PASS='tu-contraseña'`. Una sola vez cada comilla, sin espacios antes ni después. |
+| `MAIL_FROM` | El remitente: `"SpiderFolio <no-reply@tu-empresa.com>"`. La dirección **tiene que ser la misma casilla que `SMTP_USER`**: casi todos los servidores rechazan cualquier otra. |
 
-`SMTP_HOST`, `SMTP_PORT` y `MAIL_FROM` son obligatorias: si falta alguna, la API no arranca y el log dice cuál.
-Después de cambiarlas, aplica con `docker compose up -d` desde la carpeta `deploy`.
-
-Para comprobar que funciona, abre la pantalla de inicio de sesión, pulsa **¿Olvidaste tu contraseña?** y pide
-el enlace para tu propio email.
-
-Los emails de cuenta (confirmar el email, la contraseña, el inicio de sesión) **siempre** salen por este
+`SMTP_HOST`, `SMTP_PORT` y `MAIL_FROM` son obligatorias: si falta alguna, la API no arranca y el log dice
+cuál. Los emails de cuenta (confirmar el email, la contraseña, el inicio de sesión) **siempre** salen por este
 servidor, aunque la empresa tenga remitente propio. Más variables en [Configuración](/es/docs/configuracion).
+
+### Después de cambiar el `.env`
+
+Desde la carpeta de la instalación, recrea la app y el worker para que lean los valores nuevos:
+
+```sh
+docker compose up -d --force-recreate app worker
+```
+
+Un `docker compose restart` no alcanza: reinicia los contenedores con el `.env` que tenían.
+
+### Ejemplos por proveedor
+
+**Hostinger.** Según tu plan, el correo es de Hostinger o de Titan. Mira en hPanel › Correos qué servidor
+SMTP te indica:
+
+```ini
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=no-reply@tu-empresa.com
+SMTP_PASS='la-contraseña-de-esa-casilla'
+MAIL_FROM="SpiderFolio <no-reply@tu-empresa.com>"
+```
+
+Con Titan, cambia `SMTP_HOST=smtp.titan.email` (también puerto 465).
+
+**Gmail o Google Workspace.** Gmail no acepta tu contraseña normal: activa la verificación en dos pasos de la
+cuenta y crea una **contraseña de aplicación** (Cuenta de Google › Seguridad › Contraseñas de aplicaciones).
+Pégala sin espacios:
+
+```ini
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu-cuenta@gmail.com
+SMTP_PASS='abcdefghijklmnop'
+MAIL_FROM="SpiderFolio <tu-cuenta@gmail.com>"
+```
+
+**Microsoft 365.** La casilla necesita **SMTP autenticado** activado (Centro de administración de Microsoft
+365 › Usuarios › la casilla › Correo › Administrar aplicaciones de correo electrónico):
+
+```ini
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=no-reply@tu-empresa.com
+SMTP_PASS='la-contraseña-de-esa-casilla'
+MAIL_FROM="SpiderFolio <no-reply@tu-empresa.com>"
+```
+
+Microsoft está retirando el inicio de sesión con usuario y contraseña en SMTP. Si el servidor responde
+`535 5.7.139` (autenticación básica desactivada), usa un servicio transaccional (Resend, Postmark, Amazon SES…)
+en lugar de la casilla de Microsoft 365.
+
+### Comprobar que funciona
+
+En **Administración › Seguridad**, pestaña **Email**, la tarjeta **Email del servidor** muestra si el SMTP de
+la instalación funciona, el servidor y el remitente. Pulsa **Enviar email de prueba**: llega a tu propio email
+y, si falla, muestra el error exacto (el motivo, el código como `EAUTH · 535` y la respuesta del servidor, con
+el usuario y la contraseña tapados).
+
+### Si el email no funciona
+
+- Si el servidor rechaza el usuario o la contraseña (`EAUTH`, `535`) o el remitente, ese email **no se
+  reintenta**: queda como fallido. Los fallos de conexión sí se reintentan unas veces antes de darse por
+  fallidos.
+- El propietario y los administradores reciben un aviso en la campana: «El email no está funcionando: revisa
+  la configuración SMTP», con el motivo (como mucho uno por hora).
+- Corrige el `.env`, recrea la app y el worker, y usa **Enviar email de prueba** hasta que llegue. Los emails
+  que fallaron no se reenvían solos: pide de nuevo lo que necesites (por ejemplo, **Reenviar** una
+  invitación o el email de verificación).
+
+### Diagnóstico
+
+Desde la carpeta de la instalación (los mismos comandos en PowerShell y en Linux):
+
+```sh
+docker compose logs --tail 100 worker
+```
+
+Busca las líneas `Email no enviado`: el campo `code` dice el motivo (`AUTH`, `CONNECTION`, `TLS`,
+`SENDER_REJECTED`).
+
+Para comprobar que la contraseña llegó bien sin mostrarla, mira cuántos caracteres tiene:
+
+```sh
+docker compose exec worker sh -c 'echo ${#SMTP_PASS}'
+```
+
+Tiene que ser el largo exacto de tu contraseña. Si da 2 más, se colaron comillas de más (por ejemplo,
+`SMTP_PASS=''clave''`); si da 0, el `.env` no tiene `SMTP_PASS` o el worker no se recreó. Comprueba también
+el servidor y el puerto que está usando:
+
+```sh
+docker compose exec worker sh -c 'echo $SMTP_HOST:$SMTP_PORT'
+```
 
 ## El remitente propio de la empresa
 
@@ -110,7 +202,8 @@ sea de tu dominio.
 ## Auditoría
 
 Guardar la configuración, enviar pruebas, activar, desactivar y cada envío que salió por el respaldo quedan en
-el registro de auditoría, en el área **Email de la empresa**. Nunca se guarda la contraseña.
+el registro de auditoría, en el área **Email de la empresa**, igual que cada prueba del email del servidor
+(con su resultado). Nunca se guarda la contraseña.
 
 ## Relacionado
 

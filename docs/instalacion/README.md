@@ -62,11 +62,17 @@ cd spiderfolio
 **Linux**
 
 ```sh
+cd ~
 url=https://github.com/spiderjad/SpiderFolio
 url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
 curl -fsSL $url | tar -xz
 cd spiderfolio
 ```
+
+SpiderFolio queda en la carpeta `spiderfolio` dentro de tu carpeta de usuario: en Windows,
+`C:\Users\<tu-usuario>\spiderfolio`; en Linux, `/home/<tu-usuario>/spiderfolio`. Para instalarlo en
+otra carpeta, cambia la primera línea (`cd $HOME` o `cd ~`) por esa carpeta, por ejemplo `cd D:\Apps`;
+tiene que existir antes.
 
 Todos los comandos siguientes se escriben en esa carpeta, `spiderfolio`.
 
@@ -191,6 +197,39 @@ docker compose logs -f app
 
 Cuando aparece la línea `API lista`, ya está. Sal del log con `Ctrl+C` (la app sigue en marcha).
 
+### Si el puerto 8080 u 8025 está ocupado
+
+Si `docker compose up -d` dice `port is already allocated` o `ports are not available`, otro programa
+usa ese puerto. Mira cuál es:
+
+**Windows (PowerShell)**
+
+```powershell
+Get-NetTCPConnection -LocalPort 8080 -State Listen |
+  ForEach-Object { Get-Process -Id $_.OwningProcess }
+```
+
+**Linux**
+
+```sh
+sudo ss -ltnp 'sport = :8080'
+```
+
+Ciérralo o usa otro puerto. Abre el `.env` y cambia estas líneas (con el número que elijas):
+
+```ini
+HTTP_PORT=8081
+APP_URL=http://localhost:8081
+WEB_URL=http://localhost:8081
+```
+
+Si el ocupado es el 8025 (la bandeja de prueba), cambia `MAIL_UI_PORT=8026` y abre los emails en
+`http://localhost:8026`. Guarda el archivo y aplica el cambio:
+
+```sh
+docker compose up -d --force-recreate
+```
+
 ### 5. Comprueba
 
 **Windows (PowerShell)**
@@ -265,11 +304,15 @@ docker compose version
 Se descarga el paquete de instalación de la última versión publicada (Release).
 
 ```sh
+cd ~
 url=https://github.com/spiderjad/SpiderFolio
 url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
 curl -fsSL $url | tar -xz
 cd spiderfolio
 ```
+
+SpiderFolio queda en `/home/<tu-usuario>/spiderfolio`. Para instalarlo en otra carpeta, cambia
+`cd ~` por esa carpeta (tu usuario tiene que poder escribir en ella).
 
 Todos los comandos siguientes se escriben en esa carpeta, `spiderfolio`.
 
@@ -402,11 +445,15 @@ docker compose version
 Se descarga el paquete de instalación de la última versión publicada (Release).
 
 ```sh
+cd ~
 url=https://github.com/spiderjad/SpiderFolio
 url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
 curl -fsSL $url | tar -xz
 cd spiderfolio
 ```
+
+SpiderFolio queda en `/home/<tu-usuario>/spiderfolio`. Para instalarlo en otra carpeta, cambia
+`cd ~` por esa carpeta (tu usuario tiene que poder escribir en ella).
 
 Todos los comandos siguientes se escriben en esa carpeta, `spiderfolio`.
 
@@ -616,17 +663,8 @@ servidor; copia la carpeta de copias fuera de la máquina virtual.
   `El sistema no puede encontrar el archivo especificado`. Abre Docker Desktop y espera a
   **Engine running**. Si no termina de arrancar, ejecuta `wsl --update` y reinicia; si sigue igual,
   activa la virtualización en la BIOS.
-- **Puerto ocupado.** El error dice `port is already allocated` o `ports are not available`. Mira qué
-  programa usa el puerto:
-
-  ```powershell
-  Get-NetTCPConnection -LocalPort 8080 -State Listen |
-    ForEach-Object { Get-Process -Id $_.OwningProcess }
-  ```
-
-  Ciérralo o usa otro puerto: en `.env`, `HTTP_PORT=8081`, `APP_URL=http://localhost:8081` y
-  `WEB_URL=http://localhost:8081`. Si el ocupado es el 8025 (Mailpit), cambia `MAIL_UI_PORT`.
-  Después, `docker compose up -d`.
+- **Puerto ocupado.** El error dice `port is already allocated` o `ports are not available`. Mira
+  [Si el puerto 8080 u 8025 está ocupado](#si-el-puerto-8080-u-8025-está-ocupado).
 - **El Bloc de notas lo guardó como `.env.txt`.** Docker no lo encuentra y dice que falta
   `POSTGRES_PASSWORD`. Compruébalo y renómbralo:
 
@@ -648,6 +686,29 @@ servidor; copia la carpeta de copias fuera de la máquina virtual.
   El `.env` que escribe `setup.ps1` ya usa saltos de línea de Linux.
 - **«La ejecución de scripts está deshabilitada en este sistema».** Ejecuta el script como dice la
   guía, con `powershell -ExecutionPolicy Bypass -File .\setup.ps1`: no cambia nada del sistema.
+
+## Cambiar la configuración
+
+Toda la configuración está en el `.env` de la carpeta `spiderfolio`. Después de cambiarlo, recrea la app y
+el worker para que lean los valores nuevos (un `docker compose restart` no alcanza):
+
+```sh
+docker compose up -d --force-recreate app worker
+```
+
+Si cambiaste `COMPOSE_PROFILES`, `HTTP_PORT` o `MAIL_UI_PORT`, usa `docker compose up -d --force-recreate`
+(sin nombres de servicio), que también agrega o quita las piezas opcionales.
+
+## Si el email no llega
+
+1. En **Administración › Seguridad**, pestaña **Email**, la tarjeta **Email del servidor** dice si el SMTP
+   funciona. Pulsa **Enviar email de prueba**: si falla, muestra el error exacto.
+2. `MAIL_FROM` tiene que ser la misma casilla que `SMTP_USER`, y `SMTP_PASS` va con un solo par de
+   comillas simples: `SMTP_PASS='tu-contraseña'`.
+3. Después de corregir el `.env`, recrea la app y el worker (arriba).
+
+Ejemplos para Hostinger, Gmail y Microsoft 365, y los comandos de diagnóstico, en
+[Email (SMTP)](https://spiderfolio.spiderjad.com/es/docs/email-smtp).
 
 ## Opcional
 
@@ -683,5 +744,5 @@ servidor; copia la carpeta de copias fuera de la máquina virtual.
 - [Configuración](https://spiderfolio.spiderjad.com/es/docs/configuracion): todas las variables de `.env`.
 - [Solución de problemas](https://spiderfolio.spiderjad.com/es/docs/solucion-de-problemas).
 
-En este repositorio: [Actualizar](actualizar.md) · [Copias de seguridad y restauración](copias-de-seguridad.md) ·
+En este repositorio: [Email (SMTP)](email.md) · [Actualizar](actualizar.md) · [Copias de seguridad y restauración](copias-de-seguridad.md) ·
 [Plugins comerciales](plugins.md) · variables completas en `deploy/.env.example` y `docs/spec/entorno.md`.

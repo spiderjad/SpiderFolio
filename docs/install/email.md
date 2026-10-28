@@ -1,0 +1,200 @@
+Versión en español: [docs/instalacion/email.md](../instalacion/email.md)
+
+# SMTP email
+
+SpiderFolio sends emails to confirm accounts, recover passwords, invite people, send document notices and
+share links. There are two levels:
+
+1. **The installation's SMTP** (required): set up by whoever runs the server and used by every company.
+2. **The company's custom sender** (optional): each company can send its emails from its own SMTP server and
+   with its own address.
+
+## The installation's SMTP
+
+It goes in the installation's `.env` (the `spiderfolio` folder). Your company's server or a
+transactional service (Resend, Postmark, Amazon SES…) works.
+
+| Variable | What to set |
+|---|---|
+| `SMTP_HOST` | The SMTP server, for example `smtp.your-provider.com`. |
+| `SMTP_PORT` | `465` (direct TLS) or `587` (STARTTLS). Use the one your provider gives you. |
+| `SMTP_USER` | The full mailbox you sign in to email with, for example `no-reply@your-company.com`. |
+| `SMTP_PASS` | Its password, **in single quotes**: `SMTP_PASS='your-password'`. One quote on each side, with no spaces before or after. |
+| `MAIL_FROM` | The sender: `"SpiderFolio <no-reply@your-company.com>"`. The address **must be the same mailbox as `SMTP_USER`**: almost every server rejects any other. |
+
+`SMTP_HOST`, `SMTP_PORT` and `MAIL_FROM` are required: if one is missing, the API doesn't start and the log
+says which. Account emails (email confirmation, password, sign-in) are **always** sent through this server,
+even if the company has a custom sender. More variables in [Configuration](https://spiderfolio.spiderjad.com/en/docs/configuration).
+
+### After changing `.env`
+
+From the installation folder, recreate the app and the worker so they read the new values:
+
+```sh
+docker compose up -d --force-recreate app worker
+```
+
+A `docker compose restart` isn't enough: it restarts the containers with the `.env` they already had.
+
+### Examples by provider
+
+**Hostinger.** Depending on your plan, email is Hostinger's or Titan's. Check in hPanel › Emails which SMTP
+server it gives you:
+
+```ini
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=no-reply@your-company.com
+SMTP_PASS='that-mailbox-password'
+MAIL_FROM="SpiderFolio <no-reply@your-company.com>"
+```
+
+With Titan, set `SMTP_HOST=smtp.titan.email` (also port 465).
+
+**Gmail or Google Workspace.** Gmail doesn't accept your normal password: turn on 2-Step Verification for the
+account and create an **app password** (Google Account › Security › App passwords). Paste it without spaces:
+
+```ini
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-account@gmail.com
+SMTP_PASS='abcdefghijklmnop'
+MAIL_FROM="SpiderFolio <your-account@gmail.com>"
+```
+
+**Microsoft 365.** The mailbox needs **Authenticated SMTP** turned on (Microsoft 365 admin center › Users ›
+the mailbox › Mail › Manage email apps):
+
+```ini
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=no-reply@your-company.com
+SMTP_PASS='that-mailbox-password'
+MAIL_FROM="SpiderFolio <no-reply@your-company.com>"
+```
+
+Microsoft is retiring user-and-password sign-in for SMTP. If the server replies `535 5.7.139` (basic
+authentication disabled), use a transactional service (Resend, Postmark, Amazon SES…) instead of the
+Microsoft 365 mailbox.
+
+### Check that it works
+
+In **Administration › Security**, **Email** tab, the **Server email** card shows whether the installation's
+SMTP works, the server and the sender. Click **Send test email**: it goes to your own email and, if it fails,
+shows the exact error (the reason, the code such as `EAUTH · 535` and the server's reply, with the user and
+password masked).
+
+### If email isn't working
+
+- If the server rejects the user or the password (`EAUTH`, `535`) or the sender, that email **isn't retried**:
+  it's marked as failed. Connection failures are retried a few times before they're marked as failed.
+- The owner and the administrators get a bell notice: "Email isn't working: check the SMTP settings", with the
+  reason (at most one per hour).
+- Fix `.env`, recreate the app and the worker, and use **Send test email** until it arrives. Failed emails
+  aren't resent on their own: ask again for what you need (for example, **Resend** an invitation or the
+  verification email).
+
+### Troubleshooting
+
+From the installation folder (the same commands in PowerShell and on Linux):
+
+```sh
+docker compose logs --tail 100 worker
+```
+
+Look for the `Email no enviado` (email not sent) lines: the `code` field gives the reason (`AUTH`,
+`CONNECTION`, `TLS`, `SENDER_REJECTED`).
+
+To check that the password arrived intact without showing it, see how many characters it has:
+
+```sh
+docker compose exec worker sh -c 'echo ${#SMTP_PASS}'
+```
+
+It must be the exact length of your password. If it's 2 more, extra quotes slipped in (for example,
+`SMTP_PASS=''secret''`); if it's 0, `.env` has no `SMTP_PASS` or the worker wasn't recreated. Also check the
+server and port it's using:
+
+```sh
+docker compose exec worker sh -c 'echo $SMTP_HOST:$SMTP_PORT'
+```
+
+## The company's custom sender
+
+With it, your company's emails (invitations, document notices, shares) go out from your SMTP server and with
+your address, for example `notices@yourcompany.com`, instead of the installation's sender.
+
+### Where to find it
+
+In **Administration › Security**, **Email** tab. You need the **Manage security** capability. The owner sees
+the **General** and **Email** tabs; admins only see **Email**.
+
+If you see "The custom sender isn't available on this server," the installation is missing
+`EMAIL_ENCRYPTION_KEY`, the key used to store your SMTP password encrypted. Ask whoever runs the server.
+
+### Set it up
+
+1. Fill in the server details:
+   - **SMTP server**: it must be a public address; internal network addresses aren't accepted.
+   - **Port**: 25, 465, 587 or 2525.
+   - **Security**: **STARTTLS (port 587)** or **TLS (port 465)**.
+   - **Username (optional)** and **Password**. The password is stored encrypted and never shown again; to keep
+     the current one, leave it empty.
+2. Fill in the sender: **Sender name**, **Sender address** (one your server lets you use) and, if you like,
+   **Reply-to (optional)**.
+3. Click **Save**.
+4. Click **Send test email**. The test goes to **your** email, never to anyone else. You can send up to 5 per
+   hour (and 20 per hour across the whole company).
+5. If the test arrived fine, click **Turn on**.
+
+At the top you see the status: **Not active**, **Active** or **Disabled**, and whether the settings are
+**Tested** or **Not tested**. If you change anything and save, it goes back to **Not active** until you send
+another test. To stop using it, click **Turn off**.
+
+If the test fails, we tell you why: username or password rejected, couldn't connect (check server, port and
+security), the secure connection failed, the server rejected the sender, or the server wasn't found.
+
+### If your server fails
+
+Nobody misses their notice:
+
+- If a send fails, that email still goes out through the installation's server, with the name "Your company
+  (via SpiderFolio)" and your address as **Reply-to**.
+- The owner and the admins with **Manage security** get a notification in the bell and by email (at most one
+  per hour). The **Email** tab also shows the last error.
+- After **3 failures in a row**, the custom sender switches to **Disabled**. Fix the settings, send a test and
+  turn it on again.
+
+### Verified domain
+
+Below you'll see **Verified domain**: a way to send from your domain without a password, by creating DNS
+records. In this version it shows "Sending with a verified domain will be available soon."
+
+## Keep your emails out of spam
+
+This applies both to the installation's `MAIL_FROM` and to the custom sender. In the DNS of the sender
+address's domain, create these records with the values your email provider gives you (in the **Email** tab,
+the **Are your emails going to spam?** section has the same guide with examples to copy):
+
+- **SPF**: a TXT record that says which servers can send on your behalf. There can only be one: if you already
+  have one, add your provider's `include`. Example: `v=spf1 include:spf.your-provider.com ~all`.
+- **DKIM**: your provider generates a key and gives you a TXT or CNAME record (for example,
+  `selector._domainkey.yourdomain.com`). Create it exactly as they tell you.
+- **DMARC**: a TXT record on `_dmarc.yourdomain.com`. Start with `p=none` (monitor only) and, once everything
+  is delivered fine, move to `quarantine`. Example: `v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com`.
+
+To check it, send the test email to your inbox and make sure it's not in spam. If it lands in spam, check that
+SPF and DKIM are set up correctly (DNS changes can take a few hours) and that the sender address is on your
+domain.
+
+## Audit log
+
+Saving the settings, sending tests, turning the sender on or off and every email that went out through the
+fallback are recorded in the audit log, under the **Company email** area, and so is every test of the server
+email (with its result). The password is never stored there.
+
+## Related
+
+- [Configuration](https://spiderfolio.spiderjad.com/en/docs/configuration)
+- [Invite people](https://spiderfolio.spiderjad.com/en/docs/invite-people)
+- [Security and two-step verification](https://spiderfolio.spiderjad.com/en/docs/security-and-2fa)
