@@ -56,7 +56,7 @@ export const oss: Catalog<typeof esOss> = {
     subtitle: `${SITE.name} runs on your server with Docker. Your company can be up and running in an afternoon.`,
     requirementsTitle: "What you need",
     requirements: [
-      "A Linux server with Docker and Docker Compose v2",
+      "A Linux server with Docker and Docker Compose v2 (to try it, Windows or macOS with Docker Desktop too)",
       "2 vCPUs and 4 GB of RAM (up to ~200 people)",
       "An SMTP email server (your company's or a transactional service)",
       "A domain pointing to the server, to sign in over HTTPS from any device",
@@ -64,30 +64,30 @@ export const oss: Catalog<typeof esOss> = {
     steps: [
       {
         title: "Download",
-        text: "Clone the repository and copy the example configuration.",
-        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy\ncp .env.example .env",
+        text: "Clone the repository. On Windows, the guide shows how to download it without Git.",
+        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy",
       },
       {
         title: "Configure",
-        text: "Fill in the URL, the database password, the secrets and your email server. Generate the secrets with openssl.",
-        code: "openssl rand -base64 48   # JWT_ACCESS_SECRET\nopenssl rand -base64 32   # EMAIL_ENCRYPTION_KEY and MFA_ENCRYPTION_KEY (a different one for each)",
+        text: "The script asks where you're installing (your PC, a server with a domain or behind your proxy) and your email details, generates the secrets and writes .env. On Windows: setup.ps1.",
+        code: "./setup.sh",
       },
       {
         title: "Start",
-        text: "One command starts the database, the app and the worker. Migrations run automatically. With a domain, the https profile requests the certificate automatically.",
-        code: "docker compose --profile https up -d\ndocker compose logs -f app",
+        text: 'One command starts the database, the app and the worker. Migrations run automatically and, with a domain, so does the HTTPS certificate. The check answers {"status":"ok"}.',
+        code: "docker compose up -d\ncurl http://localhost:8080/api/health",
       },
       {
         title: "Create your company",
-        text: "Go to your domain, sign up and you become the owner. Then invite your team from Administration.",
-        code: "https://your-domain/register",
+        text: "Go to your address, sign up and you become the owner. Then invite your team from Administration.",
+        code: "https://docs.your-company.com/register",
       },
     ],
     optionalTitle: "Optional",
     optional: [
       {
         title: "Controlled PDF",
-        text: "Add the pdf profile (Gotenberg) to generate the PDF of controlled documents.",
+        text: "Turn on the pdf profile (Gotenberg) to generate the PDF of controlled documents.",
       },
       {
         title: "Files on S3",

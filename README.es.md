@@ -44,18 +44,49 @@ corresponde. Pensado para pymes de habla hispana, también en planta.
 
 ## Instalar
 
-Con Docker, en un servidor propio:
+Con Docker Compose. Elige dónde lo vas a instalar; cada opción tiene su paso a paso completo en la
+[guía de instalación](docs/instalacion/README.md):
 
-```sh
-git clone https://github.com/spiderjad/SpiderFolio
-cd SpiderFolio/deploy
-cp .env.example .env          # completa la URL, la contraseña de la base, los secretos y el SMTP
-docker compose --profile https up -d
+| Opción | Para qué | Guía |
+| --- | --- | --- |
+| Probar en tu PC | Verlo funcionando (Windows, macOS o Linux), con una bandeja de email de prueba | [Probar en tu PC](docs/instalacion/README.md#probar-en-tu-pc) |
+| Servidor con dominio propio | Uso real, con HTTPS automático | [Servidor con dominio propio](docs/instalacion/README.md#servidor-con-dominio-propio) |
+| Servidor con proxy propio | Ya tienes nginx, Traefik, IIS… | [Servidor con proxy propio](docs/instalacion/README.md#servidor-con-proxy-propio) |
+
+Windows Server: lo recomendado es una máquina virtual Ubuntu en Hyper-V
+([Windows](docs/instalacion/README.md#windows)).
+
+El script de instalación pregunta lo mínimo, genera los secretos y escribe `deploy/.env`.
+
+**Windows (PowerShell)**, con Docker Desktop en marcha:
+
+```powershell
+cd $HOME
+$repo = "https://github.com/spiderjad/SpiderFolio"
+Invoke-WebRequest "$repo/archive/refs/heads/main.zip" `
+  -OutFile spiderfolio.zip
+Expand-Archive spiderfolio.zip -DestinationPath .
+cd SpiderFolio-main\deploy
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+docker compose up -d
 ```
 
-Guía completa: [docs/instalacion](docs/instalacion/README.md) (requisitos, HTTPS, PDF controlado,
-archivos en disco o S3, [actualizar](docs/instalacion/actualizar.md) y
-[copias de seguridad](docs/instalacion/copias-de-seguridad.md)).
+**Linux**:
+
+```sh
+git clone https://github.com/spiderjad/SpiderFolio.git
+cd SpiderFolio/deploy
+./setup.sh
+docker compose up -d
+```
+
+Comprueba: `curl http://localhost:8080/api/health` responde `{"status":"ok"}`. Después abre la
+dirección que elegiste (en tu PC, `http://localhost:8080`; los emails de prueba, en
+`http://localhost:8025`).
+
+Más: [actualizar](docs/instalacion/actualizar.md), [copias de seguridad](docs/instalacion/copias-de-seguridad.md)
+y la [guía en la web](https://spiderfolio.spiderjad.com/es/docs/instalar). In English:
+[docs/install](docs/install/README.md).
 
 ## Plugins comerciales
 

@@ -250,3 +250,57 @@ details > summary::-webkit-details-marker {
   background: hsl(var(--success-soft));
   color: hsl(var(--success-soft-foreground));
 }
+
+/* Inline code in the guides: @tailwindcss/typography wraps it in literal backticks (`code`). A light
+   background marks it instead; code blocks (pre) keep their own style. */
+.prose :where(code):not(:where(pre *))::before,
+.prose :where(code):not(:where(pre *))::after {
+  content: none;
+}
+.prose :where(code):not(:where(pre *)) {
+  border-radius: 0.375rem;
+  background: hsl(var(--muted));
+  padding: 0.125rem 0.375rem;
+  font-weight: 500;
+}
+
+/* Windows / Linux tabs (components/OsTabs.astro). */
+.os-tabs {
+  margin: 1.25rem 0;
+}
+.os-tabs-list {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.os-tabs-list label {
+  position: relative;
+  cursor: pointer;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+.os-tabs-list input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.os-tabs-list label:has(input:checked) {
+  border-bottom-color: hsl(var(--primary));
+  color: hsl(var(--foreground));
+}
+.os-tabs-list label:has(input:focus-visible) {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+.os-tabs:has(input[value="windows"]:checked) [data-os-panel="linux"],
+.os-tabs:has(input[value="linux"]:checked) [data-os-panel="windows"] {
+  display: none;
+}
+.os-tab-panel > :first-child {
+  margin-top: 0.75rem;
+}

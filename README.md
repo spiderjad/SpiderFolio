@@ -45,18 +45,48 @@ floor.
 
 ## Install
 
-With Docker, on your own server:
+With Docker Compose. Pick where you'll install it; each option has its own complete step by step in
+the [installation guide](docs/install/README.md):
 
-```sh
-git clone https://github.com/spiderjad/SpiderFolio
-cd SpiderFolio/deploy
-cp .env.example .env          # fill in the URL, the database password, the secrets and SMTP
-docker compose --profile https up -d
+| Option | What for | Guide |
+| --- | --- | --- |
+| Try it on your PC | See it working (Windows, macOS or Linux), with a test inbox | [Try it on your PC](docs/install/README.md#try-it-on-your-pc) |
+| Server with your own domain | Real use, with automatic HTTPS | [Server with your own domain](docs/install/README.md#server-with-your-own-domain) |
+| Server behind your own proxy | You already have nginx, Traefik, IIS… | [Server behind your own proxy](docs/install/README.md#server-behind-your-own-proxy) |
+
+Windows Server: an Ubuntu virtual machine in Hyper-V is recommended
+([Windows](docs/install/README.md#windows)).
+
+The setup script asks the minimum, generates the secrets and writes `deploy/.env`.
+
+**Windows (PowerShell)**, with Docker Desktop running:
+
+```powershell
+cd $HOME
+$repo = "https://github.com/spiderjad/SpiderFolio"
+Invoke-WebRequest "$repo/archive/refs/heads/main.zip" `
+  -OutFile spiderfolio.zip
+Expand-Archive spiderfolio.zip -DestinationPath .
+cd SpiderFolio-main\deploy
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+docker compose up -d
 ```
 
-Full guide: [docs/install](docs/install/README.md) (requirements, HTTPS, controlled PDF, files on
-disk or S3, [updating](docs/install/upgrading.md) and [backups](docs/install/backups.md)). In
-Spanish: [docs/instalacion](docs/instalacion/README.md).
+**Linux**:
+
+```sh
+git clone https://github.com/spiderjad/SpiderFolio.git
+cd SpiderFolio/deploy
+./setup.sh
+docker compose up -d
+```
+
+Check: `curl http://localhost:8080/api/health` answers `{"status":"ok"}`. Then open the address
+you chose (on your PC, `http://localhost:8080`; test emails at `http://localhost:8025`).
+
+More: [updating](docs/install/upgrading.md), [backups](docs/install/backups.md) and the
+[web guide](https://spiderfolio.spiderjad.com/en/docs/install). In Spanish:
+[docs/instalacion](docs/instalacion/README.md).
 
 ## Commercial plugins
 

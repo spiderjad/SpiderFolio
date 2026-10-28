@@ -6,6 +6,7 @@ order: 3
 icon: clipboard
 ---
 
+import OsTabs from "../../../components/OsTabs.astro";
 import Shot from "../../../components/Shot.astro";
 
 Toda la configuración de SpiderFolio vive en un solo archivo, `deploy/.env`, que creas copiando
@@ -15,8 +16,8 @@ valor).
 
 ## Reglas básicas
 
-- **Nunca subas `.env` a un repositorio** ni lo compartas por chat. Déjalo con permisos `600`
-  (`chmod 600 .env`).
+- **Nunca subas `.env` a un repositorio** ni lo compartas por chat. En Linux, déjalo con permisos `600`
+  (`chmod 600 .env`; `setup.sh` ya lo hace).
 - **Guarda una copia segura** de `.env` fuera del servidor: tiene las claves con las que se cifran la
   verificación en dos pasos y las contraseñas SMTP de cada empresa.
 - Un valor vacío o solo con espacios cuenta como no definido.
@@ -28,13 +29,46 @@ valor).
 
 ## Generar los secretos
 
-```sh
-openssl rand -base64 48   # JWT_ACCESS_SECRET (64 caracteres)
-openssl rand -base64 32   # EMAIL_ENCRYPTION_KEY
-openssl rand -base64 32   # MFA_ENCRYPTION_KEY
+El script de instalación (`setup.ps1` o `setup.sh`) los genera solo. A mano:
+
+<OsTabs>
+<Fragment slot="windows">
+
+```powershell
+function New-Secret([int]$Bytes) {
+  $b = New-Object byte[] $Bytes
+  $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+  $rng.GetBytes($b)
+  [Convert]::ToBase64String($b)
+}
+# POSTGRES_PASSWORD (solo letras y números)
+(New-Secret 32) -replace '[^A-Za-z0-9]', ''
+# JWT_ACCESS_SECRET (64 caracteres)
+New-Secret 48
+# EMAIL_ENCRYPTION_KEY
+New-Secret 32
+# MFA_ENCRYPTION_KEY
+New-Secret 32
 ```
 
-Ejecuta cada orden por separado y usa un valor distinto para cada variable. Las dos claves de 32 bytes
+</Fragment>
+<Fragment slot="linux">
+
+```sh
+# POSTGRES_PASSWORD (solo letras y números)
+openssl rand -hex 24
+# JWT_ACCESS_SECRET (64 caracteres)
+openssl rand -base64 48
+# EMAIL_ENCRYPTION_KEY
+openssl rand -base64 32
+# MFA_ENCRYPTION_KEY
+openssl rand -base64 32
+```
+
+</Fragment>
+</OsTabs>
+
+Usa un valor distinto para cada variable. Las dos claves de 32 bytes
 **tienen que ser distintas entre sí**: si son iguales, la API no arranca.
 
 ## Dirección
@@ -42,10 +76,12 @@ Ejecuta cada orden por separado y usa un valor distinto para cada variable. Las 
 | Variable | Obligatoria | Para qué sirve |
 | --- | --- | --- |
 | `APP_URL` | Sí | La URL pública con la que se entra a la app, por ejemplo `https://docs.tu-empresa.com`. Se usa en los enlaces de los emails, en CORS y en las URLs de descarga. Con el perfil `https`: `https://` + `DOMAIN`. |
-| `WEB_URL` | Sí | La web informativa a la que enlazan los emails. Puede ser la misma `APP_URL`. |
+| `WEB_URL` | Sí | La web pública del proyecto (documentación y textos legales). En una instalación propia, pon la misma `APP_URL`. |
 | `DOMAIN` | Con el perfil `https` | El dominio para el que Caddy pide el certificado, sin `https://`. Necesita un registro DNS `A` (y `AAAA` si usas IPv6) apuntando al servidor. |
 | `HTTP_BIND` | No (`127.0.0.1`) | Dirección donde se publica la app sin Caddy. `127.0.0.1` = solo el propio servidor (lo normal detrás de un proxy). `0.0.0.0` la expone en todas las interfaces. |
 | `HTTP_PORT` | No (`8080`) | Puerto donde se publica la app sin Caddy. |
+| `COMPOSE_PROFILES` | No | Piezas opcionales, separadas por comas: `https` (Caddy), `pdf` (Gotenberg) y `mail` (Mailpit, bandeja de prueba en `http://localhost:8025`; solo para probar). |
+| `MAIL_UI_PORT` | No (`8025`) | Puerto de la bandeja de Mailpit (perfil `mail`). |
 | `TRUST_PROXY_HOPS` | No (`1`) | Cuántos proxies hay delante de la app. `1` detrás de Caddy o de tu propio proxy; `0` si la app está expuesta directamente. Con un CDN delante de tu proxy, `2`. Máximo `5`. |
 
 `TRUST_PROXY_HOPS` importa: con él la app sabe cuál es la IP real de cada persona, que se usa en los

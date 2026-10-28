@@ -1,0 +1,51 @@
+---
+// Windows (PowerShell) / Linux tabs for commands in the guides. Radio buttons: they work without
+// JavaScript and with the keyboard (arrows). The script only keeps every tab group on the page, and
+// the next visit, on the system the reader chose.
+// MDX: <OsTabs><Fragment slot="windows">…</Fragment><Fragment slot="linux">…</Fragment></OsTabs>
+const name = `os-${Math.random().toString(36).slice(2, 10)}`;
+---
+
+<div class="reveal os-tabs">
+  <div class="os-tabs-list not-prose" role="radiogroup" aria-label="Sistema operativo / Operating system">
+    <label>
+      <input type="radio" name={name} value="windows" data-os-tab checked />
+      <span>Windows (PowerShell)</span>
+    </label>
+    <label>
+      <input type="radio" name={name} value="linux" data-os-tab />
+      <span>Linux</span>
+    </label>
+  </div>
+  <div class="os-tab-panel" data-os-panel="windows"><slot name="windows" /></div>
+  <div class="os-tab-panel" data-os-panel="linux"><slot name="linux" /></div>
+</div>
+
+<script>
+  const KEY = "spiderfolio-os";
+
+  function select(os: string): void {
+    for (const input of document.querySelectorAll<HTMLInputElement>("input[data-os-tab]")) {
+      input.checked = input.value === os;
+    }
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved === "windows" || saved === "linux") select(saved);
+    } catch {
+      // No storage (private window): Windows stays selected.
+    }
+    for (const input of document.querySelectorAll<HTMLInputElement>("input[data-os-tab]")) {
+      input.addEventListener("change", () => {
+        select(input.value);
+        try {
+          localStorage.setItem(KEY, input.value);
+        } catch {
+          // Without storage the choice only lasts for this page.
+        }
+      });
+    }
+  });
+</script>

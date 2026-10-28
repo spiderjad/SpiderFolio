@@ -1,13 +1,14 @@
-# SpiderFolio en un servidor propio (docs/instalacion/README.md).
+# SpiderFolio on your own server (docs/install/README.md · docs/instalacion/README.md).
 #
-#   cp .env.example .env    # y completar los secretos
-#   docker compose up -d     # base, API con la app y worker; migraciones automáticas
+#   ./setup.sh  (Linux)  ·  .\setup.ps1  (Windows)   # writes .env
+#   docker compose up -d                              # db, app, worker; migrations run on start
 #
-# Opcionales (perfiles):
-#   --profile https   Caddy con HTTPS automático para DOMAIN (puertos 80 y 443)
-#   --profile pdf     Gotenberg: PDF de los documentos controlados (sin él, se avisa en la app)
+# Optional profiles (set COMPOSE_PROFILES in .env, comma-separated):
+#   https  Caddy with automatic HTTPS for DOMAIN (ports 80 and 443)
+#   pdf    Gotenberg: PDF of controlled documents (needs GOTENBERG_URL=http://gotenberg:3000)
+#   mail   Mailpit: test inbox at http://localhost:8025, no real email server (SMTP_HOST=mailpit)
 #
-# Actualizar: docker compose pull && docker compose up -d (docs/instalacion/actualizar.md).
+# Update: docker compose pull && docker compose up -d (docs/instalacion/actualizar.md).
 
 name: spiderfolio
 
@@ -17,7 +18,7 @@ x-app: &app
   environment:
     NODE_ENV: production
     PORT: "4000"
-    DATABASE_URL: postgres://${POSTGRES_USER:-spiderfolio}:${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env}@db:5432/${POSTGRES_DB:-spiderfolio}
+    DATABASE_URL: postgres://${POSTGRES_USER:-spiderfolio}:${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env / Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-spiderfolio}
     STORAGE_DIR: /data/files
     GOTENBERG_URL: ${GOTENBERG_URL:-}
   volumes:
@@ -32,7 +33,7 @@ services:
     image: postgres:16.15-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-spiderfolio}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env / Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-spiderfolio}
     volumes:
       - db-data:/var/lib/postgresql/data
@@ -43,11 +44,11 @@ services:
       retries: 20
     restart: unless-stopped
 
-  # API y app. Al arrancar aplica las migraciones pendientes (núcleo y plugins).
+  # API and app. On start it applies pending migrations (core and plugins).
   app:
     <<: *app
-    # docker compose build: compila la imagen desde el código (con los plugins de plugins/) y la etiqueta
-    # como SPIDERFOLIO_IMAGE; el worker usa la misma.
+    # docker compose build: builds the image from source (with the plugins in plugins/) and tags it
+    # as SPIDERFOLIO_IMAGE; the worker uses the same one.
     build:
       context: ..
       dockerfile: Dockerfile
@@ -56,7 +57,7 @@ services:
     ports:
       - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:4000"
 
-  # Colas y tareas programadas (emails, PDF, búsqueda, papelera…). Arranca cuando la API ya migró.
+  # Queues and scheduled jobs (emails, PDFs, search, trash…). Starts once the API has migrated.
   worker:
     <<: *app
     command: ["node", "backend/src/worker.ts"]
@@ -68,8 +69,14 @@ services:
   caddy:
     image: caddy:2.10.2-alpine
     profiles: ["https"]
+    # Compose interpolates the whole file even for inactive profiles, so DOMAIN can't use ${DOMAIN:?}:
+    # it would be required without the https profile too. It's checked here, when Caddy starts.
     environment:
-      DOMAIN: ${DOMAIN:?Con el perfil https, completa DOMAIN en .env}
+      DOMAIN: ${DOMAIN:-}
+    entrypoint:
+      - sh
+      - -c
+      - '[ -n "$$DOMAIN" ] || { echo "Con el perfil https, completa DOMAIN en .env / With the https profile, set DOMAIN in .env" >&2; exit 1; }; exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
     ports:
       - "80:80"
       - "443:443"
@@ -85,6 +92,14 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:8.38.0
     profiles: ["pdf"]
+    restart: unless-stopped
+
+  # Test inbox: catches every email (nothing leaves the machine). Only for trying SpiderFolio out.
+  mailpit:
+    image: axllent/mailpit:v1.31.5
+    profiles: ["mail"]
+    ports:
+      - "127.0.0.1:${MAIL_UI_PORT:-8025}:8025"
     restart: unless-stopped
 
 volumes:

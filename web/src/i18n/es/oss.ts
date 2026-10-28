@@ -54,7 +54,7 @@ export const oss = {
     subtitle: `${SITE.name} corre en tu servidor con Docker. En una tarde tienes la empresa funcionando.`,
     requirementsTitle: "Qué necesitas",
     requirements: [
-      "Un servidor Linux con Docker y Docker Compose v2",
+      "Un servidor Linux con Docker y Docker Compose v2 (para probar, también Windows o macOS con Docker Desktop)",
       "2 vCPU y 4 GB de RAM (hasta ~200 personas)",
       "Un servidor de email SMTP (el de tu empresa o uno transaccional)",
       "Un dominio apuntando al servidor, para entrar con HTTPS desde cualquier equipo",
@@ -62,30 +62,30 @@ export const oss = {
     steps: [
       {
         title: "Descarga",
-        text: "Clona el repositorio y copia el ejemplo de configuración.",
-        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy\ncp .env.example .env",
+        text: "Clona el repositorio. En Windows, la guía explica cómo bajarlo sin Git.",
+        code: "git clone https://github.com/spiderjad/SpiderFolio.git\ncd SpiderFolio/deploy",
       },
       {
         title: "Configura",
-        text: "Completa la URL, la contraseña de la base, los secretos y tu servidor de email. Los secretos se generan con openssl.",
-        code: "openssl rand -base64 48   # JWT_ACCESS_SECRET\nopenssl rand -base64 32   # EMAIL_ENCRYPTION_KEY y MFA_ENCRYPTION_KEY (una distinta para cada una)",
+        text: "El script pregunta dónde lo instalas (tu PC, un servidor con dominio o detrás de tu proxy) y los datos del email, genera los secretos y escribe .env. En Windows: setup.ps1.",
+        code: "./setup.sh",
       },
       {
         title: "Arranca",
-        text: "Un comando levanta la base, la app y el worker. Las migraciones se aplican solas. Con un dominio, el perfil https pide el certificado automáticamente.",
-        code: "docker compose --profile https up -d\ndocker compose logs -f app",
+        text: 'Un comando levanta la base, la app y el worker. Las migraciones se aplican solas y, con un dominio, el certificado HTTPS también. La comprobación responde {"status":"ok"}.',
+        code: "docker compose up -d\ncurl http://localhost:8080/api/health",
       },
       {
         title: "Crea tu empresa",
-        text: "Entra a tu dominio, regístrate y quedas como propietario. Después invita a tu equipo desde Administración.",
-        code: "https://tu-dominio/register",
+        text: "Entra a tu dirección, regístrate y quedas como propietario. Después invita a tu equipo desde Administración.",
+        code: "https://docs.tu-empresa.com/register",
       },
     ],
     optionalTitle: "Opcional",
     optional: [
       {
         title: "PDF controlado",
-        text: "Agrega el perfil pdf (Gotenberg) para generar el PDF de los documentos controlados.",
+        text: "Activa el perfil pdf (Gotenberg) para generar el PDF de los documentos controlados.",
       },
       {
         title: "Archivos en S3",
