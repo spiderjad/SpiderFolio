@@ -222,6 +222,11 @@ async function startServer(): Promise<ChildProcess> {
       APP_STATIC_DIR: join(root, "frontend", "dist"),
       TRUST_PROXY_HOPS: "0",
       BIAN_ENABLED: "false",
+      // Example data on screen (Security › Email), never the developer's own SMTP. The API only
+      // queues emails and no worker runs here, so nothing is sent.
+      SMTP_HOST: "smtp.example.com",
+      SMTP_PORT: "587",
+      MAIL_FROM: "SpiderFolio <no-reply@example.com>",
       // El Gotenberg de docker compose: sin él, la app muestra el aviso de que no hay PDF.
       GOTENBERG_URL: process.env.GOTENBERG_URL ?? "http://127.0.0.1:3000",
     },

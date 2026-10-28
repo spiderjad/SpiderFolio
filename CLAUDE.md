@@ -5,7 +5,7 @@
 - Antes de cada commit, solo `npm run typecheck` y `npm run lint`. Nada más.
 - Los tests de seguridad (permisos, aislamiento entre empresas) se hacen todos juntos al cerrar el módulo, cuando quien mantiene el proyecto lo pida.
 - Nunca corras la suite completa, la integración completa, `test:docker` ni E2E salvo que quien mantiene el proyecto lo pida.
-- Nada de revisar en el navegador ni sacar capturas: eso lo hace quien mantiene el proyecto.
+- No abrir el navegador para probar a mano: eso lo hace quien mantiene el proyecto. Las capturas sí: cada vez que cambia una pantalla con guía, regenerarlas con `web/scripts/capturas.ts` (base `spiderfolio_capturas`, ver «Trabajo»).
 - Si typecheck o lint fallan, máximo 2 intentos de arreglo. Si sigue fallando, commit de lo que funciona, anotá el fallo en `docs/plans/` y avisá a quien mantiene el proyecto en una línea.
 
 ## Producto
