@@ -32,6 +32,33 @@ The license is verified on your own server, with no internet connection. An inva
 license is rejected. It belongs to your company: if the installation hosts several companies, each one loads
 its own.
 
+## The company ID
+
+**Company ID** shows your company's identifier on this server. Click **Copy** and send it to us when you ask
+for a license: we issue it for that ID and it only works in your company. A license for another company is
+rejected.
+
+## Upload a plugin
+
+If we send you a `.sfplugin` file, you install it from this screen, without logging in to the server. It
+brings the plugin signed by SpiderJAD and your company's license.
+
+1. Under **Upload a plugin**, click **Choose .sfplugin file** and pick the file. You need two-step
+   verification turned on (see [Security and two-step verification](/en/docs/security-and-2fa)); if you
+   confirmed it more than a few minutes ago, it asks for your code.
+2. The server checks the signature, that nothing was modified and that the license is your company's, and
+   installs it. If something doesn't match, it tells you why and installs nothing.
+3. The plugin shows as **Installed, loads on restart**. Click **Restart now** and confirm with **Restart in 1
+   minute**.
+
+During that minute, everyone signed in sees a notice with a countdown so they save what they're editing. The
+app comes back on its own in a few seconds, with the plugin loaded. If the server doesn't restart on its own,
+the screen says so: whoever runs it restarts the app and the worker.
+
+If the server hosts several companies, the screen warns that the plugin is installed for the whole server
+(each company activates it with its own license). Unsigned third-party plugins aren't uploaded here. The
+upload, any rejection and the restart go to Admin › Audit log.
+
 ## The server's plugins
 
 Under **Plugins installed on this server** you see each plugin with its status:

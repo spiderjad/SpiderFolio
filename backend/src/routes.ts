@@ -31,6 +31,7 @@ import { searchRoutes } from "./modules/search/search.routes.ts";
 import { qrRoutes } from "./modules/qr/qr.routes.ts";
 import { pageRoutes } from "./modules/nodes/pages.routes.ts";
 import { spaceRoutes } from "./modules/spaces/spaces.routes.ts";
+import type { RestartWatch } from "./plugins/restart.ts";
 import { securityRoutes } from "./modules/security/security.routes.ts";
 import { bianRoutes } from "./modules/bian/bian.routes.ts";
 import { emailSettingsRoutes } from "./modules/email-settings/email-settings.routes.ts";
@@ -49,6 +50,8 @@ export interface AppDeps {
   passwords: Passwords;
   /** Plugins instalados y su activación por licencia (docs/spec/plugins.md). */
   plugins: PluginRuntime;
+  /** The announced restart this process follows (plugins/restart.ts); tests go without it. */
+  restart?: RestartWatch;
   storage: Storage;
   /** Bucket de sistema (ZIP generados en segundo plano). */
   systemStorage: Storage;

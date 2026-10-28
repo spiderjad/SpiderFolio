@@ -67,6 +67,7 @@ import {
 import { isDarkTheme, setThemePreference } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { locale, texts } from "@/i18n";
+import { RestartBanner } from "./restart-banner";
 
 /** Transiciones con los tokens de movimiento (se anulan con prefers-reduced-motion). */
 const ease =
@@ -1100,6 +1101,7 @@ export function AppShell({
           }}
         />
         <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <RestartBanner />
           {/* key: cada pantalla entra con su animación, no solo la primera. */}
           <div key={pathname} className="page-enter">
             <BianContext.Provider value={bianActions}>{children}</BianContext.Provider>

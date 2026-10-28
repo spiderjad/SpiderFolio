@@ -100,6 +100,30 @@ export const envSchema = z
         )
         .pipe(z.array(z.string()).max(10)),
     ),
+    /**
+     * Folder where plugins uploaded from the app are installed (default: the last PLUGINS_DIR folder).
+     * In Docker, the plugins volume (/data/plugins).
+     */
+    PLUGIN_INSTALL_DIR: optionalString,
+    /** Whether the owner can upload signed plugins (.sfplugin) from the app. On by default. */
+    PLUGIN_UPLOAD_ENABLED: z.preprocess(
+      emptyToUndefined,
+      z
+        .enum(["true", "false"])
+        .default("true")
+        .transform((value) => value === "true"),
+    ),
+    /**
+     * The process runs under something that starts it again when it exits (Docker's restart policy,
+     * the dev watcher): only then the app offers «Restart now» (docs/spec/plugins.md).
+     */
+    SPIDERFOLIO_SUPERVISED: z.preprocess(
+      emptyToUndefined,
+      z
+        .enum(["true", "false"])
+        .default("false")
+        .transform((value) => value === "true"),
+    ),
     /** Paquetes npm de plugins (privados), separados por comas. */
     PLUGIN_PACKAGES: z.preprocess(
       emptyToUndefined,

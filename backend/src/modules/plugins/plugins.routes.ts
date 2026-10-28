@@ -1,6 +1,10 @@
-// /api/v1/w/:slug/plugins, /admin/license y /admin/plugins (docs/spec/plugins.md). Cargar o quitar la
-// licencia y activar plugins community es solo del propietario.
+// /api/v1/w/:slug/plugins, /admin/license, /admin/plugins and /admin/server (docs/spec/plugins.md).
+// Loading or removing the license, turning on community plugins, uploading signed plugins and
+// restarting the server are the owner's only.
+import express, { type Request } from "express";
+import { pluginPackageLimits } from "@spiderfolio/limits";
 import { z } from "zod";
+import { AppError } from "../../lib/errors.ts";
 import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { tenantOf } from "../../middleware/tenant.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
@@ -12,6 +16,11 @@ import {
   saveLicense,
   setCommunityPlugin,
 } from "./plugins.service.ts";
+import {
+  pluginServerView,
+  requestRestart,
+  uploadPluginPackage,
+} from "./plugin-packages.service.ts";
 
 const LicenseBodySchema = z.strictObject({ token: z.string().trim().min(10).max(8000) });
 const ActivationSchema = z.strictObject({
@@ -22,6 +31,19 @@ const ActivationSchema = z.strictObject({
 const PluginParamsSchema = z.object({ pluginId: PluginIdSchema });
 
 export function pluginRoutes(deps: AppDeps): TenantRoute[] {
+  const authOf = (req: Request) => {
+    if (req.auth === undefined) throw new AppError("UNAUTHENTICATED");
+    return req.auth;
+  };
+  /** License and plugins screen: the license, the installed plugins, the company id and the server. */
+  const overview = async (req: Request) => {
+    const ctx = adminContextOf(req);
+    return {
+      ...(await licenseOverview(ctx, deps.plugins)),
+      workspaceId: ctx.tenant.workspaceId,
+      server: await pluginServerView(deps, authOf(req)),
+    };
+  };
   return [
     {
       method: "get",
@@ -35,7 +57,7 @@ export function pluginRoutes(deps: AppDeps): TenantRoute[] {
       path: "/admin/license",
       ownerOnly: true,
       handler: async (req, res) => {
-        res.json(await licenseOverview(adminContextOf(req), deps.plugins));
+        res.json(await overview(req));
       },
     },
     {
@@ -44,9 +66,8 @@ export function pluginRoutes(deps: AppDeps): TenantRoute[] {
       ownerOnly: true,
       handler: async (req, res) => {
         const { token } = LicenseBodySchema.parse(req.body);
-        const ctx = adminContextOf(req);
-        await saveLicense(ctx, deps.plugins, token);
-        res.json(await licenseOverview(ctx, deps.plugins));
+        await saveLicense(adminContextOf(req), deps.plugins, token);
+        res.json(await overview(req));
       },
     },
     {
@@ -57,9 +78,37 @@ export function pluginRoutes(deps: AppDeps): TenantRoute[] {
       handler: async (req, res) => {
         const { pluginId } = PluginParamsSchema.parse(req.params);
         const change = ActivationSchema.parse(req.body);
-        const ctx = adminContextOf(req);
-        await setCommunityPlugin(ctx, deps.plugins, pluginId, change);
-        res.json(await licenseOverview(ctx, deps.plugins));
+        await setCommunityPlugin(adminContextOf(req), deps.plugins, pluginId, change);
+        res.json(await overview(req));
+      },
+    },
+    {
+      // A signed plugin (.sfplugin) as the raw body; installed for the next restart.
+      method: "post",
+      path: "/admin/plugins/packages",
+      ownerOnly: true,
+      guards: [
+        express.raw({ type: "application/octet-stream", limit: pluginPackageLimits.maxBytes }),
+      ],
+      handler: async (req, res) => {
+        if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+          throw new AppError("BAD_REQUEST");
+        }
+        const uploaded = await uploadPluginPackage(
+          adminContextOf(req),
+          deps,
+          authOf(req),
+          req.body,
+        );
+        res.status(201).json({ ...(await overview(req)), uploaded });
+      },
+    },
+    {
+      method: "post",
+      path: "/admin/server/restart",
+      ownerOnly: true,
+      handler: async (req, res) => {
+        res.status(202).json(await requestRestart(adminContextOf(req), deps, authOf(req)));
       },
     },
     {

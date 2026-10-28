@@ -7,6 +7,24 @@ comerciales (políticas de seguridad avanzadas, directorio corporativo, importac
 OneDrive/SharePoint, conector MCP, plantillas por rubro, salas de auditoría) y se activan con una
 licencia.
 
+## Subir un plugin desde la app
+
+La forma más simple: te enviamos un archivo `.sfplugin` con el plugin firmado por SpiderJAD y la licencia
+de tu empresa. No hace falta entrar al servidor.
+
+1. El propietario entra a Administración › Licencia y plugins, copia el **ID de la empresa** y nos lo
+   envía: la licencia se emite para ese ID y solo funciona en tu empresa.
+2. Con el archivo que te enviamos, en la misma pantalla pulsa **Elegir archivo .sfplugin**. Necesitas
+   tener activa la verificación en dos pasos (Mi perfil › Seguridad); la app te pide el código.
+3. El servidor comprueba la firma, que nada se haya modificado y que la licencia sea de tu empresa, y lo
+   instala. Pulsa **Reiniciar ahora**: la app y el worker se reinician en un minuto, con un aviso a
+   todas las personas conectadas para que guarden lo que están editando.
+
+Si el servidor tiene varias empresas, el plugin se instala para todo el servidor (cada empresa lo
+activa con su propia licencia). Quien administra el servidor puede apagar la subida con
+`PLUGIN_UPLOAD_ENABLED=false` en `.env`. Los plugins de terceros sin firma no se suben desde la app:
+se copian en la carpeta del servidor (abajo). Todo queda en la auditoría.
+
 ## Instalar un plugin en una instalación con Docker
 
 Con `deploy/compose.yaml`, los plugins viven en el volumen `plugins` (la carpeta `/data/plugins` de la

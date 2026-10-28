@@ -133,7 +133,11 @@ export const PluginCapabilitySchema = z
 /** Prefijo y versión del formato: SFL1.<payload base64url>.<firma Ed25519 base64url>. */
 export const LICENSE_PREFIX = "SFL1";
 
-export const LicensePayloadSchema = z.strictObject({
+/**
+ * What a license says. Unknown fields are ignored (the signature still covers them), so a newer license
+ * with fields this core doesn't know still loads; only the fields below decide anything.
+ */
+export const LicensePayloadSchema = z.object({
   /** Id de la licencia (para soporte y revocación manual). */
   id: z.string().min(1).max(64),
   /** Empresa a la que se emitió. */
@@ -144,12 +148,17 @@ export const LicensePayloadSchema = z.strictObject({
   issuedAt: z.iso.datetime(),
   /** Vencimiento (ISO 8601); null = sin vencimiento. */
   expiresAt: z.iso.datetime().nullable(),
+  /**
+   * Company (workspace id) the license belongs to. With it, the license only works in that company;
+   * without it (older licenses), in whichever loads it. A signed plugin package always carries one.
+   */
+  workspaceId: z.string().min(1).max(64).optional(),
 });
 export type LicensePayload = z.infer<typeof LicensePayloadSchema>;
 
 export type LicenseStatus =
   | { state: "none" }
-  | { state: "invalid"; reason: "format" | "signature" | "payload" }
+  | { state: "invalid"; reason: "format" | "signature" | "payload" | "workspace" }
   | { state: "expired"; payload: LicensePayload }
   | { state: "valid"; payload: LicensePayload };
 
@@ -189,3 +198,51 @@ export function licenseSigningInput(payload: LicensePayload): string {
   const json = JSON.stringify(LicensePayloadSchema.parse(payload));
   return `${LICENSE_PREFIX}.${toBase64Url(new TextEncoder().encode(json))}`;
 }
+
+// ─── Signed plugin packages (.sfplugin) ─────────────────────────────────────
+
+/**
+ * A .sfplugin is a gzipped tar (ustar) with exactly: PACKAGE_MANIFEST_FILE, PACKAGE_SIGNATURE_FILE and
+ * the built plugin under PACKAGE_FILES_PREFIX. The signature is Ed25519 over the manifest's bytes, as
+ * they are in the file, with SpiderJAD's package key (base64url in PACKAGE_SIGNATURE_FILE).
+ */
+export const PACKAGE_MANIFEST_FILE = "manifest.json";
+export const PACKAGE_SIGNATURE_FILE = "manifest.sig";
+export const PACKAGE_FILES_PREFIX = "package/";
+export const PACKAGE_FORMAT = "sfplugin/1";
+
+/** Plugin versions in packages: plain x.y.z, so they can be compared (no downgrades). */
+export const PluginVersionSchema = z
+  .string()
+  .regex(/^\d{1,6}\.\d{1,6}\.\d{1,6}$/u, "Versión x.y.z");
+
+/** -1, 0 or 1, comparing x.y.z versions number by number. */
+export function compareVersions(a: string, b: string): number {
+  const left = a.split(".").map(Number);
+  const right = b.split(".").map(Number);
+  for (let index = 0; index < 3; index += 1) {
+    const difference = (left[index] ?? 0) - (right[index] ?? 0);
+    if (difference !== 0) return difference < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+/** The signed manifest: what the package holds, file by file, and the license it brings. */
+export const PluginPackageManifestSchema = z.object({
+  format: z.literal(PACKAGE_FORMAT),
+  id: PluginIdSchema,
+  version: PluginVersionSchema,
+  /** SFL1 license for the company that receives the package (it must name that workspaceId). */
+  license: z.string().min(10).max(8000),
+  /** Every file under PACKAGE_FILES_PREFIX, with its path relative to it. */
+  files: z
+    .array(
+      z.strictObject({
+        path: PackagePathSchema,
+        size: z.int().nonnegative(),
+        sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+      }),
+    )
+    .min(1),
+});
+export type PluginPackageManifest = z.infer<typeof PluginPackageManifestSchema>;

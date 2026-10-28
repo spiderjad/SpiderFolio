@@ -31,6 +31,33 @@ Arriba ves el estado de la licencia: **Sin licencia**, **Licencia vigente**, **L
 La licencia se verifica en tu propio servidor, sin conexión a internet. Una licencia no válida o ya vencida se
 rechaza. Es de tu empresa: si la instalación tiene varias empresas, cada una carga la suya.
 
+## El ID de la empresa
+
+En **ID de la empresa** está el identificador de tu empresa en este servidor. Pulsa **Copiar** y envíanoslo
+cuando pidas una licencia: la emitimos para ese ID y solo funciona en tu empresa. Si cargas una licencia de
+otra empresa, se rechaza.
+
+## Subir un plugin
+
+Si te enviamos un archivo `.sfplugin`, lo instalas desde esta pantalla, sin entrar al servidor. Trae el plugin
+firmado por SpiderJAD y la licencia de tu empresa.
+
+1. En **Subir un plugin**, pulsa **Elegir archivo .sfplugin** y elige el archivo. Necesitas tener activa la
+   verificación en dos pasos (ver [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)); si la
+   confirmaste hace más de unos minutos, te pide el código.
+2. El servidor comprueba la firma, que nada se haya modificado y que la licencia sea de tu empresa, y lo
+   instala. Si algo no cuadra, te dice por qué y no instala nada.
+3. El plugin queda **Instalado, se carga al reiniciar**. Pulsa **Reiniciar ahora** y confirma con **Reiniciar
+   en 1 minuto**.
+
+Durante ese minuto, todas las personas conectadas ven un aviso con la cuenta regresiva para que guarden lo que
+están editando. La app vuelve sola en unos segundos, con el plugin cargado. Si el servidor no se reinicia solo,
+la pantalla lo indica: quien lo administra reinicia la app y el worker.
+
+Si el servidor tiene varias empresas, la pantalla avisa que el plugin se instala para todo el servidor (cada
+empresa lo activa con su licencia). Los plugins de terceros sin firma no se suben desde aquí. La subida, los
+rechazos y el reinicio quedan en Administración › Registro de auditoría.
+
 ## Los plugins del servidor
 
 En **Plugins instalados en este servidor** ves cada plugin con su estado:

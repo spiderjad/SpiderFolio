@@ -9,6 +9,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { readdirSync, statSync, watch } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { RESTART_EXIT_CODE } from "../src/plugins/restart.ts";
 
 /** mtime y tamaño; null si el archivo no existe. */
 export type Fingerprint = string | null;
@@ -65,9 +66,17 @@ function main(entry: string): void {
     const proc = spawn(process.execPath, ["--env-file-if-exists=../.env", entry], {
       cwd: backendDir,
       stdio: "inherit",
+      // This watcher starts the process again when it asks to (RESTART_EXIT_CODE): the app can offer
+      // «Restart now» (backend/src/plugins/restart.ts).
+      env: { SPIDERFOLIO_SUPERVISED: "true", ...process.env },
     });
     proc.on("exit", (code, signal) => {
       if (child === proc) child = undefined;
+      if (!stopping && code === RESTART_EXIT_CODE) {
+        console.log(`'${entry}' pidió reiniciarse: arrancando de nuevo`);
+        start();
+        return;
+      }
       if (!stopping && signal === null) {
         console.log(
           `'${entry}' terminó (código ${String(code)}); esperando cambios para reiniciar`,

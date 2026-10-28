@@ -6,6 +6,24 @@ SpiderFolio is open source (AGPLv3) and works fully without plugins. Plugins add
 (advanced security policies, corporate directory, import from OneDrive/SharePoint, MCP connector,
 industry templates, audit rooms) and are activated with a license.
 
+## Upload a plugin from the app
+
+The simplest way: we send you a `.sfplugin` file with the plugin signed by SpiderJAD and your company's
+license. You don't need to log in to the server.
+
+1. The owner goes to Admin › License and plugins, copies the **Company ID** and sends it to us: the
+   license is issued for that ID and only works in your company.
+2. With the file we send you, on the same screen click **Choose .sfplugin file**. You need two-step
+   verification turned on (My profile › Security); the app asks for your code.
+3. The server checks the signature, that nothing was modified and that the license is your company's,
+   and installs it. Click **Restart now**: the app and the worker restart in one minute, with a notice
+   to everyone signed in so they save what they're editing.
+
+If the server hosts several companies, the plugin is installed for the whole server (each company
+activates it with its own license). Whoever runs the server can turn uploads off with
+`PLUGIN_UPLOAD_ENABLED=false` in `.env`. Unsigned third-party plugins aren't uploaded from the app: they're
+copied into the server's folder (below). Everything goes to the audit log.
+
 ## Install a plugin on a Docker installation
 
 With `deploy/compose.yaml`, plugins live in the `plugins` volume (the `/data/plugins` folder of the app

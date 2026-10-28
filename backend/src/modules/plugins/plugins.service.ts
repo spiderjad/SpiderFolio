@@ -11,7 +11,7 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 
 export interface LicenseView {
   state: LicenseStatus["state"];
-  reason?: "format" | "signature" | "payload";
+  reason?: "format" | "signature" | "payload" | "workspace";
   id?: string;
   customer?: string;
   plugins?: string[];
@@ -105,7 +105,10 @@ export async function saveLicense(
   plugins: PluginRuntime,
   token: string,
 ): Promise<void> {
-  const status = plugins.verify(token);
+  const status = plugins.verify(token, ctx.tenant.workspaceId);
+  if (status.state === "invalid" && status.reason === "workspace") {
+    throw new AppError("BAD_REQUEST", { message: pluginTexts.licenseOtherCompany });
+  }
   if (status.state === "invalid" || status.state === "none") {
     throw new AppError("BAD_REQUEST", { message: pluginTexts.licenseInvalid });
   }
@@ -131,7 +134,7 @@ export async function removeLicense(ctx: AdminContext, plugins: PluginRuntime): 
   if (existing === null) return;
   await ctx.db.workspaceLicense.delete({ where: { id: existing.id } });
   plugins.forget(ctx.tenant.workspaceId);
-  const status = plugins.verify(existing.token);
+  const status = plugins.verify(existing.token, ctx.tenant.workspaceId);
   await auditAdmin(ctx, {
     action: "license.remove",
     entityType: "WorkspaceLicense",

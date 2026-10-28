@@ -32,8 +32,8 @@ export interface PluginRuntime {
   /** Capacidades de todos los plugins instalados (se pueden asignar aunque la licencia venza). */
   readonly capabilities: readonly PluginCapability[];
   licenseStatus(workspaceId: string): Promise<LicenseStatus>;
-  /** Verifica un token con la clave de este runtime (al cargarlo). */
-  verify(token: string): LicenseStatus;
+  /** Verifies a token with this runtime's key, for the company that loads it. */
+  verify(token: string, workspaceId: string): LicenseStatus;
   /** Ids activos en el workspace: comerciales en una licencia válida y community activados. */
   activeIds(workspaceId: string): Promise<ReadonlySet<string>>;
   isActive(workspaceId: string, pluginId: string): Promise<boolean>;
@@ -112,8 +112,9 @@ function settingsStore(
 export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
   const { prisma, logger, installed } = deps;
   const now = deps.now ?? (() => new Date());
-  const verifyOptions = () => ({
+  const verifyOptions = (workspaceId: string) => ({
     now: now(),
+    workspaceId,
     ...(deps.publicKey === undefined ? {} : { publicKey: deps.publicKey }),
   });
   const byId = new Map(installed.map((plugin) => [plugin.manifest.id, plugin]));
@@ -142,7 +143,7 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
   };
 
   const licenseStatus = async (workspaceId: string) =>
-    verifyLicense((await stateOf(workspaceId)).token, verifyOptions());
+    verifyLicense((await stateOf(workspaceId)).token, verifyOptions(workspaceId));
 
   /** Comercial: en una licencia válida. Community: activado por el propietario de la empresa. */
   const isOn = (plugin: InstalledPlugin, licensed: ReadonlySet<string>, community: ReadonlySet<string>) =>
@@ -153,7 +154,7 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
   const activeIds = async (workspaceId: string): Promise<ReadonlySet<string>> => {
     if (installed.length === 0) return new Set();
     const state = await stateOf(workspaceId);
-    const licensed = licensedPlugins(verifyLicense(state.token, verifyOptions()));
+    const licensed = licensedPlugins(verifyLicense(state.token, verifyOptions(workspaceId)));
     return new Set(
       installed.filter((p) => isOn(p, licensed, state.community)).map((p) => p.manifest.id),
     );
@@ -190,7 +191,7 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
     installed,
     capabilities: installed.flatMap((plugin) => plugin.backend?.capabilities ?? []),
     licenseStatus,
-    verify: (token) => verifyLicense(token, verifyOptions()),
+    verify: (token, workspaceId) => verifyLicense(token, verifyOptions(workspaceId)),
     activeIds,
     async isActive(workspaceId, pluginId) {
       return (await activeIds(workspaceId)).has(pluginId);
@@ -227,7 +228,7 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
           });
           return rows
             .filter((row) =>
-              licensedPlugins(verifyLicense(row.token, verifyOptions())).has(pluginId),
+              licensedPlugins(verifyLicense(row.token, verifyOptions(row.workspaceId))).has(pluginId),
             )
             .map((row) => row.workspaceId);
         },

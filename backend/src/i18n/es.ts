@@ -502,6 +502,27 @@ export const pluginTexts = {
   notCommunity: "Este plugin se activa con la licencia, no a mano.",
   acceptRiskRequired:
     "Para activar un plugin no verificado tienes que confirmar que tiene acceso al servidor.",
+  licenseOtherCompany:
+    "Esa licencia es de otra empresa. Pídenos la de tu empresa con el ID que ves en esta pantalla.",
+  uploadDisabled: "En este servidor los plugins no se pueden subir desde la app.",
+  uploadNeedsMfa:
+    "Para subir un plugin necesitas tener activa la verificación en dos pasos (Mi perfil › Seguridad).",
+  packageRejected: {
+    format: "El archivo no es un plugin de SpiderFolio (.sfplugin) o está dañado.",
+    tooLarge: "El archivo es demasiado grande para un plugin.",
+    signature: "La firma del plugin no es válida: no lo publicó SpiderJAD o fue modificado.",
+    tampered: "El plugin fue modificado después de firmarse.",
+    manifest: "El plugin no tiene un manifiesto válido.",
+    unsupported: "Este plugin necesita una versión más nueva de SpiderFolio. Actualiza el servidor primero.",
+    license: "La licencia que trae el plugin no es válida o no lo incluye.",
+    licenseExpired: "La licencia que trae el plugin ya venció.",
+    licenseWorkspace: "La licencia que trae el plugin es de otra empresa.",
+    downgrade: "Ya hay instalada una versión más nueva de este plugin.",
+    builtIn: "Este plugin viene incluido en la imagen del servidor: se actualiza con la imagen.",
+  },
+  restartUnsupported:
+    "Este servidor no se reinicia solo: reinicia la app y el worker desde el servidor para cargar los plugins.",
+  restartPending: "Ya hay un reinicio programado.",
 } as const;
 
 /** Mensajes de validación (Zod) que vuelven a la app en `details.issues`. */

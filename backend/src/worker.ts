@@ -2,6 +2,8 @@
 // periódicas. En producción es otro contenedor con la misma imagen que la API.
 import type { JobResult, PgBoss } from "pg-boss";
 import { loadEnv } from "./config/env.ts";
+import { pluginInstallDir } from "./plugins/install.ts";
+import { RESTART_EXIT_CODE, watchRestart } from "./plugins/restart.ts";
 import { createBoss, createJobs, ensureQueues } from "./jobs/boss.ts";
 import {
   cleanupExpired,
@@ -163,6 +165,7 @@ export async function startWorker(boss: PgBoss, deps: WorkerDeps): Promise<void>
 }
 
 async function main(): Promise<void> {
+  const startedAt = new Date();
   const env = loadEnv();
   initSentry(env);
   const logger = createLogger(env);
@@ -200,14 +203,28 @@ async function main(): Promise<void> {
   await startPluginJobs(boss, plugins, logger);
   logger.info("Worker listo");
 
-  const shutdown = async () => {
+  let closing = false;
+  const shutdown = async (code: number) => {
+    if (closing) return;
+    closing = true;
     logger.info("Cerrando worker");
+    restart.stop();
+    // Running jobs finish (graceful); the supervisor starts the worker again with the new plugins.
     await boss.stop({ graceful: true });
     await prisma.$disconnect();
-    process.exit(0);
+    process.exit(code);
   };
-  process.once("SIGTERM", () => void shutdown());
-  process.once("SIGINT", () => void shutdown());
+  // An announced restart (plugins/restart.ts): the same plan the API follows.
+  const restart = watchRestart({
+    dir: pluginInstallDir(env),
+    startedAt,
+    onRestart: () => {
+      logger.info("Reinicio programado: cerrando el worker");
+      void shutdown(RESTART_EXIT_CODE);
+    },
+  });
+  process.once("SIGTERM", () => void shutdown(0));
+  process.once("SIGINT", () => void shutdown(0));
 }
 
 if (import.meta.main) await main();

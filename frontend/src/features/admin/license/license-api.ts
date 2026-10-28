@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 
 export interface LicenseView {
   state: "none" | "invalid" | "expired" | "valid";
-  reason?: "format" | "signature" | "payload";
+  reason?: "format" | "signature" | "payload" | "workspace";
   id?: string;
   customer?: string;
   plugins?: string[];
@@ -24,9 +24,22 @@ export interface InstalledPluginView {
   active: boolean;
 }
 
+export interface PluginServerView {
+  uploadEnabled: boolean;
+  ownMfa: boolean;
+  multiCompany: boolean;
+  restartSupported: boolean;
+  restartAt: string | null;
+  /** Installed on disk, loaded on the next restart. */
+  waiting: { id: string; version: string }[];
+}
+
 export interface LicenseOverview {
   license: LicenseView;
   installed: InstalledPluginView[];
+  /** This company's id: the license is issued for it. */
+  workspaceId: string;
+  server: PluginServerView;
 }
 
 export const limitKeys = [
@@ -77,6 +90,14 @@ export const licenseApi = {
       method: "PUT",
       body: enabled ? { enabled, acceptRisk: true } : { enabled },
     }),
+  uploadPlugin: (slug: string, file: Blob) =>
+    api<
+      LicenseOverview & {
+        uploaded: { id: string; version: string; previousVersion: string | null };
+      }
+    >(w(slug, "/admin/plugins/packages"), { method: "POST", file }),
+  restart: (slug: string) =>
+    api<{ restartAt: string }>(w(slug, "/admin/server/restart"), { method: "POST" }),
   limits: (slug: string) => api<LimitsOverview>(w(slug, "/admin/limits")),
   updateLimits: (slug: string, changes: Partial<Limits>) =>
     api<LimitsOverview>(w(slug, "/admin/limits"), { method: "PATCH", body: changes }),

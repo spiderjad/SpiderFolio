@@ -32,6 +32,7 @@ ENV NODE_ENV=production \
     PORT=4000 \
     APP_STATIC_DIR=/app/frontend/dist \
     PLUGINS_DIR=/app/plugins,/data/plugins \
+    PLUGIN_INSTALL_DIR=/data/plugins \
     STORAGE_DRIVER=local \
     STORAGE_DIR=/data/files
 WORKDIR /app

@@ -1,9 +1,19 @@
-// Administración › Licencia y plugins (solo el propietario): estado de la licencia, plugins instalados
-// en este servidor, cargar, reemplazar o quitar la licencia y activar los plugins community. La verificación la hace el servidor, sin
-// conexión (docs/spec/plugins.md).
+// Admin › License and plugins (owner only): the license status, the plugins installed on this server,
+// loading, replacing or removing the license, turning on community plugins, the company id the license
+// is issued for, uploading a signed plugin (.sfplugin) and the restart that loads it. The server does
+// every check, offline (docs/spec/plugins.md).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRound, Puzzle, ServerCrash, ShieldAlert } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import {
+  Building2,
+  Copy,
+  KeyRound,
+  Puzzle,
+  RotateCw,
+  ServerCrash,
+  ShieldAlert,
+  Upload,
+} from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,8 +21,10 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge, Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { FormField, Textarea } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
+import { ConfirmCodeDialog } from "@/features/profile/two-factor-section";
+import { ApiError } from "@/lib/api";
 import { pluginKeys } from "@/plugins/registry";
-import { formatShortDate } from "@/lib/utils";
+import { formatDateTime, formatShortDate } from "@/lib/utils";
 import { pluginsUrl } from "@/lib/web-url";
 import {
   licenseApi,
@@ -86,7 +98,11 @@ export function LicensePage() {
               }}
             />
           )}
+          <CompanyCard id={data.workspaceId} />
           <PluginsCard data={data} slug={workspaceSlug} onChanged={refresh} />
+          {data.server.uploadEnabled && (
+            <UploadCard data={data} slug={workspaceSlug} onChanged={refresh} />
+          )}
           <ConfirmDialog
             open={removing}
             onOpenChange={setRemoving}
@@ -121,7 +137,11 @@ function LicenseCard({
     <Card className="grid gap-3 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <KeyRound className="mt-0.5 size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />
+          <KeyRound
+            className="mt-0.5 size-5 shrink-0 text-primary"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
           <div className="min-w-0 break-words">
             <CardTitle className="flex flex-wrap items-center gap-2 text-base">
               {t.status[license.state]}
@@ -149,7 +169,11 @@ function LicenseCard({
         </div>
       </div>
       {license.state === "expired" && <Banner tone="warning">{t.expiredNote}</Banner>}
-      {license.state === "invalid" && <Banner tone="warning">{t.invalidNote}</Banner>}
+      {license.state === "invalid" && (
+        <Banner tone="warning">
+          {license.reason === "workspace" ? t.invalidWorkspace : t.invalidNote}
+        </Banner>
+      )}
     </Card>
   );
 }
@@ -244,7 +268,8 @@ function PluginsCard({
             >
               <div className="min-w-0">
                 <p className="flex flex-wrap items-center gap-2 font-medium">
-                  {plugin.name} <span className="text-xs text-muted-foreground">v{plugin.version}</span>
+                  {plugin.name}{" "}
+                  <span className="text-xs text-muted-foreground">v{plugin.version}</span>
                   {plugin.distribution === "community" && (
                     <Badge tone="warning">{c.unverified}</Badge>
                   )}
@@ -311,6 +336,187 @@ function PluginsCard({
           }
         }}
       />
+    </Card>
+  );
+}
+
+/** The id the license is issued for: the owner sends it to SpiderJAD. */
+function CompanyCard({ id }: { id: string }) {
+  const c = t.company;
+  return (
+    <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
+      <div className="flex min-w-0 items-start gap-3">
+        <Building2
+          className="mt-0.5 size-5 shrink-0 text-primary"
+          strokeWidth={1.75}
+          aria-hidden="true"
+        />
+        <div className="min-w-0 break-words">
+          <CardTitle className="text-base">{c.title}</CardTitle>
+          <p className="font-mono text-sm">{id}</p>
+          <p className="text-xs text-muted-foreground">{c.hint}</p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        onClick={() => {
+          void navigator.clipboard.writeText(id).then(() => toast.success(c.copied));
+        }}
+      >
+        <Copy className="size-4" aria-hidden="true" />
+        {c.copy}
+      </Button>
+    </Card>
+  );
+}
+
+/**
+ * Upload a signed plugin and restart to load it. Both need the owner's own two-step verification,
+ * confirmed recently: on MFA_RECENT_REQUIRED the code is asked for and the action retried.
+ */
+function UploadCard({
+  data,
+  slug,
+  onChanged,
+}: {
+  data: LicenseOverview;
+  slug: string;
+  onChanged: () => Promise<void>;
+}) {
+  const u = t.upload;
+  const r = t.restart;
+  const { server } = data;
+  const input = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [askCode, setAskCode] = useState<"upload" | "restart" | null>(null);
+  const [confirmRestart, setConfirmRestart] = useState(false);
+  const onMfa = (action: "upload" | "restart") => (error: Error) => {
+    if (error instanceof ApiError && error.code === "MFA_RECENT_REQUIRED") {
+      setAskCode(action);
+      return;
+    }
+    toast.error(adminErrorText(error));
+  };
+  const upload = useMutation({
+    mutationFn: (chosen: File) => licenseApi.uploadPlugin(slug, chosen),
+    onSuccess: async (result) => {
+      setFile(null);
+      const name = result.installed.find((plugin) => plugin.id === result.uploaded.id)?.name;
+      toast.success(u.uploaded(name ?? result.uploaded.id, result.uploaded.version));
+      await onChanged();
+    },
+    onError: onMfa("upload"),
+  });
+  const restart = useMutation({
+    mutationFn: () => licenseApi.restart(slug),
+    onSuccess: async () => {
+      setConfirmRestart(false);
+      await onChanged();
+    },
+    onError: (error) => {
+      setConfirmRestart(false);
+      onMfa("restart")(error);
+    },
+  });
+  const waiting = server.waiting
+    .map(
+      (plugin) =>
+        `${data.installed.find((p) => p.id === plugin.id)?.name ?? plugin.id} ${plugin.version}`,
+    )
+    .join(", ");
+  return (
+    <Card className="grid gap-3 p-5">
+      <div className="flex items-start gap-3">
+        <Upload
+          className="mt-0.5 size-5 shrink-0 text-primary"
+          strokeWidth={1.75}
+          aria-hidden="true"
+        />
+        <div className="min-w-0 break-words">
+          <CardTitle className="text-base">{u.title}</CardTitle>
+          <p className="text-xs text-muted-foreground">{u.text}</p>
+        </div>
+      </div>
+      {server.multiCompany && <Banner tone="warning">{u.multiCompany}</Banner>}
+      {!server.ownMfa && <Banner tone="warning">{u.needsMfa}</Banner>}
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          ref={input}
+          type="file"
+          accept=".sfplugin"
+          className="sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(event) => {
+            const chosen = event.target.files?.[0] ?? null;
+            event.target.value = "";
+            if (chosen === null) return;
+            setFile(chosen);
+            upload.mutate(chosen);
+          }}
+        />
+        <Button
+          disabled={!server.ownMfa || upload.isPending}
+          onClick={() => {
+            input.current?.click();
+          }}
+        >
+          {upload.isPending ? u.uploading : u.choose}
+        </Button>
+        {file !== null && <span className="text-xs text-muted-foreground">{file.name}</span>}
+      </div>
+      <p className="text-xs text-muted-foreground">{u.communityNote}</p>
+      {server.waiting.length > 0 && (
+        <div className="grid gap-2 rounded-lg border border-border p-3">
+          <p className="text-sm">{r.waiting(waiting)}</p>
+          {server.restartAt !== null ? (
+            <p className="text-xs text-muted-foreground">
+              {r.scheduled(formatDateTime(server.restartAt))}
+            </p>
+          ) : server.restartSupported ? (
+            <div>
+              <Button
+                variant="outline"
+                disabled={!server.ownMfa}
+                onClick={() => {
+                  setConfirmRestart(true);
+                }}
+              >
+                <RotateCw className="size-4" aria-hidden="true" />
+                {r.now}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">{r.manual}</p>
+          )}
+        </div>
+      )}
+      <ConfirmDialog
+        open={confirmRestart}
+        onOpenChange={setConfirmRestart}
+        icon={RotateCw}
+        tone="warning"
+        title={r.confirmTitle}
+        description={r.confirmText}
+        confirmLabel={r.confirm}
+        pendingLabel={r.scheduling}
+        onConfirm={async () => {
+          await restart.mutateAsync().catch(() => undefined);
+        }}
+      />
+      {askCode !== null && (
+        <ConfirmCodeDialog
+          onClose={() => {
+            setAskCode(null);
+          }}
+          onConfirmed={() => {
+            const action = askCode;
+            setAskCode(null);
+            if (action === "upload" && file !== null) upload.mutate(file);
+            if (action === "restart") restart.mutate();
+          }}
+        />
+      )}
     </Card>
   );
 }

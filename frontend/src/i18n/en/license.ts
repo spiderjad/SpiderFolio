@@ -50,6 +50,42 @@ export const licenseEs: Catalog<typeof EsLicense> = {
       disabled: "Plugin deactivated",
     },
     catalogLink: "See the plugin catalog",
+    invalidWorkspace: "The saved license belongs to another company: load this company's one.",
+    company: {
+      title: "Company ID",
+      hint: "Send it to us to generate your company's license: it only works with this ID.",
+      copy: "Copy",
+      copied: "ID copied",
+    },
+    upload: {
+      title: "Upload a plugin",
+      text: "The .sfplugin file we sent you: it brings the plugin signed by SpiderJAD and your company's license. It's verified on this server before it's installed.",
+      choose: "Choose .sfplugin file",
+      uploading: "Verifying and installing…",
+      uploaded: (name: string, version: string) => `${name} ${version} installed`,
+      needsMfa:
+        "To upload plugins you need two-step verification turned on (My profile › Security).",
+      multiCompany:
+        "This server hosts several companies: the plugin is installed for the whole server. Each company activates it with its own license.",
+      communityNote:
+        "Unsigned third-party plugins aren't uploaded here: whoever runs the server copies them into the plugins folder.",
+    },
+    restart: {
+      waiting: (list: string) => `Installed, loads on restart: ${list}.`,
+      now: "Restart now",
+      confirmTitle: "Restart now?",
+      confirmText:
+        "The app and the worker restart in 1 minute to load the plugins. Everyone signed in gets a notice to save what they're editing, and the app comes back on its own in a few seconds.",
+      confirm: "Restart in 1 minute",
+      scheduling: "Scheduling…",
+      scheduled: (time: string) => `Restart scheduled for ${time}.`,
+      manual:
+        "This server doesn't restart on its own: whoever runs it restarts the app and the worker (docker compose restart app worker).",
+    },
+    restartBanner: (seconds: number) =>
+      seconds > 0
+        ? `The app restarts in ${String(seconds)} s to load server changes. Save what you're editing.`
+        : "The app is restarting. It's back in a few seconds.",
   },
   limits: {
     title: "Limits and usage",

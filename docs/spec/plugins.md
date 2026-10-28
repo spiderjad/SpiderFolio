@@ -95,8 +95,17 @@ Payload (`LicensePayloadSchema` en `@spiderfolio/plugin-sdk`):
 
 ```json
 { "id": "LIC-0001", "customer": "Embutidos Demo S.L.", "plugins": ["security-policies"],
-  "issuedAt": "2026-10-26T00:00:00.000Z", "expiresAt": "2027-12-31T23:59:59.000Z" }
+  "issuedAt": "2026-10-26T00:00:00.000Z", "expiresAt": "2027-12-31T23:59:59.000Z",
+  "workspaceId": "cmh…" }
 ```
+
+- **Atada a la empresa**: `workspaceId` (opcional) es el id del workspace al que se emitió. Con él, la
+  licencia solo vale en esa empresa: cargarla en otra se rechaza («es de otra empresa») y, si ya estaba
+  cargada, queda como no válida (`reason: "workspace"`). Sin él (licencias anteriores), vale donde se cargue.
+  El propietario ve el ID de su empresa en Licencia y plugins, con un botón para copiarlo y enviarlo.
+- **Campos nuevos**: el núcleo ignora los campos que no conoce (la firma los cubre igual), así un núcleo
+  futuro acepta licencias con más datos. Un núcleo anterior a este cambio rechaza una licencia con
+  `workspaceId`: hay que actualizar el núcleo antes de cargar licencias nuevas.
 
 - Se verifica **sin conexión** en cada uso (`backend/src/plugins/license.ts`) con la clave pública fija
   en `backend/src/plugins/license-key.ts`. Ninguna variable de entorno la reemplaza; los tests pasan otra
@@ -110,6 +119,55 @@ Payload (`LicensePayloadSchema` en `@spiderfolio/plugin-sdk`):
   consultan y la app deja de mostrarlo. Sus datos y ajustes se conservan.
 - Emisión: con una herramienta privada de SpiderJAD (no se publica). La clave privada vive fuera
   de cualquier repositorio.
+
+## Subir un plugin desde la app
+
+Además de copiar la carpeta al volumen, el **propietario** puede subir un plugin comercial firmado desde
+Administración › Licencia y plugins. Los plugins community (sin firma) nunca se suben por la app: solo
+copiándolos en la carpeta del servidor.
+
+**El archivo `.sfplugin`** (`PluginPackageManifestSchema` del SDK): un tar ustar comprimido con gzip con
+exactamente `manifest.json`, `manifest.sig` y el plugin compilado bajo `package/` (ver «Paquetes
+compilados»). `manifest.json` trae el id, la versión `x.y.z`, la licencia de la empresa (SFL1) y la lista
+de archivos con su tamaño y SHA-256. `manifest.sig` es la firma Ed25519 de SpiderJAD sobre los bytes de
+`manifest.json`, con la **clave de paquetes** (`backend/src/plugins/package-key.ts`, distinta de la de
+licencias y fija en el código como ella). Lo arma la herramienta privada de SpiderJAD.
+
+**Se verifica todo en memoria antes de escribir nada** (`backend/src/plugins/package.ts`). Se rechaza si:
+
+- no es un tar.gz válido, trae enlaces, dispositivos o extensiones PAX/GNU, rutas absolutas, con `..` o
+  repetidas, o supera los topes de `pluginPackageLimits` (`packages/limits`: tamaño del archivo, tamaño
+  descomprimido y cantidad de archivos);
+- la firma no es válida, o algún archivo no coincide byte a byte con el manifiesto firmado, falta o sobra;
+- el `package.json` del plugin no coincide con el manifiesto firmado (id, versión), no es comercial o
+  necesita un `pluginApi` más nuevo que el del núcleo;
+- la licencia no es válida, venció, no incluye el plugin o no es de la empresa que lo sube (en un
+  paquete el `workspaceId` es obligatorio);
+- ya hay instalada una versión más nueva (no se baja de versión, así no se reinstala una vieja con
+  fallos), o el plugin viene incluido en la imagen (se actualiza con la imagen).
+
+**Quién**: solo el propietario, con su verificación en dos pasos activa y confirmada hace poco
+(`MFA_RECENT_REQUIRED`: la app pide el código y reintenta). El servidor puede apagar la subida con
+`PLUGIN_UPLOAD_ENABLED=false` (encendida por defecto). Si el servidor tiene más de una empresa, la
+pantalla avisa que el plugin se instala para todo el servidor; cada empresa lo activa con su licencia.
+
+**Instalación** (`backend/src/plugins/install.ts`): en `PLUGIN_INSTALL_DIR` (en Docker, el volumen
+`/data/plugins`; si falta, la última carpeta de `PLUGINS_DIR`). Se escribe en una carpeta oculta y se
+cambia por la anterior con un `rename`, así el cargador nunca lee una a medias. La licencia que trae pasa
+a ser la de la empresa si es más nueva (`issuedAt`) que la cargada. Se carga al reiniciar.
+
+**Reiniciar ahora** (`backend/src/plugins/restart.ts`): solo si algo vuelve a levantar los procesos al
+salir (`SPIDERFOLIO_SUPERVISED=true`: lo pone `deploy/compose.yaml`, y el watcher de `npm run dev`); si
+no, la pantalla explica cómo reiniciar a mano. El propietario (con 2FA reciente) programa el reinicio:
+se escribe `.restart.json` en la carpeta de instalación, que comparten la API y el worker. Desde ese
+momento cada respuesta de la API lleva `X-SpiderFolio-Restart-At` y la app muestra a todas las personas
+conectadas una cuenta regresiva para que guarden lo que están editando (`RESTART_NOTICE_MS`, 1 minuto).
+A la hora, cada proceso deja de aceptar trabajo, termina lo que está haciendo (pedidos en curso, jobs) y
+sale con el código 75; Docker (o el watcher) lo vuelve a levantar con los plugins nuevos. Un proceso
+ignora los planes anteriores a su arranque, así no se reinicia dos veces.
+
+**Auditoría**: `plugin.package.upload` (id, versión, versión anterior, licencia y si se actualizó),
+`plugin.package.rejected` (el motivo) y `server.restart.request` (la hora y lo que espera cargarse).
 
 ## Plugins community
 

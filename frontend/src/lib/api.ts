@@ -3,6 +3,7 @@
 // Nunca refresca ante INVALID_CREDENTIALS (login o contraseña actual incorrectos).
 import { getAccessToken, setAccessToken } from "@/auth/token-store";
 import { locale } from "@/i18n";
+import { noteRestart, RESTART_HEADER } from "./restart";
 
 export const API_BASE = "/api/v1";
 
@@ -92,6 +93,8 @@ export function refreshAccessToken(): Promise<boolean> {
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  /** A file sent as is (application/octet-stream), instead of a JSON body. */
+  file?: Blob;
   headers?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -102,12 +105,17 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   const token = getAccessToken();
   if (token !== null) headers.Authorization = `Bearer ${token}`;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
+  if (options.file !== undefined) headers["Content-Type"] = "application/octet-stream";
   try {
     return await fetch(`${API_BASE}${path}`, {
       method: options.method ?? "GET",
       headers,
       credentials: "same-origin",
-      ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
+      ...(options.file !== undefined
+        ? { body: options.file }
+        : options.body === undefined
+          ? {}
+          : { body: JSON.stringify(options.body) }),
       ...(options.signal === undefined ? {} : { signal: options.signal }),
     });
   } catch (error) {
@@ -139,6 +147,7 @@ async function request(path: string, options: RequestOptions): Promise<Response>
       }
     }
   }
+  noteRestart(res.headers.get(RESTART_HEADER));
   return res;
 }
 

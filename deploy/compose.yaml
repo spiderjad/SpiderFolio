@@ -21,6 +21,8 @@ x-app: &app
     DATABASE_URL: postgres://${POSTGRES_USER:-spiderfolio}:${POSTGRES_PASSWORD:?Completa POSTGRES_PASSWORD en .env / Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-spiderfolio}
     STORAGE_DIR: /data/files
     GOTENBERG_URL: ${GOTENBERG_URL:-}
+    # Docker starts app and worker again when they exit (restart below): «Restart now» can be offered.
+    SPIDERFOLIO_SUPERVISED: "true"
   volumes:
     - files:/data/files
     # Built plugins (docs/instalacion/plugins.md): the same folder for the API and the worker.

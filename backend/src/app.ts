@@ -35,6 +35,7 @@ import { tenantRoutes, type AppDeps } from "./routes.ts";
 import { createTokenSigner, LOCAL_STORAGE_PATH } from "./lib/local-storage.ts";
 import { localStorageRouter } from "./modules/storage/local-storage.routes.ts";
 import { pluginAssetsRouter, staticAppRouter } from "./static-app.ts";
+import { RESTART_HEADER } from "./plugins/restart.ts";
 import { localeFromHeader, withLocale } from "./i18n/locales.ts";
 import { registerPluginCapabilities } from "./modules/roles/capabilities.ts";
 
@@ -73,6 +74,12 @@ export function createApp(deps: AppDeps): Express {
     );
   }
   app.use(express.json({ limit: "1mb" }));
+  // An announced restart (plugins/restart.ts): every response says when, so the app warns its users.
+  app.use((_req, res, next) => {
+    const plan = deps.restart?.pending();
+    if (plan != null) res.setHeader(RESTART_HEADER, plan.restartAt);
+    next();
+  });
   app.use(cookieParser());
   // Idioma de los mensajes: el que manda la app (el activo); sin cabecera, español.
   app.use((req, _res, next) => {

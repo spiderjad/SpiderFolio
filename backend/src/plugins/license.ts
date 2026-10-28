@@ -1,5 +1,6 @@
-// Verificación sin conexión de la licencia de plugins (docs/spec/plugins.md): firma Ed25519 sobre
-// «SFL1.<payload>», payload válido y no vencido. Nunca llama a ningún servidor.
+// Offline verification of the plugin license (docs/spec/plugins.md): Ed25519 signature over
+// «SFL1.<payload>», a valid payload, not expired and, if it names a company, that company. It never
+// calls any server.
 import { createPublicKey, verify, type KeyObject } from "node:crypto";
 import {
   LicensePayloadSchema,
@@ -13,8 +14,10 @@ const defaultKey = createPublicKey(LICENSE_PUBLIC_KEY_PEM);
 
 export interface VerifyOptions {
   now?: Date;
-  /** Solo tests: otra clave pública. */
+  /** Tests only: another public key. */
   publicKey?: KeyObject;
+  /** The company checking it: a license for another company (workspaceId) is invalid here. */
+  workspaceId?: string;
 }
 
 export function verifyLicense(
@@ -38,6 +41,13 @@ export function verifyLicense(
   const parsed = LicensePayloadSchema.safeParse(json);
   if (!parsed.success) return { state: "invalid", reason: "payload" };
   const payload: LicensePayload = parsed.data;
+  if (
+    payload.workspaceId !== undefined &&
+    options.workspaceId !== undefined &&
+    payload.workspaceId !== options.workspaceId
+  ) {
+    return { state: "invalid", reason: "workspace" };
+  }
   const now = options.now ?? new Date();
   if (payload.expiresAt !== null && new Date(payload.expiresAt).getTime() <= now.getTime()) {
     return { state: "expired", payload };
@@ -45,7 +55,7 @@ export function verifyLicense(
   return { state: "valid", payload };
 }
 
-/** Plugins que una licencia activa ahora (vacío si no es válida o venció). */
+/** Plugins a license activates now (empty if it isn't valid or has expired). */
 export function licensedPlugins(status: LicenseStatus): ReadonlySet<string> {
   return status.state === "valid" ? new Set(status.payload.plugins) : new Set();
 }

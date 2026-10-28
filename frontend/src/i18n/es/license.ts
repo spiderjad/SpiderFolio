@@ -48,6 +48,42 @@ export const licenseEs = {
       disabled: "Plugin desactivado",
     },
     catalogLink: "Ver el catálogo de plugins",
+    invalidWorkspace: "La licencia guardada es de otra empresa: carga la de esta empresa.",
+    company: {
+      title: "ID de la empresa",
+      hint: "Envíanoslo para generar la licencia de tu empresa: solo funciona con este ID.",
+      copy: "Copiar",
+      copied: "ID copiado",
+    },
+    upload: {
+      title: "Subir un plugin",
+      text: "El archivo .sfplugin que te enviamos: trae el plugin firmado por SpiderJAD y la licencia de tu empresa. Se verifica en este servidor antes de instalarlo.",
+      choose: "Elegir archivo .sfplugin",
+      uploading: "Verificando e instalando…",
+      uploaded: (name: string, version: string) => `${name} ${version} instalado`,
+      needsMfa:
+        "Para subir plugins necesitas tener activa la verificación en dos pasos (Mi perfil › Seguridad).",
+      multiCompany:
+        "Este servidor tiene varias empresas: el plugin se instala para todo el servidor. Cada empresa lo activa con su propia licencia.",
+      communityNote:
+        "Los plugins de terceros sin firma no se suben desde aquí: quien administra el servidor los copia en la carpeta de plugins.",
+    },
+    restart: {
+      waiting: (list: string) => `Instalado, se carga al reiniciar: ${list}.`,
+      now: "Reiniciar ahora",
+      confirmTitle: "¿Reiniciar ahora?",
+      confirmText:
+        "La app y el worker se reinician en 1 minuto para cargar los plugins. Avisamos a todas las personas conectadas para que guarden lo que están editando, y la app vuelve sola en unos segundos.",
+      confirm: "Reiniciar en 1 minuto",
+      scheduling: "Programando…",
+      scheduled: (time: string) => `Reinicio programado para las ${time}.`,
+      manual:
+        "Este servidor no se reinicia solo: quien lo administra reinicia la app y el worker (docker compose restart app worker).",
+    },
+    restartBanner: (seconds: number) =>
+      seconds > 0
+        ? `La app se reinicia en ${String(seconds)} s para cargar cambios del servidor. Guarda lo que estés editando.`
+        : "La app se está reiniciando. Vuelve en unos segundos.",
   },
   limits: {
     title: "Límites y uso",

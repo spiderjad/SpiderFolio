@@ -535,6 +535,27 @@ export const pluginTexts: Catalog<typeof Es.pluginTexts> = {
   notCommunity: "This plugin is activated by the license, not manually.",
   acceptRiskRequired:
     "To activate an unverified plugin you have to confirm that it has access to the server.",
+  licenseOtherCompany:
+    "That license belongs to another company. Ask us for your company's one with the ID shown on this screen.",
+  uploadDisabled: "On this server plugins can't be uploaded from the app.",
+  uploadNeedsMfa:
+    "To upload a plugin you need two-step verification turned on (My profile › Security).",
+  packageRejected: {
+    format: "The file isn't a SpiderFolio plugin (.sfplugin) or it's damaged.",
+    tooLarge: "The file is too large for a plugin.",
+    signature: "The plugin's signature isn't valid: SpiderJAD didn't publish it or it was modified.",
+    tampered: "The plugin was modified after it was signed.",
+    manifest: "The plugin doesn't have a valid manifest.",
+    unsupported: "This plugin needs a newer version of SpiderFolio. Update the server first.",
+    license: "The license inside the plugin isn't valid or doesn't include it.",
+    licenseExpired: "The license inside the plugin has expired.",
+    licenseWorkspace: "The license inside the plugin belongs to another company.",
+    downgrade: "A newer version of this plugin is already installed.",
+    builtIn: "This plugin comes built into the server image: it's updated with the image.",
+  },
+  restartUnsupported:
+    "This server doesn't restart on its own: restart the app and the worker on the server to load the plugins.",
+  restartPending: "A restart is already scheduled.",
 };
 
 /** Validation (Zod) messages returned to the app in `details.issues`. */
