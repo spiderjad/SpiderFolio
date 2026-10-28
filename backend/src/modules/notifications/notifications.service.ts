@@ -28,6 +28,8 @@ export const NOTIFICATION_KINDS = [
   "reading_overdue_leader",
   /** El SMTP propio de la empresa falló y los correos salieron por SpiderFolio (para administradores). */
   "email_fallback",
+  /** The server SMTP fails for good (for administrators; `detail` = reason code). */
+  "email_failing",
   /** El uso de consultas de Bian llegó al 80 % o 95 % del total (para administradores; `version` = umbral). */
   "bian_usage",
   /** Alguien pide más consultas de Bian (para administradores; `actor` = quien pide). */
@@ -64,6 +66,8 @@ export interface NotificationView {
   expiresAt: Date | null;
   /** «invitation_by_leader»: a quién se invitó y a qué departamentos; null si ya no existe. */
   invitation: { email: string; departments: string[] } | null;
+  /** «email_failing»: the reason code (AUTH, CONNECTION…). */
+  detail: string | null;
 }
 
 export async function listNotifications(
@@ -203,6 +207,7 @@ export async function listNotifications(
       expiresAt: row.expiresAt,
       invitation:
         row.invitationId === null ? null : (invitationById.get(row.invitationId) ?? null),
+      detail: row.detail,
     };
   });
   return { ...pageOf(items, total, query), unread };
@@ -330,6 +335,7 @@ export async function createDocumentNotices(
       | "expiring"
       | "expiring_granted"
       | "email_fallback"
+      | "email_failing"
       | "bian_usage"
       | "bian_request"
       | "invitation_by_leader"

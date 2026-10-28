@@ -459,6 +459,12 @@ export const customEmailTexts = {
     body: (workspace: string) =>
       `Este email de prueba salió con el servidor SMTP configurado para ${workspace}. Si lo ves en tu bandeja, ya puedes activar el remitente propio.`,
   },
+  /** Test of the server SMTP (the one in .env). */
+  systemTest: {
+    subject: "Prueba del email de SpiderFolio",
+    title: "El email del servidor funciona",
+    body: "Este email de prueba salió con el servidor SMTP configurado en esta instalación (SMTP_HOST en .env). Si lo ves en tu bandeja, las verificaciones, invitaciones y avisos van a llegar.",
+  },
 } as const;
 
 /** Bian, el asistente IA: voz cercana y clara, español neutro con tuteo. */

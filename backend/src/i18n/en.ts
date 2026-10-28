@@ -488,6 +488,13 @@ export const customEmailTexts: Catalog<typeof Es.customEmailTexts> = {
       `This test email was sent with the SMTP server set up for ${workspace}. ` +
       "If you see it in your inbox, you can turn on the custom sender.",
   },
+  systemTest: {
+    subject: "SpiderFolio email test",
+    title: "The server email works",
+    body:
+      "This test email was sent with the SMTP server set up for this installation (SMTP_HOST in " +
+      ".env). If you see it in your inbox, verifications, invitations and notices will arrive.",
+  },
 };
 
 /** Bian, the AI assistant: friendly, clear voice. */

@@ -34,6 +34,7 @@ export const modelMetadata = {
   RecoveryCode: { scope: "global", relations: { user: "User" } },
   TrustedDevice: { scope: "global", relations: { user: "User" } },
   RateLimitBucket: { scope: "global", relations: {} },
+  SystemEmailHealth: { scope: "global", relations: {} },
   Workspace: {
     scope: "workspace",
     relations: {

@@ -90,6 +90,35 @@ export interface EmailTestResponse {
   result: { ok: boolean; code?: string; message?: string };
   settings: EmailSettings;
 }
+
+export type SmtpErrorCode = "AUTH" | "CONNECTION" | "TLS" | "SENDER_REJECTED" | "UNKNOWN";
+
+/** Server SMTP (.env): its state; never the user or the password. */
+export interface SystemEmail {
+  status: {
+    failing: boolean;
+    lastErrorCode: SmtpErrorCode | null;
+    lastErrorAt: string | null;
+    lastSuccessAt: string | null;
+  };
+  host: string;
+  port: number;
+  from: string;
+}
+
+export interface SystemEmailTestResponse {
+  result:
+    | { ok: true }
+    | {
+        ok: false;
+        code: SmtpErrorCode;
+        message: string;
+        smtpCode: string | null;
+        responseCode: number | null;
+        response: string | null;
+      };
+  settings: SystemEmail;
+}
 export type MemberStatus = "ACTIVE" | "SUSPENDED";
 
 export interface RoleView {
@@ -374,6 +403,7 @@ export const adminKeys = {
   pinSettings: (slug: string) => ["w", slug, "admin", "pin-settings"] as const,
   security: (slug: string) => ["w", slug, "admin", "security"] as const,
   email: (slug: string) => ["w", slug, "admin", "email"] as const,
+  systemEmail: (slug: string) => ["w", slug, "admin", "email", "system"] as const,
   roleOptions: (slug: string) => ["w", slug, "admin", "roles", "options"] as const,
   departmentOptions: (slug: string) => ["w", slug, "admin", "departments", "options"] as const,
 };
@@ -495,6 +525,9 @@ export const adminApi = {
     api<EmailSettings>(admin(slug, "/email"), { method: "PUT", body }),
   testEmailSettings: (slug: string) =>
     api<EmailTestResponse>(admin(slug, "/email/test"), { method: "POST", body: {} }),
+  systemEmail: (slug: string) => api<SystemEmail>(admin(slug, "/email/system")),
+  testSystemEmail: (slug: string) =>
+    api<SystemEmailTestResponse>(admin(slug, "/email/system/test"), { method: "POST", body: {} }),
   registerEmailDomain: (slug: string, body: EmailDomainInput) =>
     api<EmailSettings>(admin(slug, "/email/domain"), { method: "PUT", body }),
   verifyEmailDomain: (slug: string) =>

@@ -1,5 +1,5 @@
-// /api/v1/w/:slug/admin/email (Seguridad › Email). Propietario y administradores con
-// security.manage; la prueba tiene su propio rate limit.
+// /api/v1/w/:slug/admin/email (Security › Email): the company's own sender and the server SMTP.
+// Owner and administrators with security.manage; the tests have their own rate limit.
 import type { Request } from "express";
 import { createSecretBox } from "../../lib/secret-box.ts";
 import { clientIp, sensitiveRateLimit } from "../../middleware/rate-limit.ts";
@@ -18,6 +18,7 @@ import {
   updateEmailSettings,
   type EmailSettingsDeps,
 } from "./email-settings.service.ts";
+import { getSystemEmail, sendSystemTestEmail } from "./system-email.ts";
 
 const HOUR = 60 * 60_000;
 
@@ -79,6 +80,24 @@ export function emailSettingsRoutes(deps: AppDeps): TenantRoute[] {
       handler: async (req, res) => {
         // Solo al email de quien lo pide: no sirve para mandar correo a terceros.
         res.json(await sendTestEmail(adminContextOf(req), settings, req.auth?.userId ?? ""));
+      },
+    },
+    // Server SMTP (.env): its state and a test that shows the exact error.
+    {
+      method: "get",
+      path: "/admin/email/system",
+      capability: "security.manage",
+      handler: async (_req, res) => {
+        res.json(await getSystemEmail(deps));
+      },
+    },
+    {
+      method: "post",
+      path: "/admin/email/system/test",
+      capability: "security.manage",
+      guards: testLimits,
+      handler: async (req, res) => {
+        res.json(await sendSystemTestEmail(adminContextOf(req), deps, req.auth?.userId ?? ""));
       },
     },
     {

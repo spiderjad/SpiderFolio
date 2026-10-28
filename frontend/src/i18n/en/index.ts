@@ -245,6 +245,16 @@ export const en: Messages = {
     noAccess: "You no longer have access to what was shared with you.",
     emailFallback:
       "Your company’s email server failed: emails were sent through SpiderFolio. Check Security › Email.",
+    emailFailing: (reason: string) =>
+      `Email isn’t working: check the SMTP settings. Reason: ${reason}`,
+    smtpReasons: {
+      AUTH: "the server rejected the user or the password.",
+      SENDER_REJECTED:
+        "the server rejected the sender or the recipient (MAIL_FROM must be the same mailbox as SMTP_USER).",
+      CONNECTION: "couldn’t connect to the SMTP server (server, port or security).",
+      TLS: "couldn’t set up the secure connection (certificate or TLS).",
+      UNKNOWN: "the SMTP server returned an error while sending.",
+    },
     readingRequired: (what: string) => `You need to read “${what}”`,
     readingReminder: (what: string) => `You still need to confirm you read “${what}”`,
     bianUsage: (percent: number) =>

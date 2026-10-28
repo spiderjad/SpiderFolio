@@ -687,6 +687,8 @@ const cases: IsolationCase[] = [
   { method: "post", path: "/admin/email/domain/verify", url: () => "/admin/email/domain/verify" },
   { method: "delete", path: "/admin/email/domain", url: () => "/admin/email/domain" },
   { method: "post", path: "/admin/email/test", url: () => "/admin/email/test" },
+  { method: "get", path: "/admin/email/system", url: () => "/admin/email/system" },
+  { method: "post", path: "/admin/email/system/test", url: () => "/admin/email/system/test" },
   { method: "post", path: "/admin/email/activate", url: () => "/admin/email/activate" },
   { method: "post", path: "/admin/email/deactivate", url: () => "/admin/email/deactivate" },
   { method: "get", path: "/admin/members/org-chart", url: () => "/admin/members/org-chart" },
@@ -748,6 +750,7 @@ const cases: IsolationCase[] = [
 
 let ctx: TestContext;
 let app: ReturnType<typeof createApp>;
+let ownApp: ReturnType<typeof createApp>;
 let a: Awaited<ReturnType<typeof createWorkspace>>;
 let b: Awaited<ReturnType<typeof createWorkspace>>;
 let bDepartmentId = "";
@@ -758,6 +761,9 @@ let bPageId = "";
 beforeAll(async () => {
   ctx = await createTestContext();
   app = createApp(ctx.deps);
+  // Second instance, with its own in-memory rate limit (300 per minute and IP): the 404 sweep over
+  // every route already uses most of the first one.
+  ownApp = createApp(ctx.deps);
   a = await createWorkspace(ctx, "Aislamiento A");
   b = await createWorkspace(ctx, "Aislamiento B");
   bDepartmentId = (
@@ -843,7 +849,7 @@ describe("aislamiento entre tenants", () => {
   it.each(cases.filter((c) => c.method === "get"))(
     "$method $path: B sí accede a lo suyo",
     async (c) => {
-      const res = await request(app)
+      const res = await request(ownApp)
         .get(
           `/api/v1/w/${b.slug}${c.url({
             workspaceId: b.workspaceId,
@@ -861,7 +867,7 @@ describe("aislamiento entre tenants", () => {
 
   describe("espacios confidenciales y subáreas", () => {
     const get = (ws: { slug: string }, token: string, path: string) =>
-      request(app).get(`/api/v1/w/${ws.slug}${path}`).set("Authorization", `Bearer ${token}`);
+      request(ownApp).get(`/api/v1/w/${ws.slug}${path}`).set("Authorization", `Bearer ${token}`);
 
     const spaceData = (ws: typeof a, name: string, extra: object) => ({
       workspaceId: ws.workspaceId,
@@ -949,18 +955,18 @@ describe("aislamiento entre tenants", () => {
   });
 
   it("un slug inexistente también es 404 (no se distingue de uno ajeno)", async () => {
-    const res = await request(app)
+    const res = await request(ownApp)
       .get("/api/v1/w/no-existe-este-workspace")
       .set("Authorization", `Bearer ${a.token}`);
     expect(res.status).toBe(404);
   });
 
   it("nunca se acepta el workspace por query ni body", async () => {
-    const res = await request(app)
+    const res = await request(ownApp)
       .get(`/api/v1/w/${a.slug}/admin/limits?workspaceId=${b.workspaceId}`)
       .set("Authorization", `Bearer ${a.token}`);
     expect(res.status).toBe(200);
-    const own = await request(app)
+    const own = await request(ownApp)
       .get(`/api/v1/w/${a.slug}/`)
       .set("Authorization", `Bearer ${a.token}`);
     expect(bodyOf(own).workspace.id).toBe(a.workspaceId);

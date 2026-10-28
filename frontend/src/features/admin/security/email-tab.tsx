@@ -14,6 +14,7 @@ import { adminApi, adminKeys, type EmailSettings, type SmtpSecurity } from "../a
 import { adminErrorText } from "../admin-utils";
 import { smtpPortChoices, smtpSecurityChoices } from "../choices";
 import { texts } from "@/i18n";
+import { SystemEmailCard } from "./system-email-card";
 
 type Config = NonNullable<EmailSettings["config"]>;
 
@@ -28,6 +29,7 @@ export function EmailTab() {
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-4">
+      <SystemEmailCard slug={workspaceSlug} />
       <Card className="min-w-0 p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <MailCheck

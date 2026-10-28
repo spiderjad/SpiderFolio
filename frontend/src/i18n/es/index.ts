@@ -246,6 +246,16 @@ export const es = {
     noAccess: "Ya no tienes acceso a lo que te compartieron.",
     emailFallback:
       "Falló el servidor de email de tu empresa: los emails salieron por SpiderFolio. Revisa Seguridad › Email.",
+    emailFailing: (reason: string) =>
+      `El email no está funcionando: revisa la configuración SMTP. Motivo: ${reason}`,
+    smtpReasons: {
+      AUTH: "el servidor rechazó el usuario o la contraseña.",
+      SENDER_REJECTED:
+        "el servidor rechazó el remitente o el destinatario (MAIL_FROM tiene que ser la misma casilla que SMTP_USER).",
+      CONNECTION: "no se pudo conectar con el servidor SMTP (servidor, puerto o seguridad).",
+      TLS: "no se pudo establecer la conexión segura (certificado o TLS).",
+      UNKNOWN: "el servidor SMTP devolvió un error al enviar.",
+    },
     readingRequired: (what: string) => `Debes leer «${what}»`,
     readingReminder: (what: string) => `Te falta confirmar la lectura de «${what}»`,
     bianUsage: (percent: number) =>

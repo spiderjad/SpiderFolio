@@ -33,6 +33,7 @@ export interface NotificationView {
     | "reading_reminder"
     | "reading_overdue_leader"
     | "email_fallback"
+    | "email_failing"
     | "bian_usage"
     | "bian_request"
     | "invitation_by_leader";
@@ -54,6 +55,8 @@ export interface NotificationView {
   subject: { type: "person" | "department"; name: string } | null;
   /** Invitación hecha por un jefe: a quién y a qué departamentos. */
   invitation: { email: string; departments: string[] } | null;
+  /** «email_failing»: the reason code (AUTH, CONNECTION…). */
+  detail: string | null;
 }
 
 const w = (slug: string, path: string) => `/w/${slug}${path}`;
@@ -79,7 +82,9 @@ export function expiryText(expiresAt: string, now: Date = new Date()): string {
 }
 
 function pathOf(slug: string, item: NotificationView): string | null {
-  if (item.kind === "email_fallback") return `/app/${slug}/admin/security?tab=email`;
+  if (item.kind === "email_fallback" || item.kind === "email_failing") {
+    return `/app/${slug}/admin/security?tab=email`;
+  }
   if (item.kind === "invitation_by_leader") return `/app/${slug}/admin/members`;
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
@@ -102,6 +107,10 @@ function pathOf(slug: string, item: NotificationView): string | null {
 function text(item: NotificationView): string {
   const t = texts.notifications;
   if (item.kind === "email_fallback") return t.emailFallback;
+  if (item.kind === "email_failing") {
+    const reasons: Record<string, string> = t.smtpReasons;
+    return t.emailFailing(reasons[item.detail ?? ""] ?? t.smtpReasons.UNKNOWN);
+  }
   if (item.kind === "bian_usage") return t.bianUsage(item.version ?? 80);
   if (item.kind === "bian_request") return t.bianRequest(item.actor?.name ?? "");
   if (item.kind === "invitation_by_leader") {

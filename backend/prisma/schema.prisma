@@ -192,6 +192,18 @@ model RateLimitBucket {
 
 // ─── Workspace y tablas con tenant ──────────────────────────────────────────
 
+/// State of the server SMTP (the one in .env): a single row, id "system". Global, without workspace.
+model SystemEmailHealth {
+  id            String    @id @default("system")
+  /// Last classified failure (AUTH, SENDER_REJECTED, CONNECTION, TLS, UNKNOWN); never the server text.
+  lastErrorCode String?
+  lastErrorAt   DateTime?
+  lastSuccessAt DateTime?
+  /// Last notice to the administrators (at most one per hour).
+  lastAlertAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+}
+
 model Workspace {
   id               String    @id @default(cuid())
   name             String
@@ -825,6 +837,8 @@ model Notification {
   expiresAt    DateTime?
   /// Evita avisar dos veces lo mismo (el job diario puede repetir).
   dedupeKey    String?
+  /// Detail without free text: the reason code of an «email_failing» notice (AUTH, CONNECTION…).
+  detail       String?
   createdAt    DateTime  @default(now())
   readAt       DateTime?
 

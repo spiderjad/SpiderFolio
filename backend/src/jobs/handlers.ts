@@ -8,6 +8,7 @@ import { buildEmail, type EmailContext } from "../emails/templates.ts";
 import { emailChangeTexts, emailTexts } from "../i18n/index.ts";
 import { withLocale } from "../i18n/locales.ts";
 import { emailLocale } from "./email-locale.ts";
+import { alertFailedEmail } from "../modules/email-settings/system-email.ts";
 import { randomToken, sha256 } from "../lib/crypto.ts";
 import { issueAuthToken } from "../modules/auth/auth-tokens.ts";
 import type { Mailer } from "../lib/mailer.ts";
@@ -461,11 +462,24 @@ async function sendEmail(deps: WorkerDeps, job: EmailJob): Promise<void> {
   await deps.mailer.send({ to: user.email, ...email });
 }
 
-export function reportFailedEmail(deps: Pick<WorkerDeps, "logger">, payload: unknown): void {
+/**
+ * An email that won't be sent (permanent SMTP error, or retries exhausted): logged, reported to
+ * Sentry and notified to the owner and administrators of its workspaces, with the reason.
+ */
+export async function reportFailedEmail(
+  deps: Pick<WorkerDeps, "logger" | "prisma">,
+  payload: unknown,
+): Promise<void> {
   const job = EmailJobSchema.safeParse(payload);
   const kind = job.success ? job.data.kind : "desconocido";
-  deps.logger.error({ kind }, "Email no enviado tras agotar los reintentos");
+  deps.logger.error({ kind }, "Email no enviado: se marcó como fallido");
   Sentry.captureMessage(`Email no enviado: ${kind}`, "error");
+  if (!job.success) return;
+  try {
+    await alertFailedEmail(deps.prisma, job.data);
+  } catch (error) {
+    deps.logger.warn({ err: error }, "No se pudo avisar a los administradores del email fallido");
+  }
 }
 
 export interface CleanupResult {

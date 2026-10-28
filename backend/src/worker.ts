@@ -33,6 +33,11 @@ import { createMailer } from "./lib/mailer.ts";
 import { backfillBianIndexIfEmpty, drainBianIndex } from "./modules/bian/indexer.ts";
 import { createSecretBox } from "./lib/secret-box.ts";
 import { domainProviderFromEnv } from "./modules/email-settings/domain-provider.ts";
+import { classifySmtpError } from "./modules/email-settings/smtp.ts";
+import {
+  isPermanentSmtpError,
+  monitorSystemMailer,
+} from "./modules/email-settings/system-email.ts";
 import { createWorkspaceMailer } from "./modules/email-settings/workspace-mailer.ts";
 import { createStorage, createSystemStorage } from "./lib/storage.ts";
 import { createPrismaClient } from "./lib/prisma.ts";
@@ -61,15 +66,24 @@ export async function startWorker(boss: PgBoss, deps: WorkerDeps): Promise<void>
           await sendEmailJob(deps, job.data);
           return { id: job.id, status: "completed" };
         } catch (error) {
-          deps.logger.warn({ err: error, jobId: job.id }, "Email no enviado; se reintentará");
-          return { id: job.id, status: "failed", output: { message: "Envío fallido" } };
+          const { code } = classifySmtpError(error);
+          // Wrong credentials or a rejected sender: retrying won't fix it. The job fails at once and
+          // goes to email-failed, which notifies the administrators.
+          if (isPermanentSmtpError(code)) {
+            deps.logger.error(
+              { err: error, jobId: job.id, code },
+              "Email no enviado: error permanente del SMTP, no se reintenta",
+            );
+            return { id: job.id, status: "deadletter", output: { code } };
+          }
+          deps.logger.warn({ err: error, jobId: job.id, code }, "Email no enviado; se reintentará");
+          return { id: job.id, status: "failed", output: { code } };
         }
       }),
     ),
   );
-  await boss.work("email-failed", (jobs) => {
-    for (const job of jobs) reportFailedEmail(deps, job.data);
-    return Promise.resolve();
+  await boss.work("email-failed", async (jobs) => {
+    for (const job of jobs) await reportFailedEmail(deps, job.data);
   });
   await boss.work("maintenance-cleanup", async (jobs) => {
     for (const job of jobs) await cleanupExpired(deps, job.data);
@@ -159,7 +173,7 @@ async function main(): Promise<void> {
   await startWorker(boss, {
     prisma,
     mailer: createWorkspaceMailer({
-      base: createMailer(env),
+      base: monitorSystemMailer(createMailer(env), { prisma, logger }),
       prisma,
       box: env.EMAIL_ENCRYPTION_KEY === undefined ? null : createSecretBox(env),
       domainProvider: domainProviderFromEnv(env),
