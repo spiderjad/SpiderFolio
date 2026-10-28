@@ -35,6 +35,32 @@ export const site: Catalog<typeof esSite> = {
         { who: "Approver role", why: "direct access" },
       ],
     },
+    clips: {
+      eyebrow: "In action",
+      title: "See it working",
+      items: [
+        {
+          name: "control",
+          title: "Controlled documents",
+          text: "Version history, what changed, the approval and the watermarked PDF.",
+        },
+        {
+          name: "qr",
+          title: "QR codes for the shop floor",
+          text: "Generate the QR code and, when scanned, it always opens the current version.",
+        },
+        {
+          name: "bian",
+          title: "Bian, the AI assistant",
+          text: "Answers from the current documents each person can see, and cites the source.",
+        },
+        {
+          name: "compartir",
+          title: "Who has access and why",
+          text: "Every document explains who can get in and for what reason.",
+        },
+      ],
+    },
     featuresAnchor: "features",
     featuresEyebrow: "Features",
     featuresTitle: "Everything your documentation needs",

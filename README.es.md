@@ -19,7 +19,34 @@
   <a href="CONTRIBUTING.md">Contribuir</a>
 </p>
 
-![Inicio de SpiderFolio](docs/capturas/inicio.png)
+![SpiderFolio en acción: documentos controlados, códigos QR, Bian y accesos explicados](docs/clips/demo-es.gif)
+
+## Funciones
+
+### Documentos controlados
+
+Historial de versiones, qué cambió entre dos versiones, la aprobación y el PDF controlado con su marca
+de agua.
+
+![Documento controlado: historial, qué cambió, aprobación y PDF con marca de agua](docs/clips/control-es.gif)
+
+### Códigos QR para la planta
+
+Generas el QR de un documento: al escanearlo, abre siempre la versión vigente.
+
+![Generar un código QR y abrirlo](docs/clips/qr-es.gif)
+
+### Bian, el asistente IA
+
+Responde con los documentos vigentes que cada persona puede ver y cita la fuente.
+
+![Pregunta a Bian, con la respuesta y su fuente](docs/clips/bian-es.gif)
+
+### Quién accede y por qué
+
+Cada documento explica quién puede entrar y por qué motivo.
+
+![Diálogo de compartir: quién puede entrar y por qué](docs/clips/compartir-es.gif)
 
 ## Qué es
 

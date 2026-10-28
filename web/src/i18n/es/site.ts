@@ -33,6 +33,33 @@ export const site = {
         { who: "Rol Aprobador", why: "acceso directo" },
       ],
     },
+    /** Demo clips (web/public/clips, made with web/scripts/clips.ts). */
+    clips: {
+      eyebrow: "En acción",
+      title: "Míralo funcionando",
+      items: [
+        {
+          name: "control",
+          title: "Documentos controlados",
+          text: "Historial de versiones, qué cambió, la aprobación y el PDF con marca de agua.",
+        },
+        {
+          name: "qr",
+          title: "Códigos QR para la planta",
+          text: "Generas el QR y, al escanearlo, abre siempre la versión vigente.",
+        },
+        {
+          name: "bian",
+          title: "Bian, el asistente IA",
+          text: "Responde con los documentos vigentes que cada persona puede ver y cita la fuente.",
+        },
+        {
+          name: "compartir",
+          title: "Quién accede y por qué",
+          text: "Cada documento explica quién puede entrar y por qué motivo.",
+        },
+      ],
+    },
     featuresAnchor: "funciones",
     featuresEyebrow: "Funciones",
     featuresTitle: "Todo lo que necesita tu documentación",

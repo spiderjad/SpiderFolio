@@ -19,7 +19,34 @@
   <a href="CONTRIBUTING.md">Contribute</a>
 </p>
 
-![SpiderFolio home](docs/capturas/inicio.png)
+![SpiderFolio in action: controlled documents, QR codes, Bian and access explained](docs/clips/demo-en.gif)
+
+## Features
+
+### Controlled documents
+
+Version history, what changed between two versions, the approval and the controlled PDF with its
+watermark.
+
+![Controlled document: history, what changed, approval and watermarked PDF](docs/clips/control-en.gif)
+
+### QR codes for the shop floor
+
+Generate a document's QR code: scanned, it always opens the current version.
+
+![Generating a QR code and opening it](docs/clips/qr-en.gif)
+
+### Bian, the AI assistant
+
+It answers from the current documents each person can see, and cites the source.
+
+![Asking Bian a question, with the answer and its source](docs/clips/bian-en.gif)
+
+### Who has access and why
+
+Every document explains who can get in and for what reason.
+
+![Share dialog: who can get in and why](docs/clips/compartir-en.gif)
 
 ## What it is
 

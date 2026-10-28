@@ -1,6 +1,7 @@
 ---
 // Portada: héroe con el comando de instalación y una captura real, cómo funciona (diagramas animados),
 // funciones, planta, comparación, código abierto, plugins, ediciones y FAQ.
+import DemoClip from "../components/DemoClip.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import Shot from "../components/Shot.astro";
@@ -130,6 +131,18 @@ const secondaryButton =
       <div class="hero-shot">
         <Shot name="inicio" alt={l.heroAlt} eager />
       </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 pt-20 sm:px-6">
+    <p class={eyebrow}>{t.clips.eyebrow}</p>
+    <h2 class={h2}>{t.clips.title}</h2>
+    <div class="mt-10 grid gap-6 md:grid-cols-2">
+      {
+        t.clips.items.map((clip) => (
+          <DemoClip name={clip.name} locale={locale} title={clip.title} text={clip.text} />
+        ))
+      }
     </div>
   </section>
 
@@ -399,4 +412,5 @@ const secondaryButton =
 
 <script>
   import "../scripts/animate.ts";
+  import "../scripts/clips.ts";
 </script>

@@ -1,0 +1,37 @@
+---
+// A demo clip (web/public/clips/<lang>/<name>.mp4, made with web/scripts/clips.ts). In the HTML it has
+// controls and its poster, so it can be played by hand without JavaScript. src/scripts/clips.ts plays
+// it muted and in a loop while it's on screen, unless the visitor prefers reduced motion.
+import type { Locale } from "../i18n/index.ts";
+
+interface Props {
+  name: string;
+  locale: Locale;
+  title: string;
+  text: string;
+}
+const { name, locale, title, text } = Astro.props;
+const base = `/clips/${locale}/${name}`;
+---
+
+<figure class="lift reveal m-0 overflow-hidden rounded-2xl border bg-background">
+  <video
+    class="block aspect-[8/5] w-full bg-muted"
+    width="1280"
+    height="800"
+    poster={`${base}.webp`}
+    preload="none"
+    muted
+    loop
+    playsinline
+    controls
+    data-clip
+    aria-label={title}
+  >
+    <source src={`${base}.mp4`} type="video/mp4" />
+  </video>
+  <figcaption class="border-t p-5">
+    <p class="font-semibold">{title}</p>
+    <p class="mt-1 text-sm text-muted-foreground">{text}</p>
+  </figcaption>
+</figure>
