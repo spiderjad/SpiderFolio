@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@spiderfolio/tailwind-preset/preset.css";
+@import "./code-theme.css";
 
 @source "../";
 
@@ -342,4 +343,23 @@ details > summary::-webkit-details-marker {
 .code-copy.is-copied {
   background: hsl(var(--success-soft));
   color: hsl(var(--success-soft-foreground));
+}
+
+/* Code blocks (Shiki): colors come as classes (src/lib/shiki-classes.ts, code-theme.css), never as
+   inline styles. Background, base color and scroll are set here for both themes. */
+.astro-code {
+  overflow-x: auto;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  color: #24292e;
+}
+.dark .astro-code {
+  color: #e1e4e8;
+}
+.astro-code .code-no-select {
+  user-select: none;
+}
+.astro-code.code-wrap {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }

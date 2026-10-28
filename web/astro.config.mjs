@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, passthroughImageService } from "astro/config";
 import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO } from "./src/i18n/locales.ts";
 import { allAlternates } from "./src/i18n/routes.ts";
+import { shikiStyleToClass } from "./src/lib/shiki-classes.ts";
 
 // URL pública de la web (canónicas, hreflang y sitemap). WEB_SITE_URL la reemplaza (por ejemplo, para
 // una copia de pruebas).
@@ -55,6 +56,15 @@ export default defineConfig({
       }),
     }),
   ],
+  // Code blocks with light and dark colors as classes, never inline styles (CSP style-src 'self'):
+  // src/lib/shiki-classes.ts and src/styles/code-theme.css.
+  markdown: {
+    shikiConfig: {
+      themes: { light: "github-light", dark: "github-dark" },
+      defaultColor: false,
+      transformers: [shikiStyleToClass],
+    },
+  },
   // Sin optimización de imágenes (no hace falta sharp ni sus scripts de instalación).
   image: { service: passthroughImageService() },
   vite: {
