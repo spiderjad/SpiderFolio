@@ -29,6 +29,7 @@ import {
   type Locale,
   type Who,
 } from "./demo-app.ts";
+import { BIAN_TEXT, BIAN_USAGE, bianRecording, fakeBian, fakeBianUsage } from "./bian-recording.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
 const BASE = `http://localhost:${String(PORT)}`;
@@ -51,6 +52,8 @@ interface Capture {
   ready?: string;
   /** Acción extra antes de capturar (abrir un diálogo…). */
   then?: (page: Page, locale: Locale) => Promise<void>;
+  /** Bian available, answering with the recording shared with the clip (bian-recording.ts). */
+  bian?: true;
 }
 
 /** A word that matches several demo documents in each language. */
@@ -96,6 +99,21 @@ const CAPTURES: Capture[] = [
         .getByText(locale === "es" ? "Email del servidor" : "Server email", { exact: true })
         .first()
         .waitFor(),
+  },
+  {
+    name: "bian",
+    who: "owner",
+    path: (i) => `/app/${i.slug}`,
+    bian: true,
+    then: async (page, locale) => {
+      const t = BIAN_TEXT[locale];
+      await page.getByRole("button", { name: t.ask }).first().click();
+      const input = page.getByRole("textbox", { name: t.placeholder });
+      await input.fill(t.question);
+      await input.press("Enter");
+      // The recorded answer is written in about 3 s; the citations come with the last event.
+      await page.getByRole("link", { name: t.source }).first().waitFor({ timeout: 15_000 });
+    },
   },
   { name: "bian-admin", who: "owner", path: (i) => `/app/${i.slug}/admin/bian` },
   { name: "limites", who: "owner", path: (i) => `/app/${i.slug}/admin/limits` },
@@ -187,6 +205,7 @@ try {
   for (const locale of ["es", "en"] as const) {
     if (onlyLocale !== undefined && onlyLocale !== locale) continue;
     const ids = await idsOf(db, locale);
+    const bian = await bianRecording(db, locale, ids);
     mkdirSync(join(out, locale), { recursive: true });
     for (const who of ["owner", "admin", "reader"] as const) {
       const captures = CAPTURES.filter(
@@ -200,6 +219,8 @@ try {
         locale: locale === "es" ? "es-ES" : "en-GB",
         reducedMotion: "reduce",
       });
+      // Only /bian/ask is answered in the page; the rest goes to the server.
+      await context.addInitScript(fakeBian, bian);
       await signIn(context, BASE, PEOPLE[locale][who], password);
       const page = await context.newPage();
       for (const theme of ["light", "dark"] as const satisfies readonly Theme[]) {
@@ -216,6 +237,8 @@ try {
         for (const capture of captures) {
           try {
             await page.keyboard.press("Escape");
+            // Only for this capture: the usage shown elsewhere (home, admin) stays the real one.
+            if (capture.bian) await page.route(BIAN_USAGE, fakeBianUsage(bian));
             await page.goto(`${BASE}${capture.path(ids, locale)}`);
             // Some screens poll (notifications): instead of "network idle", wait for the content.
             await waitUntilReady(page);
@@ -233,6 +256,7 @@ try {
             const reason = String(error).split(/\r?\n/u)[0] ?? "";
             console.error(`FALLÓ ${locale}/${capture.name}-${theme}: ${reason}`);
           }
+          if (capture.bian) await page.unroute(BIAN_USAGE);
           // Sin pasar el límite global de pedidos por minuto de la API.
           await sleep(1500);
         }

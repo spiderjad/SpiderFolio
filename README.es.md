@@ -70,7 +70,7 @@ corresponde. Pensado para pymes de habla hispana, también en planta.
 |                                                             |                                                                                 |
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | ![Explorador](web/public/capturas/es/explorador-light.webp) | ![Documento controlado](web/public/capturas/es/documento-controlado-light.webp) |
-| ![Permisos](web/public/capturas/es/accesos-light.webp)      | ![Bian](web/public/capturas/es/bian-admin-light.webp)                           |
+| ![Permisos](web/public/capturas/es/accesos-light.webp)      | ![Bian](web/public/capturas/es/bian-light.webp)                                 |
 
 ## Instalar
 

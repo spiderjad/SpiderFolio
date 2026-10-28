@@ -71,7 +71,7 @@ floor.
 |                                                                |                                                                                |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | ![File explorer](web/public/capturas/en/explorador-light.webp) | ![Controlled document](web/public/capturas/en/documento-controlado-light.webp) |
-| ![Permissions](web/public/capturas/en/accesos-light.webp)      | ![Bian](web/public/capturas/en/bian-admin-light.webp)                          |
+| ![Permissions](web/public/capturas/en/accesos-light.webp)      | ![Bian](web/public/capturas/en/bian-light.webp)                                |
 
 ## Install
 
