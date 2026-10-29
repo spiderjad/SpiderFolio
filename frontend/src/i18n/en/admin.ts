@@ -17,8 +17,7 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
   },
   "members.manage": {
     label: "Manage members",
-    description:
-      "Changes members' role, seat, job title and departments, and removes them.",
+    description: "Changes members' role, seat, job title and departments, and removes them.",
   },
   "members.suspend": {
     label: "Suspend members",
@@ -183,7 +182,8 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
         unknown: "No emails sent yet",
         failingSince: (when: string) => `Last failed: ${when}`,
         lastSuccess: (when: string) => `Last successful send: ${when}`,
-        failingHelp: "Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and MAIL_FROM in the server's .env and restart with \"docker compose up -d --force-recreate app worker\".",
+        failingHelp:
+          'Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and MAIL_FROM in the server\'s .env and restart with "docker compose up -d --force-recreate app worker".',
         test: "Send test email",
         testHint: "It goes to your own email.",
         testOk: "Test sent. Check your inbox (and the spam folder).",
@@ -722,8 +722,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       emails: "Emails",
       emailsHint: "One per line, or separated by commas or spaces. Up to 50.",
       role: "Role",
-      seatAutoHint:
-        "Automatic: full seat for members and admins, reader for external guests",
+      seatAutoHint: "Automatic: full seat for members and admins, reader for external guests",
       seat: "Seat",
       seatAuto: "Automatic",
       departments: "Departments",
@@ -850,8 +849,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       noPeople: "This department has no people yet.",
       newArea: "New sub-area",
       noAreas: "This department has no sub-areas.",
-      needsFullSeat: (name: string) =>
-        `${name} is a reader: they need a full seat to act as head.`,
+      needsFullSeat: (name: string) => `${name} is a reader: they need a full seat to act as head.`,
     },
     detail: {
       back: "Back to departments",
@@ -879,8 +877,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
   },
   roles: {
     title: "Roles and permissions",
-    subtitle:
-      "The role sets what each person can manage; the department, what content they see.",
+    subtitle: "The role sets what each person can manage; the department, what content they see.",
     create: "New role",
     system: "System roles",
     custom: "Custom roles",

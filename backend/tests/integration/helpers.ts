@@ -11,6 +11,7 @@ import { createLogger } from "../../src/lib/logger.ts";
 import { createStorage, createSystemStorage } from "../../src/lib/storage.ts";
 import { createPrismaClient, type PrismaClient } from "../../src/lib/prisma.ts";
 import { createPasswords } from "../../src/modules/auth/passwords.ts";
+import type { SecretBox } from "../../src/lib/secret-box.ts";
 import { createWorkspace as createWorkspaceRecord } from "../../src/modules/workspaces/workspaces.service.ts";
 import type { AppDeps } from "../../src/routes.ts";
 import {
@@ -80,6 +81,8 @@ export async function testPluginRuntime(
   licensed: readonly string[] = [],
   /** Ids de los plugins que se declaran «community» (sin licencia; los activa el propietario). */
   community: readonly string[] = [],
+  /** License expiry (default none) and the box for the plugins' secrets (default none). */
+  options: { expiresAt?: Date; box?: SecretBox } = {},
 ): Promise<PluginRuntime> {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
   for (const workspaceId of licensed) {
@@ -87,8 +90,8 @@ export async function testPluginRuntime(
       id: `LIC-TEST-${randomUUID().slice(0, 8)}`,
       customer: "Empresa de prueba",
       plugins: plugins.map((plugin) => plugin.id),
-      issuedAt: new Date().toISOString(),
-      expiresAt: null,
+      issuedAt: new Date(Date.now() - 30 * 24 * 3600_000).toISOString(),
+      expiresAt: options.expiresAt?.toISOString() ?? null,
     });
     const token = `${input}.${toBase64Url(sign(null, Buffer.from(input), privateKey))}`;
     await ctx.prisma.workspaceLicense.upsert({
@@ -101,6 +104,7 @@ export async function testPluginRuntime(
     prisma: ctx.prisma,
     logger: ctx.deps.logger,
     publicKey,
+    ...(options.box === undefined ? {} : { box: options.box }),
     installed: plugins.map((backend) => ({
       manifest: {
         id: backend.id,
@@ -108,7 +112,7 @@ export async function testPluginRuntime(
         description: "",
         distribution: community.includes(backend.id) ? "community" : "commercial",
         translations: {},
-        pluginApi: 1,
+        pluginApi: (backend.authProviders ?? []).length > 0 ? 2 : 1,
       },
       dir: "",
       version: backend.version,

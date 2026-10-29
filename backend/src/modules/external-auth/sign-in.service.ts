@@ -8,6 +8,7 @@ import type {
   PasswordAuthProvider,
   PluginWorkspaceContext,
   RedirectAuthProvider,
+  RedirectSignIn,
 } from "@spiderfolio/plugin-sdk/backend";
 import { directorySignInLimits } from "@spiderfolio/limits";
 import { createHash } from "node:crypto";
@@ -162,6 +163,8 @@ export function createDirectorySignIn(deps: AppDeps) {
     member: DirectoryMember,
     info: RequestInfo,
     trustedDeviceToken: string | undefined,
+    /** Only a redirect provider's word, and only if the company trusts it; never a password one. */
+    providerMfa = false,
   ): Promise<LoginResult> {
     const result = await resolved.ctx.directory.syncMember(resolved.provider.id, member);
     if (result.status === "conflict") {
@@ -190,6 +193,9 @@ export function createDirectorySignIn(deps: AppDeps) {
       },
       info,
       trustedDeviceToken,
+      providerMfa &&
+        resolved.provider.kind === "redirect" &&
+        (await resolved.ctx.directory.trustProviderMfa()),
     );
   }
 
@@ -344,7 +350,7 @@ export function createDirectorySignIn(deps: AppDeps) {
         await fail(resolved, "provider_error", info);
         throw new SignInError("notAllowed");
       }
-      let member: DirectoryMember | null = null;
+      let member: RedirectSignIn | null = null;
       try {
         member = await resolved.provider.callback(resolved.ctx, {
           redirectUri: callbackUri(env.APP_URL, route),
@@ -363,7 +369,10 @@ export function createDirectorySignIn(deps: AppDeps) {
         await fail(resolved, "not_allowed", info);
         throw new SignInError("notAllowed");
       }
-      return { result: await signIn(resolved, member, info, trustedDeviceToken), next: flow.next };
+      return {
+        result: await signIn(resolved, member, info, trustedDeviceToken, member.mfa === true),
+        next: flow.next,
+      };
     },
   };
 }

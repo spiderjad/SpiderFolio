@@ -31,9 +31,12 @@ export const licenseEs = {
     saving: "Guardando…",
     cancel: "Cancelar",
     pluginsTitle: "Plugins instalados en este servidor",
-    noPlugins:
-      "Este servidor no tiene plugins instalados. Todo lo del núcleo funciona sin ellos.",
-    pluginState: { active: "Activo", licensed: "En la licencia (vencida)", inactive: "Sin licencia" },
+    noPlugins: "Este servidor no tiene plugins instalados. Todo lo del núcleo funciona sin ellos.",
+    pluginState: {
+      active: "Activo",
+      licensed: "En la licencia (vencida)",
+      inactive: "Sin licencia",
+    },
     community: {
       unverified: "No verificado",
       hint: "Plugin de terceros: SpiderJAD no lo revisó ni lo firmó.",
@@ -93,7 +96,8 @@ export const licenseEs = {
     usageTitle: "Uso",
     storage: "Almacenamiento",
     members: "Personas",
-    membersValue: (full: string, readers: string) => `${full} con plaza completa · ${readers} lectores`,
+    membersValue: (full: string, readers: string) =>
+      `${full} con plaza completa · ${readers} lectores`,
     aiThisMonth: "Consultas a Bian este mes",
     of: (used: string, max: string) => `${used} de ${max}`,
     unlimited: "sin límite",
@@ -103,7 +107,11 @@ export const licenseEs = {
     saved: "Límites guardados",
     readOnly: "Solo quien tiene «Ajustes de la empresa» puede cambiarlos.",
     fields: {
-      storageGb: { label: "Almacenamiento total", unit: "GB", hint: "Al llegar, no se pueden subir más archivos." },
+      storageGb: {
+        label: "Almacenamiento total",
+        unit: "GB",
+        hint: "Al llegar, no se pueden subir más archivos.",
+      },
       maxFileMb: { label: "Tamaño máximo de un archivo", unit: "MB", hint: "Mínimo 1 MB." },
       fileVersionsKept: {
         label: "Versiones guardadas por archivo",

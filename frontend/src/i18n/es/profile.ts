@@ -98,7 +98,9 @@ export const profileTexts = {
     on: "Activada",
     since: (date: string) => `Activa desde el ${date}.`,
     codesLeft: (count: number) =>
-      count === 1 ? "Te queda 1 código de recuperación." : `Te quedan ${String(count)} códigos de recuperación.`,
+      count === 1
+        ? "Te queda 1 código de recuperación."
+        : `Te quedan ${String(count)} códigos de recuperación.`,
     unavailable: "La verificación en dos pasos todavía no está disponible.",
     enable: "Activar",
     disable: "Desactivar",

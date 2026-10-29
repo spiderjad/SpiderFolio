@@ -118,6 +118,9 @@ export const auditEs: Catalog<typeof EsAudit> = {
     "directory.member.unlink": "Unlinked someone from their directory account",
     "directory.only.enable": "Turned on directory-only sign-in",
     "directory.only.disable": "Turned off directory-only sign-in",
+    "directory.mfa_trust.enable": "Accepted the identity provider's two-step verification",
+    "directory.mfa_trust.disable":
+      "Stopped accepting the identity provider's two-step verification",
   },
   actor: { system: "System", staff: "SpiderFolio team", unknown: "Person no longer here" },
   empty: "No events match these filters.",

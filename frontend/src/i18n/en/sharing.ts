@@ -60,8 +60,7 @@ export const sharingTexts: Catalog<typeof EsSharing> = {
     leaderHead: (department: string) => `They’re head of ${department}.`,
     leaderDeputy: (department: string) => `They’re deputy of ${department}.`,
     member: (department: string) => `They’re part of ${department}.`,
-    memberSubareas: (department: string) =>
-      `They’re part of ${department} (includes subareas).`,
+    memberSubareas: (department: string) => `They’re part of ${department} (includes subareas).`,
     grantPerson: "They were given direct access.",
     grantCompany: "The whole company has access.",
     grantDepartment: (department: string) => `Their department ${department} has access.`,

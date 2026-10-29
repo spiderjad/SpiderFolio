@@ -469,6 +469,8 @@ export function createAuthService(deps: AppDeps) {
       directory: SessionDirectory,
       info: RequestInfo,
       trustedDeviceToken?: string,
+      /** The identity provider did MFA and the company trusts it: no code of SpiderFolio's own. */
+      providerMfa = false,
     ): Promise<LoginResult> {
       const now = new Date();
       const user = await prisma.user.findUnique({
@@ -476,7 +478,11 @@ export function createAuthService(deps: AppDeps) {
         select: { totpEnabledAt: true },
       });
       if (user === null) throw invalidCredentials();
-      if (user.totpEnabledAt !== null && !(await trustedDevice(userId, trustedDeviceToken, now))) {
+      if (
+        user.totpEnabledAt !== null &&
+        !providerMfa &&
+        !(await trustedDevice(userId, trustedDeviceToken, now))
+      ) {
         const challenge = await issueAuthToken(prisma, userId, "MFA_CHALLENGE", now, {
           directory: { workspaceId: directory.workspaceId, provider: directory.provider },
         });
@@ -489,7 +495,12 @@ export function createAuthService(deps: AppDeps) {
         });
         return { mfaRequired: true, challenge, expiresIn: MFA_CHALLENGE_SECONDS };
       }
-      return await openSession(userId, info, now, { rehashed: null, mfaAt: null, directory });
+      return await openSession(userId, info, now, {
+        rehashed: null,
+        mfaAt: null,
+        directory,
+        providerMfa,
+      });
     },
 
     /**
@@ -552,7 +563,12 @@ export function createAuthService(deps: AppDeps) {
     userId: string,
     info: RequestInfo,
     now: Date,
-    options: { rehashed: string | null; mfaAt: Date | null; directory?: SessionDirectory | null },
+    options: {
+      rehashed: string | null;
+      mfaAt: Date | null;
+      directory?: SessionDirectory | null;
+      providerMfa?: boolean;
+    },
   ): Promise<IssuedAuth> {
     const user = { id: userId };
     const newHash = options.rehashed;
@@ -594,6 +610,7 @@ export function createAuthService(deps: AppDeps) {
           ...(newHash === null ? {} : { rehashed: true }),
           ...(options.mfaAt === null ? {} : { mfa: true }),
           ...(directory === null ? {} : { provider: directory.provider }),
+          ...(options.providerMfa === true ? { providerMfa: true } : {}),
         },
       });
       if (previous.length > 0 && !knownDevice) {

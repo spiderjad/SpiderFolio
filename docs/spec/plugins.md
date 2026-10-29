@@ -253,7 +253,9 @@ persona tiene 2FA, o a `/login/<slug>?signin=<motivo>` si algo falló (`expired`
 membresía y el vínculo. La cuenta no tiene contraseña local y su email queda confirmado, porque lo
 administra el directorio. Si ya hay una cuenta con ese email, no la vincula: responde `emailTaken` y un
 administrador la vincula a mano (`ctx.directory.link`). La 2FA propia de la persona se pide igual que con
-email y contraseña. La sesión recuerda el directorio con el que entró (`Session.authWorkspaceId` y
+email y contraseña, salvo con un proveedor `redirect` que devuelve `mfa: true` (el ID token dice que se usó
+un segundo factor, ej. `amr` con `mfa` en Entra ID) en una empresa que lo acepta
+(`ctx.directory.setTrustProviderMfa`, activado por defecto). Con un proveedor `password` siempre se pide. La sesión recuerda el directorio con el que entró (`Session.authWorkspaceId` y
 `authProvider`, que se conservan al rotar).
 
 **`ctx.directory`.** Lo que usan las pantallas y los jobs del plugin:
@@ -265,9 +267,10 @@ email y contraseña. La sesión recuerda el directorio con el que entró (`Sessi
 - `suspendMember(provider, externalId)` y `linkedMembers(provider, cursor)` (de a 100).
 - `link` y `unlink`.
 - `localOwnersWithMfa()`, `setDirectoryOnly(on)` y `directoryOnly()`.
+- `setTrustProviderMfa(on)` y `trustProviderMfa()`.
 
 Cada cambio queda en la auditoría (`directory.member.create|update|suspend|reactivate|link|unlink`,
-`directory.only.enable|disable`): con quien lo hizo si viene de una ruta, sin persona si viene de un job.
+`directory.only.enable|disable`, `directory.mfa_trust.enable|disable`): con quien lo hizo si viene de una ruta, sin persona si viene de un job.
 
 **Propietarios con acceso local siempre.**
 

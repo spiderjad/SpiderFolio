@@ -644,6 +644,9 @@ const cases: IsolationCase[] = [
     url: () => "/admin/plugins/plugin-de-prueba/activation",
     body: { enabled: true, acceptRisk: true },
   },
+  // Signed plugin packages and restarting the server (owner only); A never reaches B's.
+  { method: "post", path: "/admin/plugins/packages", url: () => "/admin/plugins/packages" },
+  { method: "post", path: "/admin/server/restart", url: () => "/admin/server/restart" },
   { method: "get", path: "/admin/limits", url: () => "/admin/limits" },
   {
     method: "patch",

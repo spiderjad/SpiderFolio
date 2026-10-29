@@ -177,7 +177,8 @@ export const adminTexts = {
         unknown: "Sin envíos todavía",
         failingSince: (when: string) => `Falló por última vez: ${when}`,
         lastSuccess: (when: string) => `Último envío correcto: ${when}`,
-        failingHelp: "Revisa SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS y MAIL_FROM en el .env del servidor y reinicia con «docker compose up -d --force-recreate app worker».",
+        failingHelp:
+          "Revisa SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS y MAIL_FROM en el .env del servidor y reinicia con «docker compose up -d --force-recreate app worker».",
         test: "Enviar email de prueba",
         testHint: "Se envía a tu propio email.",
         testOk: "Prueba enviada. Revisa tu bandeja (y la carpeta de spam).",
@@ -319,7 +320,7 @@ export const adminTexts = {
       maxFileMb: "tamaño máximo de archivo",
       fileVersionsKept: "versiones guardadas por archivo",
       auditRetentionDays: "días de auditoría",
-      aiQueriesPerMonth: "consultas a Bian por mes"
+      aiQueriesPerMonth: "consultas a Bian por mes",
     } as Record<string, string>,
   },
   seats: {

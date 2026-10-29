@@ -115,6 +115,9 @@ export const auditEs = {
     "directory.member.unlink": "Desvinculó a una persona de su cuenta del directorio",
     "directory.only.enable": "Activó el acceso solo con el directorio",
     "directory.only.disable": "Desactivó el acceso solo con el directorio",
+    "directory.mfa_trust.enable": "Aceptó la verificación en dos pasos del proveedor de identidad",
+    "directory.mfa_trust.disable":
+      "Dejó de aceptar la verificación en dos pasos del proveedor de identidad",
   } as Record<string, string>,
   actor: { system: "Sistema", staff: "Equipo de SpiderFolio", unknown: "Persona que ya no está" },
   empty: "No hay eventos con estos filtros.",

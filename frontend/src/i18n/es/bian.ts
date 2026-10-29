@@ -135,7 +135,8 @@ export const bianEs = {
       unlimited: (used: number) => `${String(used)} consultas (sin límite)`,
       renews: (date: string) => `Se renueva el ${date}`,
       totalLabel: "Total por mes de toda la empresa",
-      totalHint: "Vacío: sin límite. Las consultas se cobran en la cuenta de Anthropic de esta instalación.",
+      totalHint:
+        "Vacío: sin límite. Las consultas se cobran en la cuenta de Anthropic de esta instalación.",
       totalPlaceholder: "Sin límite",
       saveTotal: "Guardar total",
       totalSaved: "Total del mes guardado",

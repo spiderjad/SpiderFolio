@@ -62,6 +62,15 @@ export interface DirectoryMember {
   jobTitle?: string | null;
 }
 
+/** What a redirect provider returns: the person, and whether the identity provider did MFA. */
+export interface RedirectSignIn extends DirectoryMember {
+  /**
+   * The ID token says a second factor was used (Entra ID: `amr` includes "mfa"). If the company trusts
+   * it (`trustProviderMfa`, on by default), SpiderFolio doesn't ask for its own code at sign-in.
+   */
+  mfa?: boolean;
+}
+
 export type DirectorySyncResult =
   | {
       status: "created" | "updated" | "unchanged" | "reactivated";
@@ -116,6 +125,12 @@ export interface PluginDirectory {
    */
   setDirectoryOnly(on: boolean): Promise<void>;
   directoryOnly(): Promise<boolean>;
+  /**
+   * Whether a redirect provider's MFA (RedirectSignIn.mfa) replaces SpiderFolio's own code at sign-in.
+   * On by default; password providers always ask for the person's own code.
+   */
+  setTrustProviderMfa(on: boolean): Promise<void>;
+  trustProviderMfa(): Promise<boolean>;
 }
 
 /** Lo que el plugin puede usar dentro de un workspace donde está activo. */
@@ -248,6 +263,7 @@ export interface RedirectAuthProvider extends AuthProviderBase {
   /**
    * Back from the provider: exchange the code with `codeVerifier`, validate the ID token (issuer,
    * audience, nonce, the company's tenant) and return the person, or null if they aren't allowed in.
+   * Set `mfa` only from the validated token.
    */
   callback(
     ctx: PluginWorkspaceContext,
@@ -258,7 +274,7 @@ export interface RedirectAuthProvider extends AuthProviderBase {
       nonce: string;
       codeVerifier: string;
     },
-  ): Promise<DirectoryMember | null>;
+  ): Promise<RedirectSignIn | null>;
 }
 
 export type AuthProvider = PasswordAuthProvider | RedirectAuthProvider;

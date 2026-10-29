@@ -20,7 +20,7 @@ import { EmailSchema } from "../auth/auth.schemas.ts";
 import { revokeUserSessions } from "../auth/sessions.service.ts";
 import { resolveSeat } from "../members/member-rules.ts";
 import { isCapability } from "../roles/capabilities.ts";
-import { readDirectoryOnly } from "../workspaces/settings.ts";
+import { readDirectoryOnly, readTrustProviderMfa } from "../workspaces/settings.ts";
 
 /** Who the changes are recorded for: the administrator of a plugin route, or nobody (a job). */
 export interface DirectoryActor {
@@ -453,6 +453,31 @@ export function createPluginDirectory(deps: DirectoryDeps): PluginDirectory {
     async directoryOnly() {
       const workspace = await db.workspace.findFirst({ where: {}, select: { settings: true } });
       return readDirectoryOnly(workspace?.settings) === pluginId;
+    },
+    async setTrustProviderMfa(on) {
+      const workspace = await db.workspace.findFirstOrThrow({
+        where: {},
+        select: { id: true, settings: true },
+      });
+      if (readTrustProviderMfa(workspace.settings) === on) return;
+      const current =
+        typeof workspace.settings === "object" && workspace.settings !== null
+          ? (workspace.settings as Record<string, unknown>)
+          : {};
+      await db.workspace.update({
+        where: { id: workspace.id },
+        data: { settings: { ...current, directoryTrustMfa: on } },
+      });
+      await audit(db, {
+        ...actor,
+        action: on ? "directory.mfa_trust.enable" : "directory.mfa_trust.disable",
+        entityType: "Plugin",
+        entityId: pluginId,
+      });
+    },
+    async trustProviderMfa() {
+      const workspace = await db.workspace.findFirst({ where: {}, select: { settings: true } });
+      return readTrustProviderMfa(workspace?.settings);
     },
   };
 }
