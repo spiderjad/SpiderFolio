@@ -1,0 +1,114 @@
+---
+title: "Plugin: Directorio corporativo"
+description: "Entrar con Active Directory o Microsoft 365, con los grupos decidiendo departamentos y roles y bajas automáticas. Paso a paso con el asistente, qué rellenar y problemas frecuentes."
+group: administracion
+order: 10
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+El **Directorio corporativo** conecta SpiderFolio con el directorio de tu empresa:
+
+- Las personas entran con su cuenta de **Active Directory** (la de Windows) o de **Microsoft 365**.
+- La primera vez se les crea la cuenta. Sus **grupos deciden el rol y los departamentos**.
+- **Cada hora** se sincroniza: quien ya no está en el directorio, fue deshabilitado o salió de los grupos
+  permitidos queda suspendido; quien cambió de grupo cambia de rol o departamentos. Los propietarios nunca
+  se suspenden.
+- Incluye **Entrar con Microsoft**: si ya lo usabas, sigue funcionando igual, con la misma configuración y
+  las mismas personas vinculadas.
+
+Es un plugin **de pago**. Necesitas ser **propietario** de la empresa, con la verificación en dos pasos
+activa.
+
+## 1. Instalar el plugin
+
+1. En **Administración › Licencia y plugins**, copia el **ID de la empresa** y envíanoslo
+   ([contacto](mailto:contacto@spiderjad.com)).
+2. Te enviamos un archivo `.sfplugin` firmado para tu empresa. Súbelo en **Subir un plugin**.
+3. Pulsa **Reiniciar ahora**. En un minuto aparece **Directorio corporativo** en el menú de
+   Administración.
+
+## 2. Active Directory con el asistente
+
+No hace falta saber de LDAP. Antes, pídele a tu informático una **cuenta de servicio**: un usuario normal
+de Active Directory (no administrador), por ejemplo `svc-spiderfolio`, con una contraseña que no venza.
+SpiderFolio solo la usa para leer el directorio.
+
+<Shot name="plugin-asistente" alt="El asistente de Active Directory mostrando el certificado del servidor y la pregunta ¿Es tu servidor?" />
+
+1. **Dominio**: escribe el dominio de tu red (por ejemplo, `empresa.local`) y pulsa **Buscar el servidor**.
+   SpiderFolio lo busca por DNS. Si no lo encuentra, escribe el nombre del controlador de dominio (por
+   ejemplo, `dc01.empresa.local`).
+2. **Servidor**: SpiderFolio descarga el certificado del servidor y te lo muestra. Si el nombre es el de
+   tu servidor, pulsa **Sí, es mi servidor**: desde ahí solo se conecta a ese.
+3. **Cuenta de servicio**: escribe `svc-spiderfolio@empresa.local` y su contraseña. Pulsa **Probar**: tiene
+   que decir cuántas personas tiene el directorio.
+4. **Grupos**: marca los grupos cuyas personas pueden entrar (sin marcar ninguno, puede cualquiera). Abajo,
+   en **¿Qué da cada grupo?**, elige un grupo y qué rol y departamentos recibe quien está en él. Si alguien
+   está en varios, gana el primero con rol: ordénalos con las flechas.
+5. **Revisar**: el texto del botón (opcional), si se muestra en la pantalla de inicio de sesión y si se
+   sincroniza cada hora. Pulsa **Guardar**.
+
+Las personas entran con su usuario de Windows (por ejemplo, `agarcia`) y su contraseña de siempre.
+
+**Configuración avanzada**: para quien conoce LDAP, el mismo contenido campo por campo, más StartTLS,
+otra base de búsqueda u otro atributo de usuario.
+
+## 3. Microsoft 365
+
+En la misma pantalla, **Conexión con Microsoft 365** es la de [Entrar con Microsoft](/es/docs/entrar-con-microsoft)
+(sigue sus pasos 2 y 3). La única diferencia: en Azure, además de `User.Read.All`, da el permiso
+`GroupMember.Read.All` para que SpiderFolio lea los grupos.
+
+Debajo, en **Grupos de Microsoft 365**, indica qué grupos pueden entrar y qué da cada uno. Los grupos se
+escriben con su **Id. de objeto** (en Azure: **Microsoft Entra ID › Grupos › el grupo**).
+
+## 4. Sincronizar ahora
+
+<Shot name="plugin-directorio" alt="La pantalla del Directorio corporativo con el botón Sincronizar ahora arriba y el resumen de Active Directory" />
+
+Arriba de todo está **Sincronizar ahora**. Muestra primero qué cambiaría:
+
+- a quién se **suspende** y por qué (ya no está en el directorio, cuenta deshabilitada o fuera de los
+  grupos);
+- a quién se **reactiva**;
+- quién **cambia de rol, departamentos o nombre**.
+
+Revisa la lista y pulsa **Aplicar estos cambios**. Las personas nuevas no aparecen: su cuenta se crea la
+primera vez que entran.
+
+**El freno**: si una sincronización suspendería a más personas que el porcentaje indicado (10 % por
+defecto), no se aplica sola y te llega un aviso en la campana. Así un error de configuración no deja a
+todos afuera. Revisa la vista previa y, si está bien, pulsa **Aplicar igual**.
+
+## 5. Las personas que ya estaban
+
+Si alguien ya tenía cuenta en SpiderFolio, vincúlala en **Vincular una persona que ya estaba** con su
+usuario del directorio. Si no, al entrar verá que su email ya está en uso.
+
+**Solo con el directorio**: cuando todo funcione, puedes hacer que quien no es propietario solo pueda
+entrar con su cuenta del directorio. Los propietarios conservan su email y contraseña.
+
+## Si la licencia vence
+
+Active Directory deja de funcionar y la sincronización se detiene (te llega un aviso). Si tienes
+instalado **Entrar con Microsoft** (gratis), las personas siguen entrando con Microsoft, con la misma
+configuración y vinculadas como antes.
+
+## Problemas frecuentes
+
+- **«El servidor no acepta conexiones cifradas (LDAPS, puerto 636)»**: tu Active Directory no tiene LDAPS
+  activado. Pásale a tu informático la [guía corta para activar LDAPS](/es/docs/activar-ldaps).
+- **«No se encontró ese servidor»**: revisa el nombre, o que el servidor de SpiderFolio use el DNS de tu
+  red. Prueba escribir el nombre completo (`dc01.empresa.local`).
+- **«El servidor no respondió»**: un firewall bloquea el puerto 636 entre el servidor de SpiderFolio y el
+  controlador de dominio.
+- **«El certificado no es para ese nombre»**: escribe el nombre del servidor tal como aparece en
+  **Nombres**.
+- **«El servidor rechazó la cuenta de servicio»**: usuario o contraseña mal escritos, cuenta deshabilitada
+  o contraseña vencida.
+- **«El certificado del servidor no es el que confirmaste»**: el servidor cambió de certificado (pasa al
+  renovarlo). Abre el asistente otra vez y confirma el nuevo.
+- **Alguien no puede entrar**: revisa que esté en uno de los grupos permitidos y que su cuenta no esté
+  deshabilitada. Si la sincronización lo suspendió, aparece en la vista previa con el motivo.

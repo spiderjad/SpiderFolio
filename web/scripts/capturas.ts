@@ -10,7 +10,14 @@
 //
 // Levanta la API (que sirve la app) en un puerto propio con esa base y la apaga al terminar. Nunca
 // apunta a la base de desarrollo: se niega si CAPTURAS_DATABASE_URL no termina en _capturas.
-import { mkdirSync } from "node:fs";
+//
+// Plugin screens (plugin-*, and licencia with its plugins): the plugins built in the plugins
+// repository (node tools/build-plugin.ts <id>) and, for the paid ones, a license per demo company
+// signed with the production key (the core accepts no other):
+//   CAPTURAS_PLUGINS_DIR=<plugins repo>/dist  CAPTURAS_LICENCIAS=<file, one SFL1 token per line>
+// The assistant's capture reads a real certificate: the plugins repo's Samba AD test image listening
+// on 127.0.0.1:636 (docker run -d -p 127.0.0.1:636:636 spiderfolio-plugins-samba-ad).
+import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { chromium, type Page } from "@playwright/test";
@@ -41,6 +48,15 @@ if (!/_capturas(\?|$)/u.test(databaseUrl)) {
   );
 }
 if (password === "") throw new Error("Falta SEED_DEMO_PASSWORD (la misma del seed)");
+const pluginsDir = process.env.CAPTURAS_PLUGINS_DIR;
+const licenses = (
+  process.env.CAPTURAS_LICENCIAS === undefined
+    ? ""
+    : readFileSync(process.env.CAPTURAS_LICENCIAS, "utf8")
+)
+  .split(/\r?\n/u)
+  .map((line) => line.trim())
+  .filter((line) => line.startsWith("SFL1."));
 
 type Theme = "light" | "dark";
 
@@ -54,7 +70,65 @@ interface Capture {
   then?: (page: Page, locale: Locale) => Promise<void>;
   /** Bian available, answering with the recording shared with the clip (bian-recording.ts). */
   bian?: true;
+  /** With the paid plugins' license loaded (true) or without it (false); undefined: either. */
+  license?: boolean;
+  /** Data the screen needs, set right before it (only in this database). */
+  before?: (input: { workspaceId: string; slug: string; locale: Locale }) => Promise<void>;
 }
+
+/** The license read is remembered 30 s by the API (LICENSE_CACHE_MS): wait it out after a change. */
+const LICENSE_CACHE_WAIT_MS = 31_000;
+
+/** The demo company's license from CAPTURAS_LICENCIAS (the token naming its id), or none. */
+function licenseFor(workspaceId: string): string | null {
+  return (
+    licenses.find((token) => {
+      const payload = token.split(".")[1] ?? "";
+      const json = Buffer.from(payload, "base64url").toString("utf8");
+      return (JSON.parse(json) as { workspaceId?: string }).workspaceId === workspaceId;
+    }) ?? null
+  );
+}
+
+/** An owner's API session (the demo owners have no 2FA), to set a plugin up like the screen does. */
+async function ownerToken(locale: Locale): Promise<string> {
+  const res = await fetch(`${BASE}/api/v1/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-requested-with": "spiderfolio" },
+    body: JSON.stringify({ email: PEOPLE[locale].owner, password }),
+  });
+  if (!res.ok) throw new Error(`Login de la dueña de la demo: ${String(res.status)}`);
+  return ((await res.json()) as { accessToken: string }).accessToken;
+}
+
+async function pluginCall(locale: Locale, slug: string, path: string, body: unknown) {
+  const res = await fetch(`${BASE}/api/v1/w/${slug}/plugins/corporate-directory${path}`, {
+    method: path.startsWith("/ad/wizard") || path === "/ad/test" ? "POST" : "PUT",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${await ownerToken(locale)}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${path}: ${String(res.status)} ${await res.text()}`);
+  return (await res.json()) as unknown;
+}
+
+/** The labels of the assistant's first step (corporate-directory's frontend/texts.ts). */
+const WIZARD: Record<Locale, { domain: string; find: string; server: string; next: string }> = {
+  es: {
+    domain: "Dominio de tu red",
+    find: "Buscar el servidor",
+    server: "Nombre del servidor (controlador de dominio)",
+    next: "Siguiente",
+  },
+  en: {
+    domain: "Your network's domain",
+    find: "Find the server",
+    server: "Server name (domain controller)",
+    next: "Next",
+  },
+};
 
 /** A word that matches several demo documents in each language. */
 const SEARCH: Record<Locale, string> = { es: "limpieza", en: "cleaning" };
@@ -117,7 +191,6 @@ const CAPTURES: Capture[] = [
   },
   { name: "bian-admin", who: "owner", path: (i) => `/app/${i.slug}/admin/bian` },
   { name: "limites", who: "owner", path: (i) => `/app/${i.slug}/admin/limits` },
-  { name: "licencia", who: "owner", path: (i) => `/app/${i.slug}/admin/license` },
   { name: "auditoria", who: "owner", path: (i) => `/app/${i.slug}/admin/audit` },
   { name: "perfil", who: "owner", path: (i) => `/app/${i.slug}/profile` },
   {
@@ -138,6 +211,83 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i) => `/app/${i.slug}/files/${i.procedures}/p/${i.slicer}`,
     then: (page, locale) => fromMenu(page, locale, LABELS[locale].qr),
+  },
+  // Plugins: the free one alone first (the paid one replaces it), then with the paid license.
+  {
+    name: "plugin-microsoft",
+    who: "owner",
+    license: false,
+    path: (i) => `/app/${i.slug}/admin/p/microsoft-sign-in/microsoft`,
+    // An example connection (invented ids), saved like the screen does.
+    before: async ({ workspaceId }) => {
+      await db.query(
+        `INSERT INTO "PluginSetting" ("id", "workspaceId", "pluginId", "key", "value", "updatedAt")
+         VALUES ($1, $2, 'microsoft-sign-in', 'entra', $3, now())
+         ON CONFLICT ("workspaceId", "pluginId", "key") DO UPDATE SET "value" = $3, "updatedAt" = now()`,
+        [
+          `capturas-ms-${workspaceId}`,
+          workspaceId,
+          JSON.stringify({
+            enabled: true,
+            label: "",
+            tenantId: "3f2a8c51-7d4e-4b9a-9c1e-2b6f0d8e4a17",
+            clientId: "9b1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
+          }),
+        ],
+      );
+    },
+  },
+  { name: "licencia", who: "owner", license: true, path: (i) => `/app/${i.slug}/admin/license` },
+  {
+    name: "plugin-asistente",
+    who: "owner",
+    license: true,
+    path: (i) => `/app/${i.slug}/admin/p/corporate-directory/directory`,
+    // The assistant shows until Active Directory is set up.
+    before: async ({ workspaceId }) => {
+      await db.query(
+        `DELETE FROM "PluginSetting" WHERE "workspaceId" = $1 AND "pluginId" = 'corporate-directory'`,
+        [workspaceId],
+      );
+    },
+    then: async (page, locale) => {
+      const w = WIZARD[locale];
+      await page.getByLabel(w.domain).fill("empresa.test");
+      await page.getByRole("button", { name: w.find }).click();
+      await page.getByLabel(w.server).fill("localhost");
+      await page.getByRole("button", { name: w.next }).click();
+      await page.getByText("SpiderFolio Test CA").first().waitFor();
+    },
+  },
+  {
+    name: "plugin-directorio",
+    who: "owner",
+    license: true,
+    path: (i) => `/app/${i.slug}/admin/p/corporate-directory/directory`,
+    // Active Directory set up as the assistant leaves it (the Samba AD test image on 127.0.0.1:636).
+    before: async ({ slug, locale }) => {
+      const answer = (await pluginCall(locale, slug, "/ad/wizard/certificate", {
+        server: "localhost",
+      })) as { ok: boolean; certificate?: { pem: string } };
+      if (answer.certificate === undefined) throw new Error("Sin Samba AD en 127.0.0.1:636");
+      await pluginCall(locale, slug, "/ad", {
+        config: {
+          enabled: true,
+          label: "",
+          url: "ldaps://localhost:636",
+          startTls: false,
+          caCertificate: answer.certificate.pem,
+          baseDn: "DC=empresa,DC=test",
+          bindDn: "svc-spiderfolio@empresa.test",
+          loginAttribute: "sAMAccountName",
+          allowedGroups: ["CN=SpiderFolio,OU=Grupos,DC=empresa,DC=test"],
+          mappings: [],
+          sync: { enabled: true, maxSuspendPercent: 10 },
+        },
+        // The Samba AD test image's fixed password (plugins repository, test/samba-ad).
+        bindPassword: "Clave-Prueba-2026!",
+      });
+    },
   },
 ];
 
@@ -195,7 +345,38 @@ await db.query(
    ON CONFLICT ("id") DO UPDATE
    SET "lastSuccessAt" = now(), "lastErrorAt" = NULL, "lastErrorCode" = NULL, "updatedAt" = now()`,
 );
-const server = await startServer({ port: PORT, databaseUrl });
+// Free plugins are turned on by the owner: on in both demo companies (only in this database).
+await db.query(
+  `UPDATE "Workspace" SET "settings" = jsonb_set(COALESCE("settings", '{}'::jsonb), '{communityPlugins}',
+     COALESCE("settings"->'communityPlugins', '{}'::jsonb) ||
+     jsonb_build_object('microsoft-sign-in', jsonb_build_object('enabledAt', now()::text, 'enabledBy', 'capturas')))`,
+);
+let licensed: boolean | null = null;
+/** Loads or takes away the paid plugins' license in both demo companies, then waits for the cache. */
+async function setLicense(on: boolean): Promise<void> {
+  if (licensed === on) return;
+  const companies = await db.query<{ id: string }>(`SELECT id FROM "Workspace"`);
+  for (const { id } of companies.rows) {
+    const token = on ? licenseFor(id) : null;
+    if (token === null) {
+      await db.query(`DELETE FROM "WorkspaceLicense" WHERE "workspaceId" = $1`, [id]);
+    } else {
+      await db.query(
+        `INSERT INTO "WorkspaceLicense" ("id", "workspaceId", "token", "updatedAt")
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT ("workspaceId") DO UPDATE SET "token" = $3, "updatedAt" = now()`,
+        [`capturas-${id}`, id, token],
+      );
+    }
+  }
+  if (licensed !== null) await sleep(LICENSE_CACHE_WAIT_MS);
+  licensed = on;
+}
+const server = await startServer({
+  port: PORT,
+  databaseUrl,
+  ...(pluginsDir === undefined ? {} : { env: { PLUGINS_DIR: pluginsDir } }),
+});
 const failed: string[] = [];
 // CAPTURAS_SOLO=compartir,qr: rehace solo esas (y CAPTURAS_IDIOMA=es, solo un idioma).
 const only = process.env.CAPTURAS_SOLO ? new Set(process.env.CAPTURAS_SOLO.split(",")) : null;
@@ -237,6 +418,14 @@ try {
         for (const capture of captures) {
           try {
             await page.keyboard.press("Escape");
+            if (capture.license !== undefined) await setLicense(capture.license);
+            if (capture.before !== undefined) {
+              const { rows } = await db.query<{ id: string }>(
+                `SELECT id FROM "Workspace" WHERE slug = $1`,
+                [ids.slug],
+              );
+              await capture.before({ workspaceId: rows[0]?.id ?? "", slug: ids.slug, locale });
+            }
             // Only for this capture: the usage shown elsewhere (home, admin) stays the real one.
             if (capture.bian) await page.route(BIAN_USAGE, fakeBianUsage(bian));
             await page.goto(`${BASE}${capture.path(ids, locale)}`);

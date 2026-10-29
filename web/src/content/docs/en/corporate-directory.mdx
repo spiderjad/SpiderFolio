@@ -1,0 +1,108 @@
+---
+title: "Plugin: Corporate directory"
+description: "Sign in with Active Directory or Microsoft 365, with groups deciding departments and roles and automatic leavers. Step by step with the assistant, what to fill in and common problems."
+group: administracion
+order: 10
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+The **Corporate directory** connects SpiderFolio with your company's directory:
+
+- People sign in with their **Active Directory** account (the Windows one) or their **Microsoft 365** one.
+- The first time, their account is created. Their **groups decide the role and departments**.
+- **Every hour** it syncs: whoever is no longer in the directory, was disabled or left the allowed groups
+  is suspended; whoever changed groups changes role or departments. Owners are never suspended.
+- It includes **Sign in with Microsoft**: if you already used it, it keeps working the same, with the same
+  setup and the same linked people.
+
+It's a **paid** plugin. You need to be the company's **owner**, with two-step verification on.
+
+## 1. Install the plugin
+
+1. In **Administration › License and plugins**, copy the **Company ID** and send it to us
+   ([contact](mailto:contacto@spiderjad.com)).
+2. We send you a `.sfplugin` file signed for your company. Upload it in **Upload a plugin**.
+3. Tap **Restart now**. A minute later **Corporate directory** shows in the Administration menu.
+
+## 2. Active Directory with the assistant
+
+No LDAP knowledge needed. First, ask your IT person for a **service account**: a normal Active Directory
+user (not an administrator), for example `svc-spiderfolio`, with a password that doesn't expire.
+SpiderFolio only uses it to read the directory.
+
+<Shot name="plugin-asistente" alt="The Active Directory assistant showing the server's certificate and the question Is this your server?" />
+
+1. **Domain**: type your network's domain (for example, `company.local`) and tap **Find the server**.
+   SpiderFolio looks it up through DNS. If it doesn't find it, type the domain controller's name (for
+   example, `dc01.company.local`).
+2. **Server**: SpiderFolio downloads the server's certificate and shows it to you. If the name is your
+   server's, tap **Yes, it's my server**: from then on it only connects to that one.
+3. **Service account**: type `svc-spiderfolio@company.local` and its password. Tap **Test**: it has to say
+   how many people the directory has.
+4. **Groups**: tick the groups whose people may sign in (with none ticked, anyone may). Below, in **What
+   does each group give?**, pick a group and the role and departments its people get. If someone is in
+   several, the first one with a role wins: reorder them with the arrows.
+5. **Review**: the button text (optional), whether it shows on the sign-in screen and whether it syncs
+   every hour. Tap **Save**.
+
+People sign in with their Windows username (for example, `agarcia`) and their usual password.
+
+**Advanced settings**: for people who know LDAP, the same content field by field, plus StartTLS, another
+search base or another username attribute.
+
+## 3. Microsoft 365
+
+On the same screen, **Connection with Microsoft 365** is the one in
+[Sign in with Microsoft](/en/docs/sign-in-with-microsoft) (follow its steps 2 and 3). The only difference:
+in Azure, besides `User.Read.All`, grant `GroupMember.Read.All` so SpiderFolio can read the groups.
+
+Below, in **Microsoft 365 groups**, say which groups may sign in and what each one gives. Groups are
+written by their **Object ID** (in Azure: **Microsoft Entra ID › Groups › the group**).
+
+## 4. Sync now
+
+<Shot name="plugin-directorio" alt="The Corporate directory screen with the Sync now button at the top and the Active Directory summary" />
+
+At the very top there's **Sync now**. It first shows what would change:
+
+- who is **suspended** and why (no longer in the directory, account disabled or outside the groups);
+- who is **reactivated**;
+- who gets a **new role, departments or name**.
+
+Check the list and tap **Apply these changes**. New people don't show: their account is created the first
+time they sign in.
+
+**The brake**: if a sync would suspend more people than the share set (10 % by default), it isn't applied
+on its own and you get a bell notice. That way a setup mistake doesn't lock everyone out. Check the
+preview and, if it's right, tap **Apply anyway**.
+
+## 5. People who were already here
+
+If someone already had a SpiderFolio account, link it in **Link someone who was already here** with their
+directory username. Otherwise, signing in tells them their email is already in use.
+
+**Directory only**: once everything works, you can make anyone who isn't an owner sign in only with their
+directory account. Owners keep their email and password.
+
+## If the license expires
+
+Active Directory stops working and the sync stops (you get a notice). If **Sign in with Microsoft** (free)
+is installed, people keep signing in with Microsoft, with the same setup and linked as before.
+
+## Common problems
+
+- **«The server doesn't accept encrypted connections (LDAPS, port 636)»**: your Active Directory doesn't
+  have LDAPS turned on. Give your IT person the [short guide to turn on LDAPS](/en/docs/enable-ldaps).
+- **«That server wasn't found»**: check the name, or that the SpiderFolio server uses your network's DNS.
+  Try the full name (`dc01.company.local`).
+- **«The server didn't answer»**: a firewall blocks port 636 between the SpiderFolio server and the domain
+  controller.
+- **«The certificate isn't for that name»**: type the server's name as it shows in **Names**.
+- **«The server rejected the service account»**: username or password mistyped, account disabled or
+  password expired.
+- **«The server's certificate isn't the one you confirmed»**: the server changed its certificate (it
+  happens when it's renewed). Open the assistant again and confirm the new one.
+- **Someone can't sign in**: check they're in one of the allowed groups and their account isn't disabled.
+  If the sync suspended them, they show in the preview with the reason.

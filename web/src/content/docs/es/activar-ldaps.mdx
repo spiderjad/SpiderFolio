@@ -1,0 +1,55 @@
+---
+title: "Activar LDAPS (guía para el informático)"
+description: "Guía corta para que Active Directory acepte conexiones cifradas (LDAPS, puerto 636), que el Directorio corporativo necesita."
+group: administracion
+order: 11
+icon: shield
+---
+
+El [Directorio corporativo](/es/docs/directorio-corporativo) solo se conecta a Active Directory **cifrado**
+(LDAPS, puerto 636), para que las contraseñas nunca viajen a la vista. Si el asistente dice que el servidor
+no acepta conexiones cifradas, el controlador de dominio no tiene un certificado para LDAPS. Suele llevar
+unos minutos.
+
+## 1. Comprobar
+
+En una PC de la red, en PowerShell:
+
+```powershell
+Test-NetConnection dc01.empresa.local -Port 636
+```
+
+Si `TcpTestSucceeded` es `False`, el puerto está cerrado o bloqueado. Si es `True` pero el asistente
+sigue fallando, falta el certificado.
+
+## 2. Darle un certificado al controlador de dominio
+
+Elige una de las dos:
+
+- **Con una CA de la empresa (AD CS)**, lo habitual: si tienes Servicios de certificados de Active
+  Directory, los controladores de dominio piden solos un certificado con la plantilla **Controlador de
+  dominio** (o **Autenticación Kerberos**). En el controlador: `certlm.msc` › **Personal › Certificados**
+  tiene que haber uno con el nombre del servidor (`dc01.empresa.local`) y uso **Autenticación de
+  servidor**. Si no está, pídelo ahí con **Todas las tareas › Solicitar un nuevo certificado**.
+- **Sin CA**: instala en el almacén **Personal** del equipo (`certlm.msc`) un certificado de servidor
+  emitido para el nombre del controlador (`dc01.empresa.local`), con su clave privada y uso
+  **Autenticación de servidor**.
+
+Active Directory lo toma solo, sin reiniciar (a veces tarda unos minutos).
+
+## 3. Abrir el puerto
+
+Entre el servidor de SpiderFolio y el controlador de dominio tiene que estar abierto el **TCP 636**
+(firewall de Windows y cualquier firewall de red en el medio).
+
+## 4. Probar
+
+En el controlador, `ldp.exe` › **Conexión › Conectar** › servidor `dc01.empresa.local`, puerto `636`,
+marca **SSL**. Si conecta, ya está: vuelve al asistente de SpiderFolio. Te va a mostrar el certificado
+para que confirmes que es tu servidor.
+
+## Notas
+
+- Usa el **nombre** del servidor, no su IP: el certificado es para el nombre.
+- Cuando el certificado se renueve, el asistente lo va a detectar («el certificado no es el que
+  confirmaste»): ábrelo otra vez y confirma el nuevo.

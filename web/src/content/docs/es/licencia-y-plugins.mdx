@@ -39,8 +39,9 @@ otra empresa, se rechaza.
 
 ## Subir un plugin
 
-Si te enviamos un archivo `.sfplugin`, lo instalas desde esta pantalla, sin entrar al servidor. Trae el plugin
-firmado por SpiderJAD y la licencia de tu empresa.
+Un archivo `.sfplugin` se instala desde esta pantalla, sin entrar al servidor. Siempre viene firmado por
+SpiderJAD: el de un plugin de pago te lo enviamos con la licencia de tu empresa; el de uno gratis lo descargas
+del [catálogo de plugins](/es/plugins) y queda activado en tu empresa al subirlo.
 
 1. En **Subir un plugin**, pulsa **Elegir archivo .sfplugin** y elige el archivo. Necesitas tener activa la
    verificación en dos pasos (ver [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)); si la
@@ -60,11 +61,18 @@ rechazos y el reinicio quedan en Administración › Registro de auditoría.
 
 ## Los plugins del servidor
 
-En **Plugins instalados en este servidor** ves cada plugin con su estado:
+En **Plugins instalados en este servidor** ves cada plugin con su tipo y su estado:
 
-- **Activo**: está instalado y tu licencia vigente lo incluye.
-- **En la licencia (vencida)**: tu licencia lo incluye, pero venció.
-- **Sin licencia**: está instalado, pero tu licencia no lo incluye.
+- **Oficial · De pago**: se activa con tu licencia. **Activo** si tu licencia vigente lo incluye, **En la
+  licencia (vencida)** si venció y **Sin licencia** si no lo incluye.
+- **Oficial · Gratis**: firmado por SpiderJAD, sin licencia. Lo activas o lo desactivas tú con el botón.
+- **No verificado**: de terceros. Antes de activarlo te pide confirmar que confías en quien lo hizo.
+- **Lo reemplaza…**: un plugin de pago incluye lo que hace este (por ejemplo, el
+  [Directorio corporativo](/es/docs/directorio-corporativo) incluye [Entrar con Microsoft](/es/docs/entrar-con-microsoft)).
+  Queda apagado y su configuración la usa el otro; si el de pago deja de estar activo, este vuelve a funcionar
+  solo, con todo como estaba.
+
+Cada plugin oficial tiene un enlace a su **Guía**.
 
 Si la lista dice «Este servidor no tiene plugins instalados», primero hay que instalarlos. Eso lo hace quien
 administra el servidor. El plugin llega ya compilado: se copia su carpeta al volumen de plugins y se reinician
@@ -102,6 +110,8 @@ vencimiento (nunca el texto de la licencia).
 
 ## Relacionado
 
+- [Plugin: Entrar con Microsoft](/es/docs/entrar-con-microsoft)
+- [Plugin: Directorio corporativo](/es/docs/directorio-corporativo)
 - [Roles y permisos](/es/docs/roles-y-permisos)
 - [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)
 - [Configuración](/es/docs/configuracion)

@@ -1,0 +1,90 @@
+---
+title: "Plugin: Entrar con Microsoft"
+description: "Que las personas de tu empresa entren a SpiderFolio con su cuenta de Microsoft 365. Gratis. Paso a paso: registrar la aplicación en Azure, qué rellenar y problemas frecuentes."
+group: administracion
+order: 9
+icon: lock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+Con **Entrar con Microsoft**, la pantalla de inicio de sesión de tu empresa muestra un botón para entrar
+con la cuenta de trabajo de Microsoft 365 (la de Outlook y Teams). Nadie necesita otra contraseña.
+
+- **Es gratis** y está firmado por SpiderJAD.
+- La primera vez que alguien entra, se le crea la cuenta como **Miembro**. Los departamentos se los
+  asignas tú en **Administración › Miembros**.
+- Si más adelante necesitas que los grupos de Microsoft decidan departamentos y roles, o Active Directory,
+  el [Directorio corporativo](/es/docs/directorio-corporativo) lo incluye y usa esta misma configuración:
+  no hay que volver a hacer nada.
+
+Necesitas: ser **propietario** de la empresa en SpiderFolio, con la verificación en dos pasos activa, y
+alguien que pueda entrar al **portal de Azure** como administrador de tu Microsoft 365.
+
+## 1. Instalar el plugin
+
+1. Descarga el archivo `.sfplugin` desde el [catálogo de plugins](/es/plugins).
+2. En SpiderFolio, ve a **Administración › Licencia y plugins › Subir un plugin** y elige el archivo.
+3. Pulsa **Reiniciar ahora**. En un minuto aparece **Entrar con Microsoft** en el menú de Administración.
+
+No hace falta licencia: queda activado en tu empresa al subirlo.
+
+## 2. Registrar la aplicación en Azure
+
+Esto se hace una sola vez, en [portal.azure.com](https://portal.azure.com):
+
+1. **Microsoft Entra ID › Registros de aplicaciones › Nuevo registro**.
+2. Nombre: `SpiderFolio`. Tipos de cuenta: **Solo las cuentas de este directorio organizativo**.
+3. URI de redirección: elige **Web** y pega la que muestra SpiderFolio en el campo **URI de redirección**
+   (algo como `https://docs.tuempresa.com/api/v1/auth/sso/tu-empresa/microsoft-sign-in/entra/callback`).
+4. Pulsa **Registrar**. En **Información general** copia el **Id. de aplicación (cliente)** y el
+   **Id. de directorio (inquilino)**.
+5. **Certificados y secretos › Nuevo secreto de cliente**. Ponle una duración (por ejemplo, 24 meses) y
+   copia el **Valor** (no el «Id. de secreto»): Azure lo muestra una sola vez. Anota cuándo vence.
+6. **Permisos de API › Agregar un permiso › Microsoft Graph › Permisos de aplicación** › `User.Read.All`.
+   Después pulsa **Conceder consentimiento de administrador**.
+
+## 3. Rellenar la conexión en SpiderFolio
+
+Ve a **Administración › Entrar con Microsoft**. Cada campo tiene al lado qué es, un ejemplo y
+**¿Dónde lo encuentro?**.
+
+<Shot name="plugin-microsoft" alt="La pantalla Entrar con Microsoft, con los datos de la aplicación de Azure, la URI de redirección y los botones Guardar y Probar" />
+
+| Campo | Qué poner |
+|---|---|
+| **ID de directorio (tenant)** | El «Id. de directorio (inquilino)» del paso 2. |
+| **ID de la aplicación (cliente)** | El «Id. de aplicación (cliente)» del paso 2. |
+| **Secreto de cliente** | El «Valor» del secreto. Se guarda cifrado y no se vuelve a mostrar. |
+| **Texto del botón** | Opcional: lo que dice el botón. Vacío: «Microsoft». |
+
+1. Activa **Botón «Entrar con Microsoft»**.
+2. Pulsa **Probar**: tiene que decir cuántas cuentas ve la aplicación.
+3. Pulsa **Guardar** (te pide tu código de verificación en dos pasos).
+
+Listo: cierra sesión y verás el botón en la pantalla de inicio de sesión de tu empresa.
+
+**Confiar en la verificación de Microsoft**: si la persona ya confirmó su identidad en dos pasos en
+Microsoft, SpiderFolio no le pide su propio código. Viene activado; apágalo si prefieres pedirlo siempre.
+
+## 4. Las personas que ya estaban
+
+Si alguien ya tenía cuenta en SpiderFolio antes de conectar Microsoft, **no se vincula sola** (por
+seguridad, nunca por el email). Vincúlala en **Vincular una persona que ya estaba**: su email en
+SpiderFolio y su cuenta de Microsoft (por ejemplo, `ana.garcia@tuempresa.com`). Si no, al entrar con
+Microsoft verá que su email ya está en uso.
+
+## Problemas frecuentes
+
+- **«No se encontró tu Microsoft 365 con ese ID de directorio»**: el ID de directorio está mal copiado.
+  Cópialo otra vez de **Microsoft Entra ID › Información general**.
+- **«Microsoft rechazó la aplicación»**: el ID de la aplicación o el secreto no son correctos, o **el
+  secreto venció**. Crea uno nuevo (paso 2.5) y pégalo en **Secreto de cliente**.
+- **«Microsoft no deja leer las cuentas»**: falta el permiso `User.Read.All` o el **consentimiento de
+  administrador** (paso 2.6).
+- **Microsoft dice que la URI de redirección no coincide** (error AADSTS50011): la de Azure tiene que ser
+  exactamente la que muestra SpiderFolio, con `https` y sin barra al final.
+- **Alguien entra y le dice que su email ya está en uso**: es una persona que ya estaba; vincúlala (paso 4).
+- **El botón no aparece**: revisa que **Botón «Entrar con Microsoft»** esté activado y guardado, y que el
+  plugin figure como **Activo** en **Licencia y plugins**. Si tienes el Directorio corporativo, este plugin
+  figura como reemplazado: la configuración está en la pantalla del Directorio corporativo.

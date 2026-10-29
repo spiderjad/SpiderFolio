@@ -1,0 +1,89 @@
+---
+title: "Plugin: Sign in with Microsoft"
+description: "Let people in your company sign in to SpiderFolio with their Microsoft 365 account. Free. Step by step: register the application in Azure, what to fill in, and common problems."
+group: administracion
+order: 9
+icon: lock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+With **Sign in with Microsoft**, your company's sign-in screen shows a button to sign in with the
+Microsoft 365 work account (the one for Outlook and Teams). Nobody needs another password.
+
+- **It's free** and signed by SpiderJAD.
+- The first time someone signs in, their account is created as a **Member**. You assign the departments
+  in **Administration › Members**.
+- If you later need Microsoft groups to decide departments and roles, or Active Directory, the
+  [Corporate directory](/en/docs/corporate-directory) includes it and uses this same setup: nothing has to
+  be done again.
+
+You need: to be the company's **owner** in SpiderFolio, with two-step verification on, and someone who can
+sign in to the **Azure portal** as an administrator of your Microsoft 365.
+
+## 1. Install the plugin
+
+1. Download the `.sfplugin` file from the [plugin catalog](/en/plugins).
+2. In SpiderFolio, go to **Administration › License and plugins › Upload a plugin** and pick the file.
+3. Tap **Restart now**. A minute later **Sign in with Microsoft** shows in the Administration menu.
+
+No license is needed: it's turned on in your company when you upload it.
+
+## 2. Register the application in Azure
+
+This is done once, in [portal.azure.com](https://portal.azure.com):
+
+1. **Microsoft Entra ID › App registrations › New registration**.
+2. Name: `SpiderFolio`. Supported account types: **Accounts in this organizational directory only**.
+3. Redirect URI: choose **Web** and paste the one SpiderFolio shows in the **Redirect URI** field
+   (something like `https://docs.yourcompany.com/api/v1/auth/sso/your-company/microsoft-sign-in/entra/callback`).
+4. Tap **Register**. In **Overview** copy the **Application (client) ID** and the **Directory (tenant) ID**.
+5. **Certificates & secrets › New client secret**. Give it a duration (for example, 24 months) and copy
+   the **Value** (not the «Secret ID»): Azure shows it only once. Note when it expires.
+6. **API permissions › Add a permission › Microsoft Graph › Application permissions** › `User.Read.All`.
+   Then tap **Grant admin consent**.
+
+## 3. Fill in the connection in SpiderFolio
+
+Go to **Administration › Sign in with Microsoft**. Next to each field: what it is, an example and
+**Where do I find it?**.
+
+<Shot name="plugin-microsoft" alt="The Sign in with Microsoft screen, with the Azure application's details, the redirect URI and the Save and Test buttons" />
+
+| Field | What to enter |
+|---|---|
+| **Directory (tenant) ID** | The «Directory (tenant) ID» from step 2. |
+| **Application (client) ID** | The «Application (client) ID» from step 2. |
+| **Client secret** | The secret's «Value». It's stored encrypted and never shown again. |
+| **Button text** | Optional: what the button says. Empty: «Microsoft». |
+
+1. Turn on **«Sign in with Microsoft» button**.
+2. Tap **Test**: it has to say how many accounts the application sees.
+3. Tap **Save** (it asks for your two-step verification code).
+
+Done: sign out and you'll see the button on your company's sign-in screen.
+
+**Trust Microsoft's verification**: if the person already confirmed their identity in two steps at
+Microsoft, SpiderFolio doesn't ask for its own code. It's on by default; turn it off to always ask.
+
+## 4. People who were already here
+
+If someone had a SpiderFolio account before Microsoft was connected, **it isn't linked on its own** (for
+safety, never by email). Link it in **Link someone who was already here**: their email in SpiderFolio and
+their Microsoft account (for example, `ana.garcia@yourcompany.com`). Otherwise, signing in with Microsoft
+tells them their email is already in use.
+
+## Common problems
+
+- **«Your Microsoft 365 wasn't found with that directory ID»**: the directory ID is copied wrong. Copy it
+  again from **Microsoft Entra ID › Overview**.
+- **«Microsoft rejected the application»**: the application ID or the secret aren't right, or **the
+  secret expired**. Create a new one (step 2.5) and paste it in **Client secret**.
+- **«Microsoft doesn't let the app read the accounts»**: the `User.Read.All` permission or the **admin
+  consent** is missing (step 2.6).
+- **Microsoft says the redirect URI doesn't match** (error AADSTS50011): Azure's has to be exactly the one
+  SpiderFolio shows, with `https` and no trailing slash.
+- **Someone signs in and is told their email is in use**: they were already here; link them (step 4).
+- **The button doesn't show**: check **«Sign in with Microsoft» button** is on and saved, and that the
+  plugin shows as **Active** in **License and plugins**. If you have the Corporate directory, this plugin
+  shows as replaced: the setup is on the Corporate directory's screen.

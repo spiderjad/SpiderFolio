@@ -1,0 +1,54 @@
+---
+title: "Turn on LDAPS (guide for IT)"
+description: "Short guide so Active Directory accepts encrypted connections (LDAPS, port 636), which the Corporate directory needs."
+group: administracion
+order: 11
+icon: shield
+---
+
+The [Corporate directory](/en/docs/corporate-directory) only connects to Active Directory **encrypted**
+(LDAPS, port 636), so passwords never travel in the clear. If the assistant says the server doesn't accept
+encrypted connections, the domain controller has no certificate for LDAPS. It usually takes a few minutes.
+
+## 1. Check
+
+On a PC in the network, in PowerShell:
+
+```powershell
+Test-NetConnection dc01.company.local -Port 636
+```
+
+If `TcpTestSucceeded` is `False`, the port is closed or blocked. If it's `True` but the assistant still
+fails, the certificate is missing.
+
+## 2. Give the domain controller a certificate
+
+Pick one:
+
+- **With a company CA (AD CS)**, the usual way: if you have Active Directory Certificate Services, domain
+  controllers request a certificate on their own with the **Domain Controller** (or **Kerberos
+  Authentication**) template. On the controller: `certlm.msc` › **Personal › Certificates** has to have
+  one with the server's name (`dc01.company.local`) and **Server Authentication** usage. If it isn't there,
+  request it there with **All Tasks › Request New Certificate**.
+- **Without a CA**: install in the computer's **Personal** store (`certlm.msc`) a server certificate issued
+  for the controller's name (`dc01.company.local`), with its private key and **Server Authentication**
+  usage.
+
+Active Directory picks it up on its own, without restarting (sometimes it takes a few minutes).
+
+## 3. Open the port
+
+**TCP 636** has to be open between the SpiderFolio server and the domain controller (Windows firewall and
+any network firewall in between).
+
+## 4. Test
+
+On the controller, `ldp.exe` › **Connection › Connect** › server `dc01.company.local`, port `636`, tick
+**SSL**. If it connects, you're done: go back to the SpiderFolio assistant. It will show you the
+certificate to confirm it's your server.
+
+## Notes
+
+- Use the server's **name**, not its IP: the certificate is for the name.
+- When the certificate is renewed, the assistant will notice («the certificate isn't the one you
+  confirmed»): open it again and confirm the new one.

@@ -40,8 +40,9 @@ rejected.
 
 ## Upload a plugin
 
-If we send you a `.sfplugin` file, you install it from this screen, without logging in to the server. It
-brings the plugin signed by SpiderJAD and your company's license.
+A `.sfplugin` file is installed from this screen, without logging in to the server. It always comes signed
+by SpiderJAD: a paid plugin's we send you with your company's license; a free one's you download from the
+[plugin catalog](/en/plugins), and it's turned on in your company when you upload it.
 
 1. Under **Upload a plugin**, click **Choose .sfplugin file** and pick the file. You need two-step
    verification turned on (see [Security and two-step verification](/en/docs/security-and-2fa)); if you
@@ -61,11 +62,18 @@ upload, any rejection and the restart go to Admin › Audit log.
 
 ## The server's plugins
 
-Under **Plugins installed on this server** you see each plugin with its status:
+Under **Plugins installed on this server** you see each plugin with its kind and status:
 
-- **Active**: it's installed and your valid license includes it.
-- **In the license (expired)**: your license includes it, but it has expired.
-- **No license**: it's installed, but your license doesn't include it.
+- **Official · Paid**: turned on by your license. **Active** if your valid license includes it, **In the
+  license (expired)** if it expired and **No license** if it doesn't include it.
+- **Official · Free**: signed by SpiderJAD, no license. You turn it on or off with the button.
+- **Unverified**: third-party. Before turning it on, it asks you to confirm you trust whoever made it.
+- **Replaced by…**: a paid plugin includes what this one does (for example, the
+  [Corporate directory](/en/docs/corporate-directory) includes [Sign in with Microsoft](/en/docs/sign-in-with-microsoft)).
+  It stays off and the other one uses its setup; if the paid one stops being active, this one works again on
+  its own, with everything as it was.
+
+Each official plugin links to its **Guide**.
 
 If the list says "This server has no plugins installed," they need to be installed first. That's done by
 whoever runs the server. The plugin arrives already built: its folder is copied into the plugins volume and the
@@ -103,6 +111,8 @@ includes and its expiry date (never the license text).
 
 ## Related
 
+- [Plugin: Sign in with Microsoft](/en/docs/sign-in-with-microsoft)
+- [Plugin: Corporate directory](/en/docs/corporate-directory)
 - [Roles and permissions](/en/docs/roles-and-permissions)
 - [Security and two-step verification](/en/docs/security-and-2fa)
 - [Configuration](/en/docs/configuration)

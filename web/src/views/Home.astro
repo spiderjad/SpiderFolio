@@ -10,6 +10,7 @@ import Lifecycle from "../components/landing/Lifecycle.astro";
 import Permissions from "../components/landing/Permissions.astro";
 import QrFloor from "../components/landing/QrFloor.astro";
 import { CONTACT_EMAIL, REPO_URL, SITE, SITE_URL } from "../config/site.ts";
+import { PLUGINS } from "../data/plugins.ts";
 import { LOCALE_INFO, pageAlternates, pagePath, texts, type Locale } from "../i18n/index.ts";
 import MarketingLayout from "../layouts/MarketingLayout.astro";
 import { formatStars, githubStars } from "../lib/github.ts";
@@ -289,9 +290,9 @@ const secondaryButton =
     <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <p class={eyebrow}>{all.oss.plugins.title}</p>
       <h2 class={h2}>{all.oss.plugins.subtitle}</h2>
-      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {
-          all.oss.plugins.items.map((plugin) => (
+          PLUGINS.map((plugin) => (
             <a
               href={`${pluginsHref}#${plugin.id}`}
               class="lift reveal flex flex-col gap-3 rounded-2xl border bg-background p-5"
@@ -299,16 +300,20 @@ const secondaryButton =
               <span class="inline-flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                 <Icon name={plugin.icon} size={20} />
               </span>
-              <span class="font-semibold leading-snug">{plugin.title}</span>
+              <span class="font-semibold leading-snug">{plugin.text[locale].title}</span>
               <span
                 class:list={[
                   "mt-auto w-fit rounded-full px-2.5 py-0.5 text-xs font-medium",
-                  plugin.available
-                    ? "bg-success-soft text-success-soft-foreground"
-                    : "bg-muted text-muted-foreground",
+                  plugin.version === null
+                    ? "bg-muted text-muted-foreground"
+                    : plugin.price === "free"
+                      ? "bg-success-soft text-success-soft-foreground"
+                      : "bg-primary-soft text-primary-soft-foreground",
                 ]}
               >
-                {plugin.available ? all.oss.plugins.status.available : all.oss.plugins.status.soon}
+                {plugin.version === null
+                  ? all.oss.plugins.status.soon
+                  : all.oss.plugins.price[plugin.price]}
               </span>
             </a>
           ))

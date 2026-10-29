@@ -1,0 +1,56 @@
+---
+// Language-neutral addresses the app and the plugins link to (a plugin's manifest has one «guide»):
+// /plugins → the catalog, /plugins/<id> → its guide, /plugins/corporate-directory/ldaps → the short
+// LDAPS guide for IT. /lang-redirect.js goes to the saved or the browser's language (data-path-*);
+// without JavaScript, the links to each language show. noindex.
+import { SITE } from "../../config/site.ts";
+import {
+  DEFAULT_LOCALE,
+  docPath,
+  LOCALES,
+  LOCALE_INFO,
+  pagePath,
+  texts,
+  type DocKey,
+  type Locale,
+} from "../../i18n/index.ts";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export function getStaticPaths() {
+  const guides: [string | undefined, DocKey | null][] = [
+    [undefined, null],
+    ["microsoft-sign-in", "pluginMicrosoftSignIn"],
+    ["corporate-directory", "pluginCorporateDirectory"],
+    ["corporate-directory/ldaps", "pluginLdaps"],
+  ];
+  return guides.map(([guide, key]) => ({ params: { guide }, props: { key } }));
+}
+
+const { key } = Astro.props as { key: DocKey | null };
+const target = (locale: Locale) => (key === null ? pagePath("plugins", locale) : docPath(key, locale));
+const paths = Object.fromEntries(LOCALES.map((locale) => [`data-path-${locale}`, target(locale)]));
+---
+
+<BaseLayout locale={DEFAULT_LOCALE} title={SITE.name} description={texts(DEFAULT_LOCALE).home.subtitle} noindex>
+  <Fragment slot="head">
+    <meta name="spiderfolio-locales" content={LOCALES.join(" ")} data-default={DEFAULT_LOCALE} {...paths} />
+    <script is:inline src="/lang-redirect.js"></script>
+  </Fragment>
+  <main class="flex min-h-screen items-center justify-center px-4">
+    <ul class="grid w-full max-w-md gap-3 text-center">
+      {
+        LOCALES.map((locale) => (
+          <li lang={LOCALE_INFO[locale].hreflang}>
+            <a
+              href={target(locale)}
+              hreflang={LOCALE_INFO[locale].hreflang}
+              class="flex h-12 items-center justify-center rounded-full border bg-background font-medium transition-colors hover:bg-muted"
+            >
+              {texts(locale).chooser.action}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+</BaseLayout>

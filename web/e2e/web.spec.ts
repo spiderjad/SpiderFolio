@@ -78,15 +78,35 @@ test("con prefers-reduced-motion nada queda oculto ni se anima", async ({ page }
   await expect(page.locator(".hero-stagger > *").first()).toHaveCSS("animation-name", "none");
 });
 
-test("plugins y servicios: catálogo sin precios, con contacto en cada uno", async ({ page }) => {
+test("plugins y servicios: catálogo sin precios, descarga en los gratis y contacto en el resto", async ({
+  page,
+}) => {
   await page.goto("/es/plugins");
   await expect(page.getByRole("heading", { level: 1, name: "Plugins y servicios" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Plugins" }).locator("article")).toHaveCount(5);
+  const plugins = page.getByRole("region", { name: "Plugins" }).locator("article");
+  await expect(plugins).toHaveCount(7);
+  // The free plugin downloads from the «plugins» Release, never from «latest».
+  const free = page.locator("article#microsoft-sign-in");
+  await expect(free.getByText("Gratis")).toBeVisible();
+  await expect(free.getByRole("link", { name: "Descargar" })).toHaveAttribute(
+    "href",
+    /\/releases\/download\/plugins\/microsoft-sign-in-[\d.]+\.sfplugin$/u,
+  );
+  await expect(free.getByRole("link", { name: "Guía" })).toHaveAttribute(
+    "href",
+    "/es/docs/entrar-con-microsoft",
+  );
+  const paid = page.locator("article#corporate-directory");
+  await expect(paid.getByText("De pago")).toBeVisible();
+  await expect(paid.locator('a[href^="mailto:contacto@spiderjad.com"]')).toHaveAttribute(
+    "href",
+    /subject=.*Directorio%20corporativo/u,
+  );
   await expect(page.getByRole("region", { name: "Servicios" }).getByRole("listitem")).toHaveCount(
     4,
   );
-  // Five plugins, the Enterprise bundle, four services and the closing call to action.
-  await expect(page.locator('a[href^="mailto:contacto@spiderjad.com"]')).toHaveCount(11);
+  // Six paid plugins, the Enterprise bundle, four services and the closing call to action.
+  await expect(page.locator('a[href^="mailto:contacto@spiderjad.com"]')).toHaveCount(12);
   await expect(page.locator("main")).not.toContainText(/€|USD|[Pp]recio/);
 });
 

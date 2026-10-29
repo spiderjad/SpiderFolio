@@ -1,4 +1,4 @@
-// Portada (/): lleva al idioma guardado (selector de idioma) o al primero de navigator.languages que
+// Portada (/) y páginas sin idioma (/plugins/…): lleva al idioma guardado (selector de idioma) o al primero de navigator.languages que
 // tenga la web; si no hay ninguno, al idioma por defecto. Script externo: la CSP no admite scripts en
 // línea. Los idiomas los declara la página en <meta name="spiderfolio-locales">.
 (function () {
@@ -28,7 +28,8 @@
   var preferred =
     navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
   for (var i = 0; !chosen && i < preferred.length; i++) chosen = match(preferred[i]);
-  window.location.replace(
-    "/" + (chosen || fallback) + window.location.search + window.location.hash,
-  );
+  // A language-neutral page (/plugins/<id>) names where each language goes: data-path-<locale>.
+  var locale = chosen || fallback;
+  var path = meta.getAttribute("data-path-" + locale) || "/" + locale;
+  window.location.replace(path + window.location.search + window.location.hash);
 })();

@@ -1,8 +1,11 @@
 ---
-// Plugins and services: a catalog with descriptions and a "Contact" button, no prices.
+// Plugins and services: the catalog (src/data/plugins.ts) with a card per plugin, «Free» or «Paid»,
+// its screenshot, version and guide, and «Download» (free) or «Contact» (paid); no prices.
 import Icon from "../components/Icon.astro";
-import { CONTACT_EMAIL } from "../config/site.ts";
-import { pageAlternates, texts, type Locale } from "../i18n/index.ts";
+import Shot from "../components/Shot.astro";
+import { CONTACT_EMAIL, REPO_URL } from "../config/site.ts";
+import { PLUGINS, PLUGINS_RELEASE } from "../data/plugins.ts";
+import { docPath, pageAlternates, texts, type Locale } from "../i18n/index.ts";
 import MarketingLayout from "../layouts/MarketingLayout.astro";
 
 interface Props {
@@ -49,33 +52,64 @@ const contactLink =
     <h2 id="plugins-title" class={h2}>{t.pluginsTitle}</h2>
     <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {
-        t.items.map((plugin) => {
-          const href = contact(plugin.title);
+        PLUGINS.map((plugin) => {
+          const { title, text } = plugin.text[locale];
+          const available = plugin.version !== null;
+          const download =
+            available && plugin.price === "free" && plugin.file !== undefined
+              ? `${REPO_URL}/releases/download/${PLUGINS_RELEASE}/${plugin.file}`
+              : null;
+          const href = download ?? contact(title);
           return (
             <article id={plugin.id} class="reveal flex min-w-0 flex-col rounded-2xl border bg-background p-6">
               <div class="flex items-center justify-between gap-3">
                 <span class="inline-flex size-11 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                   <Icon name={plugin.icon} />
                 </span>
-                <span
-                  class:list={[
-                    "rounded-full px-2.5 py-1 text-xs font-medium",
-                    plugin.available
-                      ? "bg-success-soft text-success-soft-foreground"
-                      : "bg-muted text-muted-foreground",
-                  ]}
-                >
-                  {plugin.available ? t.status.available : t.status.soon}
+                <span class="flex flex-wrap justify-end gap-1.5">
+                  <span
+                    class:list={[
+                      "rounded-full px-2.5 py-1 text-xs font-medium",
+                      plugin.price === "free"
+                        ? "bg-success-soft text-success-soft-foreground"
+                        : "bg-primary-soft text-primary-soft-foreground",
+                    ]}
+                  >
+                    {t.price[plugin.price]}
+                  </span>
+                  {!available && (
+                    <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      {t.status.soon}
+                    </span>
+                  )}
                 </span>
               </div>
-              <h3 class="mt-5 text-lg font-semibold">{plugin.title}</h3>
-              <p class="mt-2 flex-1 text-sm text-muted-foreground">{plugin.text}</p>
-              {href !== null && (
-                <a href={href} class={contactLink}>
-                  {oss.cta.contact}
-                  <Icon name="arrow-right" size={16} />
-                </a>
+              <h3 class="mt-5 text-lg font-semibold">{title}</h3>
+              <p class="mt-2 flex-1 text-sm text-muted-foreground">{text}</p>
+              {plugin.screenshot !== undefined && (
+                <Shot name={plugin.screenshot} alt={title} class="mt-4 rounded-lg border" />
               )}
+              {available && plugin.minCore !== null && (
+                <p class="mt-4 text-xs text-muted-foreground">
+                  {t.version(plugin.version ?? "")} · {t.compatible(plugin.minCore)}
+                </p>
+              )}
+              <div class="mt-auto flex flex-wrap items-center gap-3">
+                {href !== null && (
+                  <a href={href} class={contactLink}>
+                    {download !== null ? t.download : oss.cta.contact}
+                    <Icon name="arrow-right" size={16} />
+                  </a>
+                )}
+                {plugin.guide !== undefined && (
+                  <a
+                    href={docPath(plugin.guide, locale)}
+                    class="mt-6 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {t.guide}
+                  </a>
+                )}
+              </div>
             </article>
           );
         })
