@@ -51,19 +51,21 @@ docs/spec/     especificación detallada
 ```
 ### Carpetas (Windows y Mac)
 Nada depende de rutas absolutas ni de Windows: dentro del repo, rutas relativas; fuera, `SPIDERFOLIO_HOME`
-(carpeta raíz con plugins, claves, backups y dev-plugins). Por defecto `C:\dev\SpiderFolio` en Windows
-y `~/dev/SpiderFolio` en Mac; el núcleo va al lado, en `$SPIDERFOLIO_HOME/../SpiderFolio-public`.
+(carpeta raíz de todo SpiderFolio, este repo incluido). Por defecto `C:\dev\SpiderFolio` en Windows
+y `~/dev/SpiderFolio` en Mac; el núcleo está dentro, en `$SPIDERFOLIO_HOME/public`.
 ```
-$SPIDERFOLIO_HOME/../SpiderFolio-public  núcleo (este repo)
+$SPIDERFOLIO_HOME/public                 núcleo (este repo)
 $SPIDERFOLIO_HOME/plugins                plugins comerciales (repo privado; ve el núcleo como .core, `npm run core:link`)
 $SPIDERFOLIO_HOME/claves                 claves de firma (prod, prod-paquetes…): solo leer los .pub, nunca los .key
 $SPIDERFOLIO_HOME/backups                volcados de la base de desarrollo
 $SPIDERFOLIO_HOME/dev-plugins            plugins compilados para el entorno de desarrollo (PLUGINS_DIR)
+$SPIDERFOLIO_HOME/instalacion-prueba     instalación de prueba (como la haría un cliente)
 $SPIDERFOLIO_HOME/archivo                archivo viejo (repo aparte, solo consulta)
 ```
-Nunca escribir rutas absolutas ni de un sistema operativo en código, scripts o configs. Nunca crear carpetas
-nuevas fuera de estas (ni junto a ellas ni en el perfil del usuario) sin preguntar.
-No tocar la instalación de prueba (`~/spiderfolio`, en Windows `%USERPROFILE%\spiderfolio`).
+Nunca escribir rutas absolutas ni de un sistema operativo en código, scripts o configs.
+**Nunca crear carpetas fuera de `SPIDERFOLIO_HOME` (`C:\dev\SpiderFolio`) sin preguntar antes**: ni junto a
+ella, ni en `C:\dev`, ni en el perfil del usuario. Dentro, tampoco carpetas nuevas en la raíz sin preguntar.
+No tocar la instalación de prueba (`$SPIDERFOLIO_HOME/instalacion-prueba`).
 Preparar un Mac: CONTRIBUTING.md, «Development on a Mac».
 
 Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con TanStack Query; selectores que pueden crecer usan `components/ui/combobox.tsx`.
