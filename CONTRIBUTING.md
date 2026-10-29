@@ -37,6 +37,43 @@ paths, and `.gitattributes` keeps every file, shell scripts included, with LF li
 3. Docker: Docker Desktop or OrbStack. Every image in `docker-compose.yml` has an Apple Silicon build.
 4. Clone the repository and follow «Development environment» above.
 
+### Folder layout
+
+The maintainers keep everything SpiderFolio under one folder, `SPIDERFOLIO_HOME`: `C:\dev\SpiderFolio` on
+Windows and `~/dev/SpiderFolio` on macOS. Nothing in the code depends on it: inside the repository every
+path is relative, and the folders next to it are reached as `../<folder>`.
+
+```
+SPIDERFOLIO_HOME/
+  public/        this repository
+  plugins/       commercial plugins (private repository)
+  claves/        signing keys (never in a repository)
+  backups/       development database dumps
+  dev-plugins/   built plugins for the development environment
+```
+
+To set up a Mac with the same layout:
+
+```sh
+mkdir -p ~/dev/SpiderFolio && cd ~/dev/SpiderFolio
+git clone https://github.com/spiderjad/SpiderFolio.git public
+mkdir -p backups dev-plugins
+```
+
+Copy `.env` from the other computer (or start from `.env.example`), and `claves/` by hand, never through
+a repository. To load the plugins in `dev-plugins/`, set `PLUGINS_DIR=../dev-plugins` in `.env` (relative
+folders count from the repository root). To bring over the development database, dump it on the other
+computer and restore it here:
+
+```sh
+# On the other computer
+docker compose exec postgres pg_dump -U spiderfolio -Fc -f /tmp/dev.dump spiderfolio
+docker compose cp postgres:/tmp/dev.dump ../backups/spiderfolio-dev.dump
+# Here, once `docker compose up -d` is running
+docker compose cp ../backups/spiderfolio-dev.dump postgres:/tmp/dev.dump
+docker compose exec postgres pg_restore -U spiderfolio -d spiderfolio --clean --if-exists --no-owner /tmp/dev.dump
+```
+
 ## Project rules
 
 They are in [CLAUDE.md](CLAUDE.md) and in [docs/spec/](docs/spec/) (in Spanish). The most important

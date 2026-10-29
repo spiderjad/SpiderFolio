@@ -1,7 +1,13 @@
 // Entorno validado al arrancar (CLAUDE.md, sección 4). Si falta algo o JWT_ACCESS_SECRET es
 // corto, el proceso no inicia. Los mensajes nombran la variable, nunca su valor.
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { s3EnvSchema } from "../lib/s3.ts";
+
+// Las carpetas relativas (PLUGINS_DIR, PLUGIN_INSTALL_DIR) cuentan desde la raíz del repo, igual que en
+// frontend/plugins.vite.ts, sea cual sea la carpeta desde la que arranca el proceso.
+const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
 // Un valor vacío o solo con espacios (ej. `VARIABLE=   ` en el .env) cuenta como no definido.
 const emptyToUndefined = (value: unknown) =>
@@ -84,8 +90,9 @@ export const envSchema = z
     ),
     ANTHROPIC_API_KEY: optionalString,
     /**
-     * Folders with the installed plugins, comma-separated (default: plugins/ at the root). In Docker,
-     * the ones built into the image and the plugins volume (docs/spec/plugins.md).
+     * Folders with the installed plugins, comma-separated (default: plugins/ at the root). Relative
+     * folders count from the repository root. In Docker, the ones built into the image and the plugins
+     * volume (docs/spec/plugins.md).
      */
     PLUGINS_DIR: z.preprocess(
       emptyToUndefined,
@@ -96,15 +103,18 @@ export const envSchema = z
           (value ?? "")
             .split(",")
             .map((dir) => dir.trim())
-            .filter((dir) => dir !== ""),
+            .filter((dir) => dir !== "")
+            .map((dir) => resolve(REPO_ROOT, dir)),
         )
         .pipe(z.array(z.string()).max(10)),
     ),
     /**
      * Folder where plugins uploaded from the app are installed (default: the last PLUGINS_DIR folder).
-     * In Docker, the plugins volume (/data/plugins).
+     * Relative to the repository root. In Docker, the plugins volume (/data/plugins).
      */
-    PLUGIN_INSTALL_DIR: optionalString,
+    PLUGIN_INSTALL_DIR: optionalString.transform((dir) =>
+      dir === undefined ? undefined : resolve(REPO_ROOT, dir),
+    ),
     /** Whether the owner can upload signed plugins (.sfplugin) from the app. On by default. */
     PLUGIN_UPLOAD_ENABLED: z.preprocess(
       emptyToUndefined,

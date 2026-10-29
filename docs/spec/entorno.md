@@ -36,8 +36,8 @@ EMAIL_ALLOW_PRIVATE_HOSTS=false    # solo desarrollo y tests (Mailpit); prohibid
 EMAIL_DOMAIN_PROVIDER=             # proveedor de email para dominios verificados; vacío = «próximamente»; `memory` solo en pruebas
 BIAN_ENABLED=false                 # asistente IA Bian; si es true, exige ANTHROPIC_API_KEY (validada al arrancar)
 ANTHROPIC_API_KEY=                 # clave de la API de Anthropic; nunca en el frontend ni en logs
-PLUGINS_DIR=                       # carpetas de plugins separadas por comas; vacío = plugins/ en la raíz (en Docker: /app/plugins,/data/plugins)
-PLUGIN_INSTALL_DIR=                # dónde se instalan los plugins subidos desde la app; vacío = la última de PLUGINS_DIR (en Docker: /data/plugins)
+PLUGINS_DIR=                       # carpetas de plugins separadas por comas, las relativas desde la raíz del repo; vacío = plugins/ en la raíz (en Docker: /app/plugins,/data/plugins)
+PLUGIN_INSTALL_DIR=                # dónde se instalan los plugins subidos desde la app (relativa: desde la raíz del repo); vacío = la última de PLUGINS_DIR (en Docker: /data/plugins)
 PLUGIN_UPLOAD_ENABLED=true         # el propietario puede subir plugins firmados (.sfplugin) desde Licencia y plugins
 SPIDERFOLIO_SUPERVISED=false       # algo vuelve a levantar la API y el worker al salir (Docker, npm run dev): habilita «Reiniciar ahora»
 PLUGIN_PACKAGES=                   # paquetes npm de plugins, separados por comas
