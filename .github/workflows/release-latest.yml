@@ -1,0 +1,40 @@
+# The install guides download /releases/latest/download/spiderfolio-deploy.zip: «latest» has to be a
+# core version (vX.Y.Z) with that bundle, never the «plugins» Release of the free plugins (a
+# prerelease). Checked whenever a Release changes, every day, and by hand.
+name: Release «latest»
+
+on:
+  release:
+    types: [published, edited, released, prereleased, deleted]
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest:
+    name: «latest» es una versión del núcleo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name)
+          echo "latest: $tag"
+          if ! echo "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::«latest» es «$tag», no una versión del núcleo: la guía de instalación se rompe. gh release edit <vX.Y.Z> --latest"
+            exit 1
+          fi
+          # The bundle is attached by release-bundle.yml a minute after publishing: wait for it.
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if gh api "repos/${{ github.repository }}/releases/latest" --jq '.assets[].name' | grep -qx spiderfolio-deploy.zip; then
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::$tag no tiene spiderfolio-deploy.zip"
+          exit 1
