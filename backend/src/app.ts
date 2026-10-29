@@ -41,6 +41,7 @@ import { RESTART_HEADER } from "./plugins/restart.ts";
 import { oauthConsentRouter, oauthPublicRouter } from "./modules/oauth/oauth.routes.ts";
 import { createOAuthService } from "./modules/oauth/oauth.service.ts";
 import { mcpRouter } from "./modules/mcp/mcp.router.ts";
+import { writeTools } from "./modules/mcp/tools.write.ts";
 import { localeFromHeader, withLocale } from "./i18n/locales.ts";
 import { registerPluginCapabilities } from "./modules/roles/capabilities.ts";
 
@@ -69,7 +70,7 @@ export function createApp(deps: AppDeps): Express {
   const oauth = createOAuthService(deps);
   app.use(oauthPublicRouter(deps, oauth));
   // The connector's MCP endpoint (its own body limit and bearer tokens, no cookies).
-  app.use(mcpRouter(deps, oauth));
+  app.use(mcpRouter(deps, oauth, writeTools));
   app.use(cors({ origin: env.APP_URL, credentials: true }));
   // Disco local: las «URLs prefirmadas» las atiende la API. Antes de express.json: el cuerpo es el
   // archivo tal cual (también un .json).

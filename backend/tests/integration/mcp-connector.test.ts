@@ -125,6 +125,7 @@ async function callTool(access: string, name: string, args: Record<string, unkno
   const { result } = res.body as { result: { content: { text: string }[]; isError?: boolean } };
   return {
     text: result.content.map((part) => part.text).join("\n"),
+    parts: result.content.map((part) => part.text),
     isError: result.isError === true,
   };
 }
@@ -468,5 +469,172 @@ describe("herramientas de lectura, aisladas entre empresas", () => {
     const expirations = await callTool(access, "list_expirations", { days: 365 });
     expect(expirations.isError).toBe(false);
     expect(expirations.text).not.toContain(ids.pageB);
+  });
+});
+
+describe("herramientas de escritura (con el plugin de pago), aisladas entre empresas", () => {
+  const writer = defineBackendPlugin({
+    id: "mcp-write-test",
+    version: "1.0.0",
+    features: ["mcp_read", "mcp_write"],
+  });
+  let c: TestWorkspace;
+  let d: TestWorkspace;
+  let access = "";
+  const own = { space: "", page: "" };
+  const other = { space: "", page: "", folder: "" };
+  let previous: ReturnType<typeof createApp>;
+
+  beforeAll(async () => {
+    c = await createWorkspace(ctx, "Escritura C");
+    d = await createWorkspace(ctx, "Escritura D");
+    const runtime = await testPluginRuntime(ctx, [writer], [c.workspaceId, d.workspaceId]);
+    previous = app;
+    app = createApp({ ...ctx.deps, plugins: runtime });
+    own.space = (
+      (await api(c, "/spaces", { name: "Calidad C" })).body as { space: { id: string } }
+    ).space.id;
+    own.page = (
+      (
+        await api(c, `/spaces/${own.space}/pages`, {
+          name: "Instructivo",
+          content: pageContent("Primera versión"),
+        })
+      ).body as { page: { node: { id: string } } }
+    ).page.node.id;
+    other.space = (
+      (await api(d, "/spaces", { name: "Privado D" })).body as { space: { id: string } }
+    ).space.id;
+    other.folder = (
+      (await api(d, `/spaces/${other.space}/folders`, { name: "Carpeta D" })).body as {
+        node: { id: string };
+      }
+    ).node.id;
+    other.page = (
+      (
+        await api(d, `/spaces/${other.space}/pages`, {
+          name: "Página de D",
+          content: pageContent("Solo de D"),
+        })
+      ).body as { page: { node: { id: string } } }
+    ).page.node.id;
+    access = (await connect(c, c.token)).access;
+  });
+
+  afterAll(() => {
+    app = previous;
+  });
+
+  it("con docs:write aparecen las herramientas de escritura", async () => {
+    const tools = await mcp(access, "tools/list");
+    const names = (tools.body as { result: { tools: { name: string }[] } }).result.tools.map(
+      (t) => t.name,
+    );
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "create_page",
+        "update_page",
+        "create_folder",
+        "move_node",
+        "upload_file",
+        "add_comment",
+        "submit_for_review",
+      ]),
+    );
+  });
+
+  it("un lector no recibe herramientas de escritura", async () => {
+    const readerSeat = await addMember(ctx, c, { seatType: "READER" });
+    const connection = await connect(c, readerSeat.token);
+    expect(connection.overview.companies.find((company) => company.slug === c.slug)?.canWrite).toBe(
+      false,
+    );
+    const tools = await mcp(connection.access, "tools/list");
+    const names = (tools.body as { result: { tools: { name: string }[] } }).result.tools.map(
+      (t) => t.name,
+    );
+    expect(names).not.toContain("create_page");
+  });
+
+  it("crea una página desde Markdown y queda en la auditoría vía Claude", async () => {
+    const created = await callTool(access, "create_page", {
+      spaceId: own.space,
+      title: "Borrador del autoelevador",
+      markdown: "# Autoelevador\n\n- Revisar frenos\n- Revisar horquillas",
+    });
+    expect(created.isError).toBe(false);
+    const entry = await ctx.prisma.auditLog.findFirstOrThrow({
+      where: { workspaceId: c.workspaceId, action: "page.create" },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(entry.metadata).toMatchObject({ via: "mcp", client: "Claude" });
+  });
+
+  it("update_page exige la versión: con otra devuelve conflicto y no guarda", async () => {
+    const page = await callTool(access, "get_page", { pageId: own.page });
+    const revision = (JSON.parse(page.parts[0] ?? "{}") as { revision: number }).revision;
+    const stale = await callTool(access, "update_page", {
+      pageId: own.page,
+      expectedVersion: revision + 5,
+      mode: "append",
+      markdown: "Nunca",
+    });
+    expect(stale.isError).toBe(true);
+    expect(stale.text).toContain("conflict");
+    const saved = await callTool(access, "update_page", {
+      pageId: own.page,
+      expectedVersion: revision,
+      mode: "append",
+      markdown: "Segundo párrafo",
+    });
+    expect(saved.isError).toBe(false);
+    const after = await callTool(access, "get_page", { pageId: own.page });
+    expect(after.text).toContain("Segundo párrafo");
+    expect(after.text).not.toContain("Nunca");
+  });
+
+  it("sube un archivo pequeño", async () => {
+    const uploaded = await callTool(access, "upload_file", {
+      spaceId: own.space,
+      name: "nota.txt",
+      contentBase64: Buffer.from("Hola desde Claude").toString("base64"),
+    });
+    expect(uploaded.isError).toBe(false);
+  });
+
+  it.each([
+    ["create_page", () => ({ spaceId: other.space, title: "Intruso", markdown: "x" })],
+    ["create_folder", () => ({ spaceId: other.space, name: "Intrusa" })],
+    ["create_folder", () => ({ spaceId: own.space, parentId: other.folder, name: "Intrusa" })],
+    [
+      "update_page",
+      () => ({ pageId: other.page, expectedVersion: 0, mode: "append", markdown: "x" }),
+    ],
+    ["move_node", () => ({ nodeId: other.page, folderId: null, spaceId: own.space })],
+    ["move_node", () => ({ nodeId: own.page, folderId: other.folder, spaceId: other.space })],
+    [
+      "upload_file",
+      () => ({
+        spaceId: other.space,
+        name: "x.txt",
+        contentBase64: Buffer.from("x").toString("base64"),
+      }),
+    ],
+    ["add_comment", () => ({ pageId: other.page, body: "Hola" })],
+    ["submit_for_review", () => ({ nodeId: other.page })],
+  ])("%s con ids de otra empresa: no encontrado", async (tool, args) => {
+    const answer = await callTool(access, tool, args());
+    expect(answer.isError).toBe(true);
+    expect(answer.text).toContain("Not found");
+  });
+
+  it("nada de la otra empresa cambió", async () => {
+    expect(
+      await ctx.prisma.node.count({
+        where: { workspaceId: d.workspaceId, name: { in: ["Intruso", "Intrusa", "x.txt"] } },
+      }),
+    ).toBe(0);
+    const moved = await ctx.prisma.node.findFirstOrThrow({ where: { id: other.page } });
+    expect(moved.spaceId).toBe(other.space);
   });
 });

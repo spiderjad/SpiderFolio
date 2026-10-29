@@ -66,13 +66,11 @@ export function mcpRouter(
     async (req: Request, res: Response) => {
       const origin = req.get("origin");
       if (origin !== undefined && origin !== urls.issuer) {
-        res
-          .status(403)
-          .json({
-            jsonrpc: "2.0",
-            error: { code: -32000, message: "Origin not allowed" },
-            id: null,
-          });
+        res.status(403).json({
+          jsonrpc: "2.0",
+          error: { code: -32000, message: "Origin not allowed" },
+          id: null,
+        });
         return;
       }
       const auth = await oauth.authenticate(req.get("authorization"));
