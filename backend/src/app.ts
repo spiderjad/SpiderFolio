@@ -38,6 +38,9 @@ import { createTokenSigner, LOCAL_STORAGE_PATH } from "./lib/local-storage.ts";
 import { localStorageRouter } from "./modules/storage/local-storage.routes.ts";
 import { pluginAssetsRouter, staticAppRouter } from "./static-app.ts";
 import { RESTART_HEADER } from "./plugins/restart.ts";
+import { oauthConsentRouter, oauthPublicRouter } from "./modules/oauth/oauth.routes.ts";
+import { createOAuthService } from "./modules/oauth/oauth.service.ts";
+import { mcpRouter } from "./modules/mcp/mcp.router.ts";
 import { localeFromHeader, withLocale } from "./i18n/locales.ts";
 import { registerPluginCapabilities } from "./modules/roles/capabilities.ts";
 
@@ -62,6 +65,11 @@ export function createApp(deps: AppDeps): Express {
       strictTransportSecurity: env.NODE_ENV === "production",
     }),
   );
+  // The connector's OAuth endpoints, before the app's CORS: any origin may read them (no cookies).
+  const oauth = createOAuthService(deps);
+  app.use(oauthPublicRouter(deps, oauth));
+  // The connector's MCP endpoint (its own body limit and bearer tokens, no cookies).
+  app.use(mcpRouter(deps, oauth));
   app.use(cors({ origin: env.APP_URL, credentials: true }));
   // Disco local: las «URLs prefirmadas» las atiende la API. Antes de express.json: el cuerpo es el
   // archivo tal cual (también un .json).
@@ -100,6 +108,7 @@ export function createApp(deps: AppDeps): Express {
     res.json({ status: "ok" });
   });
 
+  app.use("/api/v1/oauth", oauthConsentRouter(deps, oauth));
   app.use("/api/v1/auth/sso", directorySignInRouter(deps));
   app.use("/api/v1/auth", authRouter(deps));
   app.use("/api/v1", downloadsRouter(deps));

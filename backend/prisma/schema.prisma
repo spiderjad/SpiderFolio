@@ -95,6 +95,7 @@ model User {
   termsAcceptances TermsAcceptance[]
   recoveryCodes    RecoveryCode[]
   trustedDevices   TrustedDevice[]
+  oauthGrants      OAuthGrant[]
 }
 
 /// Evidencia de la aceptación de los Términos y la Política de privacidad: una fila por aceptación,
@@ -266,6 +267,7 @@ model Workspace {
   pluginSecrets       PluginSecret[]
   externalIdentities  ExternalIdentity[]
   ssoFlows            SsoFlow[]
+  oauthGrants         OAuthGrant[]
 }
 
 model Role {
@@ -303,11 +305,11 @@ model Membership {
   // cascada no depende del orden de los triggers; borrar un rol en uso sigue fallando.
   role      Role      @relation(fields: [roleId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
 
-  departments    DepartmentMember[]
-  pinLogin       PinLogin?
-  permissions    Permission[]
-  spaceStates    SpaceUserState[]
-  downloadTokens DownloadToken[]
+  departments      DepartmentMember[]
+  pinLogin         PinLogin?
+  permissions      Permission[]
+  spaceStates      SpaceUserState[]
+  downloadTokens   DownloadToken[]
   externalIdentity ExternalIdentity?
 
   @@unique([userId, workspaceId])
@@ -489,14 +491,14 @@ model Space {
 /// Lo personal de cada persona sobre un espacio: si lo marcó como favorito y cuándo lo abrió por
 /// última vez (para "Recientes"). No da ni quita acceso.
 model SpaceUserState {
-  id           String    @id @default(cuid())
-  workspaceId  String
-  spaceId      String
-  membershipId String
-  favorite     Boolean   @default(false)
+  id               String    @id @default(cuid())
+  workspaceId      String
+  spaceId          String
+  membershipId     String
+  favorite         Boolean   @default(false)
   /// Orden de los favoritos de la persona (menor primero); null = sin orden elegido, al final.
   favoritePosition Int?
-  visitedAt    DateTime?
+  visitedAt        DateTime?
 
   workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   space      Space      @relation(fields: [spaceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
@@ -1317,5 +1319,66 @@ model SsoFlow {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
+  @@index([expiresAt])
+}
+
+/// An application connected over OAuth (docs/spec/conector-mcp.md): registered dynamically (RFC 7591)
+/// or identified by its Client ID Metadata Document (clientId is then that HTTPS URL, re-read when
+/// `fetchedAt` is old). Not a company's: the same Claude client serves every company.
+model OAuthClient {
+  id           String    @id @default(cuid())
+  /// What the client sends as client_id: a random id (registered) or its metadata document's URL.
+  clientId     String    @unique
+  kind         String // REGISTERED | METADATA_DOCUMENT
+  clientName   String
+  redirectUris String[]
+  fetchedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  grants OAuthGrant[]
+
+  @@index([createdAt])
+}
+
+/// A connection: a person lets a client act for them in one company, with these scopes. Revoked by
+/// the person, the company's owner or administrators, or by reusing a rotated refresh token.
+model OAuthGrant {
+  id          String    @id @default(cuid())
+  clientId    String
+  userId      String
+  workspaceId String
+  scopes      String[]
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  client    OAuthClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tokens    OAuthToken[]
+
+  @@index([workspaceId, revokedAt])
+  @@index([userId, revokedAt])
+}
+
+/// Authorization codes, access and refresh tokens of a connection: only their SHA-256 hashes. A
+/// refresh token is replaced on every use (same familyId); presenting a replaced one revokes the grant.
+model OAuthToken {
+  id            String    @id @default(cuid())
+  grantId       String
+  type          String // CODE | ACCESS | REFRESH
+  tokenHash     String    @unique
+  familyId      String?
+  /// Authorization code only: the PKCE challenge (S256) and the redirect URI it was issued for.
+  codeChallenge String?
+  redirectUri   String?
+  expiresAt     DateTime
+  usedAt        DateTime?
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  grant OAuthGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+
+  @@index([grantId])
   @@index([expiresAt])
 }

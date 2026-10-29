@@ -113,4 +113,5 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 | Despliegue | docs/spec/despliegue.md |
 | Pruebas | docs/spec/pruebas.md |
 | Plugins y licencias | docs/spec/plugins.md |
+| Conector para Claude (MCP) | docs/spec/conector-mcp.md |
 | Fase 2 | docs/spec/fase-2.md |

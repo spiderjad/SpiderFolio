@@ -26,6 +26,7 @@ export const modelMetadata = {
       termsAcceptances: "TermsAcceptance",
       recoveryCodes: "RecoveryCode",
       trustedDevices: "TrustedDevice",
+      oauthGrants: "OAuthGrant",
     },
   },
   TermsAcceptance: { scope: "global", relations: { user: "User" } },
@@ -80,6 +81,7 @@ export const modelMetadata = {
       pluginSecrets: "PluginSecret",
       externalIdentities: "ExternalIdentity",
       ssoFlows: "SsoFlow",
+      oauthGrants: "OAuthGrant",
       fileTexts: "FileText",
     },
   },
@@ -187,6 +189,19 @@ export const modelMetadata = {
     relations: { workspace: "Workspace", membership: "Membership" },
   },
   SsoFlow: { scope: "tenant", relations: { workspace: "Workspace" } },
+  // The connector's OAuth (docs/spec/conector-mcp.md): clients and tokens are global (a client serves
+  // every company; a token is found by its hash); a connection belongs to one company.
+  OAuthClient: { scope: "global", relations: { grants: "OAuthGrant" } },
+  OAuthGrant: {
+    scope: "tenant",
+    relations: {
+      client: "OAuthClient",
+      user: "User",
+      workspace: "Workspace",
+      tokens: "OAuthToken",
+    },
+  },
+  OAuthToken: { scope: "global", relations: { grant: "OAuthGrant" } },
   ContentChunkDirty: { scope: "tenant", relations: {} },
   ContentChunk: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   UsageCounter: { scope: "tenant", relations: { workspace: "Workspace" } },

@@ -4,6 +4,12 @@ import type { TenantDb } from "../../db/tenant.ts";
 import type { Prisma } from "../../generated/prisma/client.ts";
 import type { PrismaClient } from "../../lib/prisma.ts";
 
+/** Done through the connector for Claude (docs/spec/conector-mcp.md): «… vía Claude» in the activity. */
+export interface AuditVia {
+  via: "mcp";
+  client: string;
+}
+
 export interface AuditEntry {
   actorId?: string | null;
   action: string;
@@ -12,6 +18,8 @@ export interface AuditEntry {
   ip?: string | null;
   userAgent?: string | null;
   metadata?: Prisma.InputJsonObject;
+  /** Merged into metadata: the entry was made through the connector. */
+  via?: AuditVia;
 }
 
 const toData = (entry: AuditEntry) => ({
@@ -21,7 +29,9 @@ const toData = (entry: AuditEntry) => ({
   entityId: entry.entityId ?? null,
   ip: entry.ip ?? null,
   userAgent: entry.userAgent ?? null,
-  ...(entry.metadata === undefined ? {} : { metadata: entry.metadata }),
+  ...(entry.metadata === undefined && entry.via === undefined
+    ? {}
+    : { metadata: { ...(entry.metadata ?? {}), ...(entry.via ?? {}) } }),
 });
 
 /** Evento de un workspace (el workspaceId lo pone forTenant). */
