@@ -24,6 +24,10 @@ export default defineConfig({
       "/api": { target: "http://localhost:4000", xfwd: true },
       // Built plugins' app (docs/spec/plugins.md), served by the API.
       "/plugin-assets": { target: "http://localhost:4000" },
+      // The connector for Claude (docs/spec/conector-mcp.md): MCP endpoint and OAuth, at APP_URL.
+      "/mcp": { target: "http://localhost:4000", xfwd: true },
+      "/oauth": { target: "http://localhost:4000", xfwd: true },
+      "/.well-known": { target: "http://localhost:4000", xfwd: true },
     },
   },
   build: {
