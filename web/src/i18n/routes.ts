@@ -35,6 +35,8 @@ export const DOC_KEYS = [
   "pluginMicrosoftSignIn",
   "pluginCorporateDirectory",
   "pluginLdaps",
+  "pluginClaudeConnector",
+  "pluginMcpConnector",
   "limits",
   "configuration",
   "firstAdmin",

@@ -72,6 +72,8 @@ interface Capture {
   bian?: true;
   /** With the paid plugins' license loaded (true) or without it (false); undefined: either. */
   license?: boolean;
+  /** Where the screen lives, if it's outside the app (the consent screen). */
+  prefix?: string;
   /** Data the screen needs, set right before it (only in this database). */
   before?: (input: { workspaceId: string; slug: string; locale: Locale }) => Promise<void>;
 }
@@ -113,6 +115,9 @@ async function pluginCall(locale: Locale, slug: string, path: string, body: unkn
   if (!res.ok) throw new Error(`${path}: ${String(res.status)} ${await res.text()}`);
   return (await res.json()) as unknown;
 }
+
+/** The consent screen's address for a real request (an app registered for the capture). */
+let consentUrl = "";
 
 /** The labels of the assistant's first step (corporate-directory's frontend/texts.ts). */
 const WIZARD: Record<Locale, { domain: string; find: string; server: string; next: string }> = {
@@ -238,6 +243,77 @@ const CAPTURES: Capture[] = [
     },
   },
   { name: "licencia", who: "owner", license: true, path: (i) => `/app/${i.slug}/admin/license` },
+  // The connector for Claude (free plugin, on in both demo companies).
+  {
+    name: "plugin-claude",
+    who: "owner",
+    license: false,
+    path: (i) => `/app/${i.slug}/admin/p/claude-connector/claude`,
+  },
+  {
+    name: "aplicaciones-conectadas",
+    who: "owner",
+    license: false,
+    path: (i) => `/app/${i.slug}/profile`,
+    then: async (page, locale) => {
+      // The profile column stays fixed while scrolling: in the shot it would cover the section.
+      await page.addStyleTag({ content: String.raw`.lg\:sticky { position: static !important; }` });
+      await page
+        .getByRole("heading", {
+          name: locale === "es" ? "Aplicaciones conectadas" : "Connected apps",
+        })
+        .scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: "conector-seguridad",
+    who: "owner",
+    license: false,
+    path: (i) => `/app/${i.slug}/admin/security`,
+    then: async (page, locale) => {
+      // In the page, not the menu (the plugin's section has the same name).
+      await page
+        .locator("main")
+        .getByText(locale === "es" ? "Conector para Claude" : "Connector for Claude", {
+          exact: true,
+        })
+        .scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: "autorizar-app",
+    who: "owner",
+    license: false,
+    path: () => consentUrl,
+    prefix: "/authorize-app",
+    // A real request, as Claude starts it: the app registers and asks to authorize.
+    before: async () => {
+      const registered = await fetch(`${BASE}/oauth/register`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          client_name: "Claude",
+          redirect_uris: ["https://claude.ai/api/mcp/auth_callback"],
+        }),
+      });
+      const { client_id: clientId } = (await registered.json()) as { client_id: string };
+      const query = new URLSearchParams({
+        response_type: "code",
+        client_id: clientId,
+        redirect_uri: "https://claude.ai/api/mcp/auth_callback",
+        code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+        code_challenge_method: "S256",
+        scope: "docs:read docs:write",
+        state: "capturas",
+        resource: `${BASE}/mcp`,
+      });
+      const answer = await fetch(`${BASE}/oauth/authorize?${query.toString()}`, {
+        redirect: "manual",
+      });
+      const location = new URL(answer.headers.get("location") ?? "");
+      consentUrl = `${location.pathname}${location.hash}`;
+    },
+  },
   {
     name: "plugin-asistente",
     who: "owner",
@@ -349,7 +425,9 @@ await db.query(
 await db.query(
   `UPDATE "Workspace" SET "settings" = jsonb_set(COALESCE("settings", '{}'::jsonb), '{communityPlugins}',
      COALESCE("settings"->'communityPlugins', '{}'::jsonb) ||
-     jsonb_build_object('microsoft-sign-in', jsonb_build_object('enabledAt', now()::text, 'enabledBy', 'capturas')))`,
+     jsonb_build_object(
+       'microsoft-sign-in', jsonb_build_object('enabledAt', now()::text, 'enabledBy', 'capturas'),
+       'claude-connector', jsonb_build_object('enabledAt', now()::text, 'enabledBy', 'capturas')))`,
 );
 let licensed: boolean | null = null;
 /** Loads or takes away the paid plugins' license in both demo companies, then waits for the cache. */
@@ -430,11 +508,11 @@ try {
             if (capture.bian) await page.route(BIAN_USAGE, fakeBianUsage(bian));
             await page.goto(`${BASE}${capture.path(ids, locale)}`);
             // Some screens poll (notifications): instead of "network idle", wait for the content.
-            await waitUntilReady(page);
+            await waitUntilReady(page, capture.prefix);
             if (capture.ready !== undefined) await page.getByText(capture.ready).first().waitFor();
             await capture.then?.(page, locale);
             // A dialog can load its own skeletons: check again right before the shot.
-            await waitUntilReady(page);
+            await waitUntilReady(page, capture.prefix);
             // Que terminen de pintarse gráficos y avatares.
             await sleep(400);
             await shoot(page, join(out, locale, `${capture.name}-${theme}.webp`));

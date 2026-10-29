@@ -102,19 +102,41 @@ export const PLUGINS: readonly CatalogPlugin[] = [
     },
   },
   {
+    id: "claude-connector",
+    icon: "sparkles",
+    price: "free",
+    version: "1.0.0",
+    minCore: "0.4.0",
+    file: "claude-connector-1.0.0.sfplugin",
+    guide: "pluginClaudeConnector",
+    screenshot: "plugin-claude",
+    text: {
+      es: {
+        title: "Conector para Claude",
+        text: "Cada persona conecta su Claude y le pregunta por los procedimientos, sus lecturas pendientes o los vencimientos. Claude solo ve lo que esa persona puede ver. Solo lectura.",
+      },
+      en: {
+        title: "Connector for Claude",
+        text: "Each person connects their Claude and asks it about procedures, their pending readings or upcoming reviews. Claude only sees what that person can see. Read-only.",
+      },
+    },
+  },
+  {
     id: "mcp-connector",
     icon: "sparkles",
     price: "paid",
-    version: null,
-    minCore: null,
+    version: "0.2.0",
+    minCore: "0.4.0",
+    guide: "pluginMcpConnector",
+    screenshot: "autorizar-app",
     text: {
       es: {
-        title: "Conector MCP para Claude",
-        text: "Claude lee y, con permiso, crea o edita la documentación de la empresa, con los permisos de cada persona y todo en la auditoría.",
+        title: "Conector para Claude: edición",
+        text: "Además de leer, Claude crea y edita páginas, carpetas y archivos, comenta y envía a revisión, con los permisos de cada persona. Nunca publica ni borra. Incluye el Conector para Claude.",
       },
       en: {
-        title: "MCP connector for Claude",
-        text: "Claude reads and, with permission, creates or edits the company's documentation, with each person's permissions and everything in the audit log.",
+        title: "Connector for Claude: editing",
+        text: "Besides reading, Claude creates and edits pages, folders and files, comments and sends for review, with each person's permissions. It never publishes or deletes. Includes the Connector for Claude.",
       },
     },
   },

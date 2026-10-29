@@ -1,0 +1,114 @@
+---
+title: "Plugin: Conector para Claude"
+description: "Conectar SpiderFolio con Claude paso a paso: cada persona pregunta a Claude por los documentos de la empresa con sus propios permisos. Gratis, solo lectura."
+group: administracion
+order: 12
+icon: sparkles
+---
+
+import Shot from "../../../components/Shot.astro";
+
+Con el **Conector para Claude**, cada persona de tu empresa conecta su [Claude](https://claude.ai) a
+SpiderFolio y le pregunta por los documentos: «¿Cuál es el procedimiento de limpieza vigente?»,
+«¿Qué lecturas tengo pendientes?», «¿Qué documentos vencen este mes?».
+
+- **Es gratis** y está firmado por SpiderJAD.
+- **Claude solo lee**, y solo lo que esa persona puede ver en SpiderFolio. Para que también cree y edite
+  páginas, está [Conector para Claude: edición](/es/docs/conector-para-claude-edicion).
+- Lo que Claude consulta queda en el registro de auditoría como «Ana Ruiz vía Claude».
+
+## Antes de empezar
+
+- **Tu SpiderFolio tiene que estar en internet con HTTPS.** Claude se conecta desde los servidores de
+  Anthropic, no desde tu computadora: la dirección de tu SpiderFolio (por ejemplo,
+  `https://docs.tuempresa.com`) tiene que abrirse desde fuera de la empresa. Con la instalación de
+  [Docker con Caddy](/es/docs/proxy-y-https) ya lo está. Una instalación que solo responde dentro de la
+  red de la empresa no sirve.
+- **Claude con conectores personalizados**: funciona con los planes Free (un conector), Pro, Max, Team
+  y Enterprise.
+- Los **invitados** no pueden conectar Claude. Quien tiene plaza de **lector** solo conecta para leer.
+
+## 1. Instalar el plugin (el propietario, una vez)
+
+1. Descarga el archivo `.sfplugin` desde el [catálogo de plugins](/es/plugins).
+2. En **Administración › Licencia y plugins**, pulsa **Subir un plugin** y elígelo.
+3. Pulsa **Reiniciar ahora**. En un minuto aparece **Conector para Claude** en el menú de
+   Administración, con la dirección para conectar y los pasos.
+
+<Shot name="plugin-claude" alt="La pantalla Conector para Claude con la URL del conector, el botón Copiar y los pasos para conectar Claude" />
+
+El conector queda activado para la empresa. Lo puedes desactivar cuando quieras en **Administración ›
+Seguridad › Conector para Claude**: al momento se rechazan las conexiones nuevas y las llamadas de las
+que ya existen.
+
+## 2. Conectar Claude (cada persona)
+
+La **URL del conector** es la dirección de tu SpiderFolio seguida de `/mcp`, por ejemplo
+`https://docs.tuempresa.com/mcp`. La ves, con un botón **Copiar**, en **Mi perfil › Aplicaciones
+conectadas**.
+
+En Claude (los nombres en inglés van entre paréntesis, por si tu Claude está en inglés):
+
+1. Abre **Personalizar › Conectores** (Customize › Connectors) y pulsa **Agregar conector
+   personalizado** (Add custom connector).
+2. **Nombre**: `SpiderFolio`. **URL del servidor MCP** (MCP server URL): pega la URL del conector. No
+   hace falta nada más: deja la autenticación como viene.
+3. Pulsa **Agregar** (Add) y después **Conectar** (Connect).
+4. Se abre SpiderFolio. Entra con tu cuenta si te lo pide, elige la **empresa** y pulsa **Permitir**.
+
+<Shot name="autorizar-app" alt="La pantalla Conectar una aplicación: Claude pide acceso, se elige la empresa y se pulsa Permitir" />
+
+Listo: Claude vuelve a la conversación y ya puede consultar SpiderFolio.
+
+**En planes Team o Enterprise**, el conector lo agrega un propietario de la organización de Claude en
+**Configuración de la organización › Conectores** (Organization settings › Connectors) con la misma URL;
+después cada persona pulsa **Conectar** en **Personalizar › Conectores**.
+
+## 3. Usarlo
+
+Pregúntale a Claude con normalidad. Por ejemplo:
+
+- «Resúmeme el procedimiento de compras vigente.»
+- «¿Qué documentos tengo pendientes de leer o aprobar?»
+- «Busca todo lo que tengamos sobre la cortadora de fiambres.»
+- «¿Qué documentos controlados vencen en los próximos 30 días?»
+
+Claude puede: buscar, ver los espacios y carpetas, leer páginas (en Markdown) y el texto de los
+archivos (PDF, Word, Excel…), ver el historial de versiones, tus aprobaciones y lecturas pendientes y los
+vencimientos. Siempre con tus permisos: lo que tú no ves, Claude tampoco.
+
+Claude **nunca** puede publicar ni aprobar documentos, confirmar lecturas en tu nombre, borrar o mandar a
+la papelera, ni cambiar permisos, miembros o la configuración.
+
+## 4. Ver y desconectar
+
+Cada persona ve sus aplicaciones conectadas en **Mi perfil › Aplicaciones conectadas** y las desconecta
+con **Desconectar**: el acceso se corta al momento.
+
+<Shot name="aplicaciones-conectadas" alt="Mi perfil, sección Aplicaciones conectadas, con la URL para conectar Claude y una conexión con el botón Desconectar" />
+
+El propietario ve **todas** las conexiones de la empresa, quién las hizo y cuándo se usaron por última
+vez, en **Administración › Seguridad**. Ahí también puede desconectar cualquiera o apagar el conector.
+
+<Shot name="conector-seguridad" alt="Administración › Seguridad: el conector activado y la lista de conexiones de la empresa" />
+
+## Seguridad
+
+- Cada conexión es de una persona en una empresa, con sus permisos, que se comprueban en cada consulta.
+- El texto de los documentos le llega a Claude marcado como **dato**, no como instrucciones: un documento
+  no puede «darle órdenes» a Claude.
+- Como máximo 60 consultas por minuto por conexión.
+- Todo queda en **Administración › Registro de auditoría**, como «nombre vía Claude».
+
+## Problemas frecuentes
+
+- **Claude dice «Couldn't reach the MCP server»**: tu SpiderFolio no se abre desde internet, o no tiene
+  HTTPS. Prueba abrir la URL del conector desde el celular sin wifi de la empresa: tiene que responder
+  (aunque sea con un error de «no autorizado»).
+- **Al conectar dice «No tienes ninguna empresa donde se pueda usar el conector»**: el plugin no está
+  instalado o activo, el propietario lo desactivó, o eres invitado.
+- **Claude dejó de poder consultar**: alguien desconectó la aplicación o el propietario apagó el
+  conector. Vuelve a pulsar **Conectar** en Claude.
+- **Claude dice que algo «no se encontró»**: no tienes acceso a ese documento en SpiderFolio (o ya no
+  existe). Claude no ve más que tú.
+- **«Too many calls»**: más de 60 consultas en un minuto. Espera un minuto.
