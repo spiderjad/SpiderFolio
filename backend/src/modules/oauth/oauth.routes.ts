@@ -141,7 +141,9 @@ export function oauthConsentRouter(deps: AppDeps, oauth: OAuthService): Router {
   router.use(authMiddleware(deps));
   const pageError = (res: Response, error: unknown) => {
     if (!(error instanceof OAuthPageError)) throw error;
-    res.status(400).json({ error: { code: "BAD_REQUEST", reason: error.reason } });
+    res.status(400).json({
+      error: { code: "BAD_REQUEST", message: error.reason, details: { reason: error.reason } },
+    });
   };
   router.get("/consent", async (req: Request, res) => {
     try {

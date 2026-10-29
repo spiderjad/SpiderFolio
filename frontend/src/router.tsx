@@ -74,6 +74,11 @@ export const routes = [
         lazy: page(() => import("@/features/auth/accept-invite-page"), "AcceptInvitePage"),
       },
       {
+        // The connector for Claude's consent screen (the request travels in the fragment).
+        path: "authorize-app",
+        lazy: page(() => import("@/features/connector/authorize-app-page"), "AuthorizeAppPage"),
+      },
+      {
         path: "forgot-password",
         lazy: page(() => import("@/features/auth/password-pages"), "ForgotPasswordPage"),
       },

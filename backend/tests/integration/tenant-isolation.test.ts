@@ -578,6 +578,28 @@ const cases: IsolationCase[] = [
     url: () => "/admin/security",
     body: { memberVisibility: "department" },
   },
+  // Connected apps (connector for Claude): a connection id of B is never found from A (nor from B,
+  // the test id isn't a connection).
+  { method: "get", path: "/me/connections", url: () => "/me/connections" },
+  {
+    method: "delete",
+    path: "/me/connections/:id",
+    url: (ids) => `/me/connections/${ids.nodeId}`,
+    ownStatus: 404,
+  },
+  { method: "get", path: "/admin/connections", url: () => "/admin/connections" },
+  {
+    method: "delete",
+    path: "/admin/connections/:id",
+    url: (ids) => `/admin/connections/${ids.nodeId}`,
+    ownStatus: 404,
+  },
+  {
+    method: "put",
+    path: "/admin/connector",
+    url: () => "/admin/connector",
+    body: { enabled: true },
+  },
   { method: "get", path: "/bian/usage", url: () => "/bian/usage" },
   {
     method: "post",

@@ -638,3 +638,53 @@ describe("herramientas de escritura (con el plugin de pago), aisladas entre empr
     expect(moved.spaceId).toBe(other.space);
   });
 });
+
+describe("aplicaciones conectadas", () => {
+  it("cada persona ve y desconecta las suyas; el propietario ve todas; nadie toca las de otro", async () => {
+    const member = await addMember(ctx, a);
+    const mine = await connect(a, member.token);
+    const ownerConnection = await connect(a, a.token);
+    const list = await request(app)
+      .get(`/api/v1/w/${a.slug}/me/connections`)
+      .set("Authorization", `Bearer ${member.token}`);
+    const listed = (
+      list.body as { connections: { items: { id: string }[] }; connector: { url: string } }
+    ).connections.items;
+    expect(listed).toHaveLength(1);
+    expect((list.body as { connector: { url: string } }).connector.url).toBe(`${appUrl}/mcp`);
+    const all = await request(app)
+      .get(`/api/v1/w/${a.slug}/admin/connections`)
+      .set("Authorization", `Bearer ${a.token}`);
+    const people = (all.body as { connections: { items: { person: { name: string } }[] } })
+      .connections.items;
+    expect(people.some((item) => item.person.name === member.user.name)).toBe(true);
+    expect(
+      (
+        await request(app)
+          .get(`/api/v1/w/${a.slug}/admin/connections`)
+          .set("Authorization", `Bearer ${member.token}`)
+      ).status,
+    ).toBe(403);
+    // The owner's connection isn't the member's to remove.
+    const ownerGrant = (
+      (
+        await request(app)
+          .get(`/api/v1/w/${a.slug}/me/connections`)
+          .set("Authorization", `Bearer ${a.token}`)
+      ).body as { connections: { items: { id: string }[] } }
+    ).connections.items[0]?.id;
+    expect(
+      (
+        await request(app)
+          .delete(`/api/v1/w/${a.slug}/me/connections/${ownerGrant ?? "x"}`)
+          .set("Authorization", `Bearer ${member.token}`)
+      ).status,
+    ).toBe(404);
+    expect((await mcp(ownerConnection.access, "tools/list")).status).toBe(200);
+    const removed = await request(app)
+      .delete(`/api/v1/w/${a.slug}/me/connections/${listed[0]?.id ?? "x"}`)
+      .set("Authorization", `Bearer ${member.token}`);
+    expect(removed.status).toBe(204);
+    expect((await mcp(mine.access, "tools/list")).status).toBe(401);
+  });
+});

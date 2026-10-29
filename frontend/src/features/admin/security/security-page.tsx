@@ -2,7 +2,8 @@
 // autoaprobación. Lo hace cumplir el servidor; esta pantalla solo cambia el ajuste. Exigir 2FA y los
 // dominios permitidos son del plugin security-policies (docs/spec/plugins.md).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, FileCheck2, Languages, UserPlus } from "lucide-react";
+import { Eye, FileCheck2, Languages, Sparkles, UserPlus } from "lucide-react";
+import { ConnectedApps } from "@/features/connector/connections";
 import { useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Card, CardTitle, Skeleton } from "@/components/ui/display";
@@ -185,6 +186,22 @@ function SecurityGeneral() {
             </div>
           </div>
         )}
+      </Card>
+      <Card className="min-w-0 p-4 sm:p-5">
+        <div className="flex items-center gap-3">
+          <Sparkles
+            className="size-5 shrink-0 text-primary"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
+          <div className="min-w-0 break-words">
+            <CardTitle className="text-base">{texts.connector.admin.title}</CardTitle>
+            <p className="text-xs text-muted-foreground">{texts.connector.admin.text}</p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <ConnectedApps slug={workspaceSlug} scope="company" />
+        </div>
       </Card>
     </div>
   );

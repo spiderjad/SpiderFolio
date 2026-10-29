@@ -26,7 +26,10 @@ export const COMMERCIAL_PLUGIN_IDS: readonly string[] = [
  * Ids of SpiderJAD's official free plugins: signed by SpiderJAD, no license; the owner turns them on in
  * their company. Only they can declare «free», and a «community» plugin can't use one.
  */
-export const OFFICIAL_FREE_PLUGIN_IDS: readonly string[] = ["microsoft-sign-in"];
+export const OFFICIAL_FREE_PLUGIN_IDS: readonly string[] = [
+  "microsoft-sign-in",
+  "claude-connector",
+];
 
 /**
  * How a plugin is turned on. «commercial» (default): with a signed license that includes it. «free»:

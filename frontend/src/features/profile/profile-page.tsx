@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
+import { ConnectedApps } from "@/features/connector/connections";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,14 @@ export function ProfilePage() {
           {!isPin && <PasswordSection />}
           {!isPin && <TwoFactorSection />}
           {!isPin && <SessionsSection />}
+          {!isPin && membership.role.base !== "GUEST" && (
+            <Section
+              title={texts.connector.profile.title}
+              description={texts.connector.profile.text}
+            >
+              <ConnectedApps slug={workspaceSlug} scope="mine" />
+            </Section>
+          )}
         </div>
       </div>
     </div>
@@ -468,8 +477,7 @@ function LanguageSection({ companyName }: { companyName: string }) {
     ...LOCALES.map((id) => ({ id, label: LOCALE_NAMES[id] })),
   ]);
   const save = useMutation({
-    mutationFn: (locale: string | null) =>
-      api("/auth/me", { method: "PATCH", body: { locale } }),
+    mutationFn: (locale: string | null) => api("/auth/me", { method: "PATCH", body: { locale } }),
     onSuccess: (_data, locale) => {
       toast.success(t.saved);
       // Sin idioma propio, el de la empresa lo fija la app al recargar.

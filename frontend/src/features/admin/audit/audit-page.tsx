@@ -39,7 +39,12 @@ const actionLabel = (action: string): string => t.actions[action] ?? action;
 function actorLabel(event: AuditEvent): string {
   if (event.actor === null) return t.actor.system;
   if (event.actor.staff) return t.actor.staff;
-  return event.actor.name ?? t.actor.unknown;
+  const name = event.actor.name ?? t.actor.unknown;
+  // Done through the connector for Claude: «Ana Ruiz vía Claude».
+  const via = event.metadata as { via?: unknown; client?: unknown } | null;
+  return via?.via === "mcp" && typeof via.client === "string"
+    ? t.actor.via(name, via.client)
+    : name;
 }
 
 export function AuditPage() {

@@ -13,6 +13,7 @@ import { filesTexts } from "./files";
 import { pagesTexts } from "./pages";
 import { sharingTexts } from "./sharing";
 import { profileTexts } from "./profile";
+import { connectorTexts } from "./connector";
 import { termsTexts } from "./terms";
 
 export const es = {
@@ -30,6 +31,7 @@ export const es = {
   accessAudit: accessAuditTexts,
   pages: pagesTexts,
   profile: profileTexts,
+  connector: connectorTexts,
   terms: termsTexts,
   app: { name: "SpiderFolio", loading: "Cargando SpiderFolio…" },
   kiosk: {
