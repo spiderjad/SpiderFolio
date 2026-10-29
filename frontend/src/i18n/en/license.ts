@@ -35,7 +35,21 @@ export const licenseEs: Catalog<typeof EsLicense> = {
     cancel: "Cancel",
     pluginsTitle: "Plugins installed on this server",
     noPlugins: "This server has no plugins installed. Everything in the core works without them.",
-    pluginState: { active: "Active", licensed: "In the license (expired)", inactive: "No license" },
+    pluginState: {
+      active: "Active",
+      licensed: "In the license (expired)",
+      inactive: "No license",
+      off: "Off",
+      replaced: (name: string) => `Replaced by ${name}`,
+    },
+    badge: {
+      paid: "Official · Paid",
+      free: "Official · Free",
+    },
+    freeHint: "Official free plugin, signed by SpiderJAD. You turn it on, no license needed.",
+    replacedHint: (name: string) =>
+      `While ${name} is active, this one stays off: ${name} already does what it does and uses the same data. If ${name} stops being active, this one works again on its own.`,
+    guide: "Guide",
     community: {
       unverified: "Unverified",
       hint: "Third-party plugin: SpiderJAD hasn't reviewed or signed it.",
@@ -59,7 +73,7 @@ export const licenseEs: Catalog<typeof EsLicense> = {
     },
     upload: {
       title: "Upload a plugin",
-      text: "The .sfplugin file we sent you: it brings the plugin signed by SpiderJAD and your company's license. It's verified on this server before it's installed.",
+      text: "A .sfplugin file signed by SpiderJAD: the one we sent you with your company's license, or a free one downloaded from the catalog. It is verified on this server before it is installed.",
       choose: "Choose .sfplugin file",
       uploading: "Verifying and installing…",
       uploaded: (name: string, version: string) => `${name} ${version} installed`,

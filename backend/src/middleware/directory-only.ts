@@ -46,7 +46,7 @@ export function directoryOnlyGuard(prisma: PrismaClient, plugins: PluginRuntime)
           session.authProvider?.startsWith(`${holder}/`) === true));
     if (
       !throughDirectory &&
-      (await plugins.signInPlugins(tenant.workspaceId)).some((p) => p.manifest.id === holder)
+      (await plugins.signInProviders(tenant.workspaceId)).some((p) => p.pluginId === holder)
     ) {
       throw new AppError("DIRECTORY_SIGN_IN_REQUIRED");
     }

@@ -85,6 +85,16 @@ export function formatShortDate(iso: string): string {
   return shortDateFormat.format(new Date(iso));
 }
 
+const utcDateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" });
+
+/**
+ * A calendar day stored as an instant in UTC (a license that runs until 2027-12-31T23:59:59Z): the
+ * day itself, «31 dic 2027», wherever the browser is (in Madrid that instant is already 1 January).
+ */
+export function formatUtcDate(iso: string): string {
+  return utcDateFormat.format(new Date(iso));
+}
+
 const relativeFormat = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
 /** «hace 5 minutos», «ayer», «hace 3 días»: cuánto pasó desde una fecha. */

@@ -23,7 +23,7 @@ import { AppError } from "../../lib/errors.ts";
 import { requireRecentMfa } from "../auth/mfa.service.ts";
 import type { AuthContext } from "../auth/auth.service.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
-import { saveLicense } from "./plugins.service.ts";
+import { saveLicense, setActivation } from "./plugins.service.ts";
 
 export type PackageDeps = Pick<AppDeps, "env" | "prisma" | "plugins">;
 
@@ -147,12 +147,19 @@ export async function uploadPluginPackage(
     throw error;
   }
 
-  // The package brings the company's license: it replaces the loaded one only if it is newer.
-  const current = await deps.plugins.licenseStatus(ctx.tenant.workspaceId);
-  const currentIssued =
-    current.state === "valid" || current.state === "expired" ? current.payload.issuedAt : null;
-  const licenseUpdated = currentIssued === null || verified.license.issuedAt > currentIssued;
-  if (licenseUpdated) await saveLicense(ctx, deps.plugins, verified.manifest.license);
+  // A commercial package brings the company's license: it replaces the loaded one only if it is
+  // newer. A free one is turned on in the company of the owner who uploads it.
+  let licenseUpdated = false;
+  if (verified.license === null || verified.manifest.license === null) {
+    await setActivation(ctx, id, true);
+    deps.plugins.forget(ctx.tenant.workspaceId);
+  } else {
+    const current = await deps.plugins.licenseStatus(ctx.tenant.workspaceId);
+    const currentIssued =
+      current.state === "valid" || current.state === "expired" ? current.payload.issuedAt : null;
+    licenseUpdated = currentIssued === null || verified.license.issuedAt > currentIssued;
+    if (licenseUpdated) await saveLicense(ctx, deps.plugins, verified.manifest.license);
+  }
 
   await auditAdmin(ctx, {
     action: "plugin.package.upload",
@@ -161,7 +168,7 @@ export async function uploadPluginPackage(
     metadata: {
       version,
       previousVersion: result.previousVersion,
-      licenseId: verified.license.id,
+      licenseId: verified.license?.id ?? null,
       licenseUpdated,
     },
   });

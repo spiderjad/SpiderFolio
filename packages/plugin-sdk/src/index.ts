@@ -23,19 +23,27 @@ export const COMMERCIAL_PLUGIN_IDS: readonly string[] = [
 ];
 
 /**
- * Cómo se activa un plugin. «commercial» (por defecto): con una licencia firmada que lo incluya.
- * «community»: de terceros, sin licencia; aparece como «No verificado» y el propietario lo activa en
- * su empresa después de confirmar que tiene acceso al servidor.
+ * Ids of SpiderJAD's official free plugins: signed by SpiderJAD, no license; the owner turns them on in
+ * their company. Only they can declare «free», and a «community» plugin can't use one.
  */
-export const PluginDistributionSchema = z.enum(["commercial", "community"]);
+export const OFFICIAL_FREE_PLUGIN_IDS: readonly string[] = ["microsoft-sign-in"];
+
+/**
+ * How a plugin is turned on. «commercial» (default): with a signed license that includes it. «free»:
+ * official and free (OFFICIAL_FREE_PLUGIN_IDS), the owner turns it on in their company. «community»:
+ * third-party, no license; it shows as «Not verified» and the owner turns it on after confirming they
+ * have access to the server.
+ */
+export const PluginDistributionSchema = z.enum(["commercial", "free", "community"]);
 export type PluginDistribution = z.infer<typeof PluginDistributionSchema>;
 
 /**
  * Version of the plugin contract this core offers. It goes up when the SDK gains extension points; a
  * plugin declares the one it needs (`pluginApi`) and a core older than that doesn't load it.
  * 2: authProviders, ctx.secrets, ctx.directory and ctx.notify.
+ * 3: «free» distribution, `replaces`, `guide`, shared sign-in providers (sharedWith) and ctx.shared.
  */
-export const PLUGIN_API_VERSION = 2;
+export const PLUGIN_API_VERSION = 3;
 
 /**
  * Modules the app shares with built plugins (frontendBundle): the plugin marks them as external and
@@ -101,6 +109,17 @@ export const PluginManifestSchema = z.object({
   /** Carpeta con migraciones SQL propias (NNNN_nombre.sql), en el esquema plugin_<id>. */
   migrations: PackagePathSchema.optional(),
   distribution: PluginDistributionSchema.default("commercial"),
+  /**
+   * Official plugins this one replaces (pluginApi 3): while this one is on in a company, those stay
+   * off there, and its providers declared `sharedWith` one of them use that plugin's data (settings,
+   * secrets, linked accounts and sign-in address). If it goes off, the replaced one finds it all.
+   */
+  replaces: z.array(PluginIdSchema).max(5).default([]),
+  /** The plugin's guide on the project's website (https), linked from License and plugins. */
+  guide: z
+    .url({ protocol: /^https$/u })
+    .max(300)
+    .optional(),
 });
 export type PluginManifest = z.infer<typeof PluginManifestSchema>;
 
@@ -233,8 +252,11 @@ export const PluginPackageManifestSchema = z.object({
   format: z.literal(PACKAGE_FORMAT),
   id: PluginIdSchema,
   version: PluginVersionSchema,
-  /** SFL1 license for the company that receives the package (it must name that workspaceId). */
-  license: z.string().min(10).max(8000),
+  /**
+   * SFL1 license for the company that receives the package (it must name that workspaceId). An
+   * official free plugin's package has none (null).
+   */
+  license: z.string().min(10).max(8000).nullable(),
   /** Every file under PACKAGE_FILES_PREFIX, with its path relative to it. */
   files: z
     .array(

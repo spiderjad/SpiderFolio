@@ -24,7 +24,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { ConfirmCodeDialog } from "@/features/profile/two-factor-section";
 import { ApiError } from "@/lib/api";
 import { pluginKeys } from "@/plugins/registry";
-import { formatDateTime, formatShortDate } from "@/lib/utils";
+import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { pluginsUrl } from "@/lib/web-url";
 import {
   licenseApi,
@@ -154,7 +154,7 @@ function LicenseCard({
               <p className="text-xs text-muted-foreground">
                 {license.expiresAt === null || license.expiresAt === undefined
                   ? t.noExpiry
-                  : t.expires(formatShortDate(license.expiresAt))}
+                  : t.expires(formatUtcDate(license.expiresAt))}
               </p>
             )}
           </div>
@@ -244,7 +244,7 @@ function PluginsCard({
   const [confirming, setConfirming] = useState<InstalledPluginView | null>(null);
   const toggle = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      licenseApi.setCommunity(slug, id, enabled),
+      licenseApi.setActivation(slug, id, enabled, confirming?.id === id),
     onSuccess: async (_data, { enabled }) => {
       setConfirming(null);
       await onChanged();
@@ -270,32 +270,54 @@ function PluginsCard({
                 <p className="flex flex-wrap items-center gap-2 font-medium">
                   {plugin.name}{" "}
                   <span className="text-xs text-muted-foreground">v{plugin.version}</span>
-                  {plugin.distribution === "community" && (
+                  {plugin.distribution === "community" ? (
                     <Badge tone="warning">{c.unverified}</Badge>
+                  ) : (
+                    <Badge>{plugin.distribution === "free" ? t.badge.free : t.badge.paid}</Badge>
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">{plugin.description}</p>
-                {plugin.distribution === "community" && (
+                {plugin.replacedBy !== null ? (
+                  <p className="text-xs text-muted-foreground">
+                    {t.replacedHint(plugin.replacedBy)}
+                  </p>
+                ) : plugin.distribution === "community" ? (
                   <p className="text-xs text-muted-foreground">{c.hint}</p>
+                ) : plugin.distribution === "free" ? (
+                  <p className="text-xs text-muted-foreground">{t.freeHint}</p>
+                ) : null}
+                {plugin.guide !== null && (
+                  <a
+                    href={plugin.guide}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {t.guide}
+                  </a>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={plugin.active ? "success" : "neutral"}>
-                  {plugin.active
-                    ? t.pluginState.active
-                    : plugin.licensed
-                      ? t.pluginState.licensed
-                      : t.pluginState.inactive}
+                  {plugin.replacedBy !== null
+                    ? t.pluginState.replaced(plugin.replacedBy)
+                    : plugin.active
+                      ? t.pluginState.active
+                      : plugin.distribution !== "commercial"
+                        ? t.pluginState.off
+                        : plugin.licensed
+                          ? t.pluginState.licensed
+                          : t.pluginState.inactive}
                 </Badge>
-                {plugin.distribution === "community" && (
+                {plugin.distribution !== "commercial" && (
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={toggle.isPending}
                     onClick={() => {
-                      if (plugin.active) {
+                      if (plugin.enabled || plugin.distribution === "free") {
                         toggle.mutate(
-                          { id: plugin.id, enabled: false },
+                          { id: plugin.id, enabled: !plugin.enabled },
                           { onError: (error) => toast.error(adminErrorText(error)) },
                         );
                       } else {
@@ -303,7 +325,7 @@ function PluginsCard({
                       }
                     }}
                   >
-                    {plugin.active ? c.disable : c.enable}
+                    {plugin.enabled ? c.disable : c.enable}
                   </Button>
                 )}
               </div>

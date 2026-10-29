@@ -10,9 +10,11 @@ export async function notifyStoppedDirectories(
   plugins: PluginRuntime,
 ): Promise<number> {
   const signIn = new Set(
-    plugins.installed
-      .filter((plugin) => (plugin.backend?.authProviders ?? []).length > 0)
-      .map((plugin) => plugin.manifest.id),
+    plugins.installed.flatMap((plugin) =>
+      (plugin.backend?.authProviders ?? []).map(
+        (provider) => provider.sharedWith ?? plugin.manifest.id,
+      ),
+    ),
   );
   if (signIn.size === 0) return 0;
   const linked = await prisma.externalIdentity.groupBy({
@@ -21,7 +23,12 @@ export async function notifyStoppedDirectories(
   });
   let created = 0;
   for (const { workspaceId, pluginId } of linked) {
-    if (await plugins.isActive(workspaceId, pluginId)) continue;
+    // Still synced: its plugin is active, or an active one replaced it (and uses its accounts).
+    const active = await plugins.activeIds(workspaceId);
+    const replacedByActive = plugins.installed.some(
+      (plugin) => active.has(plugin.manifest.id) && plugin.manifest.replaces.includes(pluginId),
+    );
+    if (active.has(pluginId) || replacedByActive) continue;
     const status = await plugins.licenseStatus(workspaceId);
     const license =
       status.state === "valid" || status.state === "expired" ? status.payload.id : "none";

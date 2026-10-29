@@ -6,6 +6,7 @@ import type {
   AuthProvider,
   DirectoryMember,
   PasswordAuthProvider,
+  PluginDirectory,
   PluginWorkspaceContext,
   RedirectAuthProvider,
   RedirectSignIn,
@@ -19,6 +20,7 @@ import { randomToken, sha256 } from "../../lib/crypto.ts";
 import { AppError } from "../../lib/errors.ts";
 import type { AppDeps } from "../../routes.ts";
 import type { InstalledPlugin } from "../../plugins/loader.ts";
+import type { SignInProvider } from "../../plugins/runtime.ts";
 import { auditGlobal } from "../audit/audit.service.ts";
 import { createAuthService, type LoginResult } from "../auth/auth.service.ts";
 import type { RequestInfo } from "../auth/sessions.service.ts";
@@ -67,9 +69,13 @@ export interface SignInOptions {
 
 interface Resolved<P extends AuthProvider> {
   workspace: { id: string; slug: string };
+  /** The sign-in address and where the accounts are linked (SignInProvider.pluginId). */
   pluginId: string;
   provider: P;
+  /** The context of the plugin the provider belongs to. */
   ctx: PluginWorkspaceContext;
+  /** The directory the accounts are linked in: the plugin's own, or the one it shares. */
+  directory: PluginDirectory;
 }
 
 const MINUTE_MS = 60_000;
@@ -129,17 +135,32 @@ export function createDirectorySignIn(deps: AppDeps) {
   ): Promise<Resolved<Extract<AuthProvider, { kind: K }>>> {
     const workspace = await workspaceFor(slug);
     if (workspace === null) throw new SignInError("unavailable");
-    const plugin = (await plugins.signInPlugins(workspace.id)).find(
-      (candidate) => candidate.manifest.id === pluginId,
+    const entry = (await plugins.signInProviders(workspace.id)).find(
+      (candidate) => candidate.pluginId === pluginId && candidate.provider.id === providerId,
     );
-    const provider = plugin?.backend?.authProviders?.find(
-      (candidate): candidate is Extract<AuthProvider, { kind: K }> =>
-        candidate.id === providerId && candidate.kind === kind,
-    );
-    if (plugin === undefined || provider === undefined) throw new SignInError("unavailable");
-    const ctx = plugins.contextFor(workspace.id, pluginId);
-    if ((await describe(plugin, provider, ctx)) === null) throw new SignInError("unavailable");
-    return { workspace, pluginId, provider, ctx };
+    const provider = entry?.provider;
+    if (entry === undefined || provider?.kind !== kind) throw new SignInError("unavailable");
+    const { ctx, directory } = contextsOf(workspace.id, entry);
+    if ((await describe(entry.plugin, provider, ctx)) === null) {
+      throw new SignInError("unavailable");
+    }
+    return {
+      workspace,
+      pluginId,
+      provider: provider as Extract<AuthProvider, { kind: K }>,
+      ctx,
+      directory,
+    };
+  }
+
+  /** The provider's plugin context, and the directory its accounts are linked in. */
+  function contextsOf(workspaceId: string, entry: SignInProvider) {
+    const ctx = plugins.contextFor(workspaceId, entry.plugin.manifest.id);
+    const directory =
+      entry.pluginId === entry.plugin.manifest.id
+        ? ctx.directory
+        : ctx.shared(entry.pluginId).directory;
+    return { ctx, directory };
   }
 
   const fail = async (
@@ -166,7 +187,7 @@ export function createDirectorySignIn(deps: AppDeps) {
     /** Only a redirect provider's word, and only if the company trusts it; never a password one. */
     providerMfa = false,
   ): Promise<LoginResult> {
-    const result = await resolved.ctx.directory.syncMember(resolved.provider.id, member);
+    const result = await resolved.directory.syncMember(resolved.provider.id, member);
     if (result.status === "conflict") {
       await fail(resolved, "email_taken", info);
       throw new SignInError("emailTaken");
@@ -195,7 +216,7 @@ export function createDirectorySignIn(deps: AppDeps) {
       trustedDeviceToken,
       providerMfa &&
         resolved.provider.kind === "redirect" &&
-        (await resolved.ctx.directory.trustProviderMfa()),
+        (await resolved.directory.trustProviderMfa()),
     );
   }
 
@@ -206,18 +227,16 @@ export function createDirectorySignIn(deps: AppDeps) {
       const workspace = await workspaceFor(slug);
       if (workspace === null) return none;
       const providers: ProviderView[] = [];
-      for (const plugin of await plugins.signInPlugins(workspace.id)) {
-        const ctx = plugins.contextFor(workspace.id, plugin.manifest.id);
-        for (const provider of plugin.backend?.authProviders ?? []) {
-          const label = await describe(plugin, provider, ctx);
-          if (label !== null) {
-            providers.push({
-              pluginId: plugin.manifest.id,
-              id: provider.id,
-              kind: provider.kind,
-              label,
-            });
-          }
+      for (const entry of await plugins.signInProviders(workspace.id)) {
+        const { ctx } = contextsOf(workspace.id, entry);
+        const label = await describe(entry.plugin, entry.provider, ctx);
+        if (label !== null) {
+          providers.push({
+            pluginId: entry.pluginId,
+            id: entry.provider.id,
+            kind: entry.provider.kind,
+            label,
+          });
         }
       }
       if (providers.length === 0) return { ...none, workspaceSlug: workspace.slug };

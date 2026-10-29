@@ -113,6 +113,7 @@ export async function testPluginRuntime(
         distribution: community.includes(backend.id) ? "community" : "commercial",
         translations: {},
         pluginApi: (backend.authProviders ?? []).length > 0 ? 2 : 1,
+        replaces: [],
       },
       dir: "",
       version: backend.version,

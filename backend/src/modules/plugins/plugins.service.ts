@@ -24,11 +24,20 @@ export interface InstalledPluginView {
   name: string;
   description: string;
   version: string;
-  /** «commercial»: se activa con la licencia. «community»: de terceros, sin verificar. */
-  distribution: "commercial" | "community";
-  /** La licencia lo incluye (vigente o vencida). Siempre false en los community. */
+  /**
+   * «commercial»: official, turned on by the license. «free»: official and free, the owner turns it on.
+   * «community»: third-party, not verified, the owner turns it on.
+   */
+  distribution: "commercial" | "free" | "community";
+  /** La licencia lo incluye (vigente o vencida). Siempre false en los free y community. */
   licensed: boolean;
   active: boolean;
+  /** The owner turned it on in the company (free and community). */
+  enabled: boolean;
+  /** Name of the active plugin that replaces it here (it stays off meanwhile), or null. */
+  replacedBy: string | null;
+  /** Its guide on the project's website, or null. */
+  guide: string | null;
 }
 
 function viewOf(status: LicenseStatus): LicenseView {
@@ -87,16 +96,29 @@ export async function licenseOverview(
     status.state === "valid" || status.state === "expired" ? status.payload.plugins : [],
   );
   const active = await plugins.activeIds(ctx.tenant.workspaceId);
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
+  const enabled = readCommunityActivations(workspace?.settings);
+  const replacer = (id: string) =>
+    plugins.installed.find(
+      (plugin) => active.has(plugin.manifest.id) && plugin.manifest.replaces.includes(id),
+    );
   return {
     license: viewOf(status),
-    installed: plugins.installed.map((plugin) => ({
-      id: plugin.manifest.id,
-      ...manifestText(plugin.manifest, currentLocale()),
-      version: plugin.version,
-      distribution: plugin.manifest.distribution,
-      licensed: plugin.manifest.distribution === "commercial" && listed.has(plugin.manifest.id),
-      active: active.has(plugin.manifest.id),
-    })),
+    installed: plugins.installed.map((plugin) => {
+      const replacedBy = replacer(plugin.manifest.id);
+      return {
+        id: plugin.manifest.id,
+        ...manifestText(plugin.manifest, currentLocale()),
+        version: plugin.version,
+        distribution: plugin.manifest.distribution,
+        licensed: plugin.manifest.distribution === "commercial" && listed.has(plugin.manifest.id),
+        active: active.has(plugin.manifest.id),
+        enabled: plugin.manifest.distribution !== "commercial" && plugin.manifest.id in enabled,
+        replacedBy:
+          replacedBy === undefined ? null : manifestText(replacedBy.manifest, currentLocale()).name,
+        guide: plugin.manifest.guide ?? null,
+      };
+    }),
   };
 }
 
@@ -144,9 +166,9 @@ export async function removeLicense(ctx: AdminContext, plugins: PluginRuntime): 
 }
 
 /**
- * Activa o desactiva un plugin community en la empresa. Solo el propietario (lo hace cumplir la ruta)
- * y, al activar, con la confirmación explícita de que el plugin no está verificado y tiene acceso al
- * servidor. Los comerciales no se activan así: solo con la licencia.
+ * Activa o desactiva un plugin free o community en la empresa. Solo el propietario (lo hace cumplir la
+ * ruta) y, al activar uno community, con la confirmación explícita de que no está verificado y tiene
+ * acceso al servidor. Los comerciales no se activan así: solo con la licencia.
  */
 export async function setCommunityPlugin(
   ctx: AdminContext,
@@ -156,12 +178,32 @@ export async function setCommunityPlugin(
 ): Promise<void> {
   const plugin = plugins.installed.find((candidate) => candidate.manifest.id === pluginId);
   if (plugin === undefined) throw notFound();
-  if (plugin.manifest.distribution !== "community") {
+  const { distribution } = plugin.manifest;
+  if (distribution === "commercial") {
     throw new AppError("BAD_REQUEST", { message: pluginTexts.notCommunity });
   }
-  if (change.enabled && change.acceptRisk !== true) {
+  if (distribution === "community" && change.enabled && change.acceptRisk !== true) {
     throw new AppError("BAD_REQUEST", { message: pluginTexts.acceptRiskRequired });
   }
+  if (!(await setActivation(ctx, pluginId, change.enabled))) return;
+  plugins.forget(ctx.tenant.workspaceId);
+  await auditAdmin(ctx, {
+    action: `plugin.${distribution}.${change.enabled ? "enable" : "disable"}`,
+    entityType: "Plugin",
+    entityId: pluginId,
+    metadata: { version: plugin.version, verified: distribution === "free" },
+  });
+}
+
+/**
+ * Writes the owner's activation of a free or community plugin (Workspace.settings.communityPlugins);
+ * false if it was already so. It needn't be loaded yet (a free package just uploaded).
+ */
+export async function setActivation(
+  ctx: AdminContext,
+  pluginId: string,
+  enabled: boolean,
+): Promise<boolean> {
   const workspace = await ctx.db.workspace.findFirstOrThrow({
     where: {},
     select: { id: true, settings: true },
@@ -171,8 +213,8 @@ export async function setCommunityPlugin(
       ? (workspace.settings as Record<string, unknown>)
       : {};
   const before = readCommunityActivations(workspace.settings);
-  if (change.enabled === pluginId in before) return;
-  const activations = change.enabled
+  if (enabled === pluginId in before) return false;
+  const activations = enabled
     ? {
         ...before,
         [pluginId]: { enabledAt: new Date().toISOString(), enabledBy: ctx.tenant.membershipId },
@@ -182,11 +224,5 @@ export async function setCommunityPlugin(
     where: { id: workspace.id },
     data: { settings: { ...current, communityPlugins: activations } },
   });
-  plugins.forget(ctx.tenant.workspaceId);
-  await auditAdmin(ctx, {
-    action: change.enabled ? "plugin.community.enable" : "plugin.community.disable",
-    entityType: "Plugin",
-    entityId: pluginId,
-    metadata: { version: plugin.version, verified: false },
-  });
+  return true;
 }

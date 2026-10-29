@@ -8,6 +8,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "nod
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   COMMERCIAL_PLUGIN_IDS,
+  OFFICIAL_FREE_PLUGIN_IDS,
   PLUGIN_API_VERSION,
   PluginCapabilitySchema,
   PluginManifestSchema,
@@ -150,12 +151,40 @@ function validateBackend(manifest: PluginManifest, value: unknown): BackendPlugi
     if (kind !== "password" && kind !== "redirect") {
       throw new Error(`Tipo de proveedor desconocido: ${String(kind)}`);
     }
+    if (provider.sharedWith !== undefined && !manifest.replaces.includes(provider.sharedWith)) {
+      throw new Error(`${provider.id}: sharedWith «${provider.sharedWith}» no está en replaces`);
+    }
     providers.add(provider.id);
   }
   if (providers.size > 0 && manifest.pluginApi < 2) {
     throw new Error("authProviders necesita pluginApi 2 en el manifiesto");
   }
   return plugin;
+}
+
+/**
+ * Only SpiderJAD's ids are official: a community plugin can't take one (it would skip the license or
+ * pass for official), «free» is only for the official free ones, and only official plugins replace
+ * others (a replacement takes over the replaced plugin's linked accounts).
+ */
+export function checkDistribution(manifest: PluginManifest): void {
+  const official =
+    COMMERCIAL_PLUGIN_IDS.includes(manifest.id) || OFFICIAL_FREE_PLUGIN_IDS.includes(manifest.id);
+  if (manifest.distribution === "community" && official) {
+    throw new Error(`«${manifest.id}» es un plugin oficial: no puede declararse community`);
+  }
+  if (manifest.distribution === "free" && !OFFICIAL_FREE_PLUGIN_IDS.includes(manifest.id)) {
+    throw new Error(`«${manifest.id}» no es un plugin oficial gratis: no puede declararse free`);
+  }
+  if (manifest.replaces.length > 0) {
+    if (manifest.distribution === "community") {
+      throw new Error(`«${manifest.id}»: un plugin community no puede reemplazar a otro`);
+    }
+    if (manifest.pluginApi < 3) throw new Error("replaces necesita pluginApi 3 en el manifiesto");
+    if (manifest.replaces.includes(manifest.id)) {
+      throw new Error(`«${manifest.id}» no puede reemplazarse a sí mismo`);
+    }
+  }
 }
 
 /** Loads the installed plugins. Never fails: what doesn't load stays out with a warning. */
@@ -174,9 +203,7 @@ export async function discoverPlugins(options: DiscoverOptions): Promise<Install
       const pkg = readPackage(dir);
       if (pkg?.spiderfolio === undefined) continue;
       const manifest = PluginManifestSchema.parse(pkg.spiderfolio);
-      if (manifest.distribution === "community" && COMMERCIAL_PLUGIN_IDS.includes(manifest.id)) {
-        throw new Error(`«${manifest.id}» es un plugin comercial: no puede declararse community`);
-      }
+      checkDistribution(manifest);
       if (manifest.pluginApi > PLUGIN_API_VERSION) {
         throw new Error(
           `«${manifest.id}» necesita la versión ${String(manifest.pluginApi)} de la API de plugins y ` +

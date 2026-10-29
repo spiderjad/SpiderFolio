@@ -2,8 +2,9 @@
 
 SpiderFolio es open source (AGPLv3). Las funciones comerciales viven en plugins que se instalan aparte
 y se activan con una licencia firmada. Sin licencia válida el plugin no se activa y el núcleo funciona
-igual: nada del núcleo depende de que un plugin esté. Los plugins de terceros pueden declararse
-«community» y se activan sin licencia (ver «Plugins community»).
+igual: nada del núcleo depende de que un plugin esté. SpiderJAD también publica plugins oficiales
+gratis («free»: firmados, sin licencia) y los de terceros pueden declararse «community» (ver
+«Distribución: comercial, gratis y community»).
 
 ## Instalación
 
@@ -123,14 +124,14 @@ Payload (`LicensePayloadSchema` en `@spiderfolio/plugin-sdk`):
 
 ## Subir un plugin desde la app
 
-Además de copiar la carpeta al volumen, el **propietario** puede subir un plugin comercial firmado desde
-Administración › Licencia y plugins. Los plugins community (sin firma) nunca se suben por la app: solo
-copiándolos en la carpeta del servidor.
+Además de copiar la carpeta al volumen, el **propietario** puede subir un plugin oficial firmado
+(comercial o gratis) desde Administración › Licencia y plugins. Los plugins community (sin firma) nunca
+se suben por la app: solo copiándolos en la carpeta del servidor.
 
 **El archivo `.sfplugin`** (`PluginPackageManifestSchema` del SDK): un tar ustar comprimido con gzip con
 exactamente `manifest.json`, `manifest.sig` y el plugin compilado bajo `package/` (ver «Paquetes
-compilados»). `manifest.json` trae el id, la versión `x.y.z`, la licencia de la empresa (SFL1) y la lista
-de archivos con su tamaño y SHA-256. `manifest.sig` es la firma Ed25519 de SpiderJAD sobre los bytes de
+compilados»). `manifest.json` trae el id, la versión `x.y.z`, la licencia de la empresa (SFL1; `null` en
+un plugin oficial gratis) y la lista de archivos con su tamaño y SHA-256. `manifest.sig` es la firma Ed25519 de SpiderJAD sobre los bytes de
 `manifest.json`, con la **clave de paquetes** (`backend/src/plugins/package-key.ts`, distinta de la de
 licencias y fija en el código como ella). Lo arma la herramienta privada de SpiderJAD.
 
@@ -140,10 +141,11 @@ licencias y fija en el código como ella). Lo arma la herramienta privada de Spi
   repetidas, o supera los topes de `pluginPackageLimits` (`packages/limits`: tamaño del archivo, tamaño
   descomprimido y cantidad de archivos);
 - la firma no es válida, o algún archivo no coincide byte a byte con el manifiesto firmado, falta o sobra;
-- el `package.json` del plugin no coincide con el manifiesto firmado (id, versión), no es comercial o
-  necesita un `pluginApi` más nuevo que el del núcleo;
-- la licencia no es válida, venció, no incluye el plugin o no es de la empresa que lo sube (en un
-  paquete el `workspaceId` es obligatorio);
+- el `package.json` del plugin no coincide con el manifiesto firmado (id, versión), es community, su
+  distribución no es la permitida para su id (`checkDistribution`), trae licencia siendo gratis o no
+  la trae siendo comercial, o necesita un `pluginApi` más nuevo que el del núcleo;
+- (comercial) la licencia no es válida, venció, no incluye el plugin o no es de la empresa que lo sube
+  (en un paquete el `workspaceId` es obligatorio);
 - ya hay instalada una versión más nueva (no se baja de versión, así no se reinstala una vieja con
   fallos), o el plugin viene incluido en la imagen (se actualiza con la imagen).
 
@@ -155,7 +157,8 @@ pantalla avisa que el plugin se instala para todo el servidor; cada empresa lo a
 **Instalación** (`backend/src/plugins/install.ts`): en `PLUGIN_INSTALL_DIR` (en Docker, el volumen
 `/data/plugins`; si falta, la última carpeta de `PLUGINS_DIR`). Se escribe en una carpeta oculta y se
 cambia por la anterior con un `rename`, así el cargador nunca lee una a medias. La licencia que trae pasa
-a ser la de la empresa si es más nueva (`issuedAt`) que la cargada. Se carga al reiniciar.
+a ser la de la empresa si es más nueva (`issuedAt`) que la cargada; uno gratis queda activado en la
+empresa del propietario que lo sube. Se carga al reiniciar.
 
 **Reiniciar ahora** (`backend/src/plugins/restart.ts`): solo si algo vuelve a levantar los procesos al
 salir (`SPIDERFOLIO_SUPERVISED=true`: lo pone `deploy/compose.yaml`, y el watcher de `npm run dev`); si
@@ -170,20 +173,41 @@ ignora los planes anteriores a su arranque, así no se reinicia dos veces.
 **Auditoría**: `plugin.package.upload` (id, versión, versión anterior, licencia y si se actualizó),
 `plugin.package.rejected` (el motivo) y `server.restart.request` (la hora y lo que espera cargarse).
 
-## Plugins community
+## Distribución: comercial, gratis y community
 
-`distribution` del manifiesto: `"commercial"` (por defecto) o `"community"`.
+`distribution` del manifiesto: `"commercial"` (por defecto), `"free"` o `"community"`. Los ids oficiales
+de SpiderJAD están en `@spiderfolio/plugin-sdk`: `COMMERCIAL_PLUGIN_IDS` y `OFFICIAL_FREE_PLUGIN_IDS`.
+`checkDistribution` (`backend/src/plugins/loader.ts`) hace que un manifiesto community con un id oficial
+no se cargue (no se salta la licencia ni pasa por oficial) y que solo los ids de
+`OFFICIAL_FREE_PLUGIN_IDS` se declaren `free`.
 
-- **Comercial**: activo con una licencia firmada que lo incluya (arriba). Los plugins de SpiderJAD son
-  todos comerciales; sus ids están en `COMMERCIAL_PLUGIN_IDS` (`@spiderfolio/plugin-sdk`) y un manifiesto
-  community con uno de esos ids no se carga (así no se salta la licencia).
+- **Comercial** («Oficial · De pago»): activo con una licencia firmada que lo incluya (arriba).
+- **Gratis** («Oficial · Gratis»): oficial, firmado por SpiderJAD y sin licencia. Su `.sfplugin` se
+  descarga del catálogo de la web y se sube como cualquier otro. El **propietario** lo activa o lo apaga
+  por empresa (`PUT /admin/plugins/:pluginId/activation` con `{ enabled }`); al subirlo queda activado
+  en su empresa. Se audita `plugin.free.enable` / `plugin.free.disable`.
 - **Community**: de terceros, sin licencia. Instalado no se activa: el **propietario** lo activa por
-  empresa en Licencia y plugins (`PUT /admin/plugins/:pluginId/activation` con
-  `{ enabled: true, acceptRisk: true }`). La app lo marca «No verificado» y pide confirmar una advertencia
-  (no está verificado y tiene acceso al servidor); sin `acceptRisk` la API responde 400. La activación
-  vive en `Workspace.settings.communityPlugins` (fuera del alcance de los plugins, que no reciben Prisma)
-  y se audita (`plugin.community.enable` / `plugin.community.disable`). Desactivado, se comporta como uno
-  sin licencia.
+  empresa con `{ enabled: true, acceptRisk: true }`. La app lo marca «No verificado» y pide confirmar una
+  advertencia (no está verificado y tiene acceso al servidor); sin `acceptRisk` la API responde 400. Se
+  audita `plugin.community.enable` / `plugin.community.disable`. Desactivado, se comporta como uno sin
+  licencia.
+
+Las activaciones de gratis y community viven en `Workspace.settings.communityPlugins` (fuera del alcance
+de los plugins, que no reciben Prisma).
+
+**Reemplazos (`replaces`, pluginApi 3).** Un plugin oficial puede declarar los ids que reemplaza (ej.
+«Directorio corporativo», de pago, reemplaza a «Entrar con Microsoft», gratis). Mientras el que
+reemplaza está activo en una empresa, los reemplazados quedan apagados allí (`activeIds`) y la pantalla
+lo explica. Sus proveedores declarados `sharedWith: "<reemplazado>"` contestan en la dirección del
+reemplazado (`/auth/sso/<empresa>/<reemplazado>/<proveedor>/…`, la misma URL de retorno en Azure) y
+vinculan las cuentas allí; sus datos (ajustes y secretos) los lee con `ctx.shared("<reemplazado>")`.
+Así nada se mueve: si la licencia del de pago vence, el gratis vuelve a estar activo y encuentra la
+configuración y las cuentas vinculadas tal cual. Si los dos ofrecen la misma dirección, gana el activo
+(el de pago en su período de gracia cede ante el gratis activo). Un plugin community no puede declarar
+`replaces`.
+
+**Guía (`guide`).** URL https de la guía del plugin en la web del proyecto; Licencia y plugins la enlaza.
+Ningún plugin oficial se publica sin su guía.
 
 ## Puntos de extensión del backend
 
@@ -334,11 +358,14 @@ apuntar `PLUGINS_DIR` o `PLUGIN_PACKAGES` a donde queden instalados.
 | Plugin | Qué agrega | Estado |
 |---|---|---|
 | `security-policies` | Exigir 2FA a la empresa (gancho `mfaRequired`) y dominios permitidos para invitar e importar (gancho `checkMemberEmail`). Sección «Políticas avanzadas» del propietario. | Hecho |
-| `corporate-directory` | Directorio corporativo: inicio de sesión con Active Directory o Microsoft Entra ID, altas y sincronización de grupos. | En desarrollo |
+| `corporate-directory` | Directorio corporativo: inicio de sesión con Active Directory o Microsoft Entra ID, altas, grupos → departamentos y roles, sincronización y bajas. Reemplaza a `microsoft-sign-in`. | Hecho |
 | `onedrive-import` | Importar de OneDrive y SharePoint (botón Nuevo, job `sync`). | Esqueleto |
 | `mcp-connector` | Conector MCP para Claude (spec en `plugins/mcp-connector/SPEC.md`). | Esqueleto |
 | `templates` | Plantillas propias y por rubro (migración propia `plugin_templates`). | Esqueleto |
 | `audit-rooms` | Salas de auditoría para auditores externos (acción en documentos). | Esqueleto |
+
+Oficiales gratis: `microsoft-sign-in` («Entrar con Microsoft»): el botón de inicio de sesión con
+Microsoft 365; la cuenta se crea como Miembro y el propietario le asigna los departamentos.
 
 Migración de datos: `20261117100000_security_policies_plugin` copia `settings.require2fa` y
 `Workspace.allowedDomains` a `PluginSetting` (plugin `security-policies`) y después quita la clave y la

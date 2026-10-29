@@ -19,6 +19,7 @@ import {
   type PluginPackageManifest,
 } from "@spiderfolio/plugin-sdk";
 import { verifyLicense } from "./license.ts";
+import { checkDistribution } from "./loader.ts";
 import { PACKAGE_PUBLIC_KEY_PEM } from "./package-key.ts";
 
 const defaultKey = createPublicKey(PACKAGE_PUBLIC_KEY_PEM);
@@ -47,7 +48,8 @@ export interface VerifiedPackage {
   manifest: PluginPackageManifest;
   /** The plugin's own manifest (package/package.json). */
   plugin: PluginManifest;
-  license: LicensePayload;
+  /** The license it brings; null for an official free plugin. */
+  license: LicensePayload | null;
   /** Files under package/, by their path relative to it. */
   files: ReadonlyMap<string, Buffer>;
 }
@@ -195,14 +197,23 @@ export function verifyPackage(file: Buffer, options: VerifyPackageOptions): Veri
   } catch {
     throw new PackageError("manifest", "package.json");
   }
+  const free = plugin.distribution === "free";
   if (
     plugin.id !== manifest.id ||
     version !== manifest.version ||
-    plugin.distribution !== "commercial"
+    plugin.distribution === "community" ||
+    free !== (manifest.license === null)
   ) {
     throw new PackageError("manifest", "No coincide con el manifiesto firmado");
   }
+  try {
+    checkDistribution(plugin);
+  } catch {
+    throw new PackageError("manifest", "Distribución no permitida");
+  }
   if (plugin.pluginApi > PLUGIN_API_VERSION) throw new PackageError("unsupported");
+  // An official free plugin: signed by SpiderJAD is enough, no license.
+  if (manifest.license === null) return { manifest, plugin, license: null, files };
 
   // The license: valid, including this plugin and for this company (always named in a package).
   const status = verifyLicense(manifest.license, {

@@ -18,10 +18,18 @@ export interface InstalledPluginView {
   name: string;
   description: string;
   version: string;
-  /** «community»: de terceros, sin licencia ni verificación; lo activa el propietario. */
-  distribution: "commercial" | "community";
+  /**
+   * «commercial»: official, turned on by the license. «free»: official and free, the owner turns it
+   * on. «community»: third-party, not verified, the owner turns it on.
+   */
+  distribution: "commercial" | "free" | "community";
   licensed: boolean;
   active: boolean;
+  /** The owner turned it on (free and community). */
+  enabled: boolean;
+  /** Name of the active plugin that replaces it here, or null. */
+  replacedBy: string | null;
+  guide: string | null;
 }
 
 export interface PluginServerView {
@@ -85,10 +93,10 @@ export const licenseApi = {
   save: (slug: string, token: string) =>
     api<LicenseOverview>(w(slug, "/admin/license"), { method: "PUT", body: { token } }),
   remove: (slug: string) => api<undefined>(w(slug, "/admin/license"), { method: "DELETE" }),
-  setCommunity: (slug: string, pluginId: string, enabled: boolean) =>
+  setActivation: (slug: string, pluginId: string, enabled: boolean, acceptRisk = false) =>
     api<LicenseOverview>(w(slug, `/admin/plugins/${encodeURIComponent(pluginId)}/activation`), {
       method: "PUT",
-      body: enabled ? { enabled, acceptRisk: true } : { enabled },
+      body: enabled && acceptRisk ? { enabled, acceptRisk } : { enabled },
     }),
   uploadPlugin: (slug: string, file: Blob) =>
     api<

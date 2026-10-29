@@ -36,7 +36,17 @@ export const licenseEs = {
       active: "Activo",
       licensed: "En la licencia (vencida)",
       inactive: "Sin licencia",
+      off: "Desactivado",
+      replaced: (name: string) => `Lo reemplaza ${name}`,
     },
+    badge: {
+      paid: "Oficial · De pago",
+      free: "Oficial · Gratis",
+    },
+    freeHint: "Plugin oficial y gratis, firmado por SpiderJAD. Lo activas tú, sin licencia.",
+    replacedHint: (name: string) =>
+      `Mientras ${name} esté activo, este queda apagado: ${name} ya incluye lo que hace y usa sus mismos datos. Si ${name} deja de estar activo, este vuelve a funcionar solo.`,
+    guide: "Guía",
     community: {
       unverified: "No verificado",
       hint: "Plugin de terceros: SpiderJAD no lo revisó ni lo firmó.",
@@ -60,7 +70,7 @@ export const licenseEs = {
     },
     upload: {
       title: "Subir un plugin",
-      text: "El archivo .sfplugin que te enviamos: trae el plugin firmado por SpiderJAD y la licencia de tu empresa. Se verifica en este servidor antes de instalarlo.",
+      text: "Un archivo .sfplugin firmado por SpiderJAD: el que te enviamos con la licencia de tu empresa, o uno gratis descargado del catálogo. Se verifica en este servidor antes de instalarlo.",
       choose: "Elegir archivo .sfplugin",
       uploading: "Verificando e instalando…",
       uploaded: (name: string, version: string) => `${name} ${version} instalado`,

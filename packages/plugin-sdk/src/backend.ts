@@ -150,6 +150,17 @@ export interface PluginNotice {
   dedupeKey?: string;
 }
 
+/**
+ * The data of a plugin this one replaces (manifest `replaces`), in this company: its settings, secrets
+ * and directory (the accounts linked through the providers declared `sharedWith` it).
+ */
+export interface SharedPluginData {
+  readonly pluginId: PluginId;
+  settings: PluginSettings;
+  secrets: PluginSecrets;
+  directory: PluginDirectory;
+}
+
 /** Lo que el plugin puede usar dentro de un workspace donde está activo. */
 export interface PluginWorkspaceContext {
   readonly pluginId: PluginId;
@@ -163,6 +174,8 @@ export interface PluginWorkspaceContext {
   enqueue(job: string, payload: Record<string, unknown>): Promise<void>;
   /** Bell notice to people of this company (pluginApi 2); how many were created. */
   notify(notice: PluginNotice): Promise<number>;
+  /** Data of a plugin listed in the manifest's `replaces` (pluginApi 3); any other id throws. */
+  shared(pluginId: PluginId): SharedPluginData;
 }
 
 export type RoleBase = "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
@@ -250,6 +263,12 @@ export interface AuthProviderInfo {
 interface AuthProviderBase {
   /** Id inside the plugin (lowercase, digits and dashes). */
   id: string;
+  /**
+   * A plugin in the manifest's `replaces` (pluginApi 3): the provider answers at that plugin's sign-in
+   * address and its accounts are linked there, so they keep working with either plugin. Its `ctx`
+   * is still this plugin's; that plugin's data is `ctx.shared(sharedWith)`.
+   */
+  sharedWith?: PluginId;
   describe(ctx: PluginWorkspaceContext): Promise<AuthProviderInfo | null>;
 }
 
