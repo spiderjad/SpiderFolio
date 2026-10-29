@@ -81,8 +81,16 @@ export async function testPluginRuntime(
   licensed: readonly string[] = [],
   /** Ids de los plugins que se declaran «community» (sin licencia; los activa el propietario). */
   community: readonly string[] = [],
-  /** License expiry (default none) and the box for the plugins' secrets (default none). */
-  options: { expiresAt?: Date; box?: SecretBox } = {},
+  /**
+   * License expiry (default none), the box for the plugins' secrets (default none), the ids declared
+   * «free» and what each plugin replaces (manifest `replaces`).
+   */
+  options: {
+    expiresAt?: Date;
+    box?: SecretBox;
+    free?: readonly string[];
+    replaces?: Readonly<Record<string, readonly string[]>>;
+  } = {},
 ): Promise<PluginRuntime> {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
   for (const workspaceId of licensed) {
@@ -110,10 +118,19 @@ export async function testPluginRuntime(
         id: backend.id,
         name: backend.id,
         description: "",
-        distribution: community.includes(backend.id) ? "community" : "commercial",
+        distribution: community.includes(backend.id)
+          ? "community"
+          : (options.free ?? []).includes(backend.id)
+            ? "free"
+            : "commercial",
         translations: {},
-        pluginApi: (backend.authProviders ?? []).length > 0 ? 2 : 1,
-        replaces: [],
+        pluginApi:
+          options.replaces?.[backend.id] !== undefined
+            ? 3
+            : (backend.authProviders ?? []).length > 0
+              ? 2
+              : 1,
+        replaces: [...(options.replaces?.[backend.id] ?? [])],
       },
       dir: "",
       version: backend.version,
