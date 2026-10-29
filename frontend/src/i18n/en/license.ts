@@ -6,7 +6,7 @@ export const licenseEs: Catalog<typeof EsLicense> = {
   license: {
     title: "License and plugins",
     subtitle:
-      "SpiderFolio is open source. Commercial plugins are activated with a license that's verified on this server, offline.",
+      "SpiderFolio is open source. Paid plugins are activated with a license that's verified on this server, offline; official free ones you turn on yourself.",
     loadError: "We couldn't load the license",
     status: {
       none: "No license",

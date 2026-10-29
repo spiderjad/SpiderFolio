@@ -3,7 +3,7 @@ export const licenseEs = {
   license: {
     title: "Licencia y plugins",
     subtitle:
-      "SpiderFolio es open source. Los plugins comerciales se activan con una licencia que se verifica en este servidor, sin conexión.",
+      "SpiderFolio es open source. Los plugins de pago se activan con una licencia que se verifica en este servidor, sin conexión; los oficiales gratis los activas tú.",
     loadError: "No pudimos cargar la licencia",
     status: {
       none: "Sin licencia",
