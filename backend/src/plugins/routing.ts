@@ -38,7 +38,7 @@ function requestContext(
   const auth = req.auth;
   if (auth === undefined) throw new AppError("UNAUTHENTICATED");
   return {
-    ...deps.plugins.contextFor(tenant.workspaceId, pluginId),
+    ...deps.plugins.contextFor(tenant.workspaceId, pluginId, auditInfo(req)),
     userId: auth.userId,
     membershipId: tenant.membershipId,
     roleBase: tenant.role.base,

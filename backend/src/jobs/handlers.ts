@@ -486,6 +486,7 @@ export interface CleanupResult {
   rateLimitBuckets: number;
   sessions: number;
   authTokens: number;
+  ssoFlows: number;
 }
 
 /** Borra objetos de S3 de lo eliminado para siempre. Idempotente: se reintenta entero si algo falla. */
@@ -595,16 +596,19 @@ export async function cleanupExpired(
   now: Date = new Date(),
 ): Promise<CleanupResult> {
   MaintenanceJobSchema.parse(payload ?? {});
-  const [buckets, sessions, tokens] = await deps.prisma.$transaction([
+  const [buckets, sessions, tokens, ssoFlows] = await deps.prisma.$transaction([
     deps.prisma.rateLimitBucket.deleteMany({ where: { resetAt: { lt: now } } }),
     deps.prisma.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     deps.prisma.authToken.deleteMany({ where: { expiresAt: { lt: now } } }),
+    // Directory sign-ins (OIDC) never finished, of every company.
+    deps.prisma.ssoFlow.deleteMany({ where: { expiresAt: { lt: now } } }),
   ]);
   await expireExports(deps, now);
   const result = {
     rateLimitBuckets: buckets.count,
     sessions: sessions.count,
     authTokens: tokens.count,
+    ssoFlows: ssoFlows.count,
   };
   deps.logger.info(result, "Limpieza de vencidos");
   return result;

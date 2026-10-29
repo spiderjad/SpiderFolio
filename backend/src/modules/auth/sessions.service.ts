@@ -31,6 +31,13 @@ export interface SessionPolicy {
   maxAgeDays: number;
 }
 
+/** The company directory a session signed in with (plugin auth provider); kept when it rotates. */
+export interface SessionDirectory {
+  workspaceId: string;
+  /** «<pluginId>/<providerId>». */
+  provider: string;
+}
+
 export interface IssuedSession {
   sessionId: string;
   familyId: string;
@@ -64,10 +71,19 @@ export async function createSession(
   now: Date = new Date(),
   idleSeconds: number | null = null,
   mfaAt: Date | null = null,
+  directory: SessionDirectory | null = null,
 ): Promise<IssuedSession> {
   return await insertSession(
     db,
-    { userId, familyId: randomUUID(), familyCreatedAt: now, idleSeconds, mfaAt },
+    {
+      userId,
+      familyId: randomUUID(),
+      familyCreatedAt: now,
+      idleSeconds,
+      mfaAt,
+      authWorkspaceId: directory?.workspaceId ?? null,
+      authProvider: directory?.provider ?? null,
+    },
     info,
     policy,
     now,
@@ -83,6 +99,8 @@ async function insertSession(
     idleSeconds: number | null;
     /** Cuándo pasó el segundo paso (2FA); al rotar se conserva. */
     mfaAt?: Date | null;
+    authWorkspaceId?: string | null;
+    authProvider?: string | null;
   },
   info: RequestInfo,
   policy: SessionPolicy,
@@ -157,6 +175,8 @@ export async function rotateSession(
         familyCreatedAt: current.familyCreatedAt,
         idleSeconds: current.idleSeconds,
         mfaAt: current.mfaAt,
+        authWorkspaceId: current.authWorkspaceId,
+        authProvider: current.authProvider,
       },
       info,
       policy,

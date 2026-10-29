@@ -17,6 +17,8 @@ export const errorStatus = {
   MFA_RECENT_REQUIRED: 403,
   /** El workspace exige verificación en dos pasos y la persona todavía no la configuró. */
   MFA_SETUP_REQUIRED: 403,
+  /** The company only lets people in through its directory (owners keep their own password). */
+  DIRECTORY_SIGN_IN_REQUIRED: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,

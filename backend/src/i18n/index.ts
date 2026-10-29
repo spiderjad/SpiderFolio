@@ -43,6 +43,7 @@ export const fileMessages = localized("fileMessages");
 export const customEmailTexts = localized("customEmailTexts");
 export const bianTexts = localized("bianTexts");
 export const pluginTexts = localized("pluginTexts");
+export const directorySignInTexts = localized("directorySignInTexts");
 export const validationMessages = localized("validationMessages");
 export const accountMessages = localized("accountMessages");
 export const mfaLoginMessages = localized("mfaLoginMessages");

@@ -108,6 +108,9 @@ export interface TenantDb {
   pinLogin: TenantDelegate<PrismaClient["pinLogin"], Op>;
   workspaceLicense: TenantDelegate<PrismaClient["workspaceLicense"], Op>;
   pluginSetting: TenantDelegate<PrismaClient["pluginSetting"], Op>;
+  pluginSecret: TenantDelegate<PrismaClient["pluginSecret"], Op>;
+  externalIdentity: TenantDelegate<PrismaClient["externalIdentity"], Op>;
+  ssoFlow: TenantDelegate<PrismaClient["ssoFlow"], Op>;
   /** Append-only: sin update ni delete (la retención la hace un job con el cliente base). */
   auditLog: TenantDelegate<PrismaClient["auditLog"], (typeof appendOnlyOps)[number]>;
   /** Transacción interactiva; el callback recibe otro TenantDb del mismo workspace. */
@@ -184,6 +187,9 @@ const delegates = {
   pinLogin: { model: "PinLogin", ops: [...readOps, ...writeOps] },
   workspaceLicense: { model: "WorkspaceLicense", ops: [...readOps, ...writeOps] },
   pluginSetting: { model: "PluginSetting", ops: [...readOps, ...writeOps] },
+  pluginSecret: { model: "PluginSecret", ops: [...readOps, ...writeOps] },
+  externalIdentity: { model: "ExternalIdentity", ops: [...readOps, ...writeOps] },
+  ssoFlow: { model: "SsoFlow", ops: [...readOps, ...writeOps] },
   auditLog: { model: "AuditLog", ops: appendOnlyOps },
 } as const satisfies Partial<Record<keyof TenantDb, { model: ModelName; ops: readonly Op[] }>>;
 

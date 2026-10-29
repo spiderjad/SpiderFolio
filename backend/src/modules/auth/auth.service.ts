@@ -39,6 +39,7 @@ import {
   SESSION_MAX_AGE_DAYS,
   type IssuedSession,
   type RequestInfo,
+  type SessionDirectory,
   type SessionPolicy,
 } from "./sessions.service.ts";
 import { currentLocale, isLocale, readWorkspaceLocale, type Locale } from "../../i18n/locales.ts";
@@ -137,6 +138,15 @@ function kioskOf(kind: string, settings: unknown): Account["kiosk"] {
 }
 
 const invalidCredentials = () => new AppError("INVALID_CREDENTIALS");
+
+/** The directory an MFA challenge carries on from the first step, if it came from one. */
+function challengeDirectory(data: unknown): SessionDirectory | null {
+  const directory = (data as { directory?: unknown } | null)?.directory as
+    { workspaceId?: unknown; provider?: unknown } | undefined;
+  return typeof directory?.workspaceId === "string" && typeof directory.provider === "string"
+    ? { workspaceId: directory.workspaceId, provider: directory.provider }
+    : null;
+}
 const invalidToken = () => new AppError("INVALID_TOKEN");
 
 export function createAuthService(deps: AppDeps) {
@@ -451,6 +461,38 @@ export function createAuthService(deps: AppDeps) {
     },
 
     /**
+     * The company's directory already checked who this is (plugin auth provider, docs/spec/plugins.md):
+     * the same second step as a password sign-in, and a session that remembers the directory.
+     */
+    async completeDirectorySignIn(
+      userId: string,
+      directory: SessionDirectory,
+      info: RequestInfo,
+      trustedDeviceToken?: string,
+    ): Promise<LoginResult> {
+      const now = new Date();
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { totpEnabledAt: true },
+      });
+      if (user === null) throw invalidCredentials();
+      if (user.totpEnabledAt !== null && !(await trustedDevice(userId, trustedDeviceToken, now))) {
+        const challenge = await issueAuthToken(prisma, userId, "MFA_CHALLENGE", now, {
+          directory: { workspaceId: directory.workspaceId, provider: directory.provider },
+        });
+        await auditGlobal(prisma, {
+          actorId: userId,
+          workspaceId: directory.workspaceId,
+          action: "auth.login.mfa_challenge",
+          metadata: { provider: directory.provider },
+          ...info,
+        });
+        return { mfaRequired: true, challenge, expiresIn: MFA_CHALLENGE_SECONDS };
+      }
+      return await openSession(userId, info, now, { rehashed: null, mfaAt: null, directory });
+    },
+
+    /**
      * Segundo paso: el desafío del login y el código de la app (o uno de recuperación). Solo acá se
      * abre la sesión. El desafío sobrevive a un código incorrecto (lo frena el bloqueo de la 2FA) y
      * se gasta al acertar. `remember`: este navegador no vuelve a pedir el código durante 30 días.
@@ -462,7 +504,7 @@ export function createAuthService(deps: AppDeps) {
       const now = new Date();
       const row = await prisma.authToken.findUnique({
         where: { tokenHash: sha256(input.challenge) },
-        select: { userId: true, type: true, usedAt: true, expiresAt: true },
+        select: { userId: true, type: true, usedAt: true, expiresAt: true, data: true },
       });
       if (
         row === null ||
@@ -477,7 +519,11 @@ export function createAuthService(deps: AppDeps) {
       if (userId === null) {
         throw new AppError("INVALID_TOKEN", { message: mfaLoginMessages.challengeExpired });
       }
-      const issued = await openSession(userId, info, now, { rehashed: null, mfaAt: now });
+      const issued = await openSession(userId, info, now, {
+        rehashed: null,
+        mfaAt: now,
+        directory: challengeDirectory(row.data),
+      });
       let device: { token: string; expiresAt: Date } | null = null;
       if (input.remember) {
         const token = randomToken();
@@ -506,7 +552,7 @@ export function createAuthService(deps: AppDeps) {
     userId: string,
     info: RequestInfo,
     now: Date,
-    options: { rehashed: string | null; mfaAt: Date | null },
+    options: { rehashed: string | null; mfaAt: Date | null; directory?: SessionDirectory | null },
   ): Promise<IssuedAuth> {
     const user = { id: userId };
     const newHash = options.rehashed;
@@ -528,14 +574,26 @@ export function createAuthService(deps: AppDeps) {
           ...(newHash === null ? {} : { passwordHash: newHash }),
         },
       });
-      const issued = await createSession(tx, user.id, info, policy, now, null, options.mfaAt);
+      const directory = options.directory ?? null;
+      const issued = await createSession(
+        tx,
+        user.id,
+        info,
+        policy,
+        now,
+        null,
+        options.mfaAt,
+        directory,
+      );
       await auditGlobal(tx, {
         actorId: user.id,
+        ...(directory === null ? {} : { workspaceId: directory.workspaceId }),
         action: "auth.login",
         ...info,
         metadata: {
           ...(newHash === null ? {} : { rehashed: true }),
           ...(options.mfaAt === null ? {} : { mfa: true }),
+          ...(directory === null ? {} : { provider: directory.provider }),
         },
       });
       if (previous.length > 0 && !knownDevice) {

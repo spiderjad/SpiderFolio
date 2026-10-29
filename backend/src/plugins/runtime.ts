@@ -12,18 +12,27 @@ import type {
   LicenseStatus,
 } from "@spiderfolio/plugin-sdk/backend";
 import { pluginSchemaName } from "@spiderfolio/plugin-sdk";
+import { directorySignInLimits } from "@spiderfolio/limits";
 import type { KeyObject } from "node:crypto";
 import type { Logger } from "pino";
 import { pluginQuery } from "../db/raw/plugins.ts";
 import { forTenant } from "../db/tenant.ts";
 import type { Prisma } from "../generated/prisma/client.ts";
 import type { PrismaClient } from "../lib/prisma.ts";
+import type { SecretBox } from "../lib/secret-box.ts";
+import {
+  createPluginDirectory,
+  noActor,
+  type DirectoryActor,
+} from "../modules/external-auth/external-directory.ts";
+import { createPluginSecrets } from "../modules/external-auth/plugin-secrets.ts";
 import { enabledCommunityPlugins } from "./community.ts";
 import { licensedPlugins, verifyLicense } from "./license.ts";
 import type { InstalledPlugin } from "./loader.ts";
 
 /** Cuánto se recuerda la licencia leída de un workspace (la API y el worker son procesos aparte). */
 const LICENSE_CACHE_MS = 30_000;
+const DAY_MS = 24 * 3600 * 1000;
 
 export type SendJob = (queue: string, payload: Record<string, unknown>) => Promise<void>;
 
@@ -39,7 +48,13 @@ export interface PluginRuntime {
   isActive(workspaceId: string, pluginId: string): Promise<boolean>;
   /** Si algún plugin activo agrega la función. */
   hasFeature(workspaceId: string, feature: string): Promise<boolean>;
-  contextFor(workspaceId: string, pluginId: string): PluginWorkspaceContext;
+  /** `actor`: who directory changes are recorded for (the person of a plugin route). */
+  contextFor(workspaceId: string, pluginId: string, actor?: DirectoryActor): PluginWorkspaceContext;
+  /**
+   * Plugins with auth providers that sign people in to the workspace: active, or commercial ones
+   * within the grace period after the license that includes them expired.
+   */
+  signInPlugins(workspaceId: string): Promise<readonly InstalledPlugin[]>;
   jobContext(pluginId: string): PluginJobContext;
   /** Olvida la licencia y las activaciones community recordadas (al cambiarlas). */
   forget(workspaceId: string): void;
@@ -58,6 +73,8 @@ export interface RuntimeDeps {
   now?: () => Date;
   /** Solo tests: otra clave pública para verificar las licencias. */
   publicKey?: KeyObject;
+  /** Encrypts the plugins' secrets; null without EMAIL_ENCRYPTION_KEY (saving one fails). */
+  box?: SecretBox | null;
 }
 
 function pluginLogger(logger: Logger, pluginId: string): PluginLogger {
@@ -146,7 +163,11 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
     verifyLicense((await stateOf(workspaceId)).token, verifyOptions(workspaceId));
 
   /** Comercial: en una licencia válida. Community: activado por el propietario de la empresa. */
-  const isOn = (plugin: InstalledPlugin, licensed: ReadonlySet<string>, community: ReadonlySet<string>) =>
+  const isOn = (
+    plugin: InstalledPlugin,
+    licensed: ReadonlySet<string>,
+    community: ReadonlySet<string>,
+  ) =>
     plugin.manifest.distribution === "community"
       ? community.has(plugin.manifest.id)
       : licensed.has(plugin.manifest.id);
@@ -160,13 +181,27 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
     );
   };
 
-  const contextFor = (workspaceId: string, pluginId: string): PluginWorkspaceContext => {
+  const contextFor = (
+    workspaceId: string,
+    pluginId: string,
+    actor: DirectoryActor = noActor,
+  ): PluginWorkspaceContext => {
     const schema = pluginSchemaName(pluginId);
-    const jobs = new Set((byId.get(pluginId)?.backend?.jobs ?? []).map((job) => job.name));
+    const backend = byId.get(pluginId)?.backend;
+    const jobs = new Set((backend?.jobs ?? []).map((job) => job.name));
     return {
       pluginId,
       workspaceId,
       settings: settingsStore(prisma, workspaceId, pluginId),
+      secrets: createPluginSecrets(prisma, deps.box ?? null, workspaceId, pluginId),
+      directory: createPluginDirectory({
+        prisma,
+        workspaceId,
+        pluginId,
+        providers: (backend?.authProviders ?? []).map((provider) => provider.id),
+        actor,
+        now,
+      }),
       sql: {
         query: (text, values = []) => pluginQuery(prisma, schema, text, values),
       },
@@ -204,6 +239,27 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
       );
     },
     contextFor,
+    async signInPlugins(workspaceId) {
+      const withProviders = installed.filter(
+        (plugin) => (plugin.backend?.authProviders ?? []).length > 0,
+      );
+      if (withProviders.length === 0) return [];
+      const active = await activeIds(workspaceId);
+      const status = await licenseStatus(workspaceId);
+      const expiresAt =
+        status.state === "expired" && status.payload.expiresAt !== null
+          ? Date.parse(status.payload.expiresAt)
+          : null;
+      const inGrace =
+        expiresAt !== null && now().getTime() < expiresAt + directorySignInLimits.graceDays * DAY_MS
+          ? new Set(status.state === "expired" ? status.payload.plugins : [])
+          : new Set<string>();
+      return withProviders.filter(
+        (plugin) =>
+          active.has(plugin.manifest.id) ||
+          (plugin.manifest.distribution === "commercial" && inGrace.has(plugin.manifest.id)),
+      );
+    },
     jobContext(pluginId) {
       return {
         logger: pluginLogger(logger, pluginId),
@@ -228,7 +284,9 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
           });
           return rows
             .filter((row) =>
-              licensedPlugins(verifyLicense(row.token, verifyOptions(row.workspaceId))).has(pluginId),
+              licensedPlugins(verifyLicense(row.token, verifyOptions(row.workspaceId))).has(
+                pluginId,
+              ),
             )
             .map((row) => row.workspaceId);
         },

@@ -22,6 +22,7 @@ export async function issueAuthToken(
   userId: string,
   type: AuthTokenType,
   now: Date = new Date(),
+  data?: Prisma.InputJsonObject,
 ): Promise<string> {
   const token = randomToken();
   await db.authToken.updateMany({
@@ -33,6 +34,7 @@ export async function issueAuthToken(
       userId,
       type,
       tokenHash: sha256(token),
+      ...(data === undefined ? {} : { data }),
       expiresAt: new Date(now.getTime() + authTokenTypes[type].ttlMs),
     },
   });

@@ -14,7 +14,7 @@ Rol y departamento son ejes distintos: el rol define qué puede administrar la p
 
 6. Modelo de datos (Prisma)
 
-Toda tabla con datos de un cliente tiene workspaceId y se consulta solo con el cliente con tenant (7.3). Agregar relaciones @relation con onDelete: Cascade desde Workspace. Las claves foráneas entre tablas con tenant son compuestas (ej. Membership(roleId, workspaceId) → Role(id, workspaceId), con @@unique([id, workspaceId]) en la tabla referenciada): la base impide apuntar a otro workspace. Esas FK usan ON DELETE NO ACTION (no RESTRICT), que se verifica al final de la sentencia: purgar un workspace en cascada no depende del orden de los triggers y borrar un rol en uso sigue fallando. Ninguna FK usa SET NULL ni SET DEFAULT (sería un UPDATE, que el trigger de AuditLog rechaza; el borrado de cuentas y workspaces tiene tests). AuditLog.actorId no es FK: borrar una cuenta conserva la auditoría con un id seudónimo. El schema real vive en backend/prisma/schema.prisma; acá se resume. AuditLog tiene un trigger que rechaza UPDATE. Los límites de cada empresa viven en Workspace.limits (docs/spec/limites.md); la licencia de plugins en WorkspaceLicense y sus ajustes en PluginSetting (docs/spec/plugins.md).
+Toda tabla con datos de un cliente tiene workspaceId y se consulta solo con el cliente con tenant (7.3). Agregar relaciones @relation con onDelete: Cascade desde Workspace. Las claves foráneas entre tablas con tenant son compuestas (ej. Membership(roleId, workspaceId) → Role(id, workspaceId), con @@unique([id, workspaceId]) en la tabla referenciada): la base impide apuntar a otro workspace. Esas FK usan ON DELETE NO ACTION (no RESTRICT), que se verifica al final de la sentencia: purgar un workspace en cascada no depende del orden de los triggers y borrar un rol en uso sigue fallando. Ninguna FK usa SET NULL ni SET DEFAULT (sería un UPDATE, que el trigger de AuditLog rechaza; el borrado de cuentas y workspaces tiene tests). AuditLog.actorId no es FK: borrar una cuenta conserva la auditoría con un id seudónimo. El schema real vive en backend/prisma/schema.prisma; acá se resume. AuditLog tiene un trigger que rechaza UPDATE. Los límites de cada empresa viven en Workspace.limits (docs/spec/limites.md); la licencia de plugins en WorkspaceLicense y sus ajustes en PluginSetting (docs/spec/plugins.md). El inicio de sesión con el directorio de una empresa usa ExternalIdentity (membresía ↔ cuenta del directorio), PluginSecret (secretos cifrados de los plugins), SsoFlow (OIDC en curso) y Session.authWorkspaceId/authProvider (docs/spec/plugins.md «Directorio de la empresa»).
 
 prisma
 enum SystemRole  { OWNER ADMIN MEMBER GUEST }
@@ -29,8 +29,8 @@ model User {
   id              String    @id @default(cuid())
   email           String?   @unique           // null en usuarios de PIN (7.6)
   emailVerifiedAt DateTime?
-  passwordHash    String?                     // null en usuarios de PIN
-  kind            UserKind  @default(STANDARD) // STANDARD | PIN; un CHECK liga el tipo con email y passwordHash
+  passwordHash    String?                     // null en usuarios de PIN y en quien entra con el directorio de su empresa
+  kind            UserKind  @default(STANDARD) // STANDARD | PIN; un CHECK exige email a STANDARD y nada a PIN
   name            String
   avatarKey       String?
   locale          String    @default("es")

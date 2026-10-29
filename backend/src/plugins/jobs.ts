@@ -4,9 +4,14 @@
 import type { PgBoss } from "pg-boss";
 import { z } from "zod";
 import type { Logger } from "pino";
+import type { PrismaClient } from "../lib/prisma.ts";
+import { notifyStoppedDirectories } from "../modules/external-auth/directory-notice.ts";
 import type { PluginRuntime } from "./runtime.ts";
 
 const WorkspacePayload = z.looseObject({ workspaceId: z.string().min(1) });
+
+/** Daily: tells owners when a directory that signed people in stopped syncing. */
+const DIRECTORY_NOTICE_QUEUE = "plugins-directory-notice";
 
 export function pluginQueueName(pluginId: string, job: string): string {
   return `plugin.${pluginId}.${job}`;
@@ -34,8 +39,20 @@ export async function startPluginJobs(
   boss: PgBoss,
   plugins: PluginRuntime,
   logger: Logger,
+  prisma: PrismaClient,
 ): Promise<void> {
   await ensurePluginQueues(boss, plugins);
+  if (plugins.installed.some((plugin) => (plugin.backend?.authProviders ?? []).length > 0)) {
+    const options = { retryLimit: 2, expireInSeconds: 900, deleteAfterSeconds: 7 * 24 * 3600 };
+    if ((await boss.getQueue(DIRECTORY_NOTICE_QUEUE)) === null) {
+      await boss.createQueue(DIRECTORY_NOTICE_QUEUE, options);
+    }
+    await boss.work(DIRECTORY_NOTICE_QUEUE, async () => {
+      const created = await notifyStoppedDirectories(prisma, plugins);
+      if (created > 0) logger.info({ created }, "Avisos de directorio detenido");
+    });
+    await boss.schedule(DIRECTORY_NOTICE_QUEUE, "10 9 * * *", {}, { tz: "UTC" });
+  }
   for (const plugin of plugins.installed) {
     const pluginId = plugin.manifest.id;
     const ctx = plugins.jobContext(pluginId);

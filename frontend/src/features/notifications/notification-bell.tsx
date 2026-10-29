@@ -36,7 +36,8 @@ export interface NotificationView {
     | "email_failing"
     | "bian_usage"
     | "bian_request"
-    | "invitation_by_leader";
+    | "invitation_by_leader"
+    | "directory_sync_stopped";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -86,6 +87,7 @@ function pathOf(slug: string, item: NotificationView): string | null {
     return `/app/${slug}/admin/security?tab=email`;
   }
   if (item.kind === "invitation_by_leader") return `/app/${slug}/admin/members`;
+  if (item.kind === "directory_sync_stopped") return `/app/${slug}/admin/license`;
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
   }
@@ -111,6 +113,7 @@ function text(item: NotificationView): string {
     const reasons: Record<string, string> = t.smtpReasons;
     return t.emailFailing(reasons[item.detail ?? ""] ?? t.smtpReasons.UNKNOWN);
   }
+  if (item.kind === "directory_sync_stopped") return t.directorySyncStopped;
   if (item.kind === "bian_usage") return t.bianUsage(item.version ?? 80);
   if (item.kind === "bian_request") return t.bianRequest(item.actor?.name ?? "");
   if (item.kind === "invitation_by_leader") {

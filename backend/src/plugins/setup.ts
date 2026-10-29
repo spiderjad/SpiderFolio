@@ -7,11 +7,12 @@ import type { Env } from "../config/env.ts";
 import { applyPluginMigrations } from "../db/raw/plugins.ts";
 import { currentLocale } from "../i18n/locales.ts";
 import type { PrismaClient } from "../lib/prisma.ts";
+import { createSecretBox } from "../lib/secret-box.ts";
 import { discoverPlugins, type InstalledPlugin } from "./loader.ts";
 import { createPluginRuntime, type PluginRuntime, type SendJob } from "./runtime.ts";
 
 export async function setupPlugins(input: {
-  env: Pick<Env, "DATABASE_URL" | "PLUGINS_DIR" | "PLUGIN_PACKAGES">;
+  env: Pick<Env, "DATABASE_URL" | "PLUGINS_DIR" | "PLUGIN_PACKAGES" | "EMAIL_ENCRYPTION_KEY">;
   prisma: PrismaClient;
   logger: Logger;
   send?: SendJob;
@@ -56,6 +57,7 @@ export async function setupPlugins(input: {
     prisma: input.prisma,
     logger,
     installed: ready,
+    box: env.EMAIL_ENCRYPTION_KEY === undefined ? null : createSecretBox(env),
     ...(input.send === undefined ? {} : { send: input.send }),
   });
 }

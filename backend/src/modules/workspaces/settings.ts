@@ -81,3 +81,12 @@ export const WorkspaceSettingsSchema = z.object({
 });
 
 export type WorkspaceSettings = z.infer<typeof WorkspaceSettingsSchema>;
+
+/**
+ * «Directory only» (docs/spec/plugins.md «Directorio de la empresa»): the plugin whose directory
+ * everyone but the owners has to sign in with, or null.
+ */
+export function readDirectoryOnly(settings: unknown): string | null {
+  const raw = (settings as { directoryOnly?: unknown } | null | undefined)?.directoryOnly;
+  return typeof raw === "string" && raw !== "" ? raw : null;
+}

@@ -11,6 +11,8 @@ export const errorMessages = {
   MFA_INVALID_CODE: "El código no es correcto o ya se usó.",
   MFA_SETUP_REQUIRED:
     "Tu empresa exige la verificación en dos pasos. Actívala en tu perfil para seguir.",
+  DIRECTORY_SIGN_IN_REQUIRED:
+    "En esta empresa se entra con la cuenta corporativa. Cierra sesión y vuelve a entrar con ella.",
   MFA_RECENT_REQUIRED: "Para hacer esto, confirma de nuevo el código de tu app de autenticación.",
   LIMIT_REACHED: "Se alcanzó un límite que fijó tu empresa. Un administrador puede cambiarlo.",
   NOT_FOUND: "No encontramos lo que buscas.",
@@ -87,8 +89,7 @@ export const emailTexts = {
     greeting: (name: string) => `Hola, ${name}:`,
     body: (workspace: string) =>
       `Un administrador de ${workspace} reinició la verificación en dos pasos de tu cuenta y cerramos tus sesiones. La próxima vez que entres podrás volver a configurarla con tu app de autenticación.`,
-    warning:
-      "Si no lo pediste, avisa a tu administrador y cambia tu contraseña ahora mismo.",
+    warning: "Si no lo pediste, avisa a tu administrador y cambia tu contraseña ahora mismo.",
   },
   passwordChanged: {
     subject: "Tu contraseña de SpiderFolio cambió",
@@ -513,7 +514,8 @@ export const pluginTexts = {
     signature: "La firma del plugin no es válida: no lo publicó SpiderJAD o fue modificado.",
     tampered: "El plugin fue modificado después de firmarse.",
     manifest: "El plugin no tiene un manifiesto válido.",
-    unsupported: "Este plugin necesita una versión más nueva de SpiderFolio. Actualiza el servidor primero.",
+    unsupported:
+      "Este plugin necesita una versión más nueva de SpiderFolio. Actualiza el servidor primero.",
     license: "La licencia que trae el plugin no es válida o no lo incluye.",
     licenseExpired: "La licencia que trae el plugin ya venció.",
     licenseWorkspace: "La licencia que trae el plugin es de otra empresa.",
@@ -681,7 +683,10 @@ export const defaultDataTexts = {
       name: "Administrador",
       description: "Todo lo administrativo, excepto la licencia de plugins y borrar el workspace.",
     },
-    MEMBER: { name: "Miembro", description: "Usa el contenido según sus departamentos y permisos." },
+    MEMBER: {
+      name: "Miembro",
+      description: "Usa el contenido según sus departamentos y permisos.",
+    },
     GUEST: { name: "Invitado", description: "Externo: solo lo compartido explícitamente." },
   },
   documentTypes: {
@@ -691,4 +696,23 @@ export const defaultDataTexts = {
     POL: "Política",
     MAN: "Manual",
   },
+} as const;
+
+/** Signing in with a company's directory (plugin auth providers). */
+export const directorySignInTexts = {
+  invalidCredentials: "Usuario o contraseña incorrectos.",
+  unavailable: "Este inicio de sesión no está disponible. Entra con tu email y contraseña.",
+  flowExpired:
+    "El inicio de sesión tardó demasiado o se abrió en otro navegador. Vuelve a intentarlo.",
+  emailTaken:
+    "Ya hay una cuenta con el email de tu cuenta corporativa. Pídele al propietario de la empresa que la vincule.",
+  notAllowed: "Tu cuenta corporativa no tiene acceso a esta empresa.",
+  directoryOnlyNeedsOwner:
+    "Antes, al menos un propietario tiene que poder entrar con su contraseña y la verificación en dos pasos.",
+  alreadyLinked: "Esa cuenta del directorio ya está vinculada a otra persona.",
+  memberAlreadyLinked: "Esa persona ya está vinculada a una cuenta del directorio.",
+  noEncryptionKey:
+    "El servidor no tiene configurada la clave de cifrado (EMAIL_ENCRYPTION_KEY): no se pueden guardar secretos.",
+  unknownRole: "Ese rol no existe en la empresa o es el de propietario.",
+  unknownDepartment: "Alguno de esos departamentos no existe en la empresa.",
 } as const;

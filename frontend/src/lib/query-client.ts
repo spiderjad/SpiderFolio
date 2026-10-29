@@ -5,9 +5,15 @@ import { ApiError } from "./api";
 /** La política de 2FA del workspace cambió y la persona todavía no la tiene: la app vuelve a pedir la cuenta. */
 export const MFA_SETUP_EVENT = "spiderfolio:mfa-setup-required";
 
+/** The company only lets this person in through its directory: the app asks them to sign in with it. */
+export const DIRECTORY_SIGN_IN_EVENT = "spiderfolio:directory-sign-in-required";
+
 const announceMfaSetup = (error: unknown) => {
   if (error instanceof ApiError && error.code === "MFA_SETUP_REQUIRED") {
     window.dispatchEvent(new Event(MFA_SETUP_EVENT));
+  }
+  if (error instanceof ApiError && error.code === "DIRECTORY_SIGN_IN_REQUIRED") {
+    window.dispatchEvent(new Event(DIRECTORY_SIGN_IN_EVENT));
   }
 };
 

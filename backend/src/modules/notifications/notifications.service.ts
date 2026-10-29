@@ -36,6 +36,8 @@ export const NOTIFICATION_KINDS = [
   "bian_request",
   /** Un jefe o subjefe invitó a alguien a su área (para quienes administran miembros; `actor` = quien invitó). */
   "invitation_by_leader",
+  /** A directory that signed people in stopped syncing (for owners; `detail` = plugin id). */
+  "directory_sync_stopped",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -205,8 +207,7 @@ export async function listNotifications(
           : { id: row.actorId, name: actorName },
       target,
       expiresAt: row.expiresAt,
-      invitation:
-        row.invitationId === null ? null : (invitationById.get(row.invitationId) ?? null),
+      invitation: row.invitationId === null ? null : (invitationById.get(row.invitationId) ?? null),
       detail: row.detail,
     };
   });

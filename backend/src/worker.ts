@@ -200,7 +200,7 @@ async function main(): Promise<void> {
       await boss.send(queue, payload);
     },
   });
-  await startPluginJobs(boss, plugins, logger);
+  await startPluginJobs(boss, plugins, logger, prisma);
   logger.info("Worker listo");
 
   let closing = false;

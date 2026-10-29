@@ -33,11 +33,98 @@ export interface PluginSql {
   ): Promise<T[]>;
 }
 
+/**
+ * Secrets of the plugin in a workspace (a service account password, a client secret). The core keeps
+ * them encrypted with its own key, bound to the company, the plugin and the key; they never reach the
+ * app or the logs. `set` fails if the server has no encryption key configured.
+ */
+export interface PluginSecrets {
+  get(key: string): Promise<string | undefined>;
+  set(key: string, value: string): Promise<void>;
+  delete(key: string): Promise<void>;
+  /** Whether it is saved, without reading it (to show «saved» in a form). */
+  has(key: string): Promise<boolean>;
+}
+
+/**
+ * A person as the company's directory describes them. The core links them by `externalId` (the
+ * directory's stable id: objectGUID, oid), never by email.
+ */
+export interface DirectoryMember {
+  externalId: string;
+  /** Address managed by the directory: the account is created with it already confirmed. */
+  email: string;
+  name: string;
+  /** Role to give; never the owner role. Missing: the current one (Member for someone new). */
+  roleId?: string;
+  /** Exactly these departments (they keep their position in the ones they stay in). Missing: unchanged. */
+  departmentIds?: readonly string[];
+  jobTitle?: string | null;
+}
+
+export type DirectorySyncResult =
+  | {
+      status: "created" | "updated" | "unchanged" | "reactivated";
+      membershipId: string;
+      /** What the core didn't apply and why (an owner's role, an email another account uses…). */
+      skipped: readonly ("ownerRole" | "sharedIdentity" | "emailTaken")[];
+    }
+  /** Someone else already has this email: an administrator links them by hand (`link`). */
+  | { status: "conflict"; reason: "emailTaken" };
+
+export interface LinkedMember {
+  membershipId: string;
+  externalId: string;
+  status: "ACTIVE" | "SUSPENDED";
+  /** Owners are never suspended nor have their role changed by the directory. */
+  owner: boolean;
+  suspendedByDirectory: boolean;
+}
+
+/**
+ * The company's members as a directory sees them (docs/spec/plugins.md «Directorio de la empresa»).
+ * The core applies every change within the company and audits it; `provider` is one of the plugin's
+ * `authProviders`.
+ */
+export interface PluginDirectory {
+  roles(): Promise<{ id: string; name: string; base: RoleBase }[]>;
+  departments(): Promise<{ id: string; name: string; parentId: string | null }[]>;
+  /**
+   * Creates or updates the member linked to this account. Someone suspended by the directory is
+   * reactivated; someone an administrator suspended stays suspended.
+   */
+  syncMember(provider: string, member: DirectoryMember): Promise<DirectorySyncResult>;
+  /** Suspends the member linked to this account (never an owner). */
+  suspendMember(
+    provider: string,
+    externalId: string,
+  ): Promise<"suspended" | "unchanged" | "owner" | "notLinked">;
+  /** Members linked through this provider, a page at a time (`cursor` from the previous page). */
+  linkedMembers(
+    provider: string,
+    cursor?: string,
+  ): Promise<{ items: LinkedMember[]; nextCursor: string | null }>;
+  /** Links an existing member to a directory account (an administrator's decision, from a route). */
+  link(provider: string, membershipId: string, externalId: string): Promise<void>;
+  unlink(membershipId: string): Promise<void>;
+  /** Active owners who can sign in with their own password and two-step verification. */
+  localOwnersWithMfa(): Promise<number>;
+  /**
+   * «Directory only»: whoever isn't an owner only gets into the company signing in with this plugin's
+   * directory. Turning it on needs at least one owner with password and two-step verification
+   * (CONFLICT otherwise). It only applies while the plugin is active.
+   */
+  setDirectoryOnly(on: boolean): Promise<void>;
+  directoryOnly(): Promise<boolean>;
+}
+
 /** Lo que el plugin puede usar dentro de un workspace donde está activo. */
 export interface PluginWorkspaceContext {
   readonly pluginId: PluginId;
   readonly workspaceId: string;
   settings: PluginSettings;
+  secrets: PluginSecrets;
+  directory: PluginDirectory;
   sql: PluginSql;
   logger: PluginLogger;
   /** Encola un job propio (declarado en `jobs`) con este workspace. */
@@ -121,6 +208,61 @@ export interface CoreHooks {
   checkMemberEmail?(ctx: PluginWorkspaceContext, email: string): Promise<string | null>;
 }
 
+/** How a provider shows on the company's sign-in screen; null: not configured there. */
+export interface AuthProviderInfo {
+  label: string;
+}
+
+interface AuthProviderBase {
+  /** Id inside the plugin (lowercase, digits and dashes). */
+  id: string;
+  describe(ctx: PluginWorkspaceContext): Promise<AuthProviderInfo | null>;
+}
+
+/**
+ * Username and password checked against the directory (LDAP). The core does the rest: attempt limits,
+ * lockout, a constant response time, the session, two-step verification and the audit. The password is
+ * only passed to `verify`; never store it.
+ */
+export interface PasswordAuthProvider extends AuthProviderBase {
+  kind: "password";
+  /** The person to sign in, or null if the credentials are wrong or they aren't allowed in. */
+  verify(
+    ctx: PluginWorkspaceContext,
+    credentials: { username: string; password: string },
+  ): Promise<DirectoryMember | null>;
+}
+
+/**
+ * Sign-in at the identity provider (OIDC). The core generates and keeps the state, the PKCE verifier
+ * and the nonce (bound to the company and to the browser, for a few minutes) and checks the state when
+ * the browser comes back.
+ */
+export interface RedirectAuthProvider extends AuthProviderBase {
+  kind: "redirect";
+  /** Where to send the browser (S256 code challenge). */
+  authorizationUrl(
+    ctx: PluginWorkspaceContext,
+    request: { redirectUri: string; state: string; nonce: string; codeChallenge: string },
+  ): Promise<string>;
+  /**
+   * Back from the provider: exchange the code with `codeVerifier`, validate the ID token (issuer,
+   * audience, nonce, the company's tenant) and return the person, or null if they aren't allowed in.
+   */
+  callback(
+    ctx: PluginWorkspaceContext,
+    response: {
+      redirectUri: string;
+      callbackUrl: URL;
+      state: string;
+      nonce: string;
+      codeVerifier: string;
+    },
+  ): Promise<DirectoryMember | null>;
+}
+
+export type AuthProvider = PasswordAuthProvider | RedirectAuthProvider;
+
 export interface BackendPlugin {
   id: PluginId;
   version: string;
@@ -135,6 +277,8 @@ export interface BackendPlugin {
    */
   i18n?: Readonly<Record<PluginLocale, Readonly<Record<string, unknown>>>>;
   hooks?: CoreHooks;
+  /** Ways to sign in to a company (pluginApi 2). Only offered where the plugin is active. */
+  authProviders?: readonly AuthProvider[];
 }
 
 /** Idiomas de la app (docs/spec/i18n.md). */

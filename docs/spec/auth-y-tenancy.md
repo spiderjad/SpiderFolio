@@ -50,6 +50,16 @@ Fase de producción: Row Level Security de Postgres como segunda barrera.
 
 backend/tests/integration/tenant-isolation.test.ts crea workspaces A y B y verifica, para cada endpoint bajo /api/v1/w/, que un usuario de A recibe 404 al leer, listar, editar, mover, descargar o borrar recursos de B. Cada endpoint nuevo se agrega a este test: el test falla si alguna ruta de tenantRoutes no está cubierta. backend/tests/integration/tenant-db.test.ts prueba forTenant contra Postgres real (lecturas, escrituras, upsert, FK compuestas, recorridos, transacciones) y backend/tests/tenant.test.ts cada regla sin base.
 
+7.5b Inicio de sesión con el directorio de la empresa
+
+Con un plugin que lo agrega, una empresa puede hacer que sus personas entren con
+Active Directory o Microsoft Entra ID, en /login/<slug>. Lo implementa el núcleo con las rutas públicas de
+/api/v1/auth/sso; el plugin solo comprueba quién es cada persona. El detalle está en docs/spec/plugins.md
+«Directorio de la empresa»: límites de intentos, flujo OIDC con PKCE, vínculo por id del directorio (nunca
+por email), propietarios con acceso local siempre, «solo directorio» (DIRECTORY_SIGN_IN_REQUIRED) y qué pasa
+si vence la licencia. Una cuenta creada así no tiene contraseña local hasta que la pide con «¿Olvidaste tu
+contraseña?».
+
 7.6 Ingreso con usuario + PIN (lectores de planta)
 
 Para personas sin email corporativo que leen en tablets compartidas. Es una cuenta aparte (User.kind = PIN, sin email ni contraseña: un CHECK de la base lo garantiza) que pertenece a un solo workspace, con plaza de lector y un rol de miembro sin capacidades. La credencial vive en PinLogin (loginName único por workspace, PIN de 6 dígitos con argon2id).

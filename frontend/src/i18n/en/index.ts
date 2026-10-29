@@ -114,6 +114,27 @@ export const en: Messages = {
       noAccount: "Don’t have an account yet?",
       register: "Get started for free",
       invalid: "Incorrect email or password.",
+      directory: {
+        with: (label: string) => `Sign in with ${label}`,
+        username: "Username",
+        or: "or with your email",
+        ownersOnly: "Owner access with email and password",
+        invalid: "Incorrect username or password.",
+        failure: {
+          expired: "Signing in took too long or was opened in another browser. Try again.",
+          notAllowed: "Your work account doesn't have access to this company.",
+          emailTaken:
+            "There's already an account with your work account's email. Ask your company's owner to link it.",
+          unavailable: "That sign-in isn't available. Sign in with your email and password.",
+          failed: "We couldn't sign you in. Try again.",
+        },
+      },
+      directoryRequired: {
+        title: "Sign in with your work account",
+        text: (company: string) =>
+          `${company} signs people in with their work account. Sign out and sign in with it.`,
+        action: "Sign out",
+      },
       mfa: {
         title: "Two-step verification",
         subtitle: "Enter the 6-digit code shown in your authenticator app.",
@@ -245,6 +266,8 @@ export const en: Messages = {
     noAccess: "You no longer have access to what was shared with you.",
     emailFallback:
       "Your company’s email server failed: emails were sent through SpiderFolio. Check Security › Email.",
+    directorySyncStopped:
+      "Your company's directory stopped syncing because its plugin is no longer active: people who leave the company aren't suspended on their own anymore. Check License and plugins.",
     emailFailing: (reason: string) =>
       `Email isn’t working: check the SMTP settings. Reason: ${reason}`,
     smtpReasons: {

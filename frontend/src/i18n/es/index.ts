@@ -113,6 +113,28 @@ export const es = {
       noAccount: "¿Todavía no tienes cuenta?",
       register: "Empieza gratis",
       invalid: "Email o contraseña incorrectos.",
+      directory: {
+        with: (label: string) => `Entrar con ${label}`,
+        username: "Usuario",
+        or: "o con tu email",
+        ownersOnly: "Acceso de propietarios con email y contraseña",
+        invalid: "Usuario o contraseña incorrectos.",
+        failure: {
+          expired:
+            "El inicio de sesión tardó demasiado o se abrió en otro navegador. Vuelve a intentarlo.",
+          notAllowed: "Tu cuenta corporativa no tiene acceso a esta empresa.",
+          emailTaken:
+            "Ya hay una cuenta con el email de tu cuenta corporativa. Pídele al propietario de la empresa que la vincule.",
+          unavailable: "Ese inicio de sesión no está disponible. Entra con tu email y contraseña.",
+          failed: "No se pudo iniciar sesión. Vuelve a intentarlo.",
+        },
+      },
+      directoryRequired: {
+        title: "Entra con tu cuenta corporativa",
+        text: (company: string) =>
+          `En ${company} se entra con la cuenta corporativa. Cierra sesión y vuelve a entrar con ella.`,
+        action: "Cerrar sesión",
+      },
       mfa: {
         title: "Verificación en dos pasos",
         subtitle: "Escribe el código de 6 dígitos que muestra tu app de autenticación.",
@@ -246,6 +268,8 @@ export const es = {
     noAccess: "Ya no tienes acceso a lo que te compartieron.",
     emailFallback:
       "Falló el servidor de email de tu empresa: los emails salieron por SpiderFolio. Revisa Seguridad › Email.",
+    directorySyncStopped:
+      "El directorio de tu empresa dejó de sincronizarse porque su plugin ya no está activo: quien se va de la empresa ya no se suspende solo. Revisa Licencia y plugins.",
     emailFailing: (reason: string) =>
       `El email no está funcionando: revisa la configuración SMTP. Motivo: ${reason}`,
     smtpReasons: {

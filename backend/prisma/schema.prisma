@@ -127,6 +127,10 @@ model Session {
   revokedAt       DateTime?
   replacedAt      DateTime? // revocada por rotación (no por logout): margen de 5 s y reuso
   mfaAt           DateTime? // cuándo pasó el segundo paso (2FA); null: no lo pasó o la persona no tiene 2FA
+  /// Signed in through a company's directory (plugin auth provider): that workspace and
+  /// «<pluginId>/<providerId>». null: email and password, PIN or invitation.
+  authWorkspaceId String?
+  authProvider    String?
   createdAt       DateTime  @default(now())
   lastUsedAt      DateTime  @default(now())
 
@@ -142,6 +146,8 @@ model AuthToken {
   userId    String
   type      String // VERIFY_EMAIL | RESET_PASSWORD | CHANGE_EMAIL
   tokenHash String    @unique
+  /// What the token carries on (MFA_CHALLENGE: the directory the first step used). Never secrets.
+  data      Json?
   expiresAt DateTime
   usedAt    DateTime?
 
@@ -257,6 +263,9 @@ model Workspace {
   readAcknowledgments ReadAcknowledgment[]
   license             WorkspaceLicense?
   pluginSettings      PluginSetting[]
+  pluginSecrets       PluginSecret[]
+  externalIdentities  ExternalIdentity[]
+  ssoFlows            SsoFlow[]
 }
 
 model Role {
@@ -299,6 +308,7 @@ model Membership {
   permissions    Permission[]
   spaceStates    SpaceUserState[]
   downloadTokens DownloadToken[]
+  externalIdentity ExternalIdentity?
 
   @@unique([userId, workspaceId])
   @@unique([id, workspaceId])
@@ -1247,4 +1257,65 @@ model PluginSetting {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, pluginId, key])
+}
+
+/// Secret of a plugin in a workspace (a service account password, a client secret), encrypted with
+/// EMAIL_ENCRYPTION_KEY and bound to the workspace, the plugin and the key. Never sent to the app.
+model PluginSecret {
+  id          String   @id @default(cuid())
+  workspaceId String
+  pluginId    String
+  key         String
+  valueEnc    String
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, pluginId, key])
+}
+
+/// A member's account in the company's directory (docs/spec/plugins.md «Directorio de la empresa»),
+/// linked by the directory's stable id (objectGUID, oid), never by email. One per membership.
+model ExternalIdentity {
+  id                   String    @id @default(cuid())
+  workspaceId          String
+  membershipId         String    @unique
+  pluginId             String
+  /// Provider id inside the plugin.
+  provider             String
+  externalId           String
+  /// The directory suspended the membership (and may reactivate it); one suspended by an
+  /// administrator stays as it is.
+  suspendedByDirectory Boolean   @default(false)
+  lastLoginAt          DateTime?
+  lastSyncAt           DateTime?
+  createdAt            DateTime  @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([membershipId, workspaceId])
+  @@unique([workspaceId, pluginId, provider, externalId])
+  @@index([workspaceId, pluginId, id])
+}
+
+/// Sign-in with a redirect provider (OIDC) in progress: the state, PKCE verifier and nonce, bound
+/// to the workspace and to the browser that started it (hash of a cookie), for a few minutes.
+model SsoFlow {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  pluginId     String
+  provider     String
+  stateHash    String    @unique
+  browserHash  String
+  codeVerifier String
+  nonce        String
+  next         String?
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }

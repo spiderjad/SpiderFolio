@@ -13,6 +13,8 @@ export const errorMessages: Catalog<typeof Es.errorMessages> = {
   MFA_INVALID_CODE: "The code is wrong or has already been used.",
   MFA_SETUP_REQUIRED:
     "Your company requires two-step verification. Turn it on in your profile to continue.",
+  DIRECTORY_SIGN_IN_REQUIRED:
+    "Your company signs people in with their work account. Sign out and sign in with it.",
   MFA_RECENT_REQUIRED: "To do this, confirm the code from your authenticator app again.",
   LIMIT_REACHED: "You reached a limit set by your company. An admin can change it.",
   NOT_FOUND: "We couldn't find what you're looking for.",
@@ -321,8 +323,7 @@ export const memberExportLabels: Catalog<typeof Es.memberExportLabels> = {
 /** Username + PIN for shop-floor readers (7.6). */
 export const pinMessages: Catalog<typeof Es.pinMessages> = {
   invalidCredentials: "Wrong username or PIN.",
-  roleNotAllowed:
-    "A person with a PIN can only have a member role without admin capabilities.",
+  roleNotAllowed: "A person with a PIN can only have a member role without admin capabilities.",
   weakPin: "That PIN is too easy to guess. Choose another one or generate one.",
   loginNameTaken: "Someone in this workspace already has that username.",
   loginNameInvalid:
@@ -347,8 +348,7 @@ export const memberMessages: Catalog<typeof Es.memberMessages> = {
   readerCannotAdminister: "A reader can't have admin capabilities.",
   guestsHaveNoDepartments:
     "An external guest only sees what is explicitly shared with them: they don't join departments.",
-  transferTargetInvalid:
-    "The person receiving the content has to be a different active member.",
+  transferTargetInvalid: "The person receiving the content has to be a different active member.",
   alreadySuspended: "This person is already suspended.",
   notSuspended: "This person isn't suspended.",
   csvTooLarge: "The file has too many rows (500 max).",
@@ -369,8 +369,7 @@ export const contentMessages: Catalog<typeof Es.contentMessages> = {
     "or sent back.",
   noPdfForVersion: "Only published or obsolete versions have a controlled PDF.",
   pdfOnly: "The controlled PDF exists for pages and PDF files.",
-  nothingPublished:
-    "There's no published version yet: publish it before asking people to read it.",
+  nothingPublished: "There's no published version yet: publish it before asking people to read it.",
   typeExists: "A document type with that code already exists.",
   counterOnlyUp: "The counter can only go up: lowering it would repeat codes already used.",
   notControlled: "This item isn't a controlled document.",
@@ -426,9 +425,9 @@ export const fileMessages: Catalog<typeof Es.fileMessages> = {
   previewNotAllowed: "This file type can't be viewed in the browser: download it.",
   replaceNeedsFile: "Only a file can be replaced.",
   notAZip: "Only ZIP files can be imported.",
-  selectionChanged: "The selection grew and can no longer be downloaded directly. Request it again.",
-  zipTooBig:
-    "The selection is too large for a single ZIP (3.9 GB max). Download it in parts.",
+  selectionChanged:
+    "The selection grew and can no longer be downloaded directly. Request it again.",
+  zipTooBig: "The selection is too large for a single ZIP (3.9 GB max). Download it in parts.",
   zipNothing: "There are no files to download.",
   zipRequesterGone: "Whoever requested the ZIP is no longer part of the team.",
   zipFailed: "The ZIP couldn't be generated. Try again.",
@@ -543,7 +542,8 @@ export const pluginTexts: Catalog<typeof Es.pluginTexts> = {
   packageRejected: {
     format: "The file isn't a SpiderFolio plugin (.sfplugin) or it's damaged.",
     tooLarge: "The file is too large for a plugin.",
-    signature: "The plugin's signature isn't valid: SpiderJAD didn't publish it or it was modified.",
+    signature:
+      "The plugin's signature isn't valid: SpiderJAD didn't publish it or it was modified.",
     tampered: "The plugin was modified after it was signed.",
     manifest: "The plugin doesn't have a valid manifest.",
     unsupported: "This plugin needs a newer version of SpiderFolio. Update the server first.",
@@ -594,8 +594,7 @@ export const mfaMessages: Catalog<typeof Es.mfaMessages> = {
   alreadyEnabled: "Two-step verification is already on.",
   notEnabled: "Two-step verification isn't on.",
   noSetup: "First start the setup to get the QR code.",
-  invalidCode:
-    "The code isn't correct or was already used. Try the one your app is showing now.",
+  invalidCode: "The code isn't correct or was already used. Try the one your app is showing now.",
   locked: "Too many wrong codes. Wait 15 minutes and try again.",
   wrongPassword: "The password isn't correct.",
 };
@@ -621,8 +620,7 @@ export const controlledPdfTexts: Catalog<typeof Es.controlledPdfTexts> = {
     "This sheet is added on download. The original file stays unchanged in SpiderFolio; the " +
     "current version is always the one in the app.",
   pageFooter: (current: string, total: string) => `Page ${current} of ${total}`,
-  watermark: (name: string, when: string) =>
-    `Uncontrolled copy · downloaded by ${name} on ${when}`,
+  watermark: (name: string, when: string) => `Uncontrolled copy · downloaded by ${name} on ${when}`,
   obsolete: "OBSOLETE",
 };
 
@@ -713,9 +711,13 @@ export const defaultDataTexts: Catalog<typeof Es.defaultDataTexts> = {
     },
     ADMIN: {
       name: "Admin",
-      description: "Everything administrative, except the plugin license and deleting the workspace.",
+      description:
+        "Everything administrative, except the plugin license and deleting the workspace.",
     },
-    MEMBER: { name: "Member", description: "Uses content according to their departments and permissions." },
+    MEMBER: {
+      name: "Member",
+      description: "Uses content according to their departments and permissions.",
+    },
     GUEST: { name: "Guest", description: "External: only what's explicitly shared." },
   },
   documentTypes: {
@@ -725,4 +727,21 @@ export const defaultDataTexts: Catalog<typeof Es.defaultDataTexts> = {
     POL: "Policy",
     MAN: "Manual",
   },
+};
+
+export const directorySignInTexts: Catalog<typeof Es.directorySignInTexts> = {
+  invalidCredentials: "Wrong username or password.",
+  unavailable: "This sign-in isn't available. Sign in with your email and password.",
+  flowExpired: "Signing in took too long or was opened in another browser. Try again.",
+  emailTaken:
+    "There's already an account with your work account's email. Ask your company's owner to link it.",
+  notAllowed: "Your work account doesn't have access to this company.",
+  directoryOnlyNeedsOwner:
+    "First, at least one owner has to be able to sign in with their password and two-step verification.",
+  alreadyLinked: "That directory account is already linked to someone else.",
+  memberAlreadyLinked: "That person is already linked to a directory account.",
+  noEncryptionKey:
+    "The server has no encryption key configured (EMAIL_ENCRYPTION_KEY): secrets can't be saved.",
+  unknownRole: "That role doesn't exist in the company or is the owner role.",
+  unknownDepartment: "Some of those departments don't exist in the company.",
 };

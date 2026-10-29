@@ -24,7 +24,9 @@ import {
   requireOwner,
 } from "./middleware/require-capability.ts";
 import { tenantMiddleware } from "./middleware/tenant.ts";
+import { directorySignInRouter } from "./modules/external-auth/sign-in.routes.ts";
 import { authRouter } from "./modules/auth/auth.routes.ts";
+import { directoryOnlyGuard } from "./middleware/directory-only.ts";
 import { mfaSetupGuard } from "./middleware/mfa-setup.ts";
 import { internalRouter } from "./modules/internal/internal.routes.ts";
 import { qrScanRouter } from "./modules/qr/qr.routes.ts";
@@ -98,6 +100,7 @@ export function createApp(deps: AppDeps): Express {
     res.json({ status: "ok" });
   });
 
+  app.use("/api/v1/auth/sso", directorySignInRouter(deps));
   app.use("/api/v1/auth", authRouter(deps));
   app.use("/api/v1", downloadsRouter(deps));
   app.use("/api/v1", profileMediaRouter(deps));
@@ -105,7 +108,12 @@ export function createApp(deps: AppDeps): Express {
   app.use("/api/v1/internal", internalRouter(deps));
 
   const tenant = express.Router({ mergeParams: true });
-  tenant.use(authMiddleware(deps), tenantMiddleware(prisma), mfaSetupGuard(prisma, deps.plugins));
+  tenant.use(
+    authMiddleware(deps),
+    tenantMiddleware(prisma),
+    mfaSetupGuard(prisma, deps.plugins),
+    directoryOnlyGuard(prisma, deps.plugins),
+  );
   for (const route of tenantRoutes(deps)) {
     const required =
       route.capability === undefined

@@ -45,6 +45,11 @@ export const routes = [
         children: [
           { path: "login", lazy: page(() => import("@/features/auth/login-page"), "LoginPage") },
           {
+            // A company's sign-in screen: also offers its directory (work account).
+            path: "login/:workspaceSlug",
+            lazy: page(() => import("@/features/auth/login-page"), "LoginPage"),
+          },
+          {
             path: "register",
             lazy: page(() => import("@/features/auth/register-page"), "RegisterPage"),
           },
@@ -221,10 +226,7 @@ export const routes = [
                     children: [
                       {
                         path: "audit",
-                        lazy: page(
-                          () => import("@/features/admin/audit/audit-page"),
-                          "AuditPage",
-                        ),
+                        lazy: page(() => import("@/features/admin/audit/audit-page"), "AuditPage"),
                       },
                     ],
                   },

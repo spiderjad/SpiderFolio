@@ -141,6 +141,20 @@ function validateBackend(manifest: PluginManifest, value: unknown): BackendPlugi
   for (const job of plugin.jobs ?? []) {
     if (!/^[a-z][a-z0-9-]{1,39}$/u.test(job.name)) throw new Error(`Job inválido: ${job.name}`);
   }
+  const providers = new Set<string>();
+  for (const provider of plugin.authProviders ?? []) {
+    if (!/^[a-z][a-z0-9-]{1,39}$/u.test(provider.id) || providers.has(provider.id)) {
+      throw new Error(`Proveedor de inicio de sesión inválido o repetido: ${provider.id}`);
+    }
+    const kind: unknown = provider.kind;
+    if (kind !== "password" && kind !== "redirect") {
+      throw new Error(`Tipo de proveedor desconocido: ${String(kind)}`);
+    }
+    providers.add(provider.id);
+  }
+  if (providers.size > 0 && manifest.pluginApi < 2) {
+    throw new Error("authProviders necesita pluginApi 2 en el manifiesto");
+  }
   return plugin;
 }
 

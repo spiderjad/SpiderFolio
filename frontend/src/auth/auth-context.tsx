@@ -46,6 +46,12 @@ interface AuthContextValue {
    * desafío para `verifyMfa` (el código de la app).
    */
   login: (email: string, password: string) => Promise<Account | { challenge: string }>;
+  /** Username and password against the company's directory (a plugin's provider); same 2FA step. */
+  directoryLogin: (
+    provider: { workspaceSlug: string; pluginId: string; id: string },
+    username: string,
+    password: string,
+  ) => Promise<Account | { challenge: string }>;
   /** Segundo paso: el código de la app (o uno de recuperación) y si se recuerda este dispositivo. */
   verifyMfa: (challenge: string, code: string, remember: boolean) => Promise<Account>;
   /** Ingreso de lectores de planta con usuario + PIN (tablets compartidas). */
@@ -159,6 +165,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
         if ("mfaRequired" in response) return { challenge: response.challenge };
         // Una sesión común en este navegador: ya no es una tablet de planta.
+        forgetKioskWorkspace();
+        return startSession(response);
+      },
+      async directoryLogin(provider, username, password) {
+        const path = [provider.workspaceSlug, provider.pluginId, provider.id]
+          .map(encodeURIComponent)
+          .join("/");
+        const response = await api<AuthResponse | { mfaRequired: true; challenge: string }>(
+          `/auth/sso/${path}/login`,
+          { method: "POST", body: { username, password } },
+        );
+        if ("mfaRequired" in response) return { challenge: response.challenge };
         forgetKioskWorkspace();
         return startSession(response);
       },

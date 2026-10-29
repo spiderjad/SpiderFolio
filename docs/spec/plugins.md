@@ -51,7 +51,8 @@ Se cargan de dos lugares:
 - Un manifiesto ignora los campos que no conoce, así un plugin nuevo no rompe un núcleo viejo. Lo que
   decide si carga es `pluginApi` (por defecto 1): la versión del contrato que necesita. Si es mayor que
   `PLUGIN_API_VERSION` del núcleo, queda fuera con un aviso en el log («actualiza SpiderFolio»). Sube
-  cuando el SDK gana puntos de extensión.
+  cuando el SDK gana puntos de extensión: la 2 agrega `authProviders`, `ctx.secrets` y `ctx.directory`
+  (un plugin que declara `authProviders` tiene que pedir `pluginApi: 2`).
 - Las rutas del manifiesto son relativas al paquete y no pueden salir de él (sin rutas absolutas ni `..`).
 
 ## Paquetes compilados
@@ -197,16 +198,98 @@ El backend del plugin exporta por defecto un `BackendPlugin` (`@spiderfolio/plug
 | `features` | Funciones que agrega; el núcleo pregunta con `plugins.hasFeature(workspaceId, f)`. |
 | `i18n` | Textos del backend del plugin, un catálogo por idioma (`{ es, en }`). Se leen al usarlos con `localized(catalogs)` (o `pluginLocale()`), que sigue el idioma de la petición (`Accept-Language`) o del job (`es` si no hay); el núcleo lo conecta con `providePluginLocale` al arrancar. Etiquetas de capacidades traducidas: `get label()` / `get description()`. |
 | `hooks` | Ganchos que consulta el núcleo: `mfaRequired` (exigir 2FA) y `checkMemberEmail` (antes de invitar o importar). |
+| `authProviders` | Formas de entrar a una empresa con su directorio (ver «Directorio de la empresa»). |
 
 El plugin **nunca recibe el cliente de Prisma**. Su contexto (`PluginWorkspaceContext`) trae:
-`settings` (clave → JSON en `PluginSetting`, por workspace), `sql` (consultas parametrizadas en su
-esquema), `logger` y `enqueue`. En un pedido además: quién es, sus capacidades, `audit` (acción
+`settings` (clave → JSON en `PluginSetting`, por workspace), `secrets` (ver abajo), `directory` (ver
+«Directorio de la empresa»), `sql` (consultas parametrizadas en su esquema), `logger` y `enqueue`. En un pedido además: quién es, sus capacidades, `audit` (acción
 `plugin.<id>.<acción>`), `requireRecentMfa` y `hasOwnMfa`. El aislamiento entre empresas en su esquema es
 responsabilidad del plugin: toda tabla lleva `workspace_id` y toda consulta filtra por
 `ctx.workspaceId`.
 
+`ctx.secrets` guarda secretos del plugin en la empresa (la contraseña de una cuenta de servicio, un client
+secret) en `PluginSecret`, cifrados con AES-256-GCM y `EMAIL_ENCRYPTION_KEY`, con la empresa, el plugin y la
+clave como datos autenticados: copiado a otra empresa, plugin o clave no descifra. Nunca salen a la app ni a
+los logs; sin `EMAIL_ENCRYPTION_KEY`, guardar uno falla con `UNAVAILABLE`.
+
 Errores: `PluginError` con `BAD_REQUEST`, `FORBIDDEN`, `NOT_FOUND` o `CONFLICT`; el núcleo los traduce al
 formato único. Los errores de Zod salen como `VALIDATION_ERROR`.
+
+## Directorio de la empresa
+
+Un plugin puede hacer que las personas entren a una empresa con el directorio de esa empresa (Active
+Directory, Microsoft Entra ID) y mantener sus miembros al día. El plugin solo comprueba quién es cada
+persona y qué dice el directorio; todo lo demás lo hace el núcleo.
+
+**Proveedores (`authProviders`).** Cada uno tiene un `id` (minúsculas, dígitos y guiones) y `describe(ctx)`,
+que devuelve la etiqueta del botón o `null` si no está configurado en esa empresa. Dos tipos:
+
+- `password` (LDAP): `verify(ctx, { username, password })` devuelve la persona (`DirectoryMember`) o `null`.
+  El núcleo pone el límite de intentos (rate limit por IP + empresa + usuario, 5 cada 15 min, y por empresa +
+  usuario desde cualquier IP, 10 cada 15 min) y un tiempo mínimo de respuesta igual para aciertos y errores
+  (`directorySignInLimits.minResponseMs`). Rechaza la contraseña vacía antes de llamar al plugin y abre la
+  sesión. La contraseña nunca se guarda.
+- `redirect` (OIDC): `authorizationUrl(ctx, { redirectUri, state, nonce, codeChallenge })` y
+  `callback(ctx, { redirectUri, callbackUrl, state, nonce, codeVerifier })`. El núcleo genera el estado, el
+  verificador PKCE (S256) y el nonce y los guarda en `SsoFlow`, atados a la empresa y al navegador (hash de
+  la cookie `spiderfolio_sso`, HttpOnly, SameSite=Lax) durante `directorySignInLimits.flowMinutes`. El estado
+  se usa una sola vez. El plugin valida el ID token (emisor, audiencia, nonce, el tenant de la empresa).
+
+Rutas públicas (`/api/v1/auth/sso`):
+
+- `GET /options?workspace=<slug>`: lo que ofrece la pantalla. Sin slug, la única empresa del servidor si hay
+  una sola.
+- `POST /:slug/:plugin/:provider/login`.
+- `GET /:slug/:plugin/:provider/start` y `GET /:slug/:plugin/:provider/callback`. La `redirectUri` que se
+  registra en el proveedor es `APP_URL` + la ruta del callback.
+
+La app muestra los proveedores en `/login/<slug>` (y en `/login` si el servidor tiene una sola empresa).
+Tras el callback, el navegador vuelve a `/app/<slug>` con la sesión, a `/login/<slug>#challenge=…` si la
+persona tiene 2FA, o a `/login/<slug>?signin=<motivo>` si algo falló (`expired`, `notAllowed`,
+`emailTaken`, `unavailable`, `failed`).
+
+**Vínculo y altas.** `ExternalIdentity` vincula una membresía con la cuenta del directorio por su id estable
+(`objectGUID`, `oid`), nunca por email. La primera vez que alguien entra, el núcleo crea la cuenta, la
+membresía y el vínculo. La cuenta no tiene contraseña local y su email queda confirmado, porque lo
+administra el directorio. Si ya hay una cuenta con ese email, no la vincula: responde `emailTaken` y un
+administrador la vincula a mano (`ctx.directory.link`). La 2FA propia de la persona se pide igual que con
+email y contraseña. La sesión recuerda el directorio con el que entró (`Session.authWorkspaceId` y
+`authProvider`, que se conservan al rotar).
+
+**`ctx.directory`.** Lo que usan las pantallas y los jobs del plugin:
+
+- `roles()` y `departments()`.
+- `syncMember(provider, member)`: alta o actualización de nombre, email, rol, departamentos y puesto. El
+  nombre y el email solo cambian si la cuenta es solo de esa empresa, y un email que ya usa otra cuenta se
+  omite (`skipped`).
+- `suspendMember(provider, externalId)` y `linkedMembers(provider, cursor)` (de a 100).
+- `link` y `unlink`.
+- `localOwnersWithMfa()`, `setDirectoryOnly(on)` y `directoryOnly()`.
+
+Cada cambio queda en la auditoría (`directory.member.create|update|suspend|reactivate|link|unlink`,
+`directory.only.enable|disable`): con quien lo hizo si viene de una ruta, sin persona si viene de un job.
+
+**Propietarios con acceso local siempre.**
+
+- El directorio nunca da ni quita el rol de propietario: `syncMember` rechaza el rol de propietario y no
+  cambia el rol de quien ya lo es. `suspendMember` nunca suspende a un propietario.
+- A quien suspendió el directorio, el directorio lo reactiva; a quien suspendió un administrador, no.
+- «Solo directorio» (`setDirectoryOnly(true)`) exige al menos un propietario activo con contraseña propia y
+  2FA (`CONFLICT` si no). Con él, quien no es propietario solo entra a la empresa con una sesión abierta con
+  ese directorio. Si no, la respuesta es `DIRECTORY_SIGN_IN_REQUIRED` (403) y la app le pide volver a entrar
+  con la cuenta corporativa. Los propietarios y las sesiones de PIN no se ven afectados.
+
+**Si vence la licencia.**
+
+- El plugin deja de estar activo: sus jobs (la sincronización) se detienen en el momento y sus pantallas
+  desaparecen.
+- Sus proveedores siguen dejando entrar durante `directorySignInLimits.graceDays` días (0 lo apaga). Después
+  dejan de aparecer, y «solo directorio» deja de aplicarse con ellos. Las sesiones abiertas siguen.
+- Quien entraba con el directorio puede pedir una contraseña local con «¿Olvidaste tu contraseña?». El
+  propietario entra con la suya.
+- Un job diario del worker (`plugins-directory-notice`) avisa a los propietarios de cada empresa con miembros
+  vinculados de que las bajas del directorio ya no se aplican solas (notificación `directory_sync_stopped`,
+  una por licencia).
 
 ## Puntos de extensión de la app
 
