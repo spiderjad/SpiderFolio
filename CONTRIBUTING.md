@@ -26,6 +26,17 @@ npm run dev                   # API :4000 + worker + app :5173 + web :4321
 
 Emails land in Mailpit: http://localhost:8025.
 
+## Development on a Mac
+
+Everything works the same on macOS (Intel or Apple Silicon): no script or config depends on Windows
+paths, and `.gitattributes` keeps every file, shell scripts included, with LF line endings.
+
+1. Command line tools (Git): `xcode-select --install`.
+2. Node 24: `brew install nvm`, then `nvm install` in the repository (it reads `.nvmrc`; npm 11 comes
+   with it). `brew install node@24` also works.
+3. Docker: Docker Desktop or OrbStack. Every image in `docker-compose.yml` has an Apple Silicon build.
+4. Clone the repository and follow «Development environment» above.
+
 ## Project rules
 
 They are in [CLAUDE.md](CLAUDE.md) and in [docs/spec/](docs/spec/) (in Spanish). The most important

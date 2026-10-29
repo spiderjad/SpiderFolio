@@ -61,6 +61,14 @@ You need **Node 24** (exact version in `.nvmrc`), **npm 11** and **Docker**.
 `npm install` also turns on the git pre-commit hook: it checks that you don't commit secrets and that
 `.env.example` keeps its secrets empty.
 
+### On a Mac
+
+The same steps work on macOS (Intel or Apple Silicon); nothing depends on Windows paths. Before them:
+
+1. Install Git with the command line tools: `xcode-select --install`.
+2. Install Node 24: `brew install nvm` and then `nvm install` inside the repository (it reads `.nvmrc`).
+3. Install Docker Desktop or OrbStack: every service image has an Apple Silicon build.
+
 ## Commands
 
 | Command | What it does |

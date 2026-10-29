@@ -49,6 +49,23 @@ packages/      tailwind-preset, limits, content, plugin-sdk
 plugins/       plugins comerciales (security-policies, onedrive-import, mcp-connector, templates, audit-rooms) y tools/
 docs/spec/     especificación detallada
 ```
+### Carpetas (Windows y Mac)
+Nada depende de rutas absolutas ni de Windows: dentro del repo, rutas relativas; fuera, `SPIDERFOLIO_HOME`
+(carpeta raíz con plugins, claves, backups y dev-plugins). Por defecto `C:\dev\SpiderFolio` en Windows
+y `~/dev/SpiderFolio` en Mac; el núcleo va al lado, en `$SPIDERFOLIO_HOME/../SpiderFolio-public`.
+```
+$SPIDERFOLIO_HOME/../SpiderFolio-public  núcleo (este repo)
+$SPIDERFOLIO_HOME/plugins                plugins comerciales (repo privado; ve el núcleo como .core, `npm run core:link`)
+$SPIDERFOLIO_HOME/claves                 claves de firma (prod, prod-paquetes…): solo leer los .pub, nunca los .key
+$SPIDERFOLIO_HOME/backups                volcados de la base de desarrollo
+$SPIDERFOLIO_HOME/dev-plugins            plugins compilados para el entorno de desarrollo (PLUGINS_DIR)
+$SPIDERFOLIO_HOME/archivo                archivo viejo (repo aparte, solo consulta)
+```
+Nunca escribir rutas absolutas ni de un sistema operativo en código, scripts o configs. Nunca crear carpetas
+nuevas fuera de estas (ni junto a ellas ni en el perfil del usuario) sin preguntar.
+No tocar la instalación de prueba (`~/spiderfolio`, en Windows `%USERPROFILE%\spiderfolio`).
+Preparar un Mac: CONTRIBUTING.md, «Development on a Mac».
+
 Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con TanStack Query; selectores que pueden crecer usan `components/ui/combobox.tsx`.
 
 ### Listas y tablas (regla de paginación)

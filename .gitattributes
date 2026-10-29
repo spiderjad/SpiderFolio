@@ -1,4 +1,7 @@
 * text=auto eol=lf
+# Shell scripts run on Linux and macOS servers: always LF, whatever the checkout's settings.
+*.sh text eol=lf
+Dockerfile text eol=lf
 *.png binary
 *.jpg binary
 *.webp binary
