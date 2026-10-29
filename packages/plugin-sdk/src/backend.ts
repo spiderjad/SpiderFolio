@@ -84,7 +84,11 @@ export type DirectorySyncResult =
 export interface LinkedMember {
   membershipId: string;
   externalId: string;
+  name: string;
   status: "ACTIVE" | "SUSPENDED";
+  /** Current role and departments, so a sync can preview what it would change. */
+  roleId: string;
+  departmentIds: readonly string[];
   /** Owners are never suspended nor have their role changed by the directory. */
   owner: boolean;
   suspendedByDirectory: boolean;
@@ -133,6 +137,19 @@ export interface PluginDirectory {
   trustProviderMfa(): Promise<boolean>;
 }
 
+/**
+ * A bell notice from the plugin. Its text and link come from the plugin's app part
+ * (FrontendPlugin.notifications[code]), in the reader's language.
+ */
+export interface PluginNotice {
+  /** The company's owners and administrators, or these members (anyone not in the company is ignored). */
+  to: "admins" | { membershipIds: readonly string[] };
+  /** The plugin's own code (lowercase, digits, «_», «.», «-»). */
+  code: string;
+  /** Once per person and key (e.g. «sync-blocked:2026-10-29», one a day). Missing: always. */
+  dedupeKey?: string;
+}
+
 /** Lo que el plugin puede usar dentro de un workspace donde está activo. */
 export interface PluginWorkspaceContext {
   readonly pluginId: PluginId;
@@ -144,6 +161,8 @@ export interface PluginWorkspaceContext {
   logger: PluginLogger;
   /** Encola un job propio (declarado en `jobs`) con este workspace. */
   enqueue(job: string, payload: Record<string, unknown>): Promise<void>;
+  /** Bell notice to people of this company (pluginApi 2); how many were created. */
+  notify(notice: PluginNotice): Promise<number>;
 }
 
 export type RoleBase = "OWNER" | "ADMIN" | "MEMBER" | "GUEST";

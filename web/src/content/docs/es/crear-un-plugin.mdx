@@ -74,13 +74,13 @@ Las dos partes son opcionales: un plugin puede tener solo backend o solo app.
 }
 ```
 
-| Campo | Qué es |
-|---|---|
-| `id` | Minúsculas, dígitos y guiones, de 2 a 40 caracteres. Es el prefijo de todo: rutas, capacidades, colas y esquema. |
-| `name`, `description` | Lo que se ve en **Licencia y plugins**. |
-| `backend`, `frontend` | Archivo de entrada de cada parte, relativo al paquete. |
-| `migrations` | Carpeta con las migraciones SQL propias. |
-| `distribution` | `"community"` para un plugin de terceros que se instala sin licencia, o `"commercial"` (por defecto) para los que se activan con una licencia firmada. Ver [Licencias](#7-licencias). |
+| Campo                 | Qué es                                                                                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                  | Minúsculas, dígitos y guiones, de 2 a 40 caracteres. Es el prefijo de todo: rutas, capacidades, colas y esquema.                                                                      |
+| `name`, `description` | Lo que se ve en **Licencia y plugins**.                                                                                                                                               |
+| `backend`, `frontend` | Archivo de entrada de cada parte, relativo al paquete.                                                                                                                                |
+| `migrations`          | Carpeta con las migraciones SQL propias.                                                                                                                                              |
+| `distribution`        | `"community"` para un plugin de terceros que se instala sin licencia, o `"commercial"` (por defecto) para los que se activan con una licencia firmada. Ver [Licencias](#7-licencias). |
 
 Para que el typecheck encuentre los componentes de la app, el `tsconfig.json` del plugin apunta `@/` a
 `frontend/src`:
@@ -278,17 +278,19 @@ export default defineBackendPlugin({
 
 Cada handler recibe `ctx` (`PluginRequestContext`):
 
-| Campo | Para qué |
-|---|---|
-| `workspaceId`, `pluginId` | La empresa del pedido y tu plugin. |
-| `userId`, `membershipId`, `roleBase`, `capabilities` | Quién hace el pedido, su rol base (`OWNER`, `ADMIN`, `MEMBER`, `GUEST`) y sus capacidades. |
-| `settings` | Ajustes del plugin en esa empresa (clave → JSON). `get(clave, esquemaZod)` devuelve `undefined` si no hay o no valida; también `set` y `delete`. |
-| `sql` | `query(texto, valores)`: SQL parametrizado (`$1`, `$2`…) dentro de tu esquema. |
-| `audit` | Registra en la auditoría de la empresa. La acción se guarda como `plugin.<id>.<acción>`. |
-| `requireRecentMfa()` | Falla si la persona no confirmó su código de 2FA hace poco. Úsalo antes de una acción sensible. |
-| `hasOwnMfa()` | Si la persona tiene la verificación en dos pasos activa. |
-| `enqueue(job, payload)` | Encola un job propio para esta empresa. |
-| `logger` | Log con el id del plugin. Nunca registres secretos ni datos personales. |
+| Campo                                                | Para qué                                                                                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `workspaceId`, `pluginId`                            | La empresa del pedido y tu plugin.                                                                                                                                 |
+| `userId`, `membershipId`, `roleBase`, `capabilities` | Quién hace el pedido, su rol base (`OWNER`, `ADMIN`, `MEMBER`, `GUEST`) y sus capacidades.                                                                         |
+| `settings`                                           | Ajustes del plugin en esa empresa (clave → JSON). `get(clave, esquemaZod)` devuelve `undefined` si no hay o no valida; también `set` y `delete`.                   |
+| `sql`                                                | `query(texto, valores)`: SQL parametrizado (`$1`, `$2`…) dentro de tu esquema.                                                                                     |
+| `audit`                                              | Registra en la auditoría de la empresa. La acción se guarda como `plugin.<id>.<acción>`.                                                                           |
+| `requireRecentMfa()`                                 | Falla si la persona no confirmó su código de 2FA hace poco. Úsalo antes de una acción sensible.                                                                    |
+| `hasOwnMfa()`                                        | Si la persona tiene la verificación en dos pasos activa.                                                                                                           |
+| `enqueue(job, payload)`                              | Encola un job propio para esta empresa.                                                                                                                            |
+| `notify(aviso)`                                      | Aviso en la campanita a personas de esta empresa (ver «Avisos en la campanita»).                                                                                   |
+| `secrets`                                            | Secretos del plugin en esa empresa (una contraseña, un client secret), cifrados por el núcleo: `get`, `set`, `delete` y `has`. Nunca salen a la app ni a los logs. |
+| `logger`                                             | Log con el id del plugin. Nunca registres secretos ni datos personales.                                                                                            |
 
 ### Jobs
 
@@ -300,6 +302,26 @@ Cada handler recibe `ctx` (`PluginRequestContext`):
 - `options` ajusta reintentos y vencimiento (`retryLimit`, `retryDelay`, `expireInSeconds`).
 - En el handler, `jobCtx.forWorkspace(id)` da el contexto de la empresa, o `null` si el plugin no está
   activo ahí. `jobCtx.activeWorkspaces()` lista las empresas donde sí lo está.
+
+### Avisos en la campanita
+
+Con `pluginApi: 2` en el manifiesto, `ctx.notify` deja un aviso en la campanita de personas de la empresa
+(también desde un job, con el contexto de `jobCtx.forWorkspace`):
+
+```ts
+await ctx.notify({
+  to: "admins", // propietarios y administradores; o { membershipIds: [...] }
+  code: "checklist-overdue",
+  dedupeKey: `checklist-overdue:${date}`, // una vez por persona y clave
+});
+```
+
+- Solo llega a personas activas de **esa** empresa: un `membershipId` de otra se ignora.
+- El aviso no lleva texto. La parte de app del plugin dice qué se lee y adónde lleva, en el idioma de cada
+  persona (`notifications` en `defineFrontendPlugin`, ver «La parte de app»). Si el plugin dejó de estar
+  activo, la campanita muestra un texto genérico.
+- Con la misma `dedupeKey`, cada persona lo recibe una sola vez: úsala para no avisar en cada ejecución de
+  un job.
 
 ### Capacidades
 
@@ -362,14 +384,14 @@ export default defineFrontendPlugin({
 });
 ```
 
-| Campo | Dónde aparece |
-|---|---|
-| `navItems` | Menú lateral. `to` es una pantalla del plugin; con `anyCapability`, solo lo ve quien tenga alguna. |
-| `screens` | `/app/:slug/p/<id>/<path>`. `path: ""` es la pantalla principal. |
-| `adminSections` | Panel de **Administración**, en `/app/:slug/admin/p/<id>/<sección>`. Exige `anyCapability`; con `ownerOnly`, solo el propietario. |
-| `documentActions` | Menú «…» de una página abierta. |
-| `explorerActions` | Menú de cada fila del explorador de **Archivos**. |
-| `folderActions` | Botón **Nuevo** del explorador, en la carpeta abierta. |
+| Campo             | Dónde aparece                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `navItems`        | Menú lateral. `to` es una pantalla del plugin; con `anyCapability`, solo lo ve quien tenga alguna.                                |
+| `screens`         | `/app/:slug/p/<id>/<path>`. `path: ""` es la pantalla principal.                                                                  |
+| `adminSections`   | Panel de **Administración**, en `/app/:slug/admin/p/<id>/<sección>`. Exige `anyCapability`; con `ownerOnly`, solo el propietario. |
+| `documentActions` | Menú «…» de una página abierta.                                                                                                   |
+| `explorerActions` | Menú de cada fila del explorador de **Archivos**.                                                                                 |
+| `folderActions`   | Botón **Nuevo** del explorador, en la carpeta abierta.                                                                            |
 
 Las pantallas y los diálogos se cargan bajo demanda (`() => import(...)`). Cada pantalla recibe `slug` (la
 empresa) y `subpath` (lo que sigue en la ruta).
@@ -389,7 +411,16 @@ aunque el núcleo cambie por dentro.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginScreenProps } from "@spiderfolio/plugin-sdk/frontend";
 import { ClipboardCheck } from "lucide-react";
-import { api, Card, CardTitle, Checkbox, EmptyState, errorText, Skeleton, toast } from "@/plugins/ui";
+import {
+  api,
+  Card,
+  CardTitle,
+  Checkbox,
+  EmptyState,
+  errorText,
+  Skeleton,
+  toast,
+} from "@/plugins/ui";
 
 interface Day {
   items: { item: string; doneAt: string | null; doneByMe: boolean }[];
@@ -441,6 +472,20 @@ export default function ChecklistPage({ slug }: PluginScreenProps) {
 `items-page.tsx` sigue la misma idea: un `Textarea` con un control por línea y un `Button` que llama a
 `PUT …/items`.
 
+### Avisos de la campanita
+
+Los avisos que envía el backend con `ctx.notify` se muestran con el texto y el enlace que da la app, por
+código:
+
+```tsx
+notifications: {
+  "checklist-overdue": {
+    text: () => (locale === "en" ? "A shift checklist is overdue." : "Hay un control de turno vencido."),
+    to: "p/shift-checklist/today", // dentro de /app/<empresa>/
+  },
+},
+```
+
 ### Acciones en menús
 
 Una acción en el menú de una fila del explorador, solo para archivos PDF:
@@ -470,10 +515,10 @@ en el backend.
 
 Los plugins se cargan de dos lugares:
 
-| Origen | Variable | Por defecto |
-|---|---|---|
-| Carpetas separadas por comas: cada subcarpeta es un plugin | `PLUGINS_DIR` | `plugins/` en la raíz (`/app/plugins,/data/plugins` en la imagen) |
-| Paquetes npm (pueden ser privados), separados por comas | `PLUGIN_PACKAGES` | vacío |
+| Origen                                                     | Variable          | Por defecto                                                       |
+| ---------------------------------------------------------- | ----------------- | ----------------------------------------------------------------- |
+| Carpetas separadas por comas: cada subcarpeta es un plugin | `PLUGINS_DIR`     | `plugins/` en la raíz (`/app/plugins,/data/plugins` en la imagen) |
+| Paquetes npm (pueden ser privados), separados por comas    | `PLUGIN_PACKAGES` | vacío                                                             |
 
 - **Backend**: la API y el worker los descubren al arrancar. Reinícialos después de instalar o actualizar
   un plugin. Un plugin que no carga queda fuera con un aviso en el log.
@@ -508,10 +553,10 @@ Un SpiderFolio más viejo no lo carga y lo avisa en el log.
 
 Hay dos tipos de plugin, según el campo `distribution` del manifiesto:
 
-| Tipo | Cómo se activa | En **Licencia y plugins** |
-|---|---|---|
-| **Comercial** (`"commercial"`, por defecto) | Con una licencia firmada que incluya su `id`. Los de SpiderJAD son todos comerciales. | Activo o «Sin licencia». |
-| **Community** (`"community"`) | Sin licencia: el **propietario** lo activa en su empresa. | Marcado **«No verificado»**, con botón Activar. |
+| Tipo                                        | Cómo se activa                                                                        | En **Licencia y plugins**                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Comercial** (`"commercial"`, por defecto) | Con una licencia firmada que incluya su `id`. Los de SpiderJAD son todos comerciales. | Activo o «Sin licencia».                        |
+| **Community** (`"community"`)               | Sin licencia: el **propietario** lo activa en su empresa.                             | Marcado **«No verificado»**, con botón Activar. |
 
 ### Plugins community
 

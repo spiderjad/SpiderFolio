@@ -427,6 +427,18 @@ describe("propietarios", () => {
       "directory.member.update",
       "directory.member.suspend",
     ]);
+    const linked = await directory.linkedMembers("ldap");
+    expect(linked.nextCursor).toBeNull();
+    expect(linked.items).toEqual([
+      expect.objectContaining({
+        externalId: person.member.externalId,
+        name: "Otro Nombre",
+        status: "SUSPENDED",
+        owner: false,
+        suspendedByDirectory: true,
+        departmentIds: [],
+      }),
+    ]);
   });
 });
 

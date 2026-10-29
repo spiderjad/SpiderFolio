@@ -100,6 +100,14 @@ export interface PluginFolderAction {
   dialog: LazyComponent<{ ctx: PluginFolderContext; onClose: () => void }>;
 }
 
+/** How the bell shows a notice the plugin sent (ctx.notify with this code). */
+export interface PluginNotificationView {
+  /** Read when shown, so it follows the active language. */
+  text: () => string;
+  /** Inside /app/:slug/ (e.g. «admin/p/<id>/<section>»); missing: the notice doesn't open anything. */
+  to?: string;
+}
+
 export interface FrontendPlugin {
   id: PluginId;
   navItems?: readonly PluginNavItem[];
@@ -111,6 +119,8 @@ export interface FrontendPlugin {
   explorerActions?: readonly PluginNodeAction[];
   /** Botón «Nuevo» del explorador. */
   folderActions?: readonly PluginFolderAction[];
+  /** Bell notices the backend sends (ctx.notify), by code. */
+  notifications?: Readonly<Record<string, PluginNotificationView>>;
   /** Textos de la app del plugin (en español). */
   i18n?: Readonly<Record<string, string>>;
 }

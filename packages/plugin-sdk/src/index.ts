@@ -33,7 +33,7 @@ export type PluginDistribution = z.infer<typeof PluginDistributionSchema>;
 /**
  * Version of the plugin contract this core offers. It goes up when the SDK gains extension points; a
  * plugin declares the one it needs (`pluginApi`) and a core older than that doesn't load it.
- * 2: authProviders, ctx.secrets and ctx.directory.
+ * 2: authProviders, ctx.secrets, ctx.directory and ctx.notify.
  */
 export const PLUGIN_API_VERSION = 2;
 

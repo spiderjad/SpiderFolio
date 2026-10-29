@@ -379,7 +379,16 @@ export function createPluginDirectory(deps: DirectoryDeps): PluginDirectory {
           id: true,
           externalId: true,
           suspendedByDirectory: true,
-          membership: { select: { id: true, status: true, role: { select: { base: true } } } },
+          membership: {
+            select: {
+              id: true,
+              status: true,
+              roleId: true,
+              role: { select: { base: true } },
+              departments: { select: { departmentId: true } },
+              user: { select: { name: true } },
+            },
+          },
         },
       });
       const page = rows.slice(0, PAGE_SIZE);
@@ -387,7 +396,10 @@ export function createPluginDirectory(deps: DirectoryDeps): PluginDirectory {
         items: page.map((row): LinkedMember => ({
           membershipId: row.membership.id,
           externalId: row.externalId,
+          name: row.membership.user.name,
           status: row.membership.status,
+          roleId: row.membership.roleId,
+          departmentIds: row.membership.departments.map((d) => d.departmentId).sort(),
           owner: row.membership.role.base === "OWNER",
           suspendedByDirectory: row.suspendedByDirectory,
         })),

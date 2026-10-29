@@ -38,6 +38,8 @@ export const NOTIFICATION_KINDS = [
   "invitation_by_leader",
   /** A directory that signed people in stopped syncing (for owners; `detail` = plugin id). */
   "directory_sync_stopped",
+  /** Sent by a plugin (ctx.notify); `detail` = «<pluginId>:<code>», its app part gives the text. */
+  "plugin",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

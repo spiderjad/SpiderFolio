@@ -16,6 +16,8 @@ import {
 import { adminErrorText } from "@/features/admin/admin-utils";
 import type { NodeType, Page } from "@/features/files/api";
 import { api } from "@/lib/api";
+import { useActivePlugins } from "@/plugins/registry";
+import type { FrontendPlugin, PluginNotificationView } from "@spiderfolio/plugin-sdk/frontend";
 import { cn, timeAgo } from "@/lib/utils";
 import { texts } from "@/i18n";
 
@@ -37,7 +39,8 @@ export interface NotificationView {
     | "bian_usage"
     | "bian_request"
     | "invitation_by_leader"
-    | "directory_sync_stopped";
+    | "directory_sync_stopped"
+    | "plugin";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -82,7 +85,25 @@ export function expiryText(expiresAt: string, now: Date = new Date()): string {
   return t.expiresInDays(days);
 }
 
-function pathOf(slug: string, item: NotificationView): string | null {
+/** A plugin's notice: «<pluginId>:<code>» in `detail`, shown as the plugin's app part says. */
+function pluginNotice(
+  item: NotificationView,
+  plugins: readonly FrontendPlugin[],
+): PluginNotificationView | null {
+  const [pluginId, code] = (item.detail ?? "").split(":");
+  if (pluginId === undefined || code === undefined) return null;
+  return plugins.find((plugin) => plugin.id === pluginId)?.notifications?.[code] ?? null;
+}
+
+function pathOf(
+  slug: string,
+  item: NotificationView,
+  plugins: readonly FrontendPlugin[],
+): string | null {
+  if (item.kind === "plugin") {
+    const to = pluginNotice(item, plugins)?.to;
+    return to === undefined ? null : `/app/${slug}/${to.replace(/^\/+/u, "")}`;
+  }
   if (item.kind === "email_fallback" || item.kind === "email_failing") {
     return `/app/${slug}/admin/security?tab=email`;
   }
@@ -106,8 +127,9 @@ function pathOf(slug: string, item: NotificationView): string | null {
   return target.parentId === null ? base : `${base}/f/${target.parentId}`;
 }
 
-function text(item: NotificationView): string {
+function text(item: NotificationView, plugins: readonly FrontendPlugin[]): string {
   const t = texts.notifications;
+  if (item.kind === "plugin") return pluginNotice(item, plugins)?.text() ?? t.pluginNotice;
   if (item.kind === "email_fallback") return t.emailFallback;
   if (item.kind === "email_failing") {
     const reasons: Record<string, string> = t.smtpReasons;
@@ -153,6 +175,7 @@ export function NotificationBell({ slug }: { slug: string }) {
   const t = texts.notifications;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const plugins = useActivePlugins(slug);
   const summary = useQuery({
     queryKey: [...notificationsKey(slug), "summary"],
     queryFn: () => notificationsApi.summary(slug),
@@ -240,7 +263,7 @@ export function NotificationBell({ slug }: { slug: string }) {
                 )}
                 onSelect={() => {
                   open.mutate(item);
-                  const to = pathOf(slug, item);
+                  const to = pathOf(slug, item, plugins);
                   if (to !== null) void navigate(to);
                 }}
               >
@@ -253,7 +276,7 @@ export function NotificationBell({ slug }: { slug: string }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className={cn("block text-sm", item.readAt === null && "font-medium")}>
-                    {text(item)}
+                    {text(item, plugins)}
                   </span>
                   <span className="block text-xs text-muted-foreground">
                     {timeAgo(item.createdAt)}

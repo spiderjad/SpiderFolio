@@ -27,6 +27,7 @@ import {
 } from "../modules/external-auth/external-directory.ts";
 import { createPluginSecrets } from "../modules/external-auth/plugin-secrets.ts";
 import { enabledCommunityPlugins } from "./community.ts";
+import { createPluginNotifier } from "./notify.ts";
 import { licensedPlugins, verifyLicense } from "./license.ts";
 import type { InstalledPlugin } from "./loader.ts";
 
@@ -205,6 +206,7 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
       sql: {
         query: (text, values = []) => pluginQuery(prisma, schema, text, values),
       },
+      notify: createPluginNotifier(prisma, workspaceId, pluginId),
       logger: pluginLogger(logger, pluginId),
       async enqueue(job, payload) {
         if (!jobs.has(job)) throw new Error(`El plugin ${pluginId} no declara el job ${job}`);

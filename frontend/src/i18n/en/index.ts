@@ -266,6 +266,7 @@ export const en: Messages = {
     noAccess: "You no longer have access to what was shared with you.",
     emailFallback:
       "Your company’s email server failed: emails were sent through SpiderFolio. Check Security › Email.",
+    pluginNotice: "A notice from one of your company's plugins.",
     directorySyncStopped:
       "Your company's directory stopped syncing because its plugin is no longer active: people who leave the company aren't suspended on their own anymore. Check License and plugins.",
     emailFailing: (reason: string) =>

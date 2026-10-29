@@ -51,7 +51,7 @@ Se cargan de dos lugares:
 - Un manifiesto ignora los campos que no conoce, así un plugin nuevo no rompe un núcleo viejo. Lo que
   decide si carga es `pluginApi` (por defecto 1): la versión del contrato que necesita. Si es mayor que
   `PLUGIN_API_VERSION` del núcleo, queda fuera con un aviso en el log («actualiza SpiderFolio»). Sube
-  cuando el SDK gana puntos de extensión: la 2 agrega `authProviders`, `ctx.secrets` y `ctx.directory`
+  cuando el SDK gana puntos de extensión: la 2 agrega `authProviders`, `ctx.secrets`, `ctx.directory` y `ctx.notify`
   (un plugin que declara `authProviders` tiene que pedir `pluginApi: 2`).
 - Las rutas del manifiesto son relativas al paquete y no pueden salir de él (sin rutas absolutas ni `..`).
 
@@ -202,7 +202,8 @@ El backend del plugin exporta por defecto un `BackendPlugin` (`@spiderfolio/plug
 
 El plugin **nunca recibe el cliente de Prisma**. Su contexto (`PluginWorkspaceContext`) trae:
 `settings` (clave → JSON en `PluginSetting`, por workspace), `secrets` (ver abajo), `directory` (ver
-«Directorio de la empresa»), `sql` (consultas parametrizadas en su esquema), `logger` y `enqueue`. En un pedido además: quién es, sus capacidades, `audit` (acción
+«Directorio de la empresa»), `sql` (consultas parametrizadas en su esquema), `logger`, `enqueue` y
+`notify` (ver abajo). En un pedido además: quién es, sus capacidades, `audit` (acción
 `plugin.<id>.<acción>`), `requireRecentMfa` y `hasOwnMfa`. El aislamiento entre empresas en su esquema es
 responsabilidad del plugin: toda tabla lleva `workspace_id` y toda consulta filtra por
 `ctx.workspaceId`.
@@ -211,6 +212,13 @@ responsabilidad del plugin: toda tabla lleva `workspace_id` y toda consulta filt
 secret) en `PluginSecret`, cifrados con AES-256-GCM y `EMAIL_ENCRYPTION_KEY`, con la empresa, el plugin y la
 clave como datos autenticados: copiado a otra empresa, plugin o clave no descifra. Nunca salen a la app ni a
 los logs; sin `EMAIL_ENCRYPTION_KEY`, guardar uno falla con `UNAVAILABLE`.
+
+`ctx.notify({ to, code, dedupeKey? })` deja avisos en la campanita (`Notification.kind = "plugin"`,
+`detail = "<pluginId>:<code>"`). `to` es `"admins"` (propietarios y administradores activos) o
+`{ membershipIds }` (hasta 100). Solo llega a personas activas de la empresa del contexto: un id de otra se
+ignora. Con `dedupeKey`, una vez por persona y clave. El aviso no guarda texto: lo pone la parte de app del
+plugin (`FrontendPlugin.notifications[code]`, con `text()` y `to` dentro de `/app/:slug/`); sin ella, la
+app muestra un texto genérico.
 
 Errores: `PluginError` con `BAD_REQUEST`, `FORBIDDEN`, `NOT_FOUND` o `CONFLICT`; el núcleo los traduce al
 formato único. Los errores de Zod salen como `VALIDATION_ERROR`.
@@ -306,6 +314,7 @@ El frontend del plugin exporta por defecto un `FrontendPlugin` (`@spiderfolio/pl
 | `documentActions` | Menú «…» de una página abierta. |
 | `explorerActions` | Menú de cada fila del explorador. |
 | `folderActions` | Botón «Nuevo» del explorador. |
+| `notifications` | Texto y enlace de los avisos que envía el backend con `ctx.notify`, por código. |
 
 La app pide `GET /api/v1/w/:slug/plugins` (los activos) y solo muestra esos. Los plugins importan
 componentes de `@/plugins/ui` (los mismos del núcleo) y nada más de la app. Idioma: `locale` de

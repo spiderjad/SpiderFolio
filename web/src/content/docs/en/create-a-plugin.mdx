@@ -74,13 +74,13 @@ Both parts are optional: a plugin can have only a backend or only an app part.
 }
 ```
 
-| Field | What it is |
-|---|---|
-| `id` | Lowercase letters, digits and hyphens, 2 to 40 characters. It prefixes everything: routes, capabilities, queues and schema. |
-| `name`, `description` | What **License and plugins** shows (by convention, in Spanish). |
-| `backend`, `frontend` | Entry file of each part, relative to the package. |
-| `migrations` | Folder with the plugin's own SQL migrations. |
-| `distribution` | `"community"` for a third-party plugin installed without a license, or `"commercial"` (the default) for plugins activated by a signed license. See [Licensing](#7-licensing). |
+| Field                 | What it is                                                                                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                  | Lowercase letters, digits and hyphens, 2 to 40 characters. It prefixes everything: routes, capabilities, queues and schema.                                                   |
+| `name`, `description` | What **License and plugins** shows (by convention, in Spanish).                                                                                                               |
+| `backend`, `frontend` | Entry file of each part, relative to the package.                                                                                                                             |
+| `migrations`          | Folder with the plugin's own SQL migrations.                                                                                                                                  |
+| `distribution`        | `"community"` for a third-party plugin installed without a license, or `"commercial"` (the default) for plugins activated by a signed license. See [Licensing](#7-licensing). |
 
 So the typecheck can find the app components, the plugin's `tsconfig.json` points `@/` to
 `frontend/src`:
@@ -276,17 +276,19 @@ export default defineBackendPlugin({
 
 Each handler gets `ctx` (`PluginRequestContext`):
 
-| Field | What for |
-|---|---|
-| `workspaceId`, `pluginId` | The request's company and your plugin. |
-| `userId`, `membershipId`, `roleBase`, `capabilities` | Who makes the request, their base role (`OWNER`, `ADMIN`, `MEMBER`, `GUEST`) and their capabilities. |
-| `settings` | Plugin settings for that company (key → JSON). `get(key, zodSchema)` returns `undefined` if there's nothing or it doesn't validate; there's also `set` and `delete`. |
-| `sql` | `query(text, values)`: parameterised SQL (`$1`, `$2`…) inside your schema. |
-| `audit` | Records an entry in the company's audit log. The action is stored as `plugin.<id>.<action>`. |
-| `requireRecentMfa()` | Fails if the person hasn't confirmed their 2FA code recently. Use it before a sensitive action. |
-| `hasOwnMfa()` | Whether the person has two-step verification turned on. |
-| `enqueue(job, payload)` | Enqueues one of your jobs for this company. |
-| `logger` | Logger tagged with the plugin id. Never log secrets or personal data. |
+| Field                                                | What for                                                                                                                                                             |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workspaceId`, `pluginId`                            | The request's company and your plugin.                                                                                                                               |
+| `userId`, `membershipId`, `roleBase`, `capabilities` | Who makes the request, their base role (`OWNER`, `ADMIN`, `MEMBER`, `GUEST`) and their capabilities.                                                                 |
+| `settings`                                           | Plugin settings for that company (key → JSON). `get(key, zodSchema)` returns `undefined` if there's nothing or it doesn't validate; there's also `set` and `delete`. |
+| `sql`                                                | `query(text, values)`: parameterised SQL (`$1`, `$2`…) inside your schema.                                                                                           |
+| `audit`                                              | Records an entry in the company's audit log. The action is stored as `plugin.<id>.<action>`.                                                                         |
+| `requireRecentMfa()`                                 | Fails if the person hasn't confirmed their 2FA code recently. Use it before a sensitive action.                                                                      |
+| `hasOwnMfa()`                                        | Whether the person has two-step verification turned on.                                                                                                              |
+| `notify(notice)`                                     | Bell notice to people in this company (see «Bell notices»).                                                                                                          |
+| `secrets`                                            | The plugin's secrets in that company (a password, a client secret), encrypted by the core: `get`, `set`, `delete` and `has`. They never reach the app or the logs.   |
+| `enqueue(job, payload)`                              | Enqueues one of your jobs for this company.                                                                                                                          |
+| `logger`                                             | Logger tagged with the plugin id. Never log secrets or personal data.                                                                                                |
 
 ### Jobs
 
@@ -300,6 +302,25 @@ Each handler gets `ctx` (`PluginRequestContext`):
 - `options` tunes retries and expiry (`retryLimit`, `retryDelay`, `expireInSeconds`).
 - In the handler, `jobCtx.forWorkspace(id)` gives you the company's context, or `null` if the plugin
   isn't active there. `jobCtx.activeWorkspaces()` lists the companies where it is.
+
+### Bell notices
+
+With `pluginApi: 2` in the manifest, `ctx.notify` leaves a notice in the bell of people in the company (also
+from a job, with the context from `jobCtx.forWorkspace`):
+
+```ts
+await ctx.notify({
+  to: "admins", // owners and administrators; or { membershipIds: [...] }
+  code: "checklist-overdue",
+  dedupeKey: `checklist-overdue:${date}`, // once per person and key
+});
+```
+
+- It only reaches active people in **that** company: a `membershipId` from another one is ignored.
+- The notice has no text. The plugin's app part says what it reads and where it leads, in each person's
+  language (`notifications` in `defineFrontendPlugin`, see «5. The app part»). If the plugin is no longer
+  active, the bell shows a generic text.
+- With the same `dedupeKey`, each person gets it only once: use it so a job doesn't notify on every run.
 
 ### Capabilities
 
@@ -362,14 +383,14 @@ export default defineFrontendPlugin({
 });
 ```
 
-| Field | Where it shows up |
-|---|---|
-| `navItems` | Side menu. `to` is one of the plugin's screens; with `anyCapability`, only people with one of them see it. |
-| `screens` | `/app/:slug/p/<id>/<path>`. `path: ""` is the main screen. |
-| `adminSections` | **Administration** panel, at `/app/:slug/admin/p/<id>/<section>`. Requires `anyCapability`; with `ownerOnly`, only the owner. |
-| `documentActions` | "…" menu of an open page. |
-| `explorerActions` | Menu of each row in the **Files** explorer. |
-| `folderActions` | The explorer's **New** button, in the open folder. |
+| Field             | Where it shows up                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `navItems`        | Side menu. `to` is one of the plugin's screens; with `anyCapability`, only people with one of them see it.                    |
+| `screens`         | `/app/:slug/p/<id>/<path>`. `path: ""` is the main screen.                                                                    |
+| `adminSections`   | **Administration** panel, at `/app/:slug/admin/p/<id>/<section>`. Requires `anyCapability`; with `ownerOnly`, only the owner. |
+| `documentActions` | "…" menu of an open page.                                                                                                     |
+| `explorerActions` | Menu of each row in the **Files** explorer.                                                                                   |
+| `folderActions`   | The explorer's **New** button, in the open folder.                                                                            |
 
 Screens and dialogs are loaded on demand (`() => import(...)`). Each screen gets `slug` (the company) and
 `subpath` (whatever follows in the route).
@@ -389,7 +410,16 @@ working even if the core changes internally.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginScreenProps } from "@spiderfolio/plugin-sdk/frontend";
 import { ClipboardCheck } from "lucide-react";
-import { api, Card, CardTitle, Checkbox, EmptyState, errorText, Skeleton, toast } from "@/plugins/ui";
+import {
+  api,
+  Card,
+  CardTitle,
+  Checkbox,
+  EmptyState,
+  errorText,
+  Skeleton,
+  toast,
+} from "@/plugins/ui";
 
 interface Day {
   items: { item: string; doneAt: string | null; doneByMe: boolean }[];
@@ -441,6 +471,19 @@ export default function ChecklistPage({ slug }: PluginScreenProps) {
 `items-page.tsx` follows the same idea: a `Textarea` with one check per line and a `Button` that calls
 `PUT …/items`.
 
+### Bell notices in the app
+
+The notices the backend sends with `ctx.notify` show with the text and link the app gives, by code:
+
+```tsx
+notifications: {
+  "checklist-overdue": {
+    text: () => (locale === "en" ? "A shift checklist is overdue." : "Hay un control de turno vencido."),
+    to: "p/shift-checklist/today", // inside /app/<company>/
+  },
+},
+```
+
 ### Menu actions
 
 An action in the menu of an explorer row, only for PDF files:
@@ -471,10 +514,10 @@ permissions in the backend.
 
 Plugins are loaded from two places:
 
-| Source | Variable | Default |
-|---|---|---|
-| Comma-separated folders: each subfolder is a plugin | `PLUGINS_DIR` | `plugins/` at the root (`/app/plugins,/data/plugins` in the image) |
-| npm packages (can be private), comma-separated | `PLUGIN_PACKAGES` | empty |
+| Source                                              | Variable          | Default                                                            |
+| --------------------------------------------------- | ----------------- | ------------------------------------------------------------------ |
+| Comma-separated folders: each subfolder is a plugin | `PLUGINS_DIR`     | `plugins/` at the root (`/app/plugins,/data/plugins` in the image) |
+| npm packages (can be private), comma-separated      | `PLUGIN_PACKAGES` | empty                                                              |
 
 - **Backend**: the API and the worker discover them on startup. Restart both after installing or
   updating a plugin. A plugin that fails to load is left out with a warning in the log.
@@ -509,10 +552,10 @@ SpiderFolio doesn't load it and says so in the log.
 
 There are two kinds of plugin, set by the manifest's `distribution` field:
 
-| Kind | How it's activated | In **License and plugins** |
-|---|---|---|
-| **Commercial** (`"commercial"`, the default) | With a signed license that includes its `id`. All SpiderJAD plugins are commercial. | Active or “No license”. |
-| **Community** (`"community"`) | No license: the **owner** activates it in their company. | Marked **“Unverified”**, with an Activate button. |
+| Kind                                         | How it's activated                                                                  | In **License and plugins**                        |
+| -------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------- |
+| **Commercial** (`"commercial"`, the default) | With a signed license that includes its `id`. All SpiderJAD plugins are commercial. | Active or “No license”.                           |
+| **Community** (`"community"`)                | No license: the **owner** activates it in their company.                            | Marked **“Unverified”**, with an Activate button. |
 
 ### Community plugins
 
