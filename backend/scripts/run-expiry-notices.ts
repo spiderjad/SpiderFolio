@@ -1,5 +1,5 @@
-// Corre a mano el job de avisos de vencimiento de accesos (el mismo que el cron diario de las 11:00
-// UTC), sin esperar al worker. Con --reset borra antes los avisos de vencimiento ya creados (los
+// Corre a mano el job de avisos de vencimiento de accesos (el mismo que sale a las 8:00 de cada
+// empresa), sin esperar al worker y a cualquier hora (todas las empresas). Con --reset borra antes los avisos de vencimiento ya creados (los
 // "expiring" y "expiring_granted") para que se regeneren con los textos actuales. Solo en local.
 //   npm run job:expiry-notices -w @spiderfolio/backend [-- --reset]
 import { loadEnv } from "../src/config/env.ts";
@@ -24,7 +24,11 @@ try {
     });
     console.log(`Avisos de vencimiento borrados: ${String(count)}`);
   }
-  const { notified } = await notifyExpiringAccess({ prisma, logger: createLogger(env) });
+  const { notified } = await notifyExpiringAccess(
+    { prisma, logger: createLogger(env) },
+    new Date(),
+    { anyHour: true },
+  );
   console.log(`Avisos de vencimiento creados: ${String(notified)}`);
 } finally {
   await prisma.$disconnect();

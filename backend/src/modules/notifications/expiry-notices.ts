@@ -13,6 +13,8 @@ const BATCH = 200;
 export async function notifyExpiringAccess(
   deps: Pick<WorkerDeps, "prisma" | "logger">,
   now: Date = new Date(),
+  /** By hand (scripts/run-expiry-notices.ts): every company, whatever the hour there. */
+  options: { anyHour?: boolean } = {},
 ): Promise<{ notified: number }> {
   const until = new Date(now.getTime() + NOTICE_DAYS * 24 * 60 * 60 * 1000);
   const companies = (
@@ -21,7 +23,10 @@ export async function notifyExpiringAccess(
       select: { id: true, settings: true },
     })
   )
-    .filter((workspace) => localHour(now, zoneOf(workspace.settings)) === NOTICE_HOUR)
+    .filter(
+      (workspace) =>
+        options.anyHour === true || localHour(now, zoneOf(workspace.settings)) === NOTICE_HOUR,
+    )
     .map((workspace) => workspace.id);
   if (companies.length === 0) return { notified: 0 };
   const trees = new Map<string, ReturnType<typeof parentMapOf>>();
