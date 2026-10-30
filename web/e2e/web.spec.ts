@@ -113,12 +113,16 @@ test("plugins y servicios: catálogo sin precios, descarga en los gratis y conta
 test("legales: las cuatro páginas, enlazadas desde el pie, con fecha y sin banner de cookies", async ({
   page,
 }) => {
+  // Sixteen navigations (home and each legal page, in two languages): WebKit needs more than 60 s.
+  test.setTimeout(180_000);
   for (const [lang, names] of [
     ["es", ["Aviso legal", "Privacidad", "Términos", "Cookies"]],
     ["en", ["Legal notice", "Privacy", "Terms", "Cookies"]],
   ] as const) {
     for (const name of names) {
-      await page.goto(`/${lang}`);
+      // The footer is there once the HTML is: no need to wait for the home page's clips (WebKit takes
+      // seconds to fire «load» with them, and this goes back to it eight times).
+      await page.goto(`/${lang}`, { waitUntil: "domcontentloaded" });
       await page.getByRole("contentinfo").getByRole("link", { name, exact: true }).click();
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       await expect(page.locator("main time")).toBeVisible();

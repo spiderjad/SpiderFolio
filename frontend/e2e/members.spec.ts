@@ -36,6 +36,8 @@ async function invitationToken(to: string): Promise<string> {
 }
 
 test("invitar, aceptar desde el email, ver y suspender a la persona", async ({ page, browser }) => {
+  // Two sessions, two emails and a dozen screens: in WebKit, on a busy machine, more than 60 s.
+  test.setTimeout(150_000);
   const violations = await trackCspViolations(page);
   const ownerEmail = uniqueEmail("duena");
   await register(page, ownerEmail);

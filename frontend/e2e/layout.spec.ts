@@ -46,6 +46,8 @@ async function overflowing(page: Page): Promise<string[]> {
 test("ninguna pantalla se desborda horizontalmente a 1280, 1024, 768 y 375 px", async ({
   page,
 }) => {
+  // Every screen at four widths: in WebKit, on a busy machine, close to the default 60 s.
+  test.setTimeout(150_000);
   await register(page, uniqueEmail("layout"));
   const slug = /\/app\/([^/]+)/.exec(page.url())?.[1] ?? "";
   // Con datos (un departamento de nombre largo) y, de paso, la apertura automática del primero.
