@@ -256,6 +256,8 @@ export const pagesTexts: Catalog<typeof EsPages> = {
   toc: { title: "On this page" },
   footer: {
     lastEdit: (name: string, when: string) => `Last edited by ${name}, ${when}`,
+    lastEditVia: (name: string, client: string, when: string) =>
+      `Last edited by ${name} via ${client}, ${when}`,
     lastEditUnknown: (when: string) => `Last edited ${when}`,
   },
   menu: {

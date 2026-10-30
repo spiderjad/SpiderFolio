@@ -359,15 +359,14 @@ function PageEditor({ page }: { page: PageDetail }) {
   const headings = useHeadings(editor);
   const showToc = !panelOpen && headings.length >= MIN_TOC_HEADINGS;
   // «Última edición»: lo que vino con la página, y desde que se guarda algo, quien lo guardó.
-  const [lastEdit, setLastEdit] = useState({
-    name: page.updatedBy?.name ?? null,
-    at: page.updatedAt,
-  });
+  const [lastEdit, setLastEdit] = useState<{ name: string | null; via: string | null; at: string }>(
+    { name: page.updatedBy?.name ?? null, via: page.updatedVia, at: page.updatedAt },
+  );
   const [now, setNow] = useState(() => new Date());
   const savedBefore = useRef<SaveState>(autosave.state);
   useEffect(() => {
     if (savedBefore.current === "saving" && autosave.state === "saved") {
-      setLastEdit({ name: account?.user.name ?? null, at: new Date().toISOString() });
+      setLastEdit({ name: account?.user.name ?? null, via: null, at: new Date().toISOString() });
     }
     savedBefore.current = autosave.state;
   }, [autosave.state, account]);
@@ -749,7 +748,9 @@ function PageEditor({ page }: { page: PageDetail }) {
             <p className="px-1 text-xs text-muted-foreground print:hidden">
               {lastEdit.name === null
                 ? t.footer.lastEditUnknown(timeAgo(lastEdit.at, now))
-                : t.footer.lastEdit(lastEdit.name, timeAgo(lastEdit.at, now))}
+                : lastEdit.via === null
+                  ? t.footer.lastEdit(lastEdit.name, timeAgo(lastEdit.at, now))
+                  : t.footer.lastEditVia(lastEdit.name, lastEdit.via, timeAgo(lastEdit.at, now))}
             </p>
 
             <div className="print:hidden">

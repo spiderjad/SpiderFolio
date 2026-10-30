@@ -163,13 +163,19 @@ export const filesTexts: Catalog<typeof EsFiles> = {
     viewAllFavorites: (total: number) => `See all (${String(total)})`,
     favorite: (name: string) => `Add ${name} to favorites`,
     unfavorite: (name: string) => `Remove ${name} from favorites`,
-    files: (count: number) => (count === 1 ? "1 file" : `${String(count)} files`),
+    contents: (pages: number, files: number) =>
+      pages === 0 && files === 0
+        ? "Empty"
+        : [
+            ...(pages > 0 ? [pages === 1 ? "1 page" : `${String(pages)} pages`] : []),
+            ...(files > 0 ? [files === 1 ? "1 file" : `${String(files)} files`] : []),
+          ].join(" · "),
     modified: (date: string) => `Modified ${date}`,
     noActivity: "No activity",
     columns: {
       name: "Space",
       department: "Department",
-      files: "Files",
+      files: "Contents",
       modified: "Modified",
       created: "Created",
     },
@@ -245,6 +251,8 @@ export const filesTexts: Catalog<typeof EsFiles> = {
       textReadOnly: "There’s nothing to see here yet.",
     },
     noResults: { title: "No results", text: "No names match your search." },
+    /** «Modified by» when the change came through an app such as Claude. */
+    via: (name: string, client: string) => `${name} via ${client}`,
     columns: {
       name: "Name",
       updated: "Modified",

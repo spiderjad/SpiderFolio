@@ -54,7 +54,8 @@ export interface SpaceView {
   favorite: boolean;
   /** Con quién está compartido (solo si la persona puede gestionarlo). */
   sharing: SharingSummary | null;
-  /** Archivos vigentes (sin papelera) y última modificación de cualquier elemento. */
+  /** Current pages and files (not in the trash) and last change of any item. */
+  pageCount: number;
   fileCount: number;
   lastModifiedAt: Date | null;
   createdAt: Date;
@@ -145,9 +146,11 @@ async function viewsOf(
     ids: ids.filter((id) => canManageSpace(ctx, access.ofSpace(id))),
   });
   const files = new Map<string, number>();
+  const pages = new Map<string, number>();
   const modified = new Map<string, Date>();
   for (const group of usage) {
     if (group.type === "FILE") files.set(group.spaceId, group._count._all);
+    if (group.type === "PAGE") pages.set(group.spaceId, group._count._all);
     const last = group._max.updatedAt;
     const known = modified.get(group.spaceId);
     if (last !== null && (known === undefined || last > known)) modified.set(group.spaceId, last);
@@ -195,6 +198,7 @@ async function viewsOf(
         reason: view,
         favorite: favorites.has(row.id),
         sharing: sharing.get(row.id) ?? null,
+        pageCount: pages.get(row.id) ?? 0,
         fileCount: files.get(row.id) ?? 0,
         lastModifiedAt: modified.get(row.id) ?? null,
         createdAt: row.createdAt,
@@ -498,10 +502,7 @@ async function assertCanPlaceIn(ctx: AdminContext, departmentId: string | null):
   throw notFound();
 }
 
-export async function createSpace(
-  ctx: AdminContext,
-  input: CreateSpaceInput,
-): Promise<SpaceView> {
+export async function createSpace(ctx: AdminContext, input: CreateSpaceInput): Promise<SpaceView> {
   const departmentId = input.departmentId ?? null;
   await assertCanPlaceIn(ctx, departmentId);
   const name = cleanName(input.name);

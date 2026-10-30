@@ -621,7 +621,12 @@ export function ExplorerPage() {
                   {t.importZip}
                 </DropdownMenuItem>
                 <PluginFolderMenuItems
-                  ctx={{ slug: workspaceSlug, person: membership, spaceId, folderId: folderId ?? null }}
+                  ctx={{
+                    slug: workspaceSlug,
+                    person: membership,
+                    spaceId,
+                    folderId: folderId ?? null,
+                  }}
                 />
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1390,7 +1395,9 @@ function ListView({
                       className="size-6 text-[10px]"
                     />
                     <span className="truncate text-xs text-muted-foreground">
-                      {node.updatedBy.name}
+                      {node.updatedVia === undefined || node.updatedVia === null
+                        ? node.updatedBy.name
+                        : t.via(node.updatedBy.name, node.updatedVia)}
                     </span>
                   </>
                 )}

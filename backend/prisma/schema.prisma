@@ -528,6 +528,9 @@ model Node {
   updatedById    String
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
+  /// App that made the last change for updatedById ("Claude"), valid while updatedViaAt == updatedAt.
+  updatedVia     String?
+  updatedViaAt   DateTime?
   trashedAt      DateTime? // papelera (30 días)
   trashRootId    String? // el nodo que se borró de verdad: restaurarlo trae a todo su subárbol
   /// Texto que se indexa para la búsqueda (título aparte): lo mantienen los triggers de la base.
@@ -719,14 +722,17 @@ model ZipExport {
 /// El texto de una página (nodo PAGE): documento Tiptap/ProseMirror validado por packages/content.
 /// `revision` sube en cada guardado y permite detectar ediciones simultáneas (control optimista).
 model PageContent {
-  nodeId      String   @id
-  workspaceId String
-  content     Json
-  revision    Int      @default(1)
+  nodeId       String    @id
+  workspaceId  String
+  content      Json
+  revision     Int       @default(1)
   /// Texto plano para búsquedas futuras.
-  textPlain   String   @default("")
-  updatedById String // id de la membresía
-  updatedAt   DateTime @updatedAt
+  textPlain    String    @default("")
+  updatedById  String // id de la membresía
+  updatedAt    DateTime  @updatedAt
+  /// As in Node: the app behind the last change, valid while updatedViaAt == updatedAt.
+  updatedVia   String?
+  updatedViaAt DateTime?
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)

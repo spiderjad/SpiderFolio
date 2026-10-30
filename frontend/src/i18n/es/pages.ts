@@ -231,6 +231,8 @@ export const pagesTexts = {
   toc: { title: "En esta página" },
   footer: {
     lastEdit: (name: string, when: string) => `Última edición: ${name}, ${when}`,
+    lastEditVia: (name: string, client: string, when: string) =>
+      `Última edición: ${name} vía ${client}, ${when}`,
     lastEditUnknown: (when: string) => `Última edición: ${when}`,
   },
   menu: {

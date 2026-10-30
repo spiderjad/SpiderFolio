@@ -160,13 +160,19 @@ export const filesTexts = {
     viewAllFavorites: (total: number) => `Ver todos (${String(total)})`,
     favorite: (name: string) => `Marcar ${name} como favorito`,
     unfavorite: (name: string) => `Quitar ${name} de favoritos`,
-    files: (count: number) => (count === 1 ? "1 archivo" : `${String(count)} archivos`),
+    contents: (pages: number, files: number) =>
+      pages === 0 && files === 0
+        ? "Vacío"
+        : [
+            ...(pages > 0 ? [pages === 1 ? "1 página" : `${String(pages)} páginas`] : []),
+            ...(files > 0 ? [files === 1 ? "1 archivo" : `${String(files)} archivos`] : []),
+          ].join(" · "),
     modified: (date: string) => `Modificado ${date}`,
     noActivity: "Sin movimientos",
     columns: {
       name: "Espacio",
       department: "Departamento",
-      files: "Archivos",
+      files: "Contenido",
       modified: "Modificado",
       created: "Creado",
     },
@@ -242,6 +248,8 @@ export const filesTexts = {
       textReadOnly: "Todavía no hay nada para ver acá.",
     },
     noResults: { title: "Sin resultados", text: "Ningún nombre coincide con la búsqueda." },
+    /** «Modificado por» when the change came through an app such as Claude. */
+    via: (name: string, client: string) => `${name} vía ${client}`,
     columns: {
       name: "Nombre",
       updated: "Modificado",

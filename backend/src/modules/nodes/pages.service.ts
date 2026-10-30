@@ -27,6 +27,7 @@ import {
   lastPosition,
   nodeSelect,
   type NodeDetail,
+  viaOf,
 } from "./nodes.service.ts";
 
 /** Cómo se ve la página si es un documento controlado. */
@@ -47,6 +48,8 @@ export interface PageDetail extends NodeDetail {
   revision: number;
   updatedAt: Date;
   updatedBy: { id: string; name: string } | null;
+  /** The app the last change was made through ("Claude"), or null. */
+  updatedVia: string | null;
 }
 
 async function loadPage(ctx: AdminContext, id: string) {
@@ -178,6 +181,7 @@ export async function getPage(ctx: AdminContext, id: string): Promise<PageDetail
     revision: page.revision,
     updatedAt: page.updatedAt,
     updatedBy: author === null ? null : { id: author.id, name: author.user.name },
+    updatedVia: viaOf(page),
   };
 }
 

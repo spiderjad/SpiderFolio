@@ -521,7 +521,11 @@ function CardGroups({
     const last = groups.at(-1);
     if (last?.id === id) last.items.push(space);
     else
-      groups.push({ id, title: space.department?.name ?? texts.files.spaces.company, items: [space] });
+      groups.push({
+        id,
+        title: space.department?.name ?? texts.files.spaces.company,
+        items: [space],
+      });
   }
   return (
     <div className="grid gap-4">
@@ -633,7 +637,7 @@ function SpaceCard({ space, actions }: { space: SpaceView; actions: Actions }) {
         <SpaceMenu space={space} actions={actions} />
       </div>
       <p className="truncate text-xs text-muted-foreground">
-        {t.files(space.fileCount)} · {modifiedText(space)}
+        {t.contents(space.pageCount, space.fileCount)} · {modifiedText(space)}
       </p>
       <p className="truncate text-xs text-muted-foreground" title={spaceAccessText(space)}>
         {spaceAccessText(space)}
@@ -790,7 +794,7 @@ function SpaceTable({
               {space.department?.name ?? t.company}
             </span>
             <span className="hidden text-xs text-muted-foreground md:block">
-              {t.files(space.fileCount)}
+              {t.contents(space.pageCount, space.fileCount)}
             </span>
             <span className="hidden truncate text-xs text-muted-foreground md:block">
               {modifiedText(space)}

@@ -59,6 +59,16 @@ export interface NodeView extends Omit<NodeRow, "sizeBytes"> {
   level: AccessLevel;
 }
 
+/** The app behind a row's last change ("Claude"), or null if a person made it in the app. */
+export const viaOf = (row: {
+  updatedAt: Date;
+  updatedVia: string | null;
+  updatedViaAt: Date | null;
+}): string | null =>
+  row.updatedVia !== null && row.updatedViaAt?.getTime() === row.updatedAt.getTime()
+    ? row.updatedVia
+    : null;
+
 /** Fila de un listado: además, cuántos elementos tiene la carpeta y quién la modificó. */
 export interface NodeListItem extends NodeView {
   /** Elementos dentro (solo carpetas). */
@@ -68,6 +78,8 @@ export interface NodeListItem extends NodeView {
   /** Tamaño de todo lo que contiene (recursivo) y que la persona puede ver; null si no se pudo calcular. */
   totalBytes: number | null;
   updatedBy: { id: string; name: string; avatarUrl: string | null } | null;
+  /** The app the last change was made through ("Claude"), or null. */
+  updatedVia: string | null;
   /** Con quién está compartido (solo si la persona puede gestionarlo). */
   sharing: SharingSummary | null;
 }
@@ -119,7 +131,12 @@ async function pagedByType(
   order: Prisma.NodeOrderByWithRelationInput,
   query: ListNodesQuery,
 ) {
-  const select = { ...nodeSelect, updatedById: true } as const;
+  const select = {
+    ...nodeSelect,
+    updatedById: true,
+    updatedVia: true,
+    updatedViaAt: true,
+  } as const;
   const groups = await ctx.db.node.groupBy({ by: ["type"], where, _count: { _all: true } });
   const countOf = (type: (typeof TYPE_ORDER)[number]) =>
     groups.find((group) => group.type === type)?._count._all ?? 0;
@@ -235,7 +252,7 @@ export async function listChildren(
   const items = rows.flatMap((row): NodeListItem[] => {
     const level = access.ofNode(row.id);
     if (level === null) return [];
-    const { updatedById, ...rest } = row;
+    const { updatedById, updatedVia, updatedViaAt, ...rest } = row;
     const name = names.get(updatedById);
     return [
       {
@@ -244,6 +261,7 @@ export async function listChildren(
         folderCount: row.type !== "FILE" ? (folderCounts.get(row.id) ?? 0) : null,
         totalBytes: row.type !== "FILE" ? (totals.get(row.id) ?? null) : null,
         sharing: sharing.get(row.id) ?? null,
+        updatedVia: viaOf({ updatedAt: row.updatedAt, updatedVia, updatedViaAt }),
         updatedBy:
           name === undefined
             ? null

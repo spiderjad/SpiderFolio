@@ -38,6 +38,36 @@ export async function contextFor(
   };
 }
 
+/**
+ * Marks what this call changed as done through the app ("via Claude"): the node and its page content
+ * updated since `since`. The mark holds while its time equals updatedAt, so a later change made in the
+ * app clears it without touching any of the app's own writes.
+ */
+export async function markVia(ctx: AdminContext, nodeId: string, since: Date): Promise<void> {
+  const client = ctx.info.via?.client;
+  if (client === undefined) return;
+  const node = await ctx.db.node.findFirst({
+    where: { id: nodeId, updatedAt: { gte: since } },
+    select: { updatedAt: true },
+  });
+  if (node !== null) {
+    await ctx.db.node.updateMany({
+      where: { id: nodeId, updatedAt: node.updatedAt },
+      data: { updatedVia: client, updatedViaAt: node.updatedAt, updatedAt: node.updatedAt },
+    });
+  }
+  const page = await ctx.db.pageContent.findFirst({
+    where: { nodeId, updatedAt: { gte: since } },
+    select: { updatedAt: true },
+  });
+  if (page !== null) {
+    await ctx.db.pageContent.updateMany({
+      where: { nodeId, updatedAt: page.updatedAt },
+      data: { updatedVia: client, updatedViaAt: page.updatedAt, updatedAt: page.updatedAt },
+    });
+  }
+}
+
 /** Links to the app, so the assistant can point the person to the right place. */
 export function appLinks(appUrl: string, slug: string) {
   const base = `${new URL(appUrl).origin}/app/${encodeURIComponent(slug)}/files`;

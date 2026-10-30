@@ -21,6 +21,7 @@ interface SpaceBody {
   id: string;
   name: string;
   favorite: boolean;
+  pageCount: number;
   fileCount: number;
   department: { id: string; name: string } | null;
 }
@@ -124,6 +125,36 @@ describe("lista de espacios", () => {
     expect(mark.status).toBe(404);
     const visit = await call(w.ws.slug, w.edith.token, "post", `/spaces/${w.privado.id}/visit`);
     expect(visit.status).toBe(404);
+  });
+
+  it("cada tarjeta cuenta páginas y archivos, sin carpetas ni lo que está en la papelera", async () => {
+    const w = await world();
+    const node = (type: "PAGE" | "FILE" | "FOLDER", name: string, trashed = false) =>
+      ctx.prisma.node.create({
+        data: {
+          workspaceId: w.ws.workspaceId,
+          spaceId: w.zeta.id,
+          type,
+          name,
+          nameKey: name.toLowerCase(),
+          position: name,
+          createdById: w.edith.membership.id,
+          updatedById: w.edith.membership.id,
+          ...(trashed ? { trashedAt: new Date() } : {}),
+        },
+      });
+    await node("PAGE", "a");
+    await node("PAGE", "b");
+    await node("PAGE", "c", true);
+    await node("FILE", "d");
+    await node("FOLDER", "e");
+    const { items } = await list(w, w.ws.token);
+    const zeta = items.find((space) => space.id === w.zeta.id);
+    expect(zeta).toMatchObject({ pageCount: 2, fileCount: 1 });
+    expect(items.find((space) => space.id === w.alfa.id)).toMatchObject({
+      pageCount: 0,
+      fileCount: 0,
+    });
   });
 
   it("recientes: lo último que se abrió primero, solo lo propio y con acceso", async () => {

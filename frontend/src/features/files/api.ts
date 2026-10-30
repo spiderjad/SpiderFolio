@@ -39,6 +39,7 @@ export interface SpaceView {
   /** Con quién está compartido (solo si la persona puede gestionarlo). */
   sharing: SharingSummary | null;
   /** Archivos vigentes y última modificación de cualquier elemento del espacio. */
+  pageCount: number;
   fileCount: number;
   lastModifiedAt: string | null;
   createdAt: string;
@@ -87,6 +88,8 @@ export interface NodeView {
   /** Tamaño de todo lo que contiene y se puede ver (carpetas, en listados); null si no se calculó. */
   totalBytes?: number | null;
   updatedBy?: { id: string; name: string; avatarUrl: string | null } | null;
+  /** The app the last change came through ("Claude"), or null. */
+  updatedVia?: string | null;
 }
 
 export interface NodeDetail {
@@ -415,6 +418,7 @@ export interface PageDetail extends NodeDetail {
   revision: number;
   updatedAt: string;
   updatedBy: { id: string; name: string } | null;
+  updatedVia: string | null;
 }
 
 export interface MentionCandidate {

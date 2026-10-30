@@ -625,6 +625,85 @@ describe("herramientas de escritura (con el plugin de pago), aisladas entre empr
     expect(after.text).not.toContain("Nunca");
   });
 
+  it("no repite el título como primer encabezado de la página", async () => {
+    const created = await callTool(access, "create_page", {
+      spaceId: own.space,
+      title: "Plan de limpieza",
+      markdown: "# Plan  de LIMPIEZA\n\nPaso uno\n\n## Otro título",
+    });
+    const { id } = JSON.parse(created.parts[0] ?? "{}") as { id: string };
+    const page = await ctx.prisma.pageContent.findUniqueOrThrow({ where: { nodeId: id } });
+    const blocks = (page.content as { content: { type: string }[] }).content;
+    expect(blocks.map((block) => block.type)).toEqual(["paragraph", "heading"]);
+  });
+
+  it("crea un documento controlado en borrador, nunca publicado", async () => {
+    const unknown = await callTool(access, "create_page", {
+      spaceId: own.space,
+      title: "Sin tipo",
+      markdown: "x",
+      documentType: "ZZZ",
+    });
+    expect(unknown.isError).toBe(true);
+    expect(unknown.text).toContain("PRC");
+    expect(
+      await ctx.prisma.node.count({ where: { workspaceId: c.workspaceId, name: "Sin tipo" } }),
+    ).toBe(0);
+
+    const created = await callTool(access, "create_page", {
+      spaceId: own.space,
+      title: "Recepción de mercadería",
+      markdown: "Controlar la temperatura.",
+      documentType: "prc",
+    });
+    expect(created.isError).toBe(false);
+    const body = JSON.parse(created.parts[0] ?? "{}") as {
+      id: string;
+      controlled: { code: string; status: string };
+    };
+    expect(body.controlled.code).toMatch(/^PRC-/u);
+    expect(body.controlled.status).toBe("DRAFT");
+    const document = await ctx.prisma.controlledDocument.findUniqueOrThrow({
+      where: { nodeId: body.id },
+    });
+    expect(document.publishedVersion).toBeNull();
+    const versions = await ctx.prisma.documentVersion.findMany({ where: { nodeId: body.id } });
+    expect(versions.map((version) => version.status)).toEqual(["DRAFT"]);
+  });
+
+  it("«vía Claude» en el explorador y en la página, hasta que alguien la edita en la app", async () => {
+    const created = await callTool(access, "create_page", {
+      spaceId: own.space,
+      title: "Hecha por Claude",
+      markdown: "Hola",
+    });
+    const { id } = JSON.parse(created.parts[0] ?? "{}") as { id: string };
+    const get = (path: string) =>
+      request(app).get(`/api/v1/w/${c.slug}${path}`).set("Authorization", `Bearer ${c.token}`);
+    const listed = async () => {
+      const res = await get(`/spaces/${own.space}/nodes?pageSize=100`);
+      expect(res.status).toBe(200);
+      const { items } = res.body as { items: { id: string; updatedVia: string | null }[] };
+      return items.find((item) => item.id === id);
+    };
+    const detail = async () =>
+      (
+        (await get(`/pages/${id}`)).body as {
+          page: { revision: number; updatedVia: string | null };
+        }
+      ).page;
+    expect((await listed())?.updatedVia).toBe("Claude");
+    const page = await detail();
+    expect(page.updatedVia).toBe("Claude");
+
+    const saved = await request(app)
+      .put(`/api/v1/w/${c.slug}/pages/${id}/content`)
+      .set("Authorization", `Bearer ${c.token}`)
+      .send({ baseRevision: page.revision, content: pageContent("Editada en la app") });
+    expect(saved.status).toBe(200);
+    expect((await detail()).updatedVia).toBeNull();
+  });
+
   it("sube un archivo pequeño", async () => {
     const uploaded = await callTool(access, "upload_file", {
       spaceId: own.space,

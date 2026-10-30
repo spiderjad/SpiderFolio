@@ -11,14 +11,16 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { mentionDepsOf } from "../comments/mentions.service.ts";
 import { createThread, reply } from "../comments/comments.service.ts";
 import { approverOptions, submitForReview } from "../documents/approvals.service.ts";
+import { listDocumentTypes, makeControlled } from "../documents/documents.service.ts";
 import { completeUpload, startUpload } from "../files/files.service.ts";
 import { createFolder, moveNode } from "../nodes/nodes.service.ts";
 import { createPage, getPage, savePage } from "../nodes/pages.service.ts";
-import { appLinks, failure, result, untrusted } from "./mcp.common.ts";
+import { appLinks, failure, markVia, result, toolError, untrusted } from "./mcp.common.ts";
 import type { ToolDefinition } from "./tools.read.ts";
 
 const Id = z.string().min(1).max(64);
 const Markdown = z.string().max(200_000);
+const DocType = z.string().trim().min(1).max(20);
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 const write = (idempotent = false) =>
@@ -46,6 +48,23 @@ function hasLossyContent(doc: unknown): boolean {
   return walk(doc);
 }
 
+/** Text of a node and its children, for comparing a heading with the title. */
+function textOf(node: unknown): string {
+  if (typeof node !== "object" || node === null) return "";
+  const { text, content } = node as { text?: unknown; content?: unknown };
+  const own = typeof text === "string" ? text : "";
+  return own + (Array.isArray(content) ? content.map(textOf).join("") : "");
+}
+
+/** The page shows its title above the content: a first heading that repeats it is dropped. */
+function withoutTitleHeading(doc: unknown, title: string): unknown {
+  const { content, ...rest } = doc as { content?: unknown[] };
+  const [first, ...others] = content ?? [];
+  const same = (text: string) => text.trim().replace(/\s+/gu, " ").toLowerCase();
+  const heading = (first as { type?: unknown } | undefined)?.type === "heading";
+  return heading && same(textOf(first)) === same(title) ? { ...rest, content: others } : doc;
+}
+
 const droppedNote = (dropped: number) =>
   dropped === 0
     ? undefined
@@ -60,12 +79,15 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
       name: "create_page",
       title: "Create a page",
       description:
-        "Creates a page from Markdown in a space or folder the user can edit. Headings, lists, quotes, code, links, bold and italic are kept; images and HTML are left out.",
+        "Creates a page from Markdown in a space or folder the user can edit. Headings, lists, quotes, code, links, bold and italic are kept; images and HTML are left out. The title is shown above the content: don't repeat it as the first heading. With documentType it's created as a controlled document in draft (it gets its code, e.g. PRC-004); it's never published or approved here: people do that in SpiderFolio.",
       inputSchema: {
         spaceId: Id,
         folderId: Id.optional().describe("A folder inside the space; omit for the space's root"),
         title: z.string().trim().min(1).max(255),
         markdown: Markdown,
+        documentType: DocType.optional().describe(
+          "Make it a controlled document of this type, by its code (e.g. PRC); omit for a normal page. An unknown code answers with the company's types",
+        ),
       },
       annotations: write(),
       write: true,
@@ -76,20 +98,47 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
             folderId: Id.optional(),
             title: z.string().trim().min(1).max(255),
             markdown: Markdown,
+            documentType: DocType.optional(),
           })
           .parse(args);
+        const since = new Date();
+        const docType = input.documentType?.toUpperCase();
+        if (docType !== undefined) {
+          const types = await listDocumentTypes(ctx);
+          if (!types.some((type) => type.code === docType)) {
+            const known = types.map((type) => `${type.code} (${type.name})`).join(", ");
+            return failure(`Unknown document type "${docType}". The company's types: ${known}.`);
+          }
+        }
         const { doc, dropped } = markdownToContent(input.markdown);
         const page = await createPage(ctx, input.spaceId, {
           parentId: input.folderId ?? null,
           name: input.title,
-          content: doc,
+          content: withoutTitleHeading(doc, input.title),
         });
+        const notes = [droppedNote(dropped)];
+        let controlled: { code: string; status: "DRAFT" } | undefined;
+        if (docType !== undefined) {
+          try {
+            const info = await makeControlled(ctx, page.node.id, { docType });
+            if (info.controlled !== null)
+              controlled = { code: info.controlled.code, status: "DRAFT" };
+          } catch (error) {
+            const reason = toolError(error).content[0]?.text ?? "";
+            notes.push(
+              `The page was created, but it couldn't be made a controlled document: ${reason}`,
+            );
+          }
+        }
+        await markVia(ctx, page.node.id, since);
+        const note = notes.filter((text) => text !== undefined).join(" ");
         return result({
           id: page.node.id,
           title: page.node.name,
           revision: page.revision,
+          ...(controlled === undefined ? {} : { controlled }),
           link: links(ctx).page(page.space.id, page.node.id),
-          note: droppedNote(dropped),
+          note: note === "" ? undefined : note,
         });
       },
     },
@@ -122,6 +171,7 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
             find: z.string().min(1).max(20_000).optional(),
           })
           .parse(args);
+        const since = new Date();
         const page = await getPage(ctx, input.pageId);
         const current = contentToMarkdown(page.content);
         if (page.revision !== input.expectedVersion) {
@@ -142,6 +192,7 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
         let dropped: number;
         if (input.mode === "replace") {
           ({ doc, dropped } = markdownToContent(input.markdown));
+          doc = withoutTitleHeading(doc, page.node.name);
         } else if (input.mode === "append") {
           const added = markdownToContent(input.markdown);
           dropped = added.dropped;
@@ -175,6 +226,7 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
           entityId: input.pageId,
           metadata: { mode: input.mode },
         });
+        await markVia(ctx, input.pageId, since);
         return result({
           id: input.pageId,
           revision: saved.revision,
@@ -198,10 +250,12 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
         const input = z
           .object({ spaceId: Id, parentId: Id.optional(), name: z.string().trim().min(1).max(255) })
           .parse(args);
+        const since = new Date();
         const node = await createFolder(ctx, input.spaceId, {
           parentId: input.parentId ?? null,
           name: input.name,
         });
+        await markVia(ctx, node.id, since);
         return result({
           id: node.id,
           name: node.name,
@@ -225,12 +279,14 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
         const input = z
           .object({ nodeId: Id, folderId: Id.nullable(), spaceId: Id.optional() })
           .parse(args);
+        const since = new Date();
         // Never REPLACE: that would send what's there to the trash.
         const node = await moveNode(ctx, input.nodeId, {
           parentId: input.folderId,
           ...(input.spaceId === undefined ? {} : { spaceId: input.spaceId }),
           onConflict: "FAIL",
         });
+        await markVia(ctx, node.id, since);
         return result({
           id: node.id,
           name: node.name,
@@ -270,6 +326,7 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
         if (bytes.length === 0) return failure("The file is empty or isn't valid base64.");
         if (bytes.length > MAX_UPLOAD_BYTES)
           return failure("Files over 10 MB are uploaded in SpiderFolio.");
+        const since = new Date();
         const fileDeps = { storage: deps.storage, jobs: deps.jobs };
         const ticket = await startUpload(ctx, fileDeps, input.spaceId, {
           parentId: input.folderId ?? null,
@@ -287,6 +344,7 @@ export function writeTools(deps: AppDeps): ToolDefinition[] {
           contentType: ticket.contentType,
         });
         const uploaded = await completeUpload(ctx, fileDeps, ticket.id);
+        await markVia(ctx, uploaded.node.id, since);
         return result({
           id: uploaded.node.id,
           name: uploaded.node.name,
