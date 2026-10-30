@@ -1,82 +1,159 @@
 ---
-title: "Actualizaciones"
-description: "Cómo actualizar SpiderFolio: versiones SemVer, pull y up, migraciones automáticas y cómo volver atrás."
+title: "Actualizar"
+description: "Actualizar SpiderFolio con un solo comando: qué hace el script, cómo usarlo en Windows y Linux, y cómo volver atrás."
 group: autoalojamiento
 order: 6
 icon: arrow-right
 ---
 
 import { REPO_URL } from "../../../config/site.ts";
+import OsTabs from "../../../components/OsTabs.astro";
+
+SpiderFolio se actualiza con un solo comando desde la carpeta de la instalación (`spiderfolio`, donde
+están `.env` y `compose.yaml`). Hace la copia de seguridad, revisa que tus plugins sigan funcionando,
+trae la versión nueva y te dice cómo volver atrás si algo sale mal.
 
 ## Versiones
 
 SpiderFolio sigue [versionado semántico](https://semver.org/lang/es/) (`MAYOR.MENOR.PARCHE`):
 
-- **Parche** (`1.4.0` → `1.4.1`): correcciones. Actualiza sin miedo.
-- **Menor** (`1.4.1` → `1.5.0`): funciones nuevas, compatibles con lo anterior. Puede traer variables
-  nuevas opcionales.
+- **Parche** (`1.4.0` → `1.4.1`): correcciones.
+- **Menor** (`1.4.1` → `1.5.0`): funciones nuevas, compatibles con lo anterior.
 - **Mayor** (`1.5.0` → `2.0.0`): cambios que pueden pedir pasos manuales. **Lee siempre las notas de la
   versión** antes, en <a href={`${REPO_URL}/releases`}>GitHub</a>.
 
-Por defecto, `compose.yaml` usa la etiqueta `latest`. Para decidir tú cuándo actualizar, fija la
-versión en `.env`:
-
-```sh
-SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:1.5.0
-```
+Cuando sale una versión nueva, el **propietario** lo ve en **Administración**: «Hay una versión nueva de
+SpiderFolio», con enlaces a sus notas y a esta guía. Para eso el servidor consulta GitHub una vez por día,
+sin enviar ningún dato. Para apagarlo, pon `UPDATE_CHECK=false` en `.env`.
 
 ## Actualizar
 
-1. **Haz una copia** (siempre, antes de actualizar), desde la carpeta de la instalación: en Linux,
-   `./backup.sh ~/copias`; en Windows, `powershell -ExecutionPolicy Bypass -File .\backup.ps1 D:\Copias`
-   (ver [Copias de seguridad](/es/docs/copias-de-seguridad)).
+<OsTabs>
+<Fragment slot="windows">
 
-2. **Trae los archivos nuevos** (`compose.yaml`, `Caddyfile`, scripts y `.env.example`). Si
-   instalaste con el paquete de la Release, descarga el nuevo encima desde la carpeta que contiene
-   `spiderfolio` (el paquete no trae `.env`, así que el tuyo se conserva):
+En PowerShell, desde la carpeta de la instalación:
 
-   ```sh
-   url=https://github.com/spiderjad/SpiderFolio
-   url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
-   curl -fsSL $url | tar -xz
-   cd spiderfolio
-   ```
+```powershell
+cd $HOME\spiderfolio
+powershell -ExecutionPolicy Bypass -File .\update.ps1
+```
 
-   Si clonaste el repositorio, desde su carpeta `deploy`: `git pull`.
+Para instalar una versión concreta: `.\update.ps1 0.5.1`.
 
-3. **Compara `.env.example` con tu `.env`**: una versión puede agregar variables. Este comando lista las
-   que están en el ejemplo y no en tu `.env`:
+</Fragment>
+<Fragment slot="linux">
 
-   ```sh
-   comm -23 <(grep -oE '^[A-Z_]+=' .env.example | sort) <(grep -oE '^[A-Z_]+=' .env | sort)
-   ```
+Desde la carpeta de la instalación:
 
-   Si falta una obligatoria, la API no arranca y el log dice cuál. Las nuevas obligatorias se indican
-   en las notas de la versión.
+```sh
+cd ~/spiderfolio
+./update.sh
+```
 
+Para instalar una versión concreta: `./update.sh 0.5.1`.
+
+</Fragment>
+</OsTabs>
+
+Tarda unos minutos (sobre todo la descarga). La app queda fuera de servicio unos segundos mientras se
+recrean los contenedores. Al final dice **LISTO: SpiderFolio 0.5.1 funcionando** y cómo volver atrás.
+
+### Si tu instalación es anterior a la 0.5.0
+
+Esas versiones no traen el script. Descárgalo una vez en la carpeta de la instalación y sigue como arriba:
+
+<OsTabs>
+<Fragment slot="windows">
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/spiderjad/SpiderFolio/main/deploy/update.ps1 -OutFile update.ps1
+```
+
+</Fragment>
+<Fragment slot="linux">
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/spiderjad/SpiderFolio/main/deploy/update.sh
+chmod +x update.sh
+```
+
+</Fragment>
+</OsTabs>
+
+## Qué hace el script
+
+1. **Averigua la versión**: la última publicada, o la que indicaste. Si ya la tienes, termina.
+2. **Revisa tus plugins con la versión nueva, antes de tocar nada**: descarga la imagen nueva y
+   comprueba con ella cada plugin instalado. Si alguno no funcionaría, **se detiene** con un aviso
+   que dice cuál y por qué, y no cambia nada (ver más abajo).
+3. **Hace una copia de seguridad** con `backup.ps1` o `backup.sh` (ver
+   [Copias de seguridad](/es/docs/copias-de-seguridad)), en `backups/`.
+4. **Trae los archivos de la versión nueva** (`compose.yaml`, scripts, `.env.example`) encima de la
+   carpeta. **Nunca toca** tu `.env`, la carpeta `backups` ni los datos. Si cambiaste tu `Caddyfile`,
+   lo conserva y deja el nuevo al lado como `Caddyfile.new`. Si cambiaste `compose.yaml`, guarda tu
+   versión como `compose.yaml.bak-<fecha>`.
+5. **Agrega a tu `.env` las variables nuevas** que trae la versión, con su valor de ejemplo, al final
+   del archivo. **Nunca cambia las que ya tienes.** Te dice cuáles agregó, por si quieres ajustarlas.
+6. **Cambia `SPIDERFOLIO_IMAGE`** si tenía un número de versión fijo (`…:0.5.0` → `…:0.5.1`). Con
+   `latest` lo deja igual, salvo que hayas pedido una versión que no es la última: ahí la fija.
+7. **Arranca la versión nueva** con `docker compose pull` y `docker compose up -d`. Nunca usa
+   `down -v` (eso borraría los datos). Al arrancar, la app aplica sola las migraciones de la base y de
+   los plugins.
+8. **Espera a que la app responda** y te dice qué versión quedó funcionando.
+
+### Si un plugin no es compatible
+
+Antes de cambiar nada, el script muestra cada plugin instalado con **OK** o **NO**:
+
+```
+OK  claude-connector 1.0.0
+NO  mi-plugin 0.3.0: necesita la API de plugins 4 y esta versión ofrece la 3
+ALTO: con la 0.5.1, los plugins marcados con NO dejarían de funcionar.
+```
+
+Pide una versión compatible de ese plugin (si es oficial, escríbenos), o quítalo en
+**Administración › Plugins › Licencia y plugins**, y vuelve a correr el script.
+
+## Volver atrás
+
+Las migraciones de la base no se deshacen solas: para volver a la versión anterior hay que recuperar la
+copia que hizo el script. Al terminar, el script te muestra estos dos pasos con la versión y la carpeta
+de la copia ya puestas:
+
+1. En `.env`, vuelve `SPIDERFOLIO_IMAGE` a la versión anterior, por ejemplo
+   `SPIDERFOLIO_IMAGE=ghcr.io/spiderjad/spiderfolio:0.5.0`.
+2. Restaura la copia:
+
+<OsTabs>
+<Fragment slot="windows">
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\restore.ps1 .\backups\20261030-093000
+```
+
+</Fragment>
+<Fragment slot="linux">
+
+```sh
+./restore.sh ./backups/20261030-093000
+```
+
+</Fragment>
+</OsTabs>
+
+El restore detiene la app, recupera la base y los archivos tal como estaban antes de actualizar y vuelve
+a arrancar con la imagen anterior. Lo que se haya cargado entre la actualización y la vuelta atrás se
+pierde.
+
+## A mano, sin el script
+
+1. Haz una copia: `backup.ps1` o `./backup.sh`.
+2. Descarga el paquete de la versión nueva encima de la carpeta que contiene `spiderfolio` (no trae
+   `.env`, así que el tuyo se conserva): `releases/latest/download/spiderfolio-deploy.zip` (Windows) o
+   `spiderfolio-deploy.tar.gz` (Linux), en <a href={`${REPO_URL}/releases`}>GitHub</a>.
+3. Compara `.env.example` con tu `.env` y agrega las variables que falten.
 4. Si fijaste `SPIDERFOLIO_IMAGE`, cámbiala a la versión nueva.
-5. **Baja la imagen y reinicia**:
-
-   ```sh
-   docker compose pull
-   docker compose up -d
-   docker compose logs -f app     # espera «API lista»
-   ```
-
-   Usa los mismos perfiles de siempre (`--profile https`, `--profile pdf`) o `COMPOSE_PROFILES` en
-   `.env`.
-
-La app queda fuera de servicio unos segundos mientras se recrean los contenedores.
-
-## Migraciones automáticas
-
-No hay que correr nada a mano: al arrancar, la app aplica las migraciones pendientes de la base, y
-también las de los plugins instalados. El worker espera a que la app termine de migrar antes de
-arrancar.
-
-- Si la base todavía no responde, la app reintenta durante un minuto.
-- Una migración que falla no deja la base a medias: cada una corre en una transacción. Revisa
-  `docker compose logs app`, corrige la causa y vuelve a arrancar.
+5. `docker compose pull` y `docker compose up -d`, y espera «API lista» en `docker compose logs -f app`.
 
 ## Si compilas la imagen tú
 
@@ -89,22 +166,10 @@ cd deploy
 docker compose up -d
 ```
 
-Con `SPIDERFOLIO_IMAGE=spiderfolio:local` en `.env`.
-
-## Volver atrás
-
-Las migraciones no se deshacen solas: una versión anterior de la app no siempre funciona con una base
-ya migrada. Para volver a la versión anterior:
-
-1. Fija `SPIDERFOLIO_IMAGE` a la etiqueta anterior en `.env`.
-2. **Restaura la copia** que hiciste antes de actualizar:
-   `./restore.sh ~/copias/<carpeta>` (en Windows, `restore.ps1`). El script detiene la app, recupera la base y los
-   archivos y vuelve a arrancar con la imagen anterior.
-
-Lo que se haya cargado entre la copia y la vuelta atrás se pierde. Ver
-[Copias de seguridad](/es/docs/copias-de-seguridad).
+Con `SPIDERFOLIO_IMAGE=spiderfolio:local` en `.env`. El script `update` es para las imágenes publicadas.
 
 ## Relacionado
 
+- [Copias de seguridad](/es/docs/copias-de-seguridad)
 - [Configuración](/es/docs/configuracion)
 - [Solución de problemas](/es/docs/solucion-de-problemas)

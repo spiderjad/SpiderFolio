@@ -2,34 +2,43 @@ Versión en español: [docs/instalacion/actualizar.md](../instalacion/actualizar
 
 # Upgrade SpiderFolio
 
-Versions follow [SemVer](https://semver.org/). Before a major version, read the release notes (they may
-require manual steps).
+A single command, from the installation folder (where `.env` and `compose.yaml` are). Full guide:
+[Update](https://spiderfolio.spiderjad.com/en/docs/updates).
 
-1. **Make a backup** (always, before upgrading): `./backup.sh` on Linux or `backup.ps1` on Windows (see [backups.md](backups.md)).
-2. **Pull the new image and restart**:
+| Windows (PowerShell) | Linux |
+| --- | --- |
+| `powershell -ExecutionPolicy Bypass -File .\update.ps1` | `./update.sh` |
+| `.\update.ps1 0.5.1` (a specific version) | `./update.sh 0.5.1` |
 
-   From the folder that contains `spiderfolio`, download the new bundle on top (it has no `.env`, so
-   yours is kept). If you cloned the repository, run `git pull` in its `deploy` folder instead.
+Installations older than 0.5.0 don't include the script: download it once from
+[`deploy/update.ps1`](../../deploy/update.ps1) or [`deploy/update.sh`](../../deploy/update.sh).
 
-   ```sh
-   url=https://github.com/spiderjad/SpiderFolio
-   url=$url/releases/latest/download/spiderfolio-deploy.tar.gz
-   curl -fsSL $url | tar -xz
-   cd spiderfolio
-   docker compose pull
-   docker compose up -d
-   # migrations run automatically; wait for "API lista"
-   docker compose logs -f app
-   ```
+## What it does
 
-3. Compare `.env.example` with your `.env`: a version may add variables (new required ones are listed in
-   the release notes; if one is missing, the API does not start and the log says which).
+1. Finds the version (the latest, or the one given); if you already have it, it stops.
+2. **Before touching anything**, pulls the new image and checks the installed plugins with it
+   (`backend/scripts/check-plugins.ts`). If one wouldn't work, it stops and says which one and why.
+3. Makes a backup (`backup.ps1` / `backup.sh`) in `backups/`.
+4. Brings the new version's files over the folder. It never touches `.env`, `backups/` or the data. A
+   changed `Caddyfile` is kept (the new one goes to `Caddyfile.new`); a changed `compose.yaml` is saved as
+   `compose.yaml.bak-<date>`.
+5. Adds to `.env` the new variables from `.env.example`, never changing yours, and says which.
+6. If `SPIDERFOLIO_IMAGE` had a fixed version, changes it to the new one (with `latest` it leaves it,
+   unless you ask for a version that isn't the latest).
+7. `docker compose pull` and `docker compose up -d` (never `down -v`); migrations run on their own.
+8. Waits for the app to answer and shows the version running.
+
+## Roll back
+
+At the end the script shows the two steps with the details filled in:
+
+1. In `.env`, `SPIDERFOLIO_IMAGE` back to the previous version.
+2. `restore.ps1` / `./restore.sh` with the backup folder it made (it stops the app, brings the database and
+   files back and starts again with the previous image; whatever was done after is lost).
+
+## New version notice
+
+The owner sees "There's a new version of SpiderFolio" in Administration. The server asks GitHub once a
+day, sending no data; `UPDATE_CHECK=false` in `.env` turns it off.
 
 If you build the image yourself (for example, with plugins): `docker compose build && docker compose up -d`.
-
-## If something goes wrong
-
-- The API does not start: `docker compose logs app`. A failed migration does not leave the database
-  half-done (each one runs in a transaction); fix the cause and start again.
-- To go back to the previous version: set `SPIDERFOLIO_IMAGE` to the previous tag **and restore the
-  backup** made in step 1 (migrations are not rolled back automatically).

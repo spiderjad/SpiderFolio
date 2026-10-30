@@ -739,7 +739,7 @@ Examples for Hostinger, Gmail and Microsoft 365, and the troubleshooting command
 ## After installing
 
 - [Backups](https://spiderfolio.spiderjad.com/en/docs/backups): schedule them before you load real data.
-- [Updates](https://spiderfolio.spiderjad.com/en/docs/updates): `docker compose pull` and `docker compose up -d`.
+- [Update](https://spiderfolio.spiderjad.com/en/docs/updates): a single command, `update.ps1` or `./update.sh`.
 - [Configuration](https://spiderfolio.spiderjad.com/en/docs/configuration): every variable in `.env`.
 - [Troubleshooting](https://spiderfolio.spiderjad.com/en/docs/troubleshooting).
 

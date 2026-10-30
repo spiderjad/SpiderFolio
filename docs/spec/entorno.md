@@ -40,6 +40,8 @@ PLUGINS_DIR=                       # carpetas de plugins separadas por comas, la
 PLUGIN_INSTALL_DIR=                # dónde se instalan los plugins subidos desde la app (relativa: desde la raíz del repo); vacío = la última de PLUGINS_DIR (en Docker: /data/plugins)
 PLUGIN_UPLOAD_ENABLED=true         # el propietario puede subir plugins firmados (.sfplugin) desde Licencia y plugins
 SPIDERFOLIO_SUPERVISED=false       # algo vuelve a levantar la API y el worker al salir (Docker, npm run dev): habilita «Reiniciar ahora»
+UPDATE_CHECK=true                  # una vez por día consulta en GitHub si hay versión nueva, para avisar al propietario en Administración
+SPIDERFOLIO_VERSION=               # la pone la imagen (la versión publicada); vacío = dev (sin aviso de versión nueva)
 PLUGIN_PACKAGES=                   # paquetes npm de plugins, separados por comas
 SEED_DEMO_PASSWORD=                     # solo local: contraseña de los usuarios demo (mínimo 10)
 

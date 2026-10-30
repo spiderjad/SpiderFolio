@@ -125,6 +125,13 @@ export const adminTexts = {
     limits: "Límites y uso",
     audit: "Registro de auditoría",
   },
+  update: {
+    text: (latest: string, current: string) =>
+      `Hay una versión nueva de SpiderFolio: la ${latest} (tienes la ${current}).`,
+    notes: "Qué trae",
+    howTo: "Cómo actualizar",
+    dismiss: "Ocultar hasta la próxima versión",
+  },
   security: {
     language: {
       title: "Idioma y zona horaria",

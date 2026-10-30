@@ -140,6 +140,6 @@ se restauró no es una copia.
 
 ## Relacionado
 
-- [Actualizaciones](https://spiderfolio.spiderjad.com/es/docs/actualizaciones): haz siempre una copia antes de actualizar.
+- [Actualizar](https://spiderfolio.spiderjad.com/es/docs/actualizaciones): haz siempre una copia antes de actualizar.
 - [Almacenamiento](https://spiderfolio.spiderjad.com/es/docs/almacenamiento)
 - [Solución de problemas](https://spiderfolio.spiderjad.com/es/docs/solucion-de-problemas)

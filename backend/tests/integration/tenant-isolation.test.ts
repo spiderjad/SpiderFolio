@@ -669,6 +669,7 @@ const cases: IsolationCase[] = [
   // Signed plugin packages and restarting the server (owner only); A never reaches B's.
   { method: "post", path: "/admin/plugins/packages", url: () => "/admin/plugins/packages" },
   { method: "delete", path: "/admin/plugins/:pluginId", url: () => "/admin/plugins/audit-rooms" },
+  { method: "get", path: "/admin/updates", url: () => "/admin/updates" },
   { method: "post", path: "/admin/server/restart", url: () => "/admin/server/restart" },
   { method: "get", path: "/admin/limits", url: () => "/admin/limits" },
   {

@@ -37,3 +37,22 @@ export function saveSidebarSection(section: SidebarSection, open: boolean): void
     // Sin almacenamiento (modo privado): el estado vale solo en esta sesión.
   }
 }
+
+// The «new version» notice in Administration: the version whose notice was closed here.
+const UPDATE_KEY = "spiderfolio-update-dismissed";
+
+export function readDismissedUpdate(): string | null {
+  try {
+    return window.localStorage.getItem(UPDATE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveDismissedUpdate(version: string): void {
+  try {
+    window.localStorage.setItem(UPDATE_KEY, version);
+  } catch {
+    // Without storage it shows up again next time: harmless.
+  }
+}

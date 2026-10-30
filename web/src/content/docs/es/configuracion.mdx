@@ -182,7 +182,8 @@ Más en [Licencia y plugins](/es/docs/licencia-y-plugins) y [Crear un plugin](/e
 | Variable | Obligatoria | Para qué sirve |
 | --- | --- | --- |
 | `SENTRY_DSN` | No | Envía los errores de la aplicación a un proyecto de Sentry. |
-| `SPIDERFOLIO_IMAGE` | No | La imagen de Docker. Por defecto `ghcr.io/spiderjad/spiderfolio:latest`. Fíjala a una versión concreta para controlar cuándo actualizas ([Actualizaciones](/es/docs/actualizaciones)). |
+| `SPIDERFOLIO_IMAGE` | No | La imagen de Docker. Por defecto `ghcr.io/spiderjad/spiderfolio:latest`. Fíjala a una versión concreta para controlar cuándo actualizas ([Actualizar](/es/docs/actualizaciones)). |
+| `UPDATE_CHECK` | No | `true` por defecto: una vez por día el servidor consulta en GitHub si hay una versión nueva, para avisar al propietario en Administración. No envía ningún dato. `false` lo apaga. |
 
 ## Variables que no tienes que tocar
 

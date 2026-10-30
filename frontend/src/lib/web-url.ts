@@ -13,3 +13,7 @@ export const legalUrl = {
 export const pluginsUrl = `${WEB_URL}/plugins`;
 
 export const docsUrl = `${WEB_URL}/docs`;
+
+/** The «Update» guide, in the app's language. */
+export const updateGuideUrl = (language: string): string =>
+  language === "en" ? `${WEB_URL}/en/docs/updates` : `${WEB_URL}/es/docs/actualizaciones`;

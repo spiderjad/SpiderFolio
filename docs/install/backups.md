@@ -139,6 +139,6 @@ never been restored isn't a backup.
 
 ## Related
 
-- [Updates](https://spiderfolio.spiderjad.com/en/docs/updates): always take a backup before updating.
+- [Update](https://spiderfolio.spiderjad.com/en/docs/updates): always take a backup before updating.
 - [Storage](https://spiderfolio.spiderjad.com/en/docs/storage)
 - [Troubleshooting](https://spiderfolio.spiderjad.com/en/docs/troubleshooting)

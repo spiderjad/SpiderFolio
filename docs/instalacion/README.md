@@ -740,7 +740,7 @@ Ejemplos para Hostinger, Gmail y Microsoft 365, y los comandos de diagnóstico, 
 ## Después de instalar
 
 - [Copias de seguridad](https://spiderfolio.spiderjad.com/es/docs/copias-de-seguridad): prográmalas antes de cargar datos reales.
-- [Actualizaciones](https://spiderfolio.spiderjad.com/es/docs/actualizaciones): `docker compose pull` y `docker compose up -d`.
+- [Actualizar](https://spiderfolio.spiderjad.com/es/docs/actualizaciones): un solo comando, `update.ps1` o `./update.sh`.
 - [Configuración](https://spiderfolio.spiderjad.com/es/docs/configuracion): todas las variables de `.env`.
 - [Solución de problemas](https://spiderfolio.spiderjad.com/es/docs/solucion-de-problemas).
 

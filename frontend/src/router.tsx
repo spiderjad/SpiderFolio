@@ -173,6 +173,7 @@ export const routes = [
               },
               {
                 path: "admin",
+                lazy: page(() => import("@/features/admin/admin-layout"), "AdminLayout"),
                 children: [
                   {
                     index: true,

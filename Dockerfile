@@ -28,7 +28,10 @@ ENV VITE_WEB_URL=${VITE_WEB_URL}
 RUN npm run build -w @spiderfolio/frontend
 
 FROM ${NODE_IMAGE} AS runtime
-ENV NODE_ENV=production \
+# The version this image is (the release workflow sets it; «dev» in a local build).
+ARG SPIDERFOLIO_VERSION=dev
+ENV SPIDERFOLIO_VERSION=${SPIDERFOLIO_VERSION} \
+    NODE_ENV=production \
     PORT=4000 \
     APP_STATIC_DIR=/app/frontend/dist \
     PLUGINS_DIR=/app/plugins,/data/plugins \

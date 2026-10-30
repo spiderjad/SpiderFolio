@@ -123,6 +123,16 @@ export const envSchema = z
         .default("true")
         .transform((value) => value === "true"),
     ),
+    /** Ask GitHub once a day whether there's a newer version, to tell the owner (on by default). */
+    UPDATE_CHECK: z.preprocess(
+      emptyToUndefined,
+      z
+        .enum(["true", "false"])
+        .default("true")
+        .transform((value) => value === "true"),
+    ),
+    /** This installation's version: the image sets it; «dev» when running from source. */
+    SPIDERFOLIO_VERSION: z.preprocess(emptyToUndefined, z.string().default("dev")),
     /**
      * The process runs under something that starts it again when it exits (Docker's restart policy,
      * the dev watcher): only then the app offers «Restart now» (docs/spec/plugins.md).

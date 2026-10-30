@@ -129,6 +129,13 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
     limits: "Limits and usage",
     audit: "Audit log",
   },
+  update: {
+    text: (latest: string, current: string) =>
+      `There's a new version of SpiderFolio: ${latest} (you have ${current}).`,
+    notes: "What's new",
+    howTo: "How to update",
+    dismiss: "Hide until the next version",
+  },
   security: {
     language: {
       title: "Language and time zone",

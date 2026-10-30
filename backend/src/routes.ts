@@ -40,6 +40,7 @@ import { auditLogRoutes } from "./modules/audit/audit-log.routes.ts";
 import { roleRoutes } from "./modules/roles/roles.routes.ts";
 import { workspaceRoutes } from "./modules/workspaces/workspaces.routes.ts";
 import { pluginRoutes } from "./modules/plugins/plugins.routes.ts";
+import { updateRoutes } from "./modules/updates/update.routes.ts";
 import { pluginTenantRoutes } from "./plugins/routing.ts";
 import type { PluginRuntime } from "./plugins/runtime.ts";
 
@@ -118,6 +119,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...trashRoutes(deps),
     ...importRoutes(deps),
     ...pluginRoutes(deps),
+    ...updateRoutes(deps),
     // Al final: las rutas de los plugins viven bajo /plugins/<id>.
     ...pluginTenantRoutes(deps),
   ];
