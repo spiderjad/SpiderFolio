@@ -468,6 +468,17 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/forms/:id/records", url: (ids) => `/forms/${ids.formId}/records` },
   {
     method: "get",
+    path: "/forms/:id/export/:format",
+    url: (ids) => `/forms/${ids.formId}/export/csv`,
+  },
+  {
+    method: "post",
+    path: "/forms/:id/records/:recordId/void",
+    url: (ids) => `/forms/${ids.formId}/records/${ids.recordId}/void`,
+    body: { reason: "Prueba de aislamiento" },
+  },
+  {
+    method: "get",
     path: "/forms/:id/records/:recordId",
     url: (ids) => `/forms/${ids.formId}/records/${ids.recordId}`,
   },

@@ -4,6 +4,7 @@
 // form marks, the options it marks, a checklist item left unchecked.
 import { z } from "zod";
 import { formMessages } from "../../i18n/index.ts";
+import { CursorQuerySchema } from "../../lib/pagination.ts";
 
 const Id = z.string().min(1).max(64);
 /** A field's or an option's id: made by the app, short and safe in a CSV header or a URL. */
@@ -157,3 +158,29 @@ export const SettingsSchema = z
     }
   });
 export type SettingsInput = z.infer<typeof SettingsSchema>;
+
+// ─── Records list, void and export (phase 4) ─────────────────────────────────────
+
+const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u);
+
+/** The records list's filters: days in the company's zone, who sent it, version, what's non-conforming. */
+export const RecordFiltersSchema = z.object({
+  from: Day.optional(),
+  to: Day.optional(),
+  person: Id.optional(),
+  version: z.coerce.number().int().min(1).optional(),
+  nonConforming: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true"),
+  /** Voided records are listed (marked) unless asked otherwise. */
+  status: z.enum(["all", "valid", "voided"]).default("all"),
+});
+export type RecordFilters = z.infer<typeof RecordFiltersSchema>;
+
+export const RecordListQuerySchema = RecordFiltersSchema.extend(CursorQuerySchema.shape);
+export type RecordListQuery = z.infer<typeof RecordListQuerySchema>;
+
+export const VoidRecordSchema = z.strictObject({ reason: z.string().trim().min(3).max(500) });
+
+export const ExportParamsSchema = z.object({ id: Id, format: z.enum(["csv", "pdf"]) });

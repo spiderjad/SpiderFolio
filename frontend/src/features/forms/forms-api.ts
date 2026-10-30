@@ -2,7 +2,7 @@
 // server checks every field again; these types mirror backend/src/modules/forms/forms.schemas.ts.
 import type { CursorPage } from "@/components/ui/infinite";
 import type { NodeDetail } from "@/features/files/api";
-import { api } from "@/lib/api";
+import { api, apiBlob } from "@/lib/api";
 
 interface FieldBase {
   id: string;
@@ -147,6 +147,32 @@ export interface RecordDetail {
   /** The fields of the version it was filled with. */
   fields: FormField[];
   files: { id: string; fieldId: string; mimeType: string }[];
+  /** Whoever asks can void it (MANAGE on the form, and it isn't voided yet). */
+  canVoid: boolean;
+}
+
+/** The records list's filters (days are the company's). */
+export interface RecordFilters {
+  from?: string | undefined;
+  to?: string | undefined;
+  person?: string | undefined;
+  version?: number | undefined;
+  nonConforming?: boolean | undefined;
+  status?: "all" | "valid" | "voided" | undefined;
+}
+
+function filterQuery(filters: RecordFilters, cursor?: string): string {
+  const params = new URLSearchParams();
+  if (filters.from !== undefined) params.set("from", filters.from);
+  if (filters.to !== undefined) params.set("to", filters.to);
+  if (filters.person !== undefined) params.set("person", filters.person);
+  if (filters.version !== undefined) params.set("version", String(filters.version));
+  if (filters.nonConforming === true) params.set("nonConforming", "true");
+  if (filters.status !== undefined && filters.status !== "all")
+    params.set("status", filters.status);
+  if (cursor !== undefined) params.set("cursor", cursor);
+  const text = params.toString();
+  return text === "" ? "" : `?${text}`;
 }
 
 /** What the server says about each answer it didn't take. */
@@ -156,7 +182,10 @@ export interface AnswerProblem {
 }
 
 export const recordsKeys = {
-  list: (slug: string, formId: string) => ["w", slug, "forms", formId, "records"] as const,
+  list: (slug: string, formId: string, filters?: RecordFilters) =>
+    filters === undefined
+      ? (["w", slug, "forms", formId, "records"] as const)
+      : (["w", slug, "forms", formId, "records", "list", filters] as const),
   record: (slug: string, formId: string, recordId: string) =>
     ["w", slug, "forms", formId, "records", recordId] as const,
   file: (slug: string, formId: string, recordId: string, fileId: string) =>
@@ -169,14 +198,26 @@ export const recordsApi = {
     formId: string,
     body: { version: number; answers: Record<string, Answer>; source: "app" | "qr" },
   ) => api<{ record: RecordView }>(w(slug, `/forms/${formId}/records`), { method: "POST", body }),
-  list: (slug: string, formId: string, cursor: string | undefined, signal: AbortSignal) =>
+  list: (
+    slug: string,
+    formId: string,
+    filters: RecordFilters,
+    cursor: string | undefined,
+    signal: AbortSignal,
+  ) =>
     api<CursorPage<RecordView>>(
-      w(
-        slug,
-        `/forms/${formId}/records${cursor === undefined ? "" : `?cursor=${encodeURIComponent(cursor)}`}`,
-      ),
-      { signal },
+      w(slug, `/forms/${formId}/records${filterQuery(filters, cursor)}`),
+      {
+        signal,
+      },
     ),
+  void: (slug: string, formId: string, recordId: string, reason: string) =>
+    api<{ record: RecordView }>(w(slug, `/forms/${formId}/records/${recordId}/void`), {
+      method: "POST",
+      body: { reason },
+    }),
+  export: (slug: string, formId: string, format: "csv" | "pdf", filters: RecordFilters) =>
+    apiBlob(w(slug, `/forms/${formId}/export/${format}${filterQuery(filters)}`)),
   get: (slug: string, formId: string, recordId: string) =>
     api<RecordDetail>(w(slug, `/forms/${formId}/records/${recordId}`)),
   fileUrl: (slug: string, formId: string, recordId: string, fileId: string) =>

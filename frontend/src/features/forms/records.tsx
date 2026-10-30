@@ -1,12 +1,41 @@
 // A form's records (docs/spec/formularios.md): the list on the form's screen (each person's own, or
 // all of them for whoever edits the form) and one record, read only, with the fields of the version
 // it was filled with, what was non-conforming, its photos and its signature.
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, ClipboardCheck, QrCode, ServerCrash } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Ban,
+  ClipboardCheck,
+  Download,
+  QrCode,
+  ServerCrash,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  COMBO_PAGE_SIZE,
+  Combobox,
+  useStaticSource,
+  type ComboboxSource,
+} from "@/components/ui/combobox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge, Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
+import { Checkbox, FormField as LabeledField, Input, Textarea } from "@/components/ui/form";
 import { LoadMore, useInfiniteList } from "@/components/ui/infinite";
-import { adminErrorText } from "@/features/admin/admin-utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/overlay";
+import { adminApi } from "@/features/admin/api";
+import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
+import { readChoice, useListParams } from "@/features/admin/list-params";
+import { ApiError } from "@/lib/api";
 import { cn, formatDateTime } from "@/lib/utils";
 import {
   formsApi,
@@ -15,50 +44,263 @@ import {
   recordsKeys,
   type Answer,
   type FormField,
+  type RecordFilters,
 } from "./forms-api";
 import { locale, texts } from "@/i18n";
 
 const t = texts.forms;
 
+const STATUSES = (["all", "valid", "voided"] as const).map((id) => ({
+  id,
+  label: t.records.filters.statuses[id],
+}));
+
+/** The list's filters, read from the URL (so they survive a reload and can be shared). */
+function filtersOf(params: URLSearchParams): RecordFilters {
+  const day = (key: string) => {
+    const value = params.get(key) ?? "";
+    return /^\d{4}-\d{2}-\d{2}$/u.test(value) ? value : undefined;
+  };
+  const version = Number(params.get("version") ?? "");
+  return {
+    from: day("desde"),
+    to: day("hasta"),
+    person: params.get("persona") ?? undefined,
+    version: Number.isInteger(version) && version >= 1 ? version : undefined,
+    nonConforming: params.get("noConformes") === "1" ? true : undefined,
+    status: readChoice(params, "estado", ["all", "valid", "voided"] as const, "all"),
+  };
+}
+
 export function RecordsList({
   formId,
+  formName,
   spaceId,
   seesAll,
 }: {
   formId: string;
+  formName: string;
   spaceId: string;
   seesAll: boolean;
 }) {
   const { workspaceSlug = "" } = useParams();
+  const { params, patch } = useListParams();
+  const filters = useMemo(() => filtersOf(params), [params]);
+  const filtered =
+    filters.from !== undefined ||
+    filters.to !== undefined ||
+    filters.person !== undefined ||
+    filters.version !== undefined ||
+    filters.nonConforming === true ||
+    filters.status !== "all";
+  const [personLabel, setPersonLabel] = useState<string | undefined>(undefined);
+  const statuses = useStaticSource("form-record-status", STATUSES);
+  const personSource = useMemo<ComboboxSource>(
+    () => ({
+      key: ["w", workspaceSlug, "files", "person-options"],
+      search: async (q, cursor, signal) => {
+        const page = await adminApi.directory(
+          workspaceSlug,
+          { q, cursor, pageSize: COMBO_PAGE_SIZE },
+          signal,
+        );
+        return {
+          items: page.items.map((p) => ({ id: p.id, label: p.name })),
+          nextCursor: page.nextCursor,
+        };
+      },
+      byIds: () => Promise.resolve([]),
+    }),
+    [workspaceSlug],
+  );
   const list = useInfiniteList({
-    queryKey: recordsKeys.list(workspaceSlug, formId),
-    fetchPage: (cursor, signal) => recordsApi.list(workspaceSlug, formId, cursor, signal),
+    queryKey: recordsKeys.list(workspaceSlug, formId, filters),
+    fetchPage: (cursor, signal) => recordsApi.list(workspaceSlug, formId, filters, cursor, signal),
+  });
+  const exportFile = useMutation({
+    mutationFn: async (format: "csv" | "pdf") => {
+      const blob = await recordsApi.export(workspaceSlug, formId, format, filters);
+      downloadBlobFile(t.records.fileName(formName, format), blob);
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
   });
   const base = `/app/${workspaceSlug}/files/${spaceId}/form/${formId}/r`;
+  const f = t.records.filters;
   return (
     <Card className="grid gap-3 p-0">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="flex items-center gap-2 font-medium">
-          <ClipboardCheck className="size-4 text-muted-foreground" aria-hidden="true" />
-          {seesAll ? t.records.title : t.records.mineTitle}
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {seesAll ? t.records.hintAll : t.records.hintMine}
-        </p>
+      <div className="flex flex-wrap items-start gap-3 border-b border-border px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="flex items-center gap-2 font-medium">
+            <ClipboardCheck className="size-4 text-muted-foreground" aria-hidden="true" />
+            {seesAll ? t.records.title : t.records.mineTitle}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {seesAll ? t.records.hintAll : t.records.hintMine}
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportFile.isPending}
+              title={t.records.exportHint}
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {exportFile.isPending ? t.records.exporting : t.records.export}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onSelect={() => {
+                exportFile.mutate("csv");
+              }}
+            >
+              {t.records.exportCsv}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                exportFile.mutate("pdf");
+              }}
+            >
+              {t.records.exportPdf}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+      <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 lg:grid-cols-6 lg:items-end">
+        <LabeledField label={f.from}>
+          {(field) => (
+            <Input
+              {...field}
+              type="date"
+              value={filters.from ?? ""}
+              onChange={(event) => {
+                patch({ desde: event.target.value });
+              }}
+            />
+          )}
+        </LabeledField>
+        <LabeledField label={f.to}>
+          {(field) => (
+            <Input
+              {...field}
+              type="date"
+              value={filters.to ?? ""}
+              onChange={(event) => {
+                patch({ hasta: event.target.value });
+              }}
+            />
+          )}
+        </LabeledField>
+        {seesAll && (
+          <LabeledField label={f.person}>
+            {(field) => (
+              <Combobox
+                {...field}
+                compact
+                label={f.person}
+                placeholder={f.anyPerson}
+                source={personSource}
+                value={filters.person ?? null}
+                valueLabel={personLabel ?? (filters.person === undefined ? undefined : f.person)}
+                clearable
+                onChange={(option) => {
+                  setPersonLabel(option?.label);
+                  patch({ persona: option?.id });
+                }}
+              />
+            )}
+          </LabeledField>
+        )}
+        <LabeledField label={f.version}>
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={filters.version ?? ""}
+              onChange={(event) => {
+                patch({ version: event.target.value });
+              }}
+            />
+          )}
+        </LabeledField>
+        <LabeledField label={f.status}>
+          {(field) => (
+            <Combobox
+              {...field}
+              compact
+              label={f.status}
+              placeholder={f.statuses.all}
+              source={statuses}
+              searchable={false}
+              value={filters.status ?? "all"}
+              onChange={(option) => {
+                patch({ estado: option === null || option.id === "all" ? undefined : option.id });
+              }}
+            />
+          )}
+        </LabeledField>
+        <div className="flex h-9 items-center">
+          <Checkbox
+            label={f.nonConforming}
+            checked={filters.nonConforming === true}
+            onChange={(event) => {
+              patch({ noConformes: event.target.checked ? "1" : undefined });
+            }}
+          />
+        </div>
+      </div>
+      {filtered && (
+        <div className="px-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setPersonLabel(undefined);
+              patch({
+                desde: undefined,
+                hasta: undefined,
+                persona: undefined,
+                version: undefined,
+                estado: undefined,
+                noConformes: undefined,
+              });
+            }}
+          >
+            <X className="size-4" aria-hidden="true" />
+            {f.clear}
+          </Button>
+        </div>
+      )}
       {list.query.isPending ? (
         <Skeleton className="mx-4 mb-4 h-20" />
+      ) : list.query.isError ? (
+        <p className="px-4 pb-4 text-sm text-danger">{adminErrorText(list.query.error)}</p>
       ) : list.items.length === 0 ? (
-        <p className="px-4 pb-4 text-sm text-muted-foreground">{t.records.empty}</p>
+        <p className="px-4 pb-4 text-sm text-muted-foreground">
+          {filtered ? t.records.emptyFiltered : t.records.empty}
+        </p>
       ) : (
         <ul className="divide-y divide-border">
           {list.items.map((record) => (
             <li key={record.id}>
               <Link
                 to={`${base}/${record.id}`}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
+                className={cn(
+                  "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40",
+                  record.voided !== null && "text-muted-foreground",
+                )}
               >
-                <span className="text-sm font-medium">{formatDateTime(record.submittedAt)}</span>
+                <span
+                  className={cn("text-sm font-medium", record.voided !== null && "line-through")}
+                >
+                  {formatDateTime(record.submittedAt)}
+                </span>
                 <span className="min-w-0 truncate text-sm text-muted-foreground">
                   {record.submittedBy?.name ?? ""}
                 </span>
@@ -98,6 +340,9 @@ export function RecordsList({
 /** /app/:slug/files/:spaceId/form/:formId/r/:recordId */
 export function RecordPage() {
   const { workspaceSlug = "", spaceId = "", formId = "", recordId = "" } = useParams();
+  const queryClient = useQueryClient();
+  const [voiding, setVoiding] = useState(false);
+  const [reason, setReason] = useState("");
   const form = useQuery({
     queryKey: formsKeys.form(workspaceSlug, formId),
     queryFn: () => formsApi.get(workspaceSlug, formId),
@@ -117,7 +362,17 @@ export function RecordPage() {
     );
   }
   if (detail.data === undefined) return <Skeleton className="mx-auto h-96 w-full max-w-2xl" />;
-  const { record, fields, files } = detail.data;
+  const { record, fields, files, canVoid } = detail.data;
+  const confirmVoid = async () => {
+    // Shown inside the dialog, which stays open (the server checks it again).
+    if (reason.trim().length < 3)
+      throw new ApiError(400, "VALIDATION_ERROR", t.record.void.tooShort);
+    await recordsApi.void(workspaceSlug, formId, recordId, reason.trim());
+    toast.success(t.record.void.done);
+    setReason("");
+    await queryClient.invalidateQueries({ queryKey: recordsKeys.list(workspaceSlug, formId) });
+    await queryClient.invalidateQueries({ queryKey: formsKeys.pending(workspaceSlug) });
+  };
   const name = form.data?.node.name ?? "";
   return (
     <div className="mx-auto grid w-full min-w-0 max-w-2xl gap-4">
@@ -129,7 +384,23 @@ export function RecordPage() {
           <ArrowLeft className="size-4" aria-hidden="true" />
           {name}
         </Link>
-        <h1 className="break-words text-xl font-semibold tracking-tight">{t.record.title(name)}</h1>
+        <div className="flex flex-wrap items-start gap-3">
+          <h1 className="min-w-0 flex-1 break-words text-xl font-semibold tracking-tight">
+            {t.record.title(name)}
+          </h1>
+          {canVoid && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setVoiding(true);
+              }}
+            >
+              <Ban className="size-4" aria-hidden="true" />
+              {t.record.void.action}
+            </Button>
+          )}
+        </div>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           <span>
             {t.record.by(record.submittedBy?.name ?? "", formatDateTime(record.submittedAt))}
@@ -145,7 +416,11 @@ export function RecordPage() {
       </div>
       {record.voided !== null && (
         <Banner tone="warning">
-          {t.records.voided}: {record.voided.reason}
+          {t.record.voidedBanner(
+            formatDateTime(record.voided.at),
+            record.voided.by?.name ?? "",
+            record.voided.reason,
+          )}
         </Banner>
       )}
       <Card className="divide-y divide-border p-0">
@@ -160,6 +435,34 @@ export function RecordPage() {
         ))}
       </Card>
       <p className="text-xs text-muted-foreground">{t.record.immutable}</p>
+      <ConfirmDialog
+        open={voiding}
+        onOpenChange={setVoiding}
+        icon={Ban}
+        tone="warning"
+        title={t.record.void.title}
+        description={
+          // The description is a <p>: only phrasing content (a label wrapping the text box) fits.
+          <span className="grid gap-3">
+            <span>{t.record.void.description}</span>
+            <label className="grid gap-1.5 text-foreground">
+              <span className="text-sm font-medium">{t.record.void.reason}</span>
+              <Textarea
+                maxLength={500}
+                className="min-h-20"
+                value={reason}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                }}
+              />
+              <span className="text-xs text-muted-foreground">{t.record.void.reasonHint}</span>
+            </label>
+          </span>
+        }
+        confirmLabel={t.record.void.confirm}
+        pendingLabel={t.record.void.pending}
+        onConfirm={confirmVoid}
+      />
     </div>
   );
 }

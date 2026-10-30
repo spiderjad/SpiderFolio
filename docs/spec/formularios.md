@@ -74,8 +74,19 @@ electrónica avanzada.
      asignados el día que empieza el período; `form_overdue` al responsable por el período anterior sin
      registro. Solo cuentan períodos desde el último cambio de cómo funciona el formulario (cambiarlo no
      vuelve vencidos los anteriores). Una sola vez por persona y período (`dedupeKey`); campana y email.
-4. Lista de registros con filtros (fechas en días de la empresa, persona, versión, solo no conformes),
-   anular, CSV y PDF.
+4. **Lista de registros, anular y exportar** (hecha). `GET /forms/:id/records` filtra por `from`/`to` (días
+   de la empresa), `person`, `version`, `nonConforming=true` y `status` (`all`, `valid`, `voided`); quien
+   solo ve los suyos sigue viendo solo los suyos aunque filtre por otra persona. Los filtros viven en la
+   URL (`desde`, `hasta`, `persona`, `version`, `noConformes`, `estado`).
+   - **Anular**: `POST /forms/:id/records/:recordId/void` con `reason` (3 a 500), MANAGE sobre el
+     formulario; queda con quién, cuándo y por qué, las respuestas no cambian, no se anula dos veces (409)
+     y se audita `form.record.void`. Un período anulado vuelve a quedar pendiente. `canVoid` en el detalle.
+   - **Exportar**: `GET /forms/:id/export/csv|pdf` con los mismos filtros y solo lo que la persona ve
+     (`records-export.ts`). CSV: fecha, persona, versión, origen, no conforme, anulación y una columna por
+     campo de cualquier versión exportada (primero los de la actual), hasta 10.000 registros. PDF
+     (Gotenberg; sin él responde 503 con un mensaje): un bloque por registro, hasta 300; fotos y firma
+     figuran como «2 fotos» / «Firmado» (las imágenes en el PDF quedan para después). Auditado
+     `form.records.export`; límite de 30 por hora y usuario.
 5. QR del formulario (abre el llenado), guías es/en, capturas y versión.
 
 Fuera de la primera versión: lógica condicional, cálculos, uso sin conexión y galería de plantillas.

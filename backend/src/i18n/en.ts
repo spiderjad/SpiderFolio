@@ -765,6 +765,9 @@ export const formMessages: Catalog<typeof Es.formMessages> = {
   weekdaysRequired: "Choose at least one weekday.",
   assigneesRequired: "Choose at least one person or department to fill it in.",
   unknownPeople: "Some of those people or departments aren't in the company.",
+  alreadyVoided: "That record is already voided.",
+  pdfUnavailable:
+    "This install doesn't make PDFs (Gotenberg is missing). Export a CSV or ask whoever runs it to turn it on.",
 };
 
 export const formNoticeTexts: Catalog<typeof Es.formNoticeTexts> = {
@@ -795,4 +798,33 @@ export const formNoticeTexts: Catalog<typeof Es.formNoticeTexts> = {
     month: (month: string) => `in ${month}`,
   },
   footnote: "You get this notice because you take part in this form or are in charge of it.",
+};
+
+export const formExportTexts: Catalog<typeof Es.formExportTexts> = {
+  fileName: (form: string, extension: string) => `${form} - records.${extension}`,
+  headers: [
+    "Date",
+    "Person",
+    "Version",
+    "Source",
+    "Non-conforming",
+    "Voided on",
+    "Reason for voiding",
+  ],
+  sources: { app: "App", qr: "QR" },
+  words: {
+    yes: "Yes",
+    no: "No",
+    unchecked: (items: string) => `(unchecked: ${items})`,
+    photos: (count: number) => (count === 1 ? "1 photo" : `${String(count)} photos`),
+    signed: "Signed",
+  },
+  version: (version: number) => `Version ${String(version)}`,
+  nonConforming: "Non-conforming",
+  voided: (at: string, by: string, reason: string) => `Voided on ${at} by ${by}: ${reason}`,
+  summary: (space: string, at: string, count: number) =>
+    `${space} · Exported on ${at} · ${count === 1 ? "1 record" : `${String(count)} records`}`,
+  empty: "No records with those filters.",
+  tooMany: (max: string) => `There are more than ${max} records. Narrow the dates down and export again.`,
+  pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
 };

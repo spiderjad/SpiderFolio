@@ -9,7 +9,7 @@ import type { Prisma } from "../../generated/prisma/client.ts";
 import { fileMessages, formMessages } from "../../i18n/index.ts";
 import { AppError, notFound } from "../../lib/errors.ts";
 import { IMAGE_EXTENSIONS, sniffImage, type ImageType } from "../../lib/image-sniff.ts";
-import { decodeCursor, encodeCursor, type CursorQuery } from "../../lib/pagination.ts";
+import { decodeCursor, encodeCursor } from "../../lib/pagination.ts";
 import type { Storage } from "../../lib/storage.ts";
 import { atLeast } from "../access/access.ts";
 import { levelOfNode, requireLevel } from "../access/access-context.ts";
@@ -17,12 +17,17 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { assertStorageRoom, lockWorkspace } from "../files/files.service.ts";
 import { assertSpaceWritable } from "../spaces/spaces.service.ts";
 import type { Jobs } from "../../jobs/boss.ts";
-import { companyZone, dayIn } from "../../lib/time-zone.ts";
+import { companyZone, dayIn, endOfDayIn, startOfDayIn } from "../../lib/time-zone.ts";
 import { checkAnswers, type Answers } from "./answers.ts";
 import { notifyNonConforming } from "./form-notices.ts";
 import { periodOf } from "./periods.ts";
 import { responsiblesOf, scheduleOf, settingsRow } from "./settings.service.ts";
-import { FieldsSchema, type FormField } from "./forms.schemas.ts";
+import {
+  FieldsSchema,
+  type FormField,
+  type RecordFilters,
+  type RecordListQuery,
+} from "./forms.schemas.ts";
 
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 export const MAX_SIGNATURE_BYTES = 1024 * 1024;
@@ -185,7 +190,7 @@ async function people(ctx: AdminContext, ids: string[]) {
 
 type RecordRow = Prisma.FormRecordGetPayload<object>;
 
-async function viewsOf(ctx: AdminContext, rows: RecordRow[]): Promise<RecordView[]> {
+export async function viewsOf(ctx: AdminContext, rows: RecordRow[]): Promise<RecordView[]> {
   const who = await people(
     ctx,
     rows.flatMap((row) => [
@@ -311,17 +316,40 @@ export async function submitRecord(
 // ─── Reading records ─────────────────────────────────────────────────────────────
 
 /** The form's records the person can see, newest first: theirs, or all if they can edit the form. */
+/**
+ * The records someone may see with the list's filters: their own, or all of them for whoever sees all.
+ * Days are the company's.
+ */
+export async function recordsWhere(
+  ctx: AdminContext,
+  formId: string,
+  filters: RecordFilters,
+): Promise<Prisma.FormRecordWhereInput> {
+  const zone = await companyZone(ctx.db);
+  const and: Prisma.FormRecordWhereInput[] = [{ nodeId: formId }];
+  if (!(await seesAll(ctx, formId))) and.push({ submittedById: ctx.tenant.membershipId });
+  if (filters.person !== undefined) and.push({ submittedById: filters.person });
+  if (filters.version !== undefined) and.push({ version: filters.version });
+  if (filters.from !== undefined) {
+    and.push({ submittedAt: { gte: startOfDayIn(filters.from, zone) } });
+  }
+  if (filters.to !== undefined) {
+    and.push({ submittedAt: { lt: new Date(endOfDayIn(filters.to, zone).getTime() + 1000) } });
+  }
+  if (filters.nonConforming) and.push({ nonConforming: { isEmpty: false } });
+  if (filters.status === "valid") and.push({ voidedAt: null });
+  if (filters.status === "voided") and.push({ voidedAt: { not: null } });
+  return { AND: and };
+}
+
 export async function listRecords(
   ctx: AdminContext,
   formId: string,
-  query: CursorQuery,
+  query: RecordListQuery,
 ): Promise<{ items: RecordView[]; total: number; nextCursor: string | null }> {
   await formOf(ctx, formId);
   requireLevel(await levelOfNode(ctx, formId), "VIEW");
-  const where: Prisma.FormRecordWhereInput = {
-    nodeId: formId,
-    ...((await seesAll(ctx, formId)) ? {} : { submittedById: ctx.tenant.membershipId }),
-  };
+  const where = await recordsWhere(ctx, formId, query);
   const position = decodeCursor(query.cursor);
   const after: Prisma.FormRecordWhereInput =
     position === null
@@ -357,6 +385,8 @@ export interface RecordDetail {
   /** The fields of the version it was filled with. */
   fields: FormField[];
   files: { id: string; fieldId: string; mimeType: string }[];
+  /** Whoever asks can void it (MANAGE on the form, and it isn't voided yet). */
+  canVoid: boolean;
 }
 
 /** One record, with the fields it was filled with: its author, or whoever sees all of the form's. */
@@ -372,7 +402,7 @@ export async function getRecord(
   if (row.submittedById !== ctx.tenant.membershipId && !(await seesAll(ctx, formId))) {
     throw notFound();
   }
-  const [views, fields, files] = await Promise.all([
+  const [views, fields, files, level] = await Promise.all([
     viewsOf(ctx, [row]),
     fieldsOf(ctx, formId, row.version),
     ctx.db.formFile.findMany({
@@ -380,10 +410,50 @@ export async function getRecord(
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true, fieldId: true, mimeType: true },
     }),
+    levelOfNode(ctx, formId),
   ]);
   const [record] = views;
   if (record === undefined) throw notFound();
-  return { record, fields, files };
+  return { record, fields, files, canVoid: record.voided === null && atLeast(level, "MANAGE") };
+}
+
+/**
+ * Voids a record: MANAGE on the form and a reason. It stays, marked with who, when and why (its
+ * answers never change); a periodic form's period it counted for is open again.
+ */
+export async function voidRecord(
+  ctx: AdminContext,
+  formId: string,
+  recordId: string,
+  input: { reason: string },
+): Promise<RecordView> {
+  const form = await formOf(ctx, formId);
+  const row = await ctx.db.formRecord.findFirst({
+    where: { id: recordId, nodeId: formId },
+    select: { id: true, submittedById: true },
+  });
+  if (row === null) throw notFound();
+  requireLevel(await levelOfNode(ctx, formId), "MANAGE");
+  await assertSpaceWritable(ctx, form.spaceId);
+  await ctx.db.$transaction(async (tx) => {
+    const changed = await tx.formRecord.updateMany({
+      where: { id: recordId, nodeId: formId, voidedAt: null },
+      data: { voidedAt: new Date(), voidedById: ctx.tenant.membershipId, voidReason: input.reason },
+    });
+    if (changed.count === 0) {
+      throw new AppError("CONFLICT", { message: formMessages.alreadyVoided });
+    }
+    await auditAdmin(
+      { db: tx, info: ctx.info },
+      {
+        action: "form.record.void",
+        entityType: "FormRecord",
+        entityId: recordId,
+        metadata: { formId, reason: input.reason },
+      },
+    );
+  });
+  return (await getRecord(ctx, formId, recordId)).record;
 }
 
 /** A short (60 s) URL to see a record's photo or signature, with the record's own access. */

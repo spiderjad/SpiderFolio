@@ -84,7 +84,10 @@ export interface TenantDb {
   zipExport: TenantDelegate<PrismaClient["zipExport"], Op>;
   pageContent: TenantDelegate<PrismaClient["pageContent"], Op>;
   formVersion: TenantDelegate<PrismaClient["formVersion"], "findFirst" | "findMany" | "count" | "create">;
-  formRecord: TenantDelegate<PrismaClient["formRecord"], "findFirst" | "findMany" | "count" | "create">;
+  formRecord: TenantDelegate<
+    PrismaClient["formRecord"],
+    "findFirst" | "findMany" | "count" | "create" | "updateMany"
+  >;
   formFile: TenantDelegate<PrismaClient["formFile"], Op>;
   formSettings: TenantDelegate<PrismaClient["formSettings"], Op>;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
@@ -169,8 +172,8 @@ const delegates = {
   pageContent: { model: "PageContent", ops: [...readOps, ...writeOps] },
   // Versions are never edited or deleted: only read and added.
   formVersion: { model: "FormVersion", ops: ["findFirst", "findMany", "count", "create"] },
-  // Records are never edited or deleted here: only read and added (voiding comes with its own path).
-  formRecord: { model: "FormRecord", ops: ["findFirst", "findMany", "count", "create"] },
+  // Records are never deleted, and their answers never change: updateMany is only for voiding one.
+  formRecord: { model: "FormRecord", ops: ["findFirst", "findMany", "count", "create", "updateMany"] },
   formFile: { model: "FormFile", ops: [...readOps, ...writeOps] },
   formSettings: { model: "FormSettings", ops: [...readOps, ...writeOps] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },

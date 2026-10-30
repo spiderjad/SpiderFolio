@@ -345,7 +345,12 @@ function Editor({ form }: { form: FormDetail }) {
           />
         </div>
       </div>
-      <RecordsList formId={node.id} spaceId={space.id} seesAll={form.seesAllRecords} />
+      <RecordsList
+        formId={node.id}
+        formName={node.name}
+        spaceId={space.id}
+        seesAll={form.seesAllRecords}
+      />
     </div>
   );
 }

@@ -744,6 +744,9 @@ export const formMessages = {
   weekdaysRequired: "Elige al menos un día de la semana.",
   assigneesRequired: "Elige al menos una persona o un departamento que lo llene.",
   unknownPeople: "Alguna de esas personas o departamentos no está en la empresa.",
+  alreadyVoided: "Ese registro ya está anulado.",
+  pdfUnavailable:
+    "Esta instalación no genera PDF (falta Gotenberg). Exporta en CSV o pide a quien la administra que lo active.",
 } as const;
 
 /** Avisos de formularios (docs/spec/formularios.md): no conformidades y períodos. */
@@ -775,4 +778,34 @@ export const formNoticeTexts = {
     month: (month: string) => month,
   },
   footnote: "Recibes este aviso por el formulario en el que participas o del que eres responsable.",
+} as const;
+
+/** Registros exportados (docs/spec/formularios.md, fase 4): CSV y PDF. */
+export const formExportTexts = {
+  fileName: (form: string, extension: string) => `${form} - registros.${extension}`,
+  headers: [
+    "Fecha",
+    "Persona",
+    "Versión",
+    "Origen",
+    "No conforme",
+    "Anulado el",
+    "Motivo de la anulación",
+  ],
+  sources: { app: "App", qr: "QR" },
+  words: {
+    yes: "Sí",
+    no: "No",
+    unchecked: (items: string) => `(sin marcar: ${items})`,
+    photos: (count: number) => (count === 1 ? "1 foto" : `${String(count)} fotos`),
+    signed: "Firmado",
+  },
+  version: (version: number) => `Versión ${String(version)}`,
+  nonConforming: "No conforme",
+  voided: (at: string, by: string, reason: string) => `Anulado el ${at} por ${by}: ${reason}`,
+  summary: (space: string, at: string, count: number) =>
+    `${space} · Exportado el ${at} · ${count === 1 ? "1 registro" : `${String(count)} registros`}`,
+  empty: "No hay registros con esos filtros.",
+  tooMany: (max: string) => `Son más de ${max} registros. Acota las fechas y vuelve a exportar.`,
+  pageFooter: (page: string, total: string) => `Página ${page} de ${total}`,
 } as const;

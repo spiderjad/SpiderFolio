@@ -98,6 +98,16 @@ function summaryOf(settings: FormSettingsView): string[] {
   return lines;
 }
 
+const RESPONSIBLE_TYPES = [
+  { id: "default", label: t.responsibleDefault },
+  { id: "person", label: t.responsiblePerson },
+  { id: "department", label: t.responsibleDepartment },
+];
+const FREQUENCIES = (["none", "daily", "weekly", "monthly"] as const).map((id) => ({
+  id,
+  label: t.frequencies[id],
+}));
+
 export function FormSettingsCard({ form }: { form: FormDetail }) {
   return (
     <Card className="grid content-start gap-3 p-4">
@@ -134,18 +144,8 @@ function SettingsEditor({ form }: { form: FormDetail }) {
     (draft.frequency === "daily" && draft.weekdays.length === 0) ||
     (periodic && draft.people.size + draft.departments.size === 0);
 
-  const responsibleTypes = useStaticSource("form-responsible", [
-    { id: "default", label: t.responsibleDefault },
-    { id: "person", label: t.responsiblePerson },
-    { id: "department", label: t.responsibleDepartment },
-  ]);
-  const frequencies = useStaticSource(
-    "form-frequency",
-    (["none", "daily", "weekly", "monthly"] as const).map((id) => ({
-      id,
-      label: t.frequencies[id],
-    })),
-  );
+  const responsibleTypes = useStaticSource("form-responsible", RESPONSIBLE_TYPES);
+  const frequencies = useStaticSource("form-frequency", FREQUENCIES);
   const departmentSource = useMemo<ComboboxSource>(
     () => ({
       key: ["w", workspaceSlug, "files", "department-options", space.id],
