@@ -276,6 +276,18 @@ export async function purgeTrashRoot(
         if (image.confirmedAt !== null) bytes += image.sizeBytes;
       }
     }
+    // A form's photos and signatures too (their rows go with the form and its records).
+    const formIds = nodes.filter((node) => node.type === "FORM").map((node) => node.id);
+    for (const ids of chunks(formIds, CHUNK)) {
+      const files = await tx.formFile.findMany({
+        where: { nodeId: { in: ids } },
+        select: { storageKey: true, sizeBytes: true, confirmedAt: true },
+      });
+      for (const file of files) {
+        keys.push(file.storageKey);
+        if (file.confirmedAt !== null) bytes += file.sizeBytes;
+      }
+    }
     // Hijos antes que padres (la clave foránea del árbol no admite lo contrario).
     const depth = new Map<string, number>();
     const parents = new Map(nodes.map((node) => [node.id, node.parentId]));

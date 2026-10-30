@@ -242,6 +242,8 @@ model Workspace {
   zipExports          ZipExport[]
   pageContents        PageContent[]
   formVersions        FormVersion[]
+  formRecords         FormRecord[]
+  formFiles           FormFile[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -553,6 +555,8 @@ model Node {
   versions            FileVersion[]
   pageContent         PageContent?
   formVersions        FormVersion[]
+  formRecords         FormRecord[]
+  formFiles           FormFile[]
   pageImages          PageImage[]
   threads             CommentThread[]
   mentions            Mention[]
@@ -741,6 +745,61 @@ model FormVersion {
 
   @@unique([nodeId, version])
   @@index([workspaceId])
+}
+
+/// A filled-in form (docs/spec/formularios.md): who, when, from where, the answers and the version
+/// they were filled with. Never edited or deleted: a mistaken one is voided (with its reason) and kept.
+model FormRecord {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  nodeId        String
+  /// The template version it was filled with (FormVersion.version of this form).
+  version       Int
+  answers       Json
+  /// Ids of the fields whose answer is non-conforming (computed by the server when it's sent).
+  nonConforming String[]
+  /// «app» or «qr»: where it was filled in from.
+  source        String
+  /// Membership that filled it in.
+  submittedById String
+  submittedAt   DateTime  @default(now())
+  voidedAt      DateTime?
+  voidedById    String?
+  voidReason    String?
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node       @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  files     FormFile[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, nodeId, submittedAt])
+  @@index([workspaceId, submittedById])
+}
+
+/// A photo or a signature of a record: uploaded while filling it in (recordId null), confirmed by its
+/// real bytes and tied to the record when it's sent. Counts for the company's storage. The ones never
+/// tied to a record are swept after a day (form-file-sweep.ts).
+model FormFile {
+  id          String    @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  fieldId     String
+  recordId    String?
+  storageKey  String    @unique
+  mimeType    String
+  sizeBytes   BigInt
+  /// Membership that uploaded it.
+  createdById String
+  createdAt   DateTime  @default(now())
+  /// null: requested, not uploaded yet.
+  confirmedAt DateTime?
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node        @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  record    FormRecord? @relation(fields: [recordId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, recordId])
+  @@index([confirmedAt, createdAt])
 }
 
 /// El texto de una página (nodo PAGE): documento Tiptap/ProseMirror validado por packages/content.

@@ -51,7 +51,13 @@ electrónica avanzada.
    `PUT /forms/:id/template` (`baseVersion`: otra versión más nueva es conflicto; los mismos campos no
    agregan versión), `GET /forms/:id/versions`, `GET /forms/:id/versions/:version`. Pantalla
    `/app/:slug/files/:spaceId/form/:formId`; «Nuevo › Formulario» en el explorador.
-2. Llenado desde el celular, fotos y firma; registros inmutables.
+2. **Llenado desde el celular, fotos y firma; registros inmutables** (hecha). Fotos y firma se suben antes
+   de enviar (`POST /forms/:id/files` → URL prefirmada → `…/confirm`, que mira los bytes reales; reducen
+   cuota) y se atan al registro al enviarlo (`POST /forms/:id/records` con `version` y `answers`); las que
+   no llegan a un registro se borran al día (`form-file-sweep.ts`). El servidor revisa cada respuesta con
+   la versión llenada (`modules/forms/answers.ts`) y calcula lo no conforme. `GET /forms/:id/records`
+   (cursor; los propios, o todos con EDIT), `GET /forms/:id/records/:recordId` y la URL corta de cada
+   adjunto. Pantallas `…/form/:formId/fill` (celular) y `…/form/:formId/r/:recordId`.
 3. No conformidades (aviso al responsable, que se elige en la plantilla: persona o departamento; por
    defecto el jefe del departamento del espacio) y formularios periódicos (diario, semanal, mensual;
    asignados a personas o departamentos; pendientes y vencidos avisados a las 8:00 de la empresa).

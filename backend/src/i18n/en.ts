@@ -756,4 +756,10 @@ export const formMessages: Catalog<typeof Es.formMessages> = {
   duplicateId: "Two fields or options have the same identifier.",
   rangeInverted: "The minimum can't be greater than the maximum.",
   unknownOption: "An option marked as non-conforming doesn't exist in the field.",
+  notAFileField: "That field isn't a photo or a signature.",
+  fileTooLarge: "The photo is over 10 MB.",
+  signatureType: "The signature has to be a PNG image.",
+  unknownVersion: "That version of the form doesn't exist.",
+  answersInvalid: "Check the marked answers.",
+  filesInvalid: "A photo or signature didn't upload properly. Add it again.",
 };

@@ -57,6 +57,8 @@ export const modelMetadata = {
       zipExports: "ZipExport",
       pageContents: "PageContent",
       formVersions: "FormVersion",
+      formRecords: "FormRecord",
+      formFiles: "FormFile",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -147,6 +149,8 @@ export const modelMetadata = {
       versions: "FileVersion",
       pageContent: "PageContent",
       formVersions: "FormVersion",
+      formRecords: "FormRecord",
+      formFiles: "FormFile",
       pageImages: "PageImage",
       threads: "CommentThread",
       mentions: "Mention",
@@ -173,6 +177,14 @@ export const modelMetadata = {
   ZipExport: { scope: "tenant", relations: { workspace: "Workspace" } },
   PageContent: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   FormVersion: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
+  FormRecord: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", node: "Node", files: "FormFile" },
+  },
+  FormFile: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", node: "Node", record: "FormRecord" },
+  },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {
     scope: "tenant",

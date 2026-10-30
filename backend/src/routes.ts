@@ -115,7 +115,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...adminDocumentRoutes(),
     ...notificationRoutes(),
     ...pageRoutes(deps),
-    ...formRoutes(),
+    ...formRoutes(deps),
     ...commentRoutes(deps),
     ...fileRoutes(deps),
     ...trashRoutes(deps),

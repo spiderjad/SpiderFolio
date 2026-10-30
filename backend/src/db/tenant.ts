@@ -84,6 +84,8 @@ export interface TenantDb {
   zipExport: TenantDelegate<PrismaClient["zipExport"], Op>;
   pageContent: TenantDelegate<PrismaClient["pageContent"], Op>;
   formVersion: TenantDelegate<PrismaClient["formVersion"], "findFirst" | "findMany" | "count" | "create">;
+  formRecord: TenantDelegate<PrismaClient["formRecord"], "findFirst" | "findMany" | "count" | "create">;
+  formFile: TenantDelegate<PrismaClient["formFile"], Op>;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -166,6 +168,9 @@ const delegates = {
   pageContent: { model: "PageContent", ops: [...readOps, ...writeOps] },
   // Versions are never edited or deleted: only read and added.
   formVersion: { model: "FormVersion", ops: ["findFirst", "findMany", "count", "create"] },
+  // Records are never edited or deleted here: only read and added (voiding comes with its own path).
+  formRecord: { model: "FormRecord", ops: ["findFirst", "findMany", "count", "create"] },
+  formFile: { model: "FormFile", ops: [...readOps, ...writeOps] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

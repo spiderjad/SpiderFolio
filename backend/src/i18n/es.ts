@@ -735,4 +735,10 @@ export const formMessages = {
   duplicateId: "Hay dos campos u opciones con el mismo identificador.",
   rangeInverted: "El mínimo no puede ser mayor que el máximo.",
   unknownOption: "Una opción marcada como no conforme no existe en el campo.",
+  notAFileField: "Ese campo no es de foto ni de firma.",
+  fileTooLarge: "La foto pesa más de 10 MB.",
+  signatureType: "La firma tiene que ser una imagen PNG.",
+  unknownVersion: "Esa versión del formulario no existe.",
+  answersInvalid: "Revisa las respuestas marcadas.",
+  filesInvalid: "Alguna foto o firma no se subió bien. Vuelve a cargarla.",
 } as const;

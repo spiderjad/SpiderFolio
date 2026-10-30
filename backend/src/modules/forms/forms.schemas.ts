@@ -100,3 +100,25 @@ export const FormVersionParamsSchema = z.object({
   id: Id,
   version: z.coerce.number().int().min(1),
 });
+
+/** A photo or signature for a field: re-encoded by the browser (JPG, PNG or WebP; the signature PNG). */
+export const StartFileSchema = z.strictObject({
+  fieldId: FieldId,
+  contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  size: z
+    .number()
+    .int()
+    .min(1)
+    .max(10 * 1024 * 1024),
+});
+
+/** A filled-in form: the version it was filled with and the answers by field id. */
+export const SubmitRecordSchema = z.strictObject({
+  version: z.number().int().min(1),
+  answers: z.record(FieldId, z.unknown()),
+  source: z.enum(["app", "qr"]).default("app"),
+});
+
+export const FormFileParamsSchema = z.object({ id: Id, fileId: Id });
+export const RecordParamsSchema = z.object({ id: Id, recordId: Id });
+export const RecordFileParamsSchema = z.object({ id: Id, recordId: Id, fileId: Id });

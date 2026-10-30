@@ -87,3 +87,90 @@ export const formsApi = {
 export function newId(prefix: string): string {
   return `${prefix}${Math.random().toString(36).slice(2, 10)}`;
 }
+
+// ─── Records (phase 2) ──────────────────────────────────────────────────────────
+
+export type Answer = string | number | string[];
+
+export interface RecordView {
+  id: string;
+  formId: string;
+  version: number;
+  answers: Record<string, Answer>;
+  nonConforming: string[];
+  source: "app" | "qr";
+  submittedAt: string;
+  submittedBy: { id: string; name: string } | null;
+  voided: { at: string; reason: string; by: { id: string; name: string } | null } | null;
+}
+
+export interface RecordDetail {
+  record: RecordView;
+  /** The fields of the version it was filled with. */
+  fields: FormField[];
+  files: { id: string; fieldId: string; mimeType: string }[];
+}
+
+/** What the server says about each answer it didn't take. */
+export interface AnswerProblem {
+  fieldId: string;
+  reason: "required" | "invalid";
+}
+
+export const recordsKeys = {
+  list: (slug: string, formId: string) => ["w", slug, "forms", formId, "records"] as const,
+  record: (slug: string, formId: string, recordId: string) =>
+    ["w", slug, "forms", formId, "records", recordId] as const,
+  file: (slug: string, formId: string, recordId: string, fileId: string) =>
+    ["w", slug, "forms", formId, "records", recordId, "files", fileId] as const,
+};
+
+export const recordsApi = {
+  submit: (
+    slug: string,
+    formId: string,
+    body: { version: number; answers: Record<string, Answer>; source: "app" | "qr" },
+  ) => api<{ record: RecordView }>(w(slug, `/forms/${formId}/records`), { method: "POST", body }),
+  list: (slug: string, formId: string, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<RecordView>>(
+      w(
+        slug,
+        `/forms/${formId}/records${cursor === undefined ? "" : `?cursor=${encodeURIComponent(cursor)}`}`,
+      ),
+      { signal },
+    ),
+  get: (slug: string, formId: string, recordId: string) =>
+    api<RecordDetail>(w(slug, `/forms/${formId}/records/${recordId}`)),
+  fileUrl: (slug: string, formId: string, recordId: string, fileId: string) =>
+    api<{ url: string }>(w(slug, `/forms/${formId}/records/${recordId}/files/${fileId}`)),
+};
+
+/**
+ * Uploads a photo or a signature for a field: asks for a presigned upload, sends the bytes straight to
+ * storage and confirms it (the server checks its real bytes). Returns the file id for the answer.
+ */
+export async function uploadFormFile(
+  slug: string,
+  formId: string,
+  fieldId: string,
+  blob: Blob,
+  contentType: "image/webp" | "image/png" | "image/jpeg",
+): Promise<string> {
+  const { fileId, url } = await api<{ fileId: string; url: string }>(
+    w(slug, `/forms/${formId}/files`),
+    {
+      method: "POST",
+      body: { fieldId, contentType, size: blob.size },
+    },
+  );
+  const put = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: blob,
+  });
+  if (!put.ok) throw new Error("upload");
+  await api<{ fileId: string }>(w(slug, `/forms/${formId}/files/${fileId}/confirm`), {
+    method: "POST",
+  });
+  return fileId;
+}

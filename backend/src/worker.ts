@@ -26,6 +26,7 @@ import { sendReadingReminders } from "./modules/documents/readings.job.ts";
 import { notifyExpiringAccess } from "./modules/notifications/expiry-notices.ts";
 import { extractFileText, reindexSearch } from "./modules/search/search-jobs.ts";
 import { sweepPageImages } from "./modules/nodes/page-image-sweep.ts";
+import { sweepFormFiles } from "./modules/forms/form-file-sweep.ts";
 import { runZipExport } from "./modules/downloads/zip-export.ts";
 import { runZipImport } from "./modules/imports/zip-import.ts";
 import { sweepFileVersions } from "./modules/files/version-retention.ts";
@@ -147,6 +148,7 @@ export async function startWorker(boss: PgBoss, deps: WorkerDeps): Promise<void>
     for (const job of queued) {
       await expireTrash({ ...deps, jobs }, job.data);
       await sweepPageImages(deps);
+      await sweepFormFiles(deps);
       await sweepFileVersions({ ...deps, jobs });
     }
   });

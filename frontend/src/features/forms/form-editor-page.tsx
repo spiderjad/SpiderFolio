@@ -50,6 +50,7 @@ import {
   type FormField,
   type Option,
 } from "./forms-api";
+import { RecordsList } from "./records";
 import { texts } from "@/i18n";
 
 const t = texts.forms;
@@ -231,6 +232,14 @@ function Editor({ form }: { form: FormDetail }) {
           <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight">{node.name}</h1>
           <Badge tone="primary">{t.editor.version(form.template.version)}</Badge>
           {editable && dirty && <Badge tone="warning">{t.editor.unsaved}</Badge>}
+          {form.template.fields.length > 0 && (
+            <Button asChild className="ml-auto">
+              <Link to={`/app/${workspaceSlug}/files/${space.id}/form/${node.id}/fill`}>
+                <ClipboardList className="size-4" aria-hidden="true" />
+                {t.fill.open}
+              </Link>
+            </Button>
+          )}
         </div>
         <p className="max-w-3xl text-xs text-muted-foreground">
           {form.canEdit ? t.editor.intro : t.editor.readOnly}
@@ -332,6 +341,7 @@ function Editor({ form }: { form: FormDetail }) {
           onView={setViewing}
         />
       </div>
+      <RecordsList formId={node.id} spaceId={space.id} seesAll={form.canEdit} />
     </div>
   );
 }

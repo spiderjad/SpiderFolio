@@ -18,6 +18,9 @@ interface Ids {
   pageId: string;
   /** A form of B (with its version 1). */
   formId: string;
+  /** A record of that form, and its photo. */
+  recordId: string;
+  fileId: string;
 }
 
 interface IsolationCase {
@@ -439,6 +442,34 @@ const cases: IsolationCase[] = [
     url: (ids) => `/forms/${ids.formId}/versions/1`,
   },
   {
+    method: "post",
+    path: "/forms/:id/files",
+    url: (ids) => `/forms/${ids.formId}/files`,
+    body: { fieldId: "pic", contentType: "image/png", size: 10 },
+  },
+  {
+    method: "post",
+    path: "/forms/:id/files/:fileId/confirm",
+    url: (ids) => `/forms/${ids.formId}/files/${ids.fileId}/confirm`,
+  },
+  {
+    method: "post",
+    path: "/forms/:id/records",
+    url: (ids) => `/forms/${ids.formId}/records`,
+    body: { version: 1, answers: {} },
+  },
+  { method: "get", path: "/forms/:id/records", url: (ids) => `/forms/${ids.formId}/records` },
+  {
+    method: "get",
+    path: "/forms/:id/records/:recordId",
+    url: (ids) => `/forms/${ids.formId}/records/${ids.recordId}`,
+  },
+  {
+    method: "get",
+    path: "/forms/:id/records/:recordId/files/:fileId",
+    url: (ids) => `/forms/${ids.formId}/records/${ids.recordId}/files/${ids.fileId}`,
+  },
+  {
     method: "put",
     path: "/pages/:id/content",
     url: (ids) => `/pages/${ids.pageId}/content`,
@@ -807,6 +838,8 @@ let bSpaceId = "";
 let bNodeId = "";
 let bPageId = "";
 let bFormId = "";
+let bRecordId = "";
+let bFileId = "";
 
 beforeAll(async () => {
   ctx = await createTestContext();
@@ -885,10 +918,38 @@ beforeAll(async () => {
       nodeId: bFormId,
       workspaceId: b.workspaceId,
       version: 1,
-      fields: [],
+      fields: [{ id: "pic", type: "photo", label: "Foto", required: false, max: 1 }],
       createdById: b.membershipId,
     },
   });
+  bRecordId = (
+    await ctx.prisma.formRecord.create({
+      data: {
+        workspaceId: b.workspaceId,
+        nodeId: bFormId,
+        version: 1,
+        answers: {},
+        nonConforming: [],
+        source: "app",
+        submittedById: b.membershipId,
+      },
+    })
+  ).id;
+  bFileId = (
+    await ctx.prisma.formFile.create({
+      data: {
+        workspaceId: b.workspaceId,
+        nodeId: bFormId,
+        fieldId: "pic",
+        recordId: bRecordId,
+        storageKey: `${b.workspaceId}/forms/${bFormId}/aislamiento.png`,
+        mimeType: "image/png",
+        sizeBytes: 10n,
+        createdById: b.membershipId,
+        confirmedAt: new Date(),
+      },
+    })
+  ).id;
 });
 
 afterAll(async () => {
@@ -911,6 +972,8 @@ describe("aislamiento entre tenants", () => {
       nodeId: bNodeId,
       pageId: bPageId,
       formId: bFormId,
+      recordId: bRecordId,
+      fileId: bFileId,
     })}`;
     const res = await request(app)
       [c.method](url)
@@ -934,6 +997,8 @@ describe("aislamiento entre tenants", () => {
             nodeId: bNodeId,
             pageId: bPageId,
             formId: bFormId,
+            recordId: bRecordId,
+            fileId: bFileId,
           })}`,
         )
         .set("Authorization", `Bearer ${b.token}`);
