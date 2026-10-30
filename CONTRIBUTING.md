@@ -74,6 +74,27 @@ docker compose cp ../backups/spiderfolio-dev.dump postgres:/tmp/dev.dump
 docker compose exec postgres pg_restore -U spiderfolio -d spiderfolio --clean --if-exists --no-owner /tmp/dev.dump
 ```
 
+## Testing the connector for Claude from your PC
+
+Claude connects from Anthropic's servers, so it can't reach `localhost`. To try the connector
+([docs/spec/conector-mcp.md](docs/spec/conector-mcp.md)) against a Docker test installation on your PC,
+expose it for a while with a Cloudflare quick tunnel (no account). Step by step, with common
+problems: [Test the connector from your PC](https://spiderfolio.spiderjad.com/en/docs/test-the-connector).
+
+1. Install `cloudflared` (`winget install --id Cloudflare.cloudflared` or `brew install cloudflared`).
+2. `cloudflared tunnel --no-autoupdate --url http://localhost:8080` prints a `https://….trycloudflare.com`
+   address. Leave it running.
+3. Set that address as `APP_URL` in the installation's `.env` and run `docker compose up -d app worker`.
+   While it lasts, open SpiderFolio through the tunnel on your PC too: through `localhost` the session
+   ends on every reload (refresh only accepts `APP_URL` as origin).
+4. In Claude, add a custom connector with `<tunnel address>/mcp` and connect.
+5. When done: Ctrl+C, `APP_URL=http://localhost:8080` again, `docker compose up -d app worker`, and remove
+   the connector in Claude.
+
+The installation is reachable from the internet while the tunnel is open: only a test installation,
+with two-step verification on for the owner. Without a tunnel, `npx @modelcontextprotocol/inspector`
+against `http://localhost:8080/mcp` goes through the same OAuth flow and lists the tools.
+
 ## Project rules
 
 They are in [CLAUDE.md](CLAUDE.md) and in [docs/spec/](docs/spec/) (in Spanish). The most important

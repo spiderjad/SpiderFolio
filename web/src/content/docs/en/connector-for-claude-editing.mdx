@@ -50,6 +50,12 @@ Same as with the free one (the full steps, with screenshots, are in
    `https://docs.yourcompany.com/mcp`).
 3. **Add** and **Connect**; in SpiderFolio pick the company and click **Allow**.
 
+**On a real server, use its own address**: `https://your-domain/mcp`, that is, the installation's
+`APP_URL` from its `.env` file with `/mcp` at the end (for example, `https://docs.yourcompany.com/mcp`).
+Never `localhost` or an internal IP: Claude can't reach them. `https://….trycloudflare.com` addresses are
+only for [testing the connector from a PC](/en/docs/test-the-connector) and change every time. If your
+SpiderFolio's address changes, each person edits the connector in Claude and connects again.
+
 <Shot name="autorizar-app" alt="SpiderFolio's Connect an app screen, where the company is picked and Allow is clicked" />
 
 The screen says what Claude will be able to do. People with a **reader** seat can only give reading, even

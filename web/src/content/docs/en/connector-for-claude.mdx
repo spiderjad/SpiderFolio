@@ -43,6 +43,12 @@ Connector for Claude**: new connections and calls from existing ones are refused
 The **connector URL** is your SpiderFolio's address followed by `/mcp`, for example
 `https://docs.yourcompany.com/mcp`. You see it, with a **Copy** button, in **My profile › Connected apps**.
 
+**On a real server, use its own address**: `https://your-domain/mcp`, that is, the installation's
+`APP_URL` from its `.env` file with `/mcp` at the end (for example, `https://docs.yourcompany.com/mcp`).
+Never `localhost` or an internal IP: Claude can't reach them. `https://….trycloudflare.com` addresses are
+only for [testing the connector from a PC](/en/docs/test-the-connector) and change every time. If your
+SpiderFolio's address changes, each person edits the connector in Claude and connects again.
+
 In Claude:
 
 1. Open **Customize › Connectors** and click **Add custom connector**.

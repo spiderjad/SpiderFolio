@@ -47,6 +47,12 @@ La **URL del conector** es la dirección de tu SpiderFolio seguida de `/mcp`, po
 `https://docs.tuempresa.com/mcp`. La ves, con un botón **Copiar**, en **Mi perfil › Aplicaciones
 conectadas**.
 
+**En un servidor real se usa su propia dirección**: `https://su-dominio/mcp`, es decir, el `APP_URL` del
+archivo `.env` de la instalación con `/mcp` al final (por ejemplo, `https://docs.tuempresa.com/mcp`).
+Nunca `localhost` ni una IP interna: Claude no las alcanza. Las direcciones `https://….trycloudflare.com`
+son solo para [probar el conector desde una PC](/es/docs/probar-el-conector) y cambian cada vez. Si la
+dirección de tu SpiderFolio cambia, cada persona edita el conector en Claude y vuelve a conectar.
+
 En Claude (los nombres en inglés van entre paréntesis, por si tu Claude está en inglés):
 
 1. Abre **Personalizar › Conectores** (Customize › Connectors) y pulsa **Agregar conector

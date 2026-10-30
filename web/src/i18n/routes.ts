@@ -62,6 +62,7 @@ export const DOC_KEYS = [
   "architecture",
   "contributing",
   "createPlugin",
+  "testConnector",
 ] as const;
 export type DocKey = (typeof DOC_KEYS)[number];
 

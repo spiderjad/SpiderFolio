@@ -55,5 +55,6 @@ export const routes: LocaleRoutes = {
     architecture: "architecture",
     contributing: "contributing",
     createPlugin: "create-a-plugin",
+    testConnector: "test-the-connector",
   },
 };

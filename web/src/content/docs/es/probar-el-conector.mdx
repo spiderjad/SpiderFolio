@@ -1,0 +1,106 @@
+---
+title: "Probar el conector desde tu PC"
+description: "Conecta Claude a una instalación de prueba en tu computadora con un túnel de Cloudflare sin cuenta, o pruébalo sin internet con MCP Inspector."
+group: desarrolladores
+order: 4
+icon: sparkles
+---
+
+Claude se conecta desde los servidores de Anthropic, así que no llega a `http://localhost`. Para probar el
+[conector para Claude](/es/docs/conector-para-claude) con una instalación en tu computadora, la expones un
+rato con un **túnel rápido de Cloudflare** (gratis y sin cuenta), que le da una dirección
+`https://….trycloudflare.com`. En un servidor real no hace falta nada de esto: se usa su propia dirección,
+`https://su-dominio/mcp`.
+
+**Importante:** mientras el túnel está abierto, **tu instalación de prueba queda accesible desde
+internet** para quien conozca la dirección. Úsalo solo con una instalación de prueba (nunca con datos
+reales), con la verificación en dos pasos activa en el propietario, y ciérralo al terminar.
+
+## Antes de empezar
+
+- Una instalación con Docker en tu PC que responda en `http://localhost:8080` (la de
+  [Instalar](/es/docs/instalar)), en la versión 0.4.1 o posterior.
+- El plugin [Conector para Claude](/es/docs/conector-para-claude) instalado en la empresa (o
+  [Conector para Claude: edición](/es/docs/conector-para-claude-edicion) para probar la escritura).
+- El propietario con la [verificación en dos pasos](/es/docs/seguridad-y-2fa) activa.
+- Una cuenta de Claude con conectores personalizados (el plan Free admite uno).
+
+## 1. Instalar cloudflared (una vez)
+
+- **Windows**: `winget install --id Cloudflare.cloudflared` y abre otra ventana de PowerShell.
+- **Mac**: `brew install cloudflared`.
+- **Linux**: el paquete de [la página de descargas de Cloudflare](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+
+## 2. Abrir el túnel
+
+En una terminal (déjala abierta mientras pruebas):
+
+```sh
+cloudflared tunnel --no-autoupdate --url http://localhost:8080
+```
+
+Al cabo de unos segundos muestra una línea con la dirección, por ejemplo
+`https://palabras-al-azar.trycloudflare.com`. Cambia cada vez que abres el túnel.
+
+## 3. Poner esa dirección en APP_URL
+
+SpiderFolio arma los enlaces y valida el inicio de sesión con `APP_URL`, así que tiene que ser la del túnel:
+
+1. En la carpeta de la instalación, edita `.env` y cambia la línea `APP_URL`:
+   ```sh
+   APP_URL=https://palabras-al-azar.trycloudflare.com
+   ```
+2. Reinicia la app (en otra terminal, desde esa carpeta):
+   ```sh
+   docker compose up -d app worker
+   ```
+3. Comprueba que responde por el túnel: abre `https://palabras-al-azar.trycloudflare.com/api/health`.
+
+Mientras dure la prueba, **entra a SpiderFolio por la dirección del túnel también desde tu PC**. Por
+`localhost:8080` la sesión se cierra cada vez que recargas la página, porque el servidor solo acepta
+renovar la sesión desde `APP_URL` (protección contra pedidos de otros sitios).
+
+## 4. Conectar Claude
+
+1. En Claude: **Personalizar › Conectores › Agregar conector personalizado** (Customize › Connectors ›
+   Add custom connector).
+2. **Nombre**: `SpiderFolio`. **URL del servidor MCP**: la del túnel con `/mcp` al final, por ejemplo
+   `https://palabras-al-azar.trycloudflare.com/mcp`.
+3. **Agregar** y **Conectar**. Se abre SpiderFolio: inicia sesión, elige la empresa y pulsa **Permitir**.
+
+Para probar, pregúntale por ejemplo:
+
+- «¿Qué documentos tengo pendientes de leer?»
+- «¿Qué vence en los próximos 30 días?»
+- «Busca el procedimiento de limpieza y resúmemelo.»
+- Con el plugin de edición: «Crea un borrador llamado "Prueba Claude" en el espacio Calidad con tres
+  puntos sobre la limpieza de la cortadora.»
+
+Lo que hizo Claude aparece en **Administración › Auditoría** como «*nombre* vía Claude».
+
+## 5. Cerrar
+
+1. En la terminal del túnel, **Ctrl+C**.
+2. En `.env`, vuelve `APP_URL=http://localhost:8080` y reinicia: `docker compose up -d app worker`.
+3. En Claude, quita el conector de prueba: esa dirección ya no existe.
+
+## Sin internet: MCP Inspector
+
+Para revisar las herramientas sin Claude ni túnel, con `APP_URL=http://localhost:8080`:
+
+```sh
+npx @modelcontextprotocol/inspector
+```
+
+En el Inspector elige **Streamable HTTP**, URL `http://localhost:8080/mcp`, y pulsa **Connect**: hace el
+mismo inicio de sesión (OAuth) que Claude. **List Tools** muestra las herramientas de esa conexión: 8 de
+lectura, y 7 más de escritura si la empresa tiene el plugin de edición y la persona plaza completa.
+
+## Problemas frecuentes
+
+- **«La aplicación que pidió conectarse no está reconocida»**: la instalación es anterior a la 0.4.1, o
+  no sale a internet para leer el documento del cliente de Claude (`https://claude.ai/oauth/…`).
+- **Claude solo lee aunque tengas el plugin de edición**: la conexión se hizo antes de instalarlo (o con
+  una versión anterior a la 0.4.1). En Claude, desconecta y vuelve a conectar; la pantalla de autorizar
+  tiene que decir que pide crear y editar.
+- **Se cierra la sesión al recargar**: estás entrando por `localhost` con el túnel abierto (paso 3).
