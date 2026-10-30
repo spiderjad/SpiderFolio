@@ -44,13 +44,77 @@ function sameOrigin(path: string): string {
   return url.href;
 }
 
-function addStyles(href: string): void {
-  if (document.querySelector(`link[data-plugin-styles="${CSS.escape(href)}"]`) !== null) return;
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = href;
-  link.dataset.pluginStyles = href;
-  document.head.append(link);
+/** A style rule's place in the cascade: its @layer/@media/@supports wrappers and its selector. */
+function ruleKeys(rules: CSSRuleList, context: string, keys: Set<string>): void {
+  for (const rule of Array.from(rules)) {
+    if (rule instanceof CSSStyleRule) {
+      keys.add(`${context}|${rule.selectorText}`);
+    } else if (rule instanceof CSSGroupingRule) {
+      ruleKeys(rule.cssRules, `${context}>${groupName(rule)}`, keys);
+    }
+  }
+}
+
+/**
+ * One spelling per media condition: the app's stylesheet says `(width >= 40rem)` and a plugin's,
+ * minified by another tool, `(min-width: 40rem)`; both are the same breakpoint.
+ */
+function sameMedia(text: string): string {
+  return text
+    .replace(/\(\s*width\s*>=\s*([^)]+?)\s*\)/gu, "(min-width: $1)")
+    .replace(/\(\s*width\s*<=\s*([^)]+?)\s*\)/gu, "(max-width: $1)")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function groupName(rule: CSSGroupingRule): string {
+  if (rule instanceof CSSLayerBlockRule) return `@layer ${rule.name}`;
+  if (rule instanceof CSSMediaRule) return `@media ${sameMedia(rule.media.mediaText)}`;
+  if (rule instanceof CSSSupportsRule) return `@supports ${rule.conditionText}`;
+  return "@group";
+}
+
+/** Deletes from `container` every style rule the app's stylesheet already has, in the same place. */
+function dropShared(
+  container: CSSStyleSheet | CSSGroupingRule,
+  context: string,
+  app: Set<string>,
+): void {
+  for (let index = container.cssRules.length - 1; index >= 0; index -= 1) {
+    const rule = container.cssRules[index];
+    if (rule instanceof CSSStyleRule && app.has(`${context}|${rule.selectorText}`)) {
+      container.deleteRule(index);
+    } else if (rule instanceof CSSGroupingRule) {
+      dropShared(rule, `${context}>${groupName(rule)}`, app);
+    }
+  }
+}
+
+const added = new Set<string>();
+
+/**
+ * A plugin's stylesheet, after the app's. It carries the Tailwind utilities the plugin uses in the
+ * same «utilities» layer, so a plain `.inline-flex` of the plugin, coming later, would beat the app's
+ * own `lg:hidden` and break the app's screens. The rules the app already has are dropped from it: the
+ * app's screens keep their order and the plugin's own classes still apply.
+ */
+async function addStyles(href: string): Promise<void> {
+  if (added.has(href)) return;
+  added.add(href);
+  const response = await fetch(href, { credentials: "same-origin" });
+  if (!response.ok) throw new Error(`Estilos del plugin: HTTP ${String(response.status)}`);
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(await response.text());
+  const app = new Set<string>();
+  for (const own of Array.from(document.styleSheets)) {
+    try {
+      ruleKeys(own.cssRules, "", app);
+    } catch {
+      // A stylesheet that can't be read (another origin) has nothing of the app's.
+    }
+  }
+  dropShared(sheet, "", app);
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 }
 
 /** Loads the built plugins that aren't compiled in. One that fails stays out (logged); never throws. */
@@ -63,7 +127,7 @@ async function loadBundles(plugins: readonly ActivePlugin[]): Promise<FrontendPl
         const { bundle } = plugin;
         if (bundle === null) return null;
         try {
-          if (bundle.styles !== null) addStyles(sameOrigin(bundle.styles));
+          if (bundle.styles !== null) await addStyles(sameOrigin(bundle.styles));
           const module = (await import(/* @vite-ignore */ sameOrigin(bundle.script))) as {
             default?: FrontendPlugin;
           };
