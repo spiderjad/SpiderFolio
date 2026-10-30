@@ -383,6 +383,7 @@ describe("forTenant: transacciones", () => {
           "mention",
           "node",
           "notification",
+          "oAuthGrant",
           "pageContent",
           "pageImage",
           "permission",
