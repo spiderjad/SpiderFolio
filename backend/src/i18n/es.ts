@@ -741,4 +741,38 @@ export const formMessages = {
   unknownVersion: "Esa versión del formulario no existe.",
   answersInvalid: "Revisa las respuestas marcadas.",
   filesInvalid: "Alguna foto o firma no se subió bien. Vuelve a cargarla.",
+  weekdaysRequired: "Elige al menos un día de la semana.",
+  assigneesRequired: "Elige al menos una persona o un departamento que lo llene.",
+  unknownPeople: "Alguna de esas personas o departamentos no está en la empresa.",
+} as const;
+
+/** Avisos de formularios (docs/spec/formularios.md): no conformidades y períodos. */
+export const formNoticeTexts = {
+  greeting: (name: string) => `Hola ${name}:`,
+  form_nonconforming: {
+    subject: (what: string) => `No conforme: ${what}`,
+    title: "Un registro tiene respuestas no conformes",
+    body: (who: string, what: string, fields: string) =>
+      `${who} envió un registro de \u00ab${what}\u00bb con respuestas fuera de lo esperado: ${fields}.`,
+    action: "Ver el registro",
+  },
+  form_due: {
+    subject: (what: string) => `Para llenar: ${what}`,
+    title: "Hay un formulario para llenar",
+    body: (what: string, period: string) =>
+      `Toca llenar \u00ab${what}\u00bb (${period}). Con un registro de cualquiera de las personas asignadas, queda hecho.`,
+    action: "Llenar el formulario",
+  },
+  form_overdue: {
+    subject: (what: string) => `Sin registro: ${what}`,
+    title: "Un formulario quedó sin llenar",
+    body: (what: string, period: string) => `Nadie llenó \u00ab${what}\u00bb en ${period}.`,
+    action: "Abrir el formulario",
+  },
+  periods: {
+    day: (date: string) => `el ${date}`,
+    week: (monday: string) => `la semana del ${monday}`,
+    month: (month: string) => month,
+  },
+  footnote: "Recibes este aviso por el formulario en el que participas o del que eres responsable.",
 } as const;

@@ -35,6 +35,8 @@ export const EmailJobSchema = z.discriminatedUnion("kind", [
   // Aviso de un documento controlado (aprobación pendiente, aprobado o rechazado, lectura…): el worker
   // lee la Notification y arma el texto; en la cola solo viaja el id.
   z.strictObject({ kind: z.literal("document-notice"), notificationId: z.string().min(1) }),
+  // A form's notice (non-conformity, period due or overdue): the worker reads the Notification.
+  z.strictObject({ kind: z.literal("form-notice"), notificationId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-ready"), exportId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-failed"), exportId: z.string().min(1) }),
 ]);
@@ -175,6 +177,11 @@ export const queues = {
     schema: MaintenanceJobSchema,
     options: { retryLimit: 2, expireInSeconds: 900, deleteAfterSeconds: 7 * 24 * 3600 },
   },
+  // Periodic forms: due and overdue periods, at 8:00 in each company's zone.
+  "form-reminders": {
+    schema: MaintenanceJobSchema,
+    options: { retryLimit: 2, expireInSeconds: 900, deleteAfterSeconds: 7 * 24 * 3600 },
+  },
   // Semanal: recorta el registro de auditoría según la retención que fija cada workspace (si fija una).
   "audit-retention": {
     schema: MaintenanceJobSchema,
@@ -205,6 +212,7 @@ export const schedules = [
   { queue: "audit-retention", cron: "20 4 * * 0", tz: "UTC" },
   { queue: "access-expiry-notices", cron: "10 * * * *", tz: "UTC" },
   { queue: "reading-reminders", cron: "5 * * * *", tz: "UTC" },
+  { queue: "form-reminders", cron: "7 * * * *", tz: "UTC" },
   { queue: "search-reindex", cron: "40 2 * * *", tz: "UTC" },
   { queue: "bian-index", cron: "* * * * *", tz: "UTC" },
 ] as const;

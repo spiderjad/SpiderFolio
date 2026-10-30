@@ -6,7 +6,7 @@ import { renderEmail } from "../emails/layout.ts";
 import { loadTenantContext } from "../middleware/tenant.ts";
 import { accessActorOf, loadAccess } from "../modules/access/access.ts";
 import { buildEmail, type EmailContext } from "../emails/templates.ts";
-import { emailChangeTexts, emailTexts } from "../i18n/index.ts";
+import { emailChangeTexts, emailTexts, formNoticeTexts } from "../i18n/index.ts";
 import { withLocale } from "../i18n/locales.ts";
 import { emailLocale } from "./email-locale.ts";
 import { alertFailedEmail } from "../modules/email-settings/system-email.ts";
@@ -288,9 +288,9 @@ async function sendSharedEmail(
           ? `${base}/form/${node.id}`
           : node.type === "FOLDER"
             ? `${base}/f/${node.id}`
-          : node.parentId === null
-            ? base
-            : `${base}/f/${node.parentId}`;
+            : node.parentId === null
+              ? base
+              : `${base}/f/${node.parentId}`;
   const email = buildEmail(job, {
     recipientName: recipient.user.name,
     appUrl: deps.appUrl,
@@ -375,8 +375,8 @@ async function sendDocumentNoticeEmail(
       : node.type === "FORM"
         ? `${base}/form/${node.id}`
         : node.parentId === null
-        ? base
-        : `${base}/f/${node.parentId}`;
+          ? base
+          : `${base}/f/${node.parentId}`;
   const email = buildEmail(job, {
     recipientName: recipient.user.name,
     appUrl: deps.appUrl,
@@ -397,6 +397,107 @@ async function sendDocumentNoticeEmail(
   await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
 }
 
+/** A period's key in words: «el 2 de noviembre de 2026», «la semana del 2 de noviembre…», «noviembre de 2026». */
+function periodWords(key: string): string {
+  const p = formNoticeTexts.periods;
+  if (/^\d{4}-\d{2}$/u.test(key)) {
+    return p.month(
+      new Intl.DateTimeFormat(currentLocale(), {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(new Date(`${key}-01T12:00:00Z`)),
+    );
+  }
+  const day = new Intl.DateTimeFormat(currentLocale(), {
+    dateStyle: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${key}T12:00:00Z`));
+  return p.day(day);
+}
+
+/** A form's notice: only to whoever is still active and still sees the form. */
+async function sendFormNoticeEmail(
+  deps: WorkerDeps,
+  job: Extract<EmailJob, { kind: "form-notice" }>,
+): Promise<void> {
+  const notice = await deps.prisma.notification.findUnique({ where: { id: job.notificationId } });
+  if (notice === null || notice.nodeId === null || notice.detail === null) return;
+  const kind = (["form_nonconforming", "form_due", "form_overdue"] as const).find(
+    (candidate) => candidate === notice.kind,
+  );
+  if (kind === undefined) return;
+  const [node, recipient, actor, settings] = await Promise.all([
+    deps.prisma.node.findFirst({
+      where: { id: notice.nodeId, trashedAt: null, type: "FORM" },
+      select: { id: true, name: true, spaceId: true, workspace: { select: { slug: true } } },
+    }),
+    deps.prisma.membership.findFirst({
+      where: { id: notice.membershipId, status: "ACTIVE" },
+      select: { userId: true, user: { select: { email: true, name: true } } },
+    }),
+    notice.actorId === null
+      ? null
+      : deps.prisma.membership.findFirst({
+          where: { id: notice.actorId },
+          select: { user: { select: { name: true } } },
+        }),
+    deps.prisma.formSettings.findUnique({
+      where: { nodeId: notice.nodeId },
+      select: { frequency: true },
+    }),
+  ]);
+  if (node === null || recipient === null || recipient.user.email === null) return;
+  const loaded = await loadTenantContext(deps.prisma, { id: notice.workspaceId }, recipient.userId);
+  if (loaded === null) return;
+  const access = await loadAccess(loaded.db, accessActorOf({ tenant: loaded.tenant }), {
+    nodeIds: [node.id],
+    spaceIds: [node.spaceId],
+  });
+  if (access.ofNode(node.id) === null) return;
+  const base = `/app/${node.workspace.slug}/files/${node.spaceId}/form/${node.id}`;
+  let detail: string;
+  let path: string;
+  if (kind === "form_nonconforming") {
+    const record = await deps.prisma.formRecord.findFirst({
+      where: { id: notice.detail, nodeId: node.id },
+      select: { id: true, version: true, nonConforming: true },
+    });
+    if (record === null) return;
+    const version = await deps.prisma.formVersion.findUnique({
+      where: { nodeId_version: { nodeId: node.id, version: record.version } },
+      select: { fields: true },
+    });
+    const labels = new Map(
+      ((version?.fields ?? []) as { id?: unknown; label?: unknown }[]).map((field) => [
+        String(field.id),
+        String(field.label),
+      ]),
+    );
+    detail = record.nonConforming.map((id) => labels.get(id) ?? id).join(", ");
+    path = `${base}/r/${record.id}`;
+  } else {
+    const words = periodWords(notice.detail);
+    detail =
+      settings?.frequency === "weekly"
+        ? formNoticeTexts.periods.week(words.replace(/^\S+\s/u, ""))
+        : words;
+    path = kind === "form_due" ? `${base}/fill` : base;
+  }
+  const email = buildEmail(job, {
+    recipientName: recipient.user.name,
+    appUrl: deps.appUrl,
+    formNotice: {
+      kind,
+      who: actor?.user.name ?? emailTexts.someone,
+      what: node.name,
+      detail,
+      url: new URL(path, deps.appUrl).toString(),
+    },
+  });
+  await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
+}
+
 export async function sendEmailJob(deps: WorkerDeps, payload: unknown): Promise<void> {
   const job: EmailJob = EmailJobSchema.parse(payload);
   // Todo el email (textos, fechas, tamaños) en el idioma del destinatario.
@@ -411,6 +512,10 @@ async function sendEmail(deps: WorkerDeps, job: EmailJob): Promise<void> {
   }
   if (job.kind === "document-notice") {
     await sendDocumentNoticeEmail(deps, job);
+    return;
+  }
+  if (job.kind === "form-notice") {
+    await sendFormNoticeEmail(deps, job);
     return;
   }
   if (job.kind === "shared") {

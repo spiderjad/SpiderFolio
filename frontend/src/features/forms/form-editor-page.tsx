@@ -50,6 +50,7 @@ import {
   type FormField,
   type Option,
 } from "./forms-api";
+import { FormSettingsCard } from "./form-settings";
 import { RecordsList } from "./records";
 import { texts } from "@/i18n";
 
@@ -334,14 +335,17 @@ function Editor({ form }: { form: FormDetail }) {
             </>
           )}
         </div>
-        <Versions
-          formId={node.id}
-          current={form.template.version}
-          viewing={viewing}
-          onView={setViewing}
-        />
+        <div className="grid min-w-0 content-start gap-4">
+          <FormSettingsCard form={form} />
+          <Versions
+            formId={node.id}
+            current={form.template.version}
+            viewing={viewing}
+            onView={setViewing}
+          />
+        </div>
       </div>
-      <RecordsList formId={node.id} spaceId={space.id} seesAll={form.canEdit} />
+      <RecordsList formId={node.id} spaceId={space.id} seesAll={form.seesAllRecords} />
     </div>
   );
 }

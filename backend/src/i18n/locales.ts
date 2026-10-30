@@ -18,7 +18,10 @@ export function readWorkspaceLocale(settings: unknown): Locale {
 }
 
 /** El de la persona si eligió uno; si no, el de su empresa. */
-export function localeFor(userLocale: string | null | undefined, workspaceSettings: unknown): Locale {
+export function localeFor(
+  userLocale: string | null | undefined,
+  workspaceSettings: unknown,
+): Locale {
   return isLocale(userLocale) ? userLocale : readWorkspaceLocale(workspaceSettings);
 }
 

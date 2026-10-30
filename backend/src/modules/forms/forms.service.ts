@@ -19,6 +19,8 @@ import {
   type NodeDetail,
 } from "../nodes/nodes.service.ts";
 import { assertSpaceWritable } from "../spaces/spaces.service.ts";
+import { seesAll } from "./records.service.ts";
+import { settingsView, type FormSettingsView } from "./settings.service.ts";
 import {
   FieldsSchema,
   type CreateFormInput,
@@ -36,8 +38,12 @@ export interface FormVersionView {
 export interface FormDetail extends NodeDetail {
   /** The current version (the latest). */
   template: FormVersionView;
-  /** Whoever asks can change the template. */
+  /** Whoever asks can change the template (and how the form runs). */
   canEdit: boolean;
+  /** Whoever asks sees every record (editors and whoever is in charge), not only theirs. */
+  seesAllRecords: boolean;
+  /** Who's in charge and, if it's periodic, how often and who fills it in. */
+  settings: FormSettingsView;
 }
 
 /** A stored version's fields: they were checked when saved, read back as the same shape. */
@@ -148,6 +154,8 @@ export async function getForm(ctx: AdminContext, id: string): Promise<FormDetail
     ...detail,
     template: await versionView(ctx, id, form.currentVersion),
     canEdit: atLeast(detail.node.level, "EDIT"),
+    seesAllRecords: await seesAll(ctx, id),
+    settings: await settingsView(ctx.db, id),
   };
 }
 

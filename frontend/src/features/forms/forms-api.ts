@@ -44,9 +44,43 @@ export interface FormVersionView {
   createdBy: { id: string; name: string } | null;
 }
 
+export type Frequency = "none" | "daily" | "weekly" | "monthly";
+
+export interface FormSettingsView {
+  responsible:
+    | { type: "default"; people: { id: string; name: string }[] }
+    | { type: "person"; id: string; name: string }
+    | { type: "department"; id: string; name: string };
+  frequency: Frequency;
+  /** ISO weekdays (1 = Monday … 7 = Sunday), only for daily forms. */
+  weekdays: number[];
+  assignees: {
+    people: { id: string; name: string }[];
+    departments: { id: string; name: string }[];
+  };
+}
+
+export interface FormSettingsInput {
+  responsible: { type: "default" } | { type: "person" | "department"; id: string };
+  frequency: Frequency;
+  weekdays: number[];
+  assignees: { people: string[]; departments: string[] };
+}
+
 export interface FormDetail extends NodeDetail {
   template: FormVersionView;
   canEdit: boolean;
+  /** Editors and whoever is in charge see every record; the rest only theirs. */
+  seesAllRecords: boolean;
+  settings: FormSettingsView;
+}
+
+export interface PendingForm {
+  formId: string;
+  name: string;
+  spaceId: string;
+  periodKey: string;
+  frequency: Exclude<Frequency, "none">;
 }
 
 export interface FormVersionSummary {
@@ -59,6 +93,7 @@ export interface FormVersionSummary {
 const w = (slug: string, path: string) => `/w/${slug}${path}`;
 
 export const formsKeys = {
+  pending: (slug: string) => ["w", slug, "forms", "pending"] as const,
   form: (slug: string, id: string) => ["w", slug, "forms", id] as const,
   versions: (slug: string, id: string) => ["w", slug, "forms", id, "versions"] as const,
   version: (slug: string, id: string, version: number) =>
@@ -69,6 +104,9 @@ export const formsApi = {
   create: (slug: string, spaceId: string, body: { parentId: string | null; name: string }) =>
     api<{ form: FormDetail }>(w(slug, `/spaces/${spaceId}/forms`), { method: "POST", body }),
   get: (slug: string, id: string) => api<{ form: FormDetail }>(w(slug, `/forms/${id}`)),
+  saveSettings: (slug: string, id: string, body: FormSettingsInput) =>
+    api<{ settings: FormSettingsView }>(w(slug, `/forms/${id}/settings`), { method: "PUT", body }),
+  pending: (slug: string) => api<{ items: PendingForm[] }>(w(slug, "/forms/pending")),
   saveTemplate: (slug: string, id: string, body: { baseVersion: number; fields: FormField[] }) =>
     api<{ form: FormDetail }>(w(slug, `/forms/${id}/template`), { method: "PUT", body }),
   versions: (slug: string, id: string, cursor: string | undefined, signal: AbortSignal) =>

@@ -244,6 +244,7 @@ model Workspace {
   formVersions        FormVersion[]
   formRecords         FormRecord[]
   formFiles           FormFile[]
+  formSettings        FormSettings[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -557,6 +558,7 @@ model Node {
   formVersions        FormVersion[]
   formRecords         FormRecord[]
   formFiles           FormFile[]
+  formSettings        FormSettings?
   pageImages          PageImage[]
   threads             CommentThread[]
   mentions            Mention[]
@@ -760,6 +762,9 @@ model FormRecord {
   nonConforming String[]
   /// «app» or «qr»: where it was filled in from.
   source        String
+  /// A periodic form's period it counts for, in the company's zone («2026-10-30», the week's Monday
+  /// or «2026-10»); null if the form isn't periodic.
+  periodKey     String?
   /// Membership that filled it in.
   submittedById String
   submittedAt   DateTime  @default(now())
@@ -774,6 +779,33 @@ model FormRecord {
   @@unique([id, workspaceId])
   @@index([workspaceId, nodeId, submittedAt])
   @@index([workspaceId, submittedById])
+  @@index([workspaceId, nodeId, periodKey])
+}
+
+/// How a form runs (docs/spec/formularios.md, phase 3): who's in charge (told about non-conformities and
+/// periods left without a record) and, for periodic forms, how often and who fills it in. Not part of the
+/// template's versions: changing it doesn't change what was filled in.
+model FormSettings {
+  nodeId                  String   @id
+  workspaceId             String
+  /// A person in charge, or a department whose heads are; neither: the heads of the space's department
+  /// (or whoever created the form).
+  responsibleMembershipId String?
+  responsibleDepartmentId String?
+  /// none | daily | weekly | monthly
+  frequency               String   @default("none")
+  /// daily: the ISO weekdays it's due on (1 = Monday … 7 = Sunday).
+  weekdays                Int[]
+  /// Who fills it in each period (one record per period, from any of them).
+  assigneeMembershipIds   String[]
+  assigneeDepartmentIds   String[]
+  updatedAt               DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, workspaceId])
+  @@index([workspaceId, frequency])
 }
 
 /// A photo or a signature of a record: uploaded while filling it in (recordId null), confirmed by its

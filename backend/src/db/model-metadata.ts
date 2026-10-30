@@ -59,6 +59,7 @@ export const modelMetadata = {
       formVersions: "FormVersion",
       formRecords: "FormRecord",
       formFiles: "FormFile",
+      formSettings: "FormSettings",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -151,6 +152,7 @@ export const modelMetadata = {
       formVersions: "FormVersion",
       formRecords: "FormRecord",
       formFiles: "FormFile",
+      formSettings: "FormSettings",
       pageImages: "PageImage",
       threads: "CommentThread",
       mentions: "Mention",
@@ -185,6 +187,7 @@ export const modelMetadata = {
     scope: "tenant",
     relations: { workspace: "Workspace", node: "Node", record: "FormRecord" },
   },
+  FormSettings: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {
     scope: "tenant",

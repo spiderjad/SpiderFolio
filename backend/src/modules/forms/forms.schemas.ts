@@ -122,3 +122,38 @@ export const SubmitRecordSchema = z.strictObject({
 export const FormFileParamsSchema = z.object({ id: Id, fileId: Id });
 export const RecordParamsSchema = z.object({ id: Id, recordId: Id });
 export const RecordFileParamsSchema = z.object({ id: Id, recordId: Id, fileId: Id });
+
+/**
+ * How the form runs: who's in charge and, if it's periodic, how often and who fills it in. A daily form
+ * needs at least one weekday; a periodic one at least one person or department.
+ */
+export const SettingsSchema = z
+  .strictObject({
+    responsible: z.discriminatedUnion("type", [
+      z.strictObject({ type: z.literal("default") }),
+      z.strictObject({ type: z.literal("person"), id: Id }),
+      z.strictObject({ type: z.literal("department"), id: Id }),
+    ]),
+    frequency: z.enum(["none", "daily", "weekly", "monthly"]),
+    weekdays: z.array(z.number().int().min(1).max(7)).max(7).default([]),
+    assignees: z.strictObject({
+      people: z.array(Id).max(200).default([]),
+      departments: z.array(Id).max(100).default([]),
+    }),
+  })
+  .superRefine((settings, ctx) => {
+    if (settings.frequency === "daily" && settings.weekdays.length === 0) {
+      ctx.addIssue({ code: "custom", message: formMessages.weekdaysRequired, path: ["weekdays"] });
+    }
+    if (
+      settings.frequency !== "none" &&
+      settings.assignees.people.length + settings.assignees.departments.length === 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: formMessages.assigneesRequired,
+        path: ["assignees"],
+      });
+    }
+  });
+export type SettingsInput = z.infer<typeof SettingsSchema>;

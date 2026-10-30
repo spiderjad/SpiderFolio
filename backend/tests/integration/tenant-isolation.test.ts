@@ -429,6 +429,13 @@ const cases: IsolationCase[] = [
     body: {},
   },
   { method: "get", path: "/forms/:id", url: (ids) => `/forms/${ids.formId}` },
+  { method: "get", path: "/forms/pending", url: () => "/forms/pending" },
+  {
+    method: "put",
+    path: "/forms/:id/settings",
+    url: (ids) => `/forms/${ids.formId}/settings`,
+    body: { responsible: { type: "default" }, frequency: "none", assignees: {} },
+  },
   {
     method: "put",
     path: "/forms/:id/template",

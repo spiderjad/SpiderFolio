@@ -762,4 +762,37 @@ export const formMessages: Catalog<typeof Es.formMessages> = {
   unknownVersion: "That version of the form doesn't exist.",
   answersInvalid: "Check the marked answers.",
   filesInvalid: "A photo or signature didn't upload properly. Add it again.",
+  weekdaysRequired: "Choose at least one weekday.",
+  assigneesRequired: "Choose at least one person or department to fill it in.",
+  unknownPeople: "Some of those people or departments aren't in the company.",
+};
+
+export const formNoticeTexts: Catalog<typeof Es.formNoticeTexts> = {
+  greeting: (name: string) => `Hello ${name},`,
+  form_nonconforming: {
+    subject: (what: string) => `Non-conforming: ${what}`,
+    title: "A record has non-conforming answers",
+    body: (who: string, what: string, fields: string) =>
+      `${who} sent a record of \u201c${what}\u201d with answers outside what's expected: ${fields}.`,
+    action: "See the record",
+  },
+  form_due: {
+    subject: (what: string) => `To fill in: ${what}`,
+    title: "There's a form to fill in",
+    body: (what: string, period: string) =>
+      `\u201c${what}\u201d is due (${period}). One record from any of the people assigned completes it.`,
+    action: "Fill in the form",
+  },
+  form_overdue: {
+    subject: (what: string) => `No record: ${what}`,
+    title: "A form wasn't filled in",
+    body: (what: string, period: string) => `Nobody filled in \u201c${what}\u201d ${period}.`,
+    action: "Open the form",
+  },
+  periods: {
+    day: (date: string) => `on ${date}`,
+    week: (monday: string) => `the week of ${monday}`,
+    month: (month: string) => `in ${month}`,
+  },
+  footnote: "You get this notice because you take part in this form or are in charge of it.",
 };

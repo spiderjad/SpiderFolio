@@ -16,7 +16,12 @@ import { levelOfNode, requireLevel } from "../access/access-context.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { assertStorageRoom, lockWorkspace } from "../files/files.service.ts";
 import { assertSpaceWritable } from "../spaces/spaces.service.ts";
+import type { Jobs } from "../../jobs/boss.ts";
+import { companyZone, dayIn } from "../../lib/time-zone.ts";
 import { checkAnswers, type Answers } from "./answers.ts";
+import { notifyNonConforming } from "./form-notices.ts";
+import { periodOf } from "./periods.ts";
+import { responsiblesOf, scheduleOf, settingsRow } from "./settings.service.ts";
 import { FieldsSchema, type FormField } from "./forms.schemas.ts";
 
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -24,6 +29,10 @@ export const MAX_SIGNATURE_BYTES = 1024 * 1024;
 
 export interface RecordDeps {
   storage: Storage;
+}
+
+export interface SubmitDeps {
+  jobs: Pick<Jobs, "enqueue">;
 }
 
 async function formOf(ctx: AdminContext, id: string) {
@@ -44,9 +53,10 @@ async function fieldsOf(ctx: AdminContext, nodeId: string, version: number): Pro
   return FieldsSchema.parse(row.fields);
 }
 
-/** Whoever can edit the form sees every record (the person in charge too, with phase 3). */
-async function seesAll(ctx: AdminContext, nodeId: string): Promise<boolean> {
-  return atLeast(await levelOfNode(ctx, nodeId), "EDIT");
+/** Whoever can edit the form, and whoever is in charge of it, sees every record. */
+export async function seesAll(ctx: AdminContext, nodeId: string): Promise<boolean> {
+  if (atLeast(await levelOfNode(ctx, nodeId), "EDIT")) return true;
+  return (await responsiblesOf(ctx.db, nodeId)).includes(ctx.tenant.membershipId);
 }
 
 // ─── Photos and signature ────────────────────────────────────────────────────────
@@ -210,6 +220,7 @@ async function viewsOf(ctx: AdminContext, rows: RecordRow[]): Promise<RecordView
  */
 export async function submitRecord(
   ctx: AdminContext,
+  deps: SubmitDeps,
   formId: string,
   input: { version: number; answers: Record<string, unknown>; source: "app" | "qr" },
 ): Promise<RecordView> {
@@ -228,6 +239,9 @@ export async function submitRecord(
     });
   }
   const fileIds = checked.files.flatMap((entry) => entry.ids);
+  // A periodic form's record counts for the period it's sent in (the company's day).
+  const schedule = scheduleOf(await settingsRow(ctx.db, formId));
+  const periodKey = periodOf(schedule, dayIn(new Date(), await companyZone(ctx.db)));
   const id = await ctx.db.$transaction(async (tx) => {
     const usable = await tx.formFile.findMany({
       where: {
@@ -253,6 +267,7 @@ export async function submitRecord(
         answers: checked.answers,
         nonConforming: checked.nonConforming,
         source: input.source,
+        periodKey,
         submittedById: ctx.tenant.membershipId,
       },
       select: { id: true },
@@ -282,6 +297,14 @@ export async function submitRecord(
     );
     return record.id;
   });
+  if (checked.nonConforming.length > 0) {
+    await notifyNonConforming(ctx.db, deps.jobs, {
+      id,
+      nodeId: formId,
+      version: input.version,
+      submittedById: ctx.tenant.membershipId,
+    });
+  }
   return await getRecord(ctx, formId, id).then((detail) => detail.record);
 }
 

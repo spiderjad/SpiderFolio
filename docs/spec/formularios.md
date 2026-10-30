@@ -56,11 +56,24 @@ electrónica avanzada.
    cuota) y se atan al registro al enviarlo (`POST /forms/:id/records` con `version` y `answers`); las que
    no llegan a un registro se borran al día (`form-file-sweep.ts`). El servidor revisa cada respuesta con
    la versión llenada (`modules/forms/answers.ts`) y calcula lo no conforme. `GET /forms/:id/records`
-   (cursor; los propios, o todos con EDIT), `GET /forms/:id/records/:recordId` y la URL corta de cada
+   (cursor; los propios, o todos con EDIT o siendo responsable), `GET /forms/:id/records/:recordId` y la URL corta de cada
    adjunto. Pantallas `…/form/:formId/fill` (celular) y `…/form/:formId/r/:recordId`.
-3. No conformidades (aviso al responsable, que se elige en la plantilla: persona o departamento; por
-   defecto el jefe del departamento del espacio) y formularios periódicos (diario, semanal, mensual;
-   asignados a personas o departamentos; pendientes y vencidos avisados a las 8:00 de la empresa).
+3. **No conformidades y formularios periódicos** (hecha). Cómo funciona cada formulario vive en
+   `FormSettings` (no versionado; `PUT /forms/:id/settings`, EDIT, auditado `form.settings.update`):
+   - **Responsable**: una persona, los jefes (HEAD) de un departamento o, por defecto, los jefes del
+     departamento del espacio; en un espacio de empresa sin departamento, quien creó el formulario. Ve
+     todos los registros y recibe los avisos `form_nonconforming` (cada registro no conforme; nunca a quien
+     lo envió) y `form_overdue`.
+   - **Periodicidad**: ninguna, diaria (con días de la semana), semanal (lunes a domingo) o mensual, con
+     personas y departamentos que lo llenan (solo cuentan quienes ven el formulario). Cada registro guarda
+     su período (`FormRecord.periodKey`: el día, el lunes de la semana o `AAAA-MM`, en la zona de la
+     empresa). **Un registro de cualquiera de los asignados completa el período.**
+   - **Pendientes**: `GET /forms/pending` (los periódicos asignados a quien pregunta, sin registro en el
+     período de hoy); tarjeta «Formularios para llenar» en Inicio y en la vista con PIN.
+   - **Avisos a las 8:00 de la empresa** (job horario `form-reminders`, `form-notices.ts`): `form_due` a los
+     asignados el día que empieza el período; `form_overdue` al responsable por el período anterior sin
+     registro. Solo cuentan períodos desde el último cambio de cómo funciona el formulario (cambiarlo no
+     vuelve vencidos los anteriores). Una sola vez por persona y período (`dedupeKey`); campana y email.
 4. Lista de registros con filtros (fechas en días de la empresa, persona, versión, solo no conformes),
    anular, CSV y PDF.
 5. QR del formulario (abre el llenado), guías es/en, capturas y versión.

@@ -13,10 +13,12 @@ import {
   RecordFileParamsSchema,
   RecordParamsSchema,
   SaveTemplateSchema,
+  SettingsSchema,
   StartFileSchema,
   SubmitRecordSchema,
 } from "./forms.schemas.ts";
 import { createForm, getForm, getVersion, listVersions, saveTemplate } from "./forms.service.ts";
+import { pendingForMe, saveSettings } from "./settings.service.ts";
 import {
   confirmFileUpload,
   getRecord,
@@ -28,9 +30,17 @@ import {
 
 const VersionsQuerySchema = z.object(pageShape(["version"], "version"));
 
-export function formRoutes(deps: Pick<AppDeps, "storage">): TenantRoute[] {
+export function formRoutes(deps: Pick<AppDeps, "storage" | "jobs">): TenantRoute[] {
   const fileDeps = { storage: deps.storage };
   return [
+    // Before /forms/:id: the periodic forms the person has to fill in now.
+    {
+      method: "get",
+      path: "/forms/pending",
+      handler: async (req, res) => {
+        res.json({ items: await pendingForMe(adminContextOf(req)) });
+      },
+    },
     {
       method: "post",
       path: "/spaces/:id/forms",
@@ -59,6 +69,16 @@ export function formRoutes(deps: Pick<AppDeps, "storage">): TenantRoute[] {
           SaveTemplateSchema.parse(req.body),
         );
         res.json({ form });
+      },
+    },
+    {
+      method: "put",
+      path: "/forms/:id/settings",
+      handler: async (req, res) => {
+        const { id } = FormParamsSchema.parse(req.params);
+        res.json({
+          settings: await saveSettings(adminContextOf(req), id, SettingsSchema.parse(req.body)),
+        });
       },
     },
     {
@@ -108,6 +128,7 @@ export function formRoutes(deps: Pick<AppDeps, "storage">): TenantRoute[] {
         const { id } = FormParamsSchema.parse(req.params);
         const record = await submitRecord(
           adminContextOf(req),
+          { jobs: deps.jobs },
           id,
           SubmitRecordSchema.parse(req.body),
         );

@@ -379,6 +379,7 @@ describe("forTenant: transacciones", () => {
           "fileVersion",
           "formFile",
           "formRecord",
+          "formSettings",
           "formVersion",
           "importJob",
           "invitation",

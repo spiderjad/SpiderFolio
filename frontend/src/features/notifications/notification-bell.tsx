@@ -40,7 +40,10 @@ export interface NotificationView {
     | "bian_request"
     | "invitation_by_leader"
     | "directory_sync_stopped"
-    | "plugin";
+    | "plugin"
+    | "form_nonconforming"
+    | "form_due"
+    | "form_overdue";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -121,6 +124,10 @@ function pathOf(
     return `/app/${slug}/files/shared?${params.toString()}`;
   }
   const base = `/app/${slug}/files/${target.spaceId}`;
+  if (item.kind === "form_nonconforming" && item.detail !== null) {
+    return `${base}/form/${target.id}/r/${item.detail}`;
+  }
+  if (item.kind === "form_due") return `${base}/form/${target.id}/fill`;
   if (target.type === "space") return base;
   if (target.nodeType === "PAGE") return `${base}/p/${target.id}`;
   if (target.nodeType === "FORM") return `${base}/form/${target.id}`;
@@ -147,6 +154,11 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
     );
   }
   if (item.target === null) return t.noAccess;
+  if (item.kind === "form_nonconforming") {
+    return t.formNonConforming(item.actor?.name ?? "", item.target.name);
+  }
+  if (item.kind === "form_due") return t.formDue(item.target.name);
+  if (item.kind === "form_overdue") return t.formOverdue(item.target.name);
   if (item.kind === "reading_required") return t.readingRequired(item.target.name);
   if (item.kind === "reading_reminder") return t.readingReminder(item.target.name);
   if (item.kind === "reading_overdue_leader") {

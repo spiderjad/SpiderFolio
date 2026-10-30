@@ -8,6 +8,7 @@ import {
   exportEmailTexts,
   invitationEmailTexts,
   documentNoticeTexts,
+  formNoticeTexts,
   mentionEmailTexts,
   sharedEmailTexts,
 } from "../i18n/index.ts";
@@ -30,6 +31,15 @@ export interface EmailContext {
   newEmail?: string;
   /** Datos de la mención (mention). */
   mention?: { who: string; page: string; inComment: boolean; url: string };
+  /** A form's notice (form-notice): the texts already chosen and written. */
+  formNotice?: {
+    kind: "form_nonconforming" | "form_due" | "form_overdue";
+    who: string;
+    what: string;
+    /** The non-conforming fields (form_nonconforming) or the period, in words. */
+    detail: string;
+    url: string;
+  };
   /** Datos de un aviso de documento controlado (document-notice). */
   documentNotice?: {
     kind:
@@ -234,6 +244,24 @@ export function buildEmail(job: EmailJob, context: EmailContext): EmailContent {
                       notice.version,
                       notice.due,
                     ),
+        ],
+        action: { label: text.action, url: notice.url },
+        footnotes: [t.footnote],
+      });
+    }
+    case "form-notice": {
+      const t = formNoticeTexts;
+      const notice = context.formNotice;
+      if (notice === undefined) throw new Error("Faltan los datos del aviso del formulario");
+      const text = t[notice.kind];
+      return renderEmail({
+        subject: text.subject(notice.what),
+        title: text.title,
+        paragraphs: [
+          t.greeting(name),
+          notice.kind === "form_nonconforming"
+            ? t.form_nonconforming.body(notice.who, notice.what, notice.detail)
+            : t[notice.kind].body(notice.what, notice.detail),
         ],
         action: { label: text.action, url: notice.url },
         footnotes: [t.footnote],

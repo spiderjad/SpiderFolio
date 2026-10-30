@@ -274,6 +274,10 @@ export const es = {
     emailFallback:
       "Falló el servidor de email de tu empresa: los emails salieron por SpiderFolio. Revisa Seguridad › Email.",
     pluginNotice: "Aviso de un plugin de tu empresa.",
+    formNonConforming: (who: string, what: string) =>
+      `${who} envió un registro no conforme de «${what}».`,
+    formDue: (what: string) => `Toca llenar «${what}».`,
+    formOverdue: (what: string) => `«${what}» quedó sin llenar en el período anterior.`,
     directorySyncStopped:
       "El directorio de tu empresa dejó de sincronizarse porque su plugin ya no está activo: quien se va de la empresa ya no se suspende solo. Revisa Licencia y plugins.",
     emailFailing: (reason: string) =>

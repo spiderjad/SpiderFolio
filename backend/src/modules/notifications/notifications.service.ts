@@ -40,6 +40,11 @@ export const NOTIFICATION_KINDS = [
   "directory_sync_stopped",
   /** Sent by a plugin (ctx.notify); `detail` = «<pluginId>:<code>», its app part gives the text. */
   "plugin",
+  /** Forms (docs/spec/formularios.md): a non-conforming record (`detail` = record), a period that
+   * starts today (`detail` = period) and one that ended without a record (`detail` = period). */
+  "form_nonconforming",
+  "form_due",
+  "form_overdue",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

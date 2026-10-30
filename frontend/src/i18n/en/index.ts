@@ -272,6 +272,10 @@ export const en: Messages = {
     emailFallback:
       "Your company’s email server failed: emails were sent through SpiderFolio. Check Security › Email.",
     pluginNotice: "A notice from one of your company's plugins.",
+    formNonConforming: (who: string, what: string) =>
+      `${who} sent a non-conforming record of “${what}”.`,
+    formDue: (what: string) => `“${what}” is due to be filled in.`,
+    formOverdue: (what: string) => `“${what}” wasn't filled in last period.`,
     directorySyncStopped:
       "Your company's directory stopped syncing because its plugin is no longer active: people who leave the company aren't suspended on their own anymore. Check License and plugins.",
     emailFailing: (reason: string) =>

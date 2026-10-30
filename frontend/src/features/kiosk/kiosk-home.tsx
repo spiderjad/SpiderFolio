@@ -2,13 +2,16 @@
 // que le toca leer llegan con "Mis documentos" (Módulo 6); mientras tanto explica qué va a ver.
 import { BookOpenCheck } from "lucide-react";
 import { useAuth } from "@/auth/auth-context";
+import { useParams } from "react-router";
 import { Card, EmptyState } from "@/components/ui/display";
+import { PendingFormsCard } from "@/features/forms/pending-forms";
 import { SwitchUserButton } from "./kiosk-session";
 import { texts } from "@/i18n";
 
 export function KioskHome() {
   const t = texts.kiosk.home;
   const { account } = useAuth();
+  const { workspaceSlug = "" } = useParams();
   return (
     <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -20,6 +23,7 @@ export function KioskHome() {
         </div>
         <SwitchUserButton />
       </div>
+      <PendingFormsCard slug={workspaceSlug} />
       <Card>
         <EmptyState icon={BookOpenCheck} title={t.empty.title}>
           {t.empty.text}
