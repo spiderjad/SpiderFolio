@@ -653,6 +653,7 @@ describe("Seguridad: solo el propietario", () => {
         bianEnabled: true,
         bianGuests: false,
         locale: "es",
+        timezone: "Europe/Madrid",
       },
     });
     for (const who of [w.admin, w.boss, w.ana, w.gestor]) {
@@ -680,6 +681,7 @@ describe("Seguridad: solo el propietario", () => {
         bianEnabled: true,
         bianGuests: false,
         locale: "es",
+        timezone: "Europe/Madrid",
       },
     });
     // Cada cambio de configuración queda auditado.
@@ -696,6 +698,7 @@ describe("Seguridad: solo el propietario", () => {
       "leadersCanInvite",
       "locale",
       "memberVisibility",
+      "timezone",
     ];
     const logs = await ctx.prisma.auditLog.findMany({
       where: { workspaceId: w.ws.workspaceId, action: "security.visibility.update" },
