@@ -13,7 +13,8 @@ does (search and read) and also lets Claude **create and edit** documentation, a
 permissions of the person who connected it:
 
 - create pages from what you ask («Create a draft work instruction for the forklift in the Safety
-  folder»);
+  folder»), also as a **controlled document in draft** («…as a controlled procedure»): it gets its code
+  (for example, PRC-004) and stays a draft, unpublished;
 - edit pages: replace them, add at the end or change a piece;
 - create folders and move pages, folders and files;
 - upload small files (up to 10 MB);
@@ -21,7 +22,12 @@ permissions of the person who connected it:
 - send the draft of a controlled document for review.
 
 It's a **paid** plugin. It includes the free one: if you had the Connector for Claude, connections keep
-working and gain editing without connecting anything again.
+working for reading. For Claude to edit too, each person disconnects SpiderFolio in Claude and connects it
+again: the authorize screen has to say it asks to create and edit.
+
+What Claude changes shows as "*name* via Claude" in the explorer's **Modified by**, in "Last edited" at the
+foot of the page and in the audit log. Once someone edits it again in SpiderFolio, it shows just that
+person.
 
 ## What it never does
 
@@ -35,7 +41,7 @@ doesn't change until someone approves and publishes it.
 
 1. In **Administration › License and plugins**, copy the **Company ID** and send it to us
    ([contact](mailto:contacto@spiderjad.com)).
-2. We send you a `.sfplugin` signed for your company. Upload it in **Upload a plugin** and click **Restart
+2. We send you a `.sfplugin` signed for your company. Upload it in **Upload plugin** and click **Restart
    now**.
 
 **Administration › Security › Connector for Claude** then says «Claude can read and edit».

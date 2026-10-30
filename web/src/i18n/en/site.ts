@@ -59,6 +59,11 @@ export const site: Catalog<typeof esSite> = {
           title: "Who has access and why",
           text: "Every document explains who can get in and for what reason.",
         },
+        {
+          name: "conector",
+          title: "Connector for Claude",
+          text: "Claude searches and reads your current documents, with each person's permissions, and takes you to the source.",
+        },
       ],
     },
     featuresAnchor: "features",

@@ -1,6 +1,6 @@
 ---
 title: "License and plugins"
-description: "Load the license for commercial plugins, see which ones are active and what happens when a license expires."
+description: "See the server's plugins, each one's license and when it expires, renew it, turn on the free ones, upload and remove plugins."
 group: administracion
 order: 7
 icon: grid
@@ -8,111 +8,118 @@ icon: grid
 
 import Shot from "../../../components/Shot.astro";
 
-SpiderFolio is open source and complete without plugins. Commercial plugins add features for companies that
-need them (for example, **Advanced security policies**: require two-step verification for the whole company
-and restrict invitations to your domains). They're installed on your server and enabled with a license. The
-catalog is on the [Plugins](/en/plugins) page.
+SpiderFolio is open source and works fully without plugins. Plugins add features for the companies that
+need them (for example, the [Corporate directory](/en/docs/corporate-directory) or the
+[Connector for Claude](/en/docs/connector-for-claude)). Some are **free** and others **paid**: paid ones work
+with your company's license. The catalog is on the [Plugins](/en/plugins) page.
 
-## Where to find it
+## Where it is
 
-In **Administration › License and plugins**. Only the company's **owner** can see it.
+In **Administration › Plugins › License and plugins**. Only the company's **owner** sees it. The screens of
+the active plugins show up in that same **Plugins** group of the menu.
 
-<Shot name="licencia" alt="The License and plugins screen, with the license status and the plugins installed on the server" />
+<Shot name="licencia" alt="The License and plugins screen: the list of plugins with their license and expiry, the Renew or change license, Turn on and Guide buttons, and the company ID at the bottom" />
 
-At the top you see the license status: **No license**, **Valid license**, **Expired license** or **Invalid
-license**, who it was issued to and when it expires (or **No expiry**).
+It's a single list with every plugin on the server. Each row shows:
 
-## Load the license
+- **Its name, version and type**: **Paid**, **Free** or **Unverified** (third-party).
+- **Its state**: **Active**, **Off**, **No license**, **License expired**, **Replaced by…**,
+  **Loads on restart** or **Removed on restart**.
+- **For paid ones, its license**: "License LIC-2026-0003 · expires 31 Dec 2027". With 30 days or fewer left
+  it says "expires in 12 days", highlighted, and once expired, "expired…".
+- **The buttons** for what can be done with that plugin: **Guide**, **Renew or change license** (or **Load
+  license**), **Turn on** or **Turn off**, and **Remove** under **⋯**.
 
-1. Click **Load license** (or **Replace license** if there's already one).
+With 8 plugins or more, a search box appears at the top.
+
+## Renew or change the license
+
+Your company has **a single license**, covering all its paid plugins. When you renew or add a plugin we send
+you a new license that includes them all.
+
+1. In the row of any paid plugin, click **Renew or change license** (if it has none yet, **Load license**).
 2. Paste the full text we sent you: it starts with `SFL1.`.
 3. Click **Save license**.
 
-The license is verified on your own server, with no internet connection. An invalid or already expired
-license is rejected. It belongs to your company: if the installation hosts several companies, each one loads
-its own.
+You can also upload the `.sfplugin` we sent you (see below): the license is inside and loads on its own.
+
+The license is checked on your own server, offline. An invalid, expired or another company's license is
+rejected. If the loaded one stops being valid, a notice above the list says so.
 
 ## The company ID
 
-**Company ID** shows your company's identifier on this server. Click **Copy** and send it to us when you ask
-for a license: we issue it for that ID and it only works in your company. A license for another company is
-rejected.
+Below the list, in small print, is the **Company ID**. Click **Copy** and send it to us when you ask for a
+license: we issue it for that ID and it only works in your company.
+
+## Turn on a free plugin
+
+**Free** plugins are signed by SpiderJAD and need no license. Click **Turn on** or **Turn off** in their row.
+An **Unverified** one (third-party) asks you to confirm you trust whoever made it, since it runs inside your
+server.
+
+A plugin **Replaced by…** isn't turned on: another active plugin already does the same and uses its data
+(for example, the Corporate directory includes [Sign in with Microsoft](/en/docs/sign-in-with-microsoft)).
+Its row only shows the guide. If the other one stops being active, this one comes back on its own, with
+everything as it was.
 
 ## Upload a plugin
 
-A `.sfplugin` file is installed from this screen, without logging in to the server. It always comes signed
-by SpiderJAD: a paid plugin's we send you with your company's license; a free one's you download from the
-[plugin catalog](/en/plugins), and it's turned on in your company when you upload it.
+A `.sfplugin` file is installed from this screen, without going into the server. It's always signed by
+SpiderJAD: for a paid plugin we send it to you with your company's license; for a free one you download it
+from the [plugin catalog](/en/plugins) and it's turned on in your company when you upload it.
 
-1. Under **Upload a plugin**, click **Choose .sfplugin file** and pick the file. You need two-step
-   verification turned on (see [Security and two-step verification](/en/docs/security-and-2fa)); if you
-   confirmed it more than a few minutes ago, it asks for your code.
+1. Click **Upload plugin** and choose the file. You need two-step verification turned on (see
+   [Security and two-step verification](/en/docs/security-and-2fa)); if you confirmed it more than a few
+   minutes ago, it asks for the code.
 2. The server checks the signature, that nothing was modified and that the license is your company's, and
-   installs it. If something doesn't match, it tells you why and installs nothing.
-3. The plugin shows as **Installed, loads on restart**. Click **Restart now** and confirm with **Restart in 1
-   minute**.
+   installs it. If anything is off, it tells you why and installs nothing.
+3. The plugin shows **Loads on restart**. In the notice at the top click **Restart now** and confirm with
+   **Restart in 1 minute**.
 
-During that minute, everyone signed in sees a notice with a countdown so they save what they're editing. The
-app comes back on its own in a few seconds, with the plugin loaded. If the server doesn't restart on its own,
-the screen says so: whoever runs it restarts the app and the worker.
+During that minute everyone signed in sees a countdown notice so they save what they're editing. The app comes
+back on its own in a few seconds, with the plugin loaded. If the server doesn't restart on its own, the notice
+says so: whoever runs it restarts the app and the worker.
 
-If the server hosts several companies, the screen warns that the plugin is installed for the whole server
-(each company activates it with its own license). Unsigned third-party plugins aren't uploaded here. The
-upload, any rejection and the restart go to Admin › Audit log.
+## Remove a plugin
 
-## The server's plugins
+1. In the plugin's row, click **⋯ › Remove**.
+2. Read what happens and confirm with **Remove from the server**:
+   - It stops loading on the **next restart**, scheduled on its own in 1 minute, warning whoever is signed in.
+     If the server doesn't restart on its own, whoever runs it restarts the app and the worker.
+   - **Its data and settings are kept**: if you upload it again, it comes back as it was.
+   - For paid ones, **the license doesn't change**.
+   - If the server has several companies, it's removed for all of them.
 
-Under **Plugins installed on this server** you see each plugin with its kind and status:
+Only plugins uploaded from the app can be removed. Those built into the server image go with the image.
 
-- **Official · Paid**: turned on by your license. **Active** if your valid license includes it, **In the
-  license (expired)** if it expired and **No license** if it doesn't include it.
-- **Official · Free**: signed by SpiderJAD, no license. You turn it on or off with the button.
-- **Unverified**: third-party. Before turning it on, it asks you to confirm you trust whoever made it.
-- **Replaced by…**: a paid plugin includes what this one does (for example, the
-  [Corporate directory](/en/docs/corporate-directory) includes [Sign in with Microsoft](/en/docs/sign-in-with-microsoft)).
-  It stays off and the other one uses its setup; if the paid one stops being active, this one works again on
-  its own, with everything as it was.
+Uploading, removing, loading the license and restarting go to **Administration › Audit log** (never the
+license text).
 
-Each official plugin links to its **Guide**.
+## If the license expires
 
-If the list says "This server has no plugins installed," they need to be installed first. That's done by
-whoever runs the server. The plugin arrives already built: its folder is copied into the plugins volume and the
-app and the worker are restarted, with nothing to build (from the `deploy/` folder):
+Thirty days before, each paid plugin's row warns "expires in N days". Once it expires, those plugins stop
+applying and SpiderFolio keeps working the same. Their settings are kept: when you load a new license they
+apply again exactly as they were.
+
+To remove the company's license, open **Renew or change license** and click **Remove the license**.
+
+## Plugins copied onto the server
+
+Whoever runs the server can also install a plugin without the app: copy its folder into the plugins volume and
+restart the app and the worker (from the `deploy/` folder):
 
 ```sh
 docker compose cp ./my-plugin app:/data/plugins/
 docker compose restart app worker
 ```
 
-Its migrations run on their own at startup. With your own image, you can also put the plugin's source in
-`plugins/` and rebuild the image (`docker compose build && docker compose up -d`).
-
-An active plugin can add:
-
-- Its own section in **Administration** (for example, the advanced security policies, owner only).
-- New capabilities in the **Plugins** group of [Roles and permissions](/en/docs/roles-and-permissions). The
-  owner has all of them; for someone else to use them, give them a custom role that includes them.
-
-## If the license expires
-
-The plugins in that license stop applying and SpiderFolio keeps working the same. Their settings are kept:
-when you load a new license they apply again exactly as they were.
-
-For example, with **Advanced security policies** expired, the company no longer requires two-step verification
-for everyone; whoever already had it turned on keeps using it.
-
-## Remove the license
-
-Click **Remove license** and confirm. The plugins stop applying in your company and their settings are kept in
-case you load it again.
-
-Loading and removing the license is recorded in the audit log, with who it was issued to, which plugins it
-includes and its expiry date (never the license text).
+Its migrations run on their own at startup. An active plugin can add a screen in the **Plugins** group of
+Administration and new capabilities in [Roles and permissions](/en/docs/roles-and-permissions).
 
 ## Related
 
+- [Plugin: Connector for Claude](/en/docs/connector-for-claude)
 - [Plugin: Sign in with Microsoft](/en/docs/sign-in-with-microsoft)
 - [Plugin: Corporate directory](/en/docs/corporate-directory)
 - [Roles and permissions](/en/docs/roles-and-permissions)
 - [Security and two-step verification](/en/docs/security-and-2fa)
-- [Configuration](/en/docs/configuration)

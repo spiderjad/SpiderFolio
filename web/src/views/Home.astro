@@ -140,8 +140,14 @@ const secondaryButton =
     <h2 class={h2}>{t.clips.title}</h2>
     <div class="mt-10 grid gap-6 md:grid-cols-2">
       {
-        t.clips.items.map((clip) => (
-          <DemoClip name={clip.name} locale={locale} title={clip.title} text={clip.text} />
+        t.clips.items.map((clip, index) => (
+          <DemoClip
+            name={clip.name}
+            locale={locale}
+            title={clip.title}
+            text={clip.text}
+            wide={index === t.clips.items.length - 1 && t.clips.items.length % 2 === 1}
+          />
         ))
       }
     </div>

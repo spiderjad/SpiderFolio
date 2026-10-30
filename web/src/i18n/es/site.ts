@@ -58,6 +58,11 @@ export const site = {
           title: "Quién accede y por qué",
           text: "Cada documento explica quién puede entrar y por qué motivo.",
         },
+        {
+          name: "conector",
+          title: "Conector para Claude",
+          text: "Claude busca y lee tus documentos vigentes, con los permisos de cada persona, y te lleva a la fuente.",
+        },
       ],
     },
     featuresAnchor: "funciones",

@@ -9,12 +9,19 @@ interface Props {
   locale: Locale;
   title: string;
   text: string;
+  /** The last one of an odd number: centered across both columns. */
+  wide?: boolean;
 }
-const { name, locale, title, text } = Astro.props;
+const { name, locale, title, text, wide = false } = Astro.props;
 const base = `/clips/${locale}/${name}`;
 ---
 
-<figure class="lift reveal m-0 overflow-hidden rounded-2xl border bg-background">
+<figure
+  class:list={[
+    "lift reveal m-0 overflow-hidden rounded-2xl border bg-background",
+    wide && "md:col-span-2 md:mx-auto md:w-1/2",
+  ]}
+>
   <video
     class="block aspect-[8/5] w-full bg-muted"
     width="1280"

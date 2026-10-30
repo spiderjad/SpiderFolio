@@ -1,6 +1,6 @@
 ---
 title: "Licencia y plugins"
-description: "Cargar la licencia de los plugins comerciales, ver cuáles están activos y qué pasa cuando una licencia vence."
+description: "Ver los plugins del servidor, la licencia de cada uno y cuándo vence, renovarla, activar los gratis, subir y quitar plugins."
 group: administracion
 order: 7
 icon: grid
@@ -8,34 +8,59 @@ icon: grid
 
 import Shot from "../../../components/Shot.astro";
 
-SpiderFolio es open source y funciona completo sin plugins. Los plugins comerciales agregan funciones para
-empresas que las necesitan (por ejemplo, **Políticas de seguridad avanzadas**: exigir la verificación en dos
-pasos a toda la empresa y limitar las invitaciones a tus dominios). Se instalan en tu servidor y se activan
-con una licencia. El catálogo está en la página [Plugins](/es/plugins).
+SpiderFolio es open source y funciona completo sin plugins. Los plugins agregan funciones para las empresas
+que las necesitan (por ejemplo, el [Directorio corporativo](/es/docs/directorio-corporativo) o el
+[Conector para Claude](/es/docs/conector-para-claude)). Unos son **gratis** y otros **de pago**: los de pago
+funcionan con la licencia de tu empresa. El catálogo está en la página [Plugins](/es/plugins).
 
 ## Dónde está
 
-En **Administración › Licencia y plugins**. Solo la ve el **propietario** de la empresa.
+En **Administración › Plugins › Licencia y plugins**. Solo la ve el **propietario** de la empresa. En ese mismo
+grupo **Plugins** del menú aparecen las pantallas de los plugins activos.
 
-<Shot name="licencia" alt="La pantalla Licencia y plugins, con el estado de la licencia y los plugins instalados en el servidor" />
+<Shot name="licencia" alt="La pantalla Licencia y plugins: la lista de plugins con su licencia y su vencimiento, los botones Renovar o cambiar licencia, Activar y Guía, y el ID de la empresa abajo" />
 
-Arriba ves el estado de la licencia: **Sin licencia**, **Licencia vigente**, **Licencia vencida** o
-**Licencia no válida**, a quién se emitió y cuándo vence (o **Sin vencimiento**).
+Es una sola lista con todos los plugins del servidor. Cada fila muestra:
 
-## Cargar la licencia
+- **El nombre, la versión y el tipo**: **De pago**, **Gratis** o **No verificado** (de terceros).
+- **El estado**: **Activo**, **Desactivado**, **Sin licencia**, **Licencia vencida**, **Reemplazado por…**,
+  **Se carga al reiniciar** o **Se quita al reiniciar**.
+- **En los de pago, su licencia**: «Licencia LIC-2026-0003 · vence el 31 dic 2027». Cuando faltan 30 días
+  o menos dice «vence en 12 días», resaltado, y al vencer, «venció el…».
+- **Los botones** de lo que se puede hacer con ese plugin: **Guía**, **Renovar o cambiar licencia** (o
+  **Cargar licencia**), **Activar** o **Desactivar**, y en **⋯** la opción **Quitar**.
 
-1. Pulsa **Cargar licencia** (o **Reemplazar licencia** si ya hay una).
+Con 8 plugins o más aparece arriba un buscador.
+
+## Renovar o cambiar la licencia
+
+Tu empresa tiene **una sola licencia**, que incluye todos sus plugins de pago. Al renovar o al sumar un plugin
+te enviamos una licencia nueva que los incluye a todos.
+
+1. En la fila de cualquier plugin de pago, pulsa **Renovar o cambiar licencia** (si todavía no tiene,
+   **Cargar licencia**).
 2. Pega el texto completo que te enviamos: empieza con `SFL1.`.
 3. Pulsa **Guardar licencia**.
 
-La licencia se verifica en tu propio servidor, sin conexión a internet. Una licencia no válida o ya vencida se
-rechaza. Es de tu empresa: si la instalación tiene varias empresas, cada una carga la suya.
+También puedes subir el `.sfplugin` que te enviamos (ver más abajo): trae la licencia adentro y la carga sola.
+
+La licencia se verifica en tu propio servidor, sin conexión a internet. Una licencia no válida, vencida o de
+otra empresa se rechaza. Si la que está cargada deja de valer, un aviso arriba de la lista lo dice.
 
 ## El ID de la empresa
 
-En **ID de la empresa** está el identificador de tu empresa en este servidor. Pulsa **Copiar** y envíanoslo
-cuando pidas una licencia: la emitimos para ese ID y solo funciona en tu empresa. Si cargas una licencia de
-otra empresa, se rechaza.
+Abajo de la lista, en pequeño, está el **ID de la empresa**. Pulsa **Copiar** y envíanoslo cuando pidas una
+licencia: la emitimos para ese ID y solo funciona en tu empresa.
+
+## Activar un plugin gratis
+
+Los plugins **Gratis** están firmados por SpiderJAD y no necesitan licencia. Pulsa **Activar** o
+**Desactivar** en su fila. Uno **No verificado** (de terceros) te pide confirmar que confías en quien lo
+hizo, porque corre dentro de tu servidor.
+
+Un plugin **Reemplazado por…** no se activa: otro plugin activo ya hace lo mismo y usa sus datos (por ejemplo,
+el Directorio corporativo incluye [Entrar con Microsoft](/es/docs/entrar-con-microsoft)). Su fila solo muestra
+la guía. Si el otro deja de estar activo, este vuelve a funcionar solo, con todo como estaba.
 
 ## Subir un plugin
 
@@ -43,75 +68,59 @@ Un archivo `.sfplugin` se instala desde esta pantalla, sin entrar al servidor. S
 SpiderJAD: el de un plugin de pago te lo enviamos con la licencia de tu empresa; el de uno gratis lo descargas
 del [catálogo de plugins](/es/plugins) y queda activado en tu empresa al subirlo.
 
-1. En **Subir un plugin**, pulsa **Elegir archivo .sfplugin** y elige el archivo. Necesitas tener activa la
-   verificación en dos pasos (ver [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)); si la
-   confirmaste hace más de unos minutos, te pide el código.
+1. Pulsa **Subir plugin** y elige el archivo. Necesitas tener activa la verificación en dos pasos (ver
+   [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)); si la confirmaste hace más de unos
+   minutos, te pide el código.
 2. El servidor comprueba la firma, que nada se haya modificado y que la licencia sea de tu empresa, y lo
    instala. Si algo no cuadra, te dice por qué y no instala nada.
-3. El plugin queda **Instalado, se carga al reiniciar**. Pulsa **Reiniciar ahora** y confirma con **Reiniciar
-   en 1 minuto**.
+3. El plugin queda **Se carga al reiniciar**. En el aviso de arriba pulsa **Reiniciar ahora** y confirma con
+   **Reiniciar en 1 minuto**.
 
 Durante ese minuto, todas las personas conectadas ven un aviso con la cuenta regresiva para que guarden lo que
 están editando. La app vuelve sola en unos segundos, con el plugin cargado. Si el servidor no se reinicia solo,
-la pantalla lo indica: quien lo administra reinicia la app y el worker.
+el aviso lo indica: quien lo administra reinicia la app y el worker.
 
-Si el servidor tiene varias empresas, la pantalla avisa que el plugin se instala para todo el servidor (cada
-empresa lo activa con su licencia). Los plugins de terceros sin firma no se suben desde aquí. La subida, los
-rechazos y el reinicio quedan en Administración › Registro de auditoría.
+## Quitar un plugin
 
-## Los plugins del servidor
+1. En la fila del plugin, pulsa **⋯ › Quitar**.
+2. Lee lo que pasa y confirma con **Quitar del servidor**:
+   - Se deja de cargar en el **próximo reinicio**, que se programa solo en 1 minuto, con aviso a quien esté
+     conectado. Si el servidor no se reinicia solo, quien lo administra reinicia la app y el worker.
+   - **Sus datos y ajustes se guardan**: si lo vuelves a subir, vuelve como estaba.
+   - En los de pago, **la licencia no cambia**.
+   - Si el servidor tiene varias empresas, se quita para todas.
 
-En **Plugins instalados en este servidor** ves cada plugin con su tipo y su estado:
+Solo se quitan los plugins subidos desde la app. Los que vienen dentro de la imagen del servidor se quitan con
+la imagen.
 
-- **Oficial · De pago**: se activa con tu licencia. **Activo** si tu licencia vigente lo incluye, **En la
-  licencia (vencida)** si venció y **Sin licencia** si no lo incluye.
-- **Oficial · Gratis**: firmado por SpiderJAD, sin licencia. Lo activas o lo desactivas tú con el botón.
-- **No verificado**: de terceros. Antes de activarlo te pide confirmar que confías en quien lo hizo.
-- **Lo reemplaza…**: un plugin de pago incluye lo que hace este (por ejemplo, el
-  [Directorio corporativo](/es/docs/directorio-corporativo) incluye [Entrar con Microsoft](/es/docs/entrar-con-microsoft)).
-  Queda apagado y su configuración la usa el otro; si el de pago deja de estar activo, este vuelve a funcionar
-  solo, con todo como estaba.
+Subir, quitar, cargar la licencia y reiniciar quedan en **Administración › Registro de auditoría** (nunca el
+texto de la licencia).
 
-Cada plugin oficial tiene un enlace a su **Guía**.
+## Si la licencia vence
 
-Si la lista dice «Este servidor no tiene plugins instalados», primero hay que instalarlos. Eso lo hace quien
-administra el servidor. El plugin llega ya compilado: se copia su carpeta al volumen de plugins y se reinician
-la app y el worker, sin compilar nada (desde la carpeta `deploy/`):
+Treinta días antes, la fila de cada plugin de pago avisa «vence en N días». Al vencer, esos plugins dejan de
+aplicarse y SpiderFolio sigue funcionando igual. Sus ajustes se conservan: al cargar una licencia nueva vuelven
+a aplicarse tal como estaban.
+
+Para quitar la licencia de la empresa, abre **Renovar o cambiar licencia** y pulsa **Quitar la licencia**.
+
+## Plugins copiados en el servidor
+
+Quien administra el servidor también puede instalar un plugin sin la app: copia su carpeta al volumen de
+plugins y reinicia la app y el worker (desde la carpeta `deploy/`):
 
 ```sh
 docker compose cp ./mi-plugin app:/data/plugins/
 docker compose restart app worker
 ```
 
-Sus migraciones se aplican solas al arrancar. Con una imagen propia, también se puede poner el código del
-plugin en `plugins/` y reconstruir la imagen (`docker compose build && docker compose up -d`).
-
-Un plugin activo puede sumar:
-
-- Una sección propia en **Administración** (por ejemplo, **Políticas avanzadas**, solo para el propietario).
-- Capacidades nuevas en el grupo **Plugins** de [Roles y permisos](/es/docs/roles-y-permisos). El propietario
-  las tiene todas; para que otra persona las use, dale un rol personalizado con ellas.
-
-## Si la licencia vence
-
-Los plugins de esa licencia dejan de aplicarse y SpiderFolio sigue funcionando igual. Sus ajustes se
-conservan: al cargar una licencia nueva vuelven a aplicarse tal como estaban.
-
-Por ejemplo, con **Políticas de seguridad avanzadas** vencida, la empresa deja de exigir la verificación en dos
-pasos a todos; quien ya la tenía activa la sigue usando.
-
-## Quitar la licencia
-
-Pulsa **Quitar licencia** y confirma. Los plugins dejan de aplicarse en tu empresa y sus ajustes se conservan
-por si vuelves a cargarla.
-
-Cargar y quitar la licencia queda en el registro de auditoría, con a quién se emitió, qué plugins incluye y su
-vencimiento (nunca el texto de la licencia).
+Sus migraciones se aplican solas al arrancar. Un plugin activo puede sumar una pantalla en el grupo
+**Plugins** de Administración y capacidades nuevas en [Roles y permisos](/es/docs/roles-y-permisos).
 
 ## Relacionado
 
+- [Plugin: Conector para Claude](/es/docs/conector-para-claude)
 - [Plugin: Entrar con Microsoft](/es/docs/entrar-con-microsoft)
 - [Plugin: Directorio corporativo](/es/docs/directorio-corporativo)
 - [Roles y permisos](/es/docs/roles-y-permisos)
 - [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)
-- [Configuración](/es/docs/configuracion)

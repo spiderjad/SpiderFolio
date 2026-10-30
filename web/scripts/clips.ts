@@ -5,6 +5,8 @@
 //   qr         generate a document's QR code and open its short URL (the current version)
 //   bian       ask Bian and watch the answer being written, with its citations
 //   compartir  Share › "Who can get in and why"
+//   conector   the connector for Claude: a question in a chat, the SpiderFolio tools it calls, the
+//              answer with the current document, and that document opened in SpiderFolio
 // Each one is exported as MP4 (web/public/clips/<lang>/<name>.mp4, with a .webp poster) and as a light
 // GIF (<name>-<lang>.gif, under 5 MB, plus demo-<lang>.gif joining the four) in clips-gif/, which is
 // not versioned: the README links the GIFs attached to a Release.
@@ -21,7 +23,10 @@
 //
 // Every run works on a fresh copy of the capture database (<name>_clips_capturas, dropped at the end):
 // approving a document changes data, and the clips have to come out the same every time. Bian never
-// calls the Anthropic API: the page gets a recorded answer, streamed at a fixed pace.
+// calls the Anthropic API: the page gets a recorded answer, streamed at a fixed pace. Neither does the
+// connector's clip: its chat is a local page (served by Playwright, never on the network) with a
+// recorded answer written from the demo document's real content. The chat is laid over the document,
+// already loaded, and opening the link takes it away: no reload in the clip.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -119,6 +124,8 @@ interface Clip {
   who: Who;
   /** Where the recording starts (already loaded; the loading is cut out). */
   path: (ids: Ids) => string;
+  /** A local page laid over the loaded screen (the connector's chat), closed by its own link. */
+  chat?: (ctx: ClipContext) => string;
   run: (page: Page, ctx: ClipContext) => Promise<void>;
 }
 
@@ -291,7 +298,144 @@ const CLIPS: Clip[] = [
       await sleep(1200);
     },
   },
+  {
+    name: "conector",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/files/${i.procedures}/p/${i.slicer}`,
+    chat: ({ locale }) => chatPage(locale),
+    run: async (page, { locale }) => {
+      const t = CHAT[locale];
+      const chat = page.frameLocator(`#${CHAT_FRAME}`);
+      const input = chat.getByRole("textbox", { name: t.placeholder });
+      await glide(page, input);
+      await input.pressSequentially(t.question, { delay: 16 });
+      await sleep(200);
+      await page.keyboard.press("Enter");
+      const open = chat.getByRole("link", { name: t.open });
+      await open.waitFor({ timeout: 15_000 });
+      await sleep(700);
+      await clickOn(page, open);
+      await page.locator(`#${CHAT_FRAME}`).waitFor({ state: "detached" });
+      await sleep(1800);
+    },
+  },
 ];
+
+// ─── The connector's chat ─────────────────────────────────────────────────────
+
+/** The chat's frame, over the app. */
+const CHAT_FRAME = "demo-chat";
+
+/** The chat's texts: a question about the slicer and the answer from INS-001 (demo-content.ts). */
+const CHAT: Record<
+  Locale,
+  {
+    title: string;
+    connected: string;
+    placeholder: string;
+    send: string;
+    question: string;
+    tools: [string, string];
+    answer: string[];
+    open: string;
+  }
+> = {
+  es: {
+    title: "Claude",
+    connected: "Conector: SpiderFolio",
+    placeholder: "Escribe tu pregunta",
+    send: "Enviar",
+    question: "¿Qué tengo que tener en cuenta antes de usar la cortadora de fiambres?",
+    tools: ["SpiderFolio · search «cortadora»", "SpiderFolio · get_page INS-001"],
+    answer: [
+      "Según el documento vigente INS-001 «Uso de la cortadora de fiambres»:",
+      "Antes de empezar: comprueba que la protección de la cuchilla está colocada y usa guante de malla en la mano que sujeta la pieza.",
+      "Durante el uso: ajusta el grosor con la máquina parada, empuja la pieza siempre con el carro y apaga y desenchufa antes de limpiar.",
+      "Importante: nunca retires la protección de la cuchilla con la máquina en marcha.",
+    ],
+    open: "Abrir INS-001 en SpiderFolio",
+  },
+  en: {
+    title: "Claude",
+    connected: "Connector: SpiderFolio",
+    placeholder: "Type your question",
+    send: "Send",
+    question: "What should I keep in mind before using the meat slicer?",
+    tools: ["SpiderFolio · search “slicer”", "SpiderFolio · get_page INS-001"],
+    answer: [
+      "According to the current document INS-001 “Using the meat slicer”:",
+      "Before you start: check that the blade guard is in place and wear a mesh glove on the hand that holds the piece.",
+      "While slicing: adjust the thickness with the machine stopped, always push the piece with the carriage, and switch off and unplug before cleaning.",
+      "Important: never remove the blade guard while the machine is running.",
+    ],
+    open: "Open INS-001 in SpiderFolio",
+  },
+};
+
+const escapeHtml = (text: string) =>
+  text.replace(/[&<>"]/gu, (char) => `&#${String(char.charCodeAt(0))};`);
+
+/**
+ * A plain chat window (not a copy of any real product's screen): on Enter it shows the two tool calls
+ * and writes the recorded answer at a fixed pace, ending with the link to the document. The link closes
+ * the chat, uncovering the document loaded underneath. The mouse is passed on to the app's page, which
+ * draws the clip's cursor.
+ */
+function chatPage(locale: Locale): string {
+  const t = CHAT[locale];
+  const data = JSON.stringify({ tools: t.tools, answer: t.answer, open: t.open });
+  return `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><title>${escapeHtml(t.title)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f1d1a; background: #f6f5f1; }
+  header { display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-bottom: 1px solid #e4e1d8; background: #fff; }
+  header b { font-size: 16px; }
+  header span { font-size: 12px; color: #5f5a50; background: #efece4; border-radius: 999px; padding: 2px 10px; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 24px 140px; display: grid; gap: 16px; }
+  .me { justify-self: end; max-width: 80%; background: #e9e6dd; border-radius: 16px; padding: 10px 14px; }
+  .tool { justify-self: start; font-size: 12px; color: #5f5a50; border: 1px solid #e4e1d8; background: #fff; border-radius: 8px; padding: 4px 10px; }
+  .answer p { margin: 0 0 10px; }
+  .answer a { display: inline-block; margin-top: 4px; color: #6d28d9; font-weight: 600; text-decoration: none; border: 1px solid #ddd6fe; background: #f5f3ff; border-radius: 8px; padding: 6px 12px; }
+  form { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); width: min(712px, calc(100vw - 48px)); display: flex; gap: 8px; background: #fff; border: 1px solid #d9d5ca; border-radius: 16px; padding: 10px; box-shadow: 0 4px 18px rgb(0 0 0 / 6%); }
+  input { flex: 1; border: 0; outline: 0; font: inherit; padding: 6px 8px; }
+  button { border: 0; border-radius: 10px; background: #1f1d1a; color: #fff; font: inherit; padding: 6px 14px; }
+</style></head><body>
+<header><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.connected)}</span></header>
+<main id="chat"></main>
+<form id="ask"><input id="q" aria-label="${escapeHtml(t.placeholder)}" placeholder="${escapeHtml(t.placeholder)}" autocomplete="off"><button>${escapeHtml(t.send)}</button></form>
+<script>
+  const data = ${data};
+  const chat = document.getElementById("chat");
+  const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+  for (const type of ["mousemove", "mousedown", "mouseup"]) {
+    addEventListener(type, (event) => parent.dispatchEvent(new MouseEvent(type, { clientX: event.clientX, clientY: event.clientY })), true);
+  }
+  const add = (cls, text) => { const el = document.createElement("div"); el.className = cls; el.textContent = text; chat.append(el); return el; };
+  document.getElementById("ask").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const q = document.getElementById("q");
+    add("me", q.value);
+    q.value = "";
+    for (const tool of data.tools) { await wait(450); add("tool", tool); }
+    await wait(400);
+    const answer = add("answer", "");
+    for (const paragraph of data.answer) {
+      const p = document.createElement("p");
+      answer.append(p);
+      for (const word of paragraph.split(" ")) { p.textContent += (p.textContent ? " " : "") + word; await wait(28); }
+    }
+    const a = document.createElement("a");
+    a.href = "#"; a.textContent = data.open;
+    a.addEventListener("click", (click) => {
+      click.preventDefault();
+      const frame = parent.document.getElementById("${CHAT_FRAME}");
+      frame.style.opacity = "0";
+      setTimeout(() => frame.remove(), 320);
+    });
+    answer.append(a);
+  });
+</script></body></html>`;
+}
 
 // ─── Data for the clips ───────────────────────────────────────────────────────
 
@@ -449,6 +593,27 @@ async function record(
   await waitUntilReady(page);
   await page.goto(`${APP_URL}${clip.path(ctx.ids)}`);
   await waitUntilReady(page);
+  if (clip.chat !== undefined) {
+    await page.evaluate(
+      ([id, html]) => {
+        const frame = document.createElement("iframe");
+        frame.id = id;
+        frame.srcdoc = html;
+        Object.assign(frame.style, {
+          position: "fixed",
+          inset: "0",
+          width: "100%",
+          height: "100%",
+          border: "0",
+          zIndex: "2147483646",
+          transition: "opacity 300ms ease",
+        });
+        document.body.append(frame);
+      },
+      [CHAT_FRAME, clip.chat(ctx)] as const,
+    );
+    await page.frameLocator(`#${CHAT_FRAME}`).getByRole("textbox").waitFor();
+  }
   await sleep(500);
   const start = (Date.now() - opened) / 1000;
   await clip.run(page, ctx);
@@ -501,7 +666,7 @@ async function record(
   return mp4;
 }
 
-/** The four clips in sequence, for the top of the README. */
+/** The clips in sequence, for the top of the README. */
 function demoGif(locale: Locale, work: string): void {
   const list = join(work, `demo-${locale}.txt`);
   writeFileSync(

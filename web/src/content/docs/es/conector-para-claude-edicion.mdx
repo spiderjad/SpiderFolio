@@ -13,7 +13,8 @@ import Shot from "../../../components/Shot.astro";
 persona que lo conectó:
 
 - crear páginas a partir de lo que le pidas («Crea un borrador de instructivo para el autoelevador en la
-  carpeta de Seguridad»);
+  carpeta de Seguridad»), también como **documento controlado en borrador** («…como procedimiento
+  controlado»): recibe su código (por ejemplo, PRC-004) y queda en borrador, sin publicar;
 - editar páginas: reemplazarlas, agregar al final o cambiar un fragmento;
 - crear carpetas y mover páginas, carpetas y archivos;
 - subir archivos pequeños (hasta 10 MB);
@@ -21,7 +22,12 @@ persona que lo conectó:
 - enviar el borrador de un documento controlado a revisión.
 
 Es un plugin **de pago**. Incluye el gratis: si tenías el Conector para Claude, las conexiones siguen
-funcionando y ganan la edición sin volver a conectar nada.
+funcionando para leer. Para que Claude también edite, cada persona desconecta SpiderFolio en Claude y lo
+vuelve a conectar: la pantalla de autorizar tiene que decir que pide crear y editar.
+
+Lo que cambia Claude se ve como «*nombre* vía Claude» en **Modificado por** del explorador, en «Última
+edición» al pie de la página y en el registro de auditoría. Cuando alguien lo vuelve a editar en
+SpiderFolio, pasa a mostrar solo a esa persona.
 
 ## Lo que nunca hace
 
@@ -36,7 +42,7 @@ vigente no cambia hasta que alguien lo apruebe y lo publique.
 
 1. En **Administración › Licencia y plugins**, copia el **ID de la empresa** y envíanoslo
    ([contacto](mailto:contacto@spiderjad.com)).
-2. Te enviamos un `.sfplugin` firmado para tu empresa. Súbelo en **Subir un plugin** y pulsa **Reiniciar
+2. Te enviamos un `.sfplugin` firmado para tu empresa. Súbelo en **Subir plugin** y pulsa **Reiniciar
    ahora**.
 
 En **Administración › Seguridad › Conector para Claude** dice entonces «Claude puede leer y editar».
