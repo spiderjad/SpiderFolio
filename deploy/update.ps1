@@ -66,6 +66,8 @@ if ($image -eq "") { $image = "ghcr.io/spiderjad/spiderfolio:latest" }
 $base = $image.Substring(0, $image.LastIndexOf(":"))
 $tag = $image.Substring($image.LastIndexOf(":") + 1)
 $newImage = "${base}:$Version"
+# Images before 0.5.0 don't say their version: a pinned tag does.
+if ($previous -notmatch $versionPattern -and $tag -match $versionPattern) { $previous = $tag }
 
 # --- 1. The new image and the plugins, before touching anything ---------------
 Write-Host "-> Descargando la imagen $newImage..."
@@ -194,6 +196,6 @@ Write-Host ""
 Write-Host "Si algo salió mal, para volver a la versión anterior:"
 Write-Host "  1. En .env: SPIDERFOLIO_IMAGE=${base}:$previous"
 Write-Host "  2. powershell -ExecutionPolicy Bypass -File .\restore.ps1 $backupPath"
-Write-Host "     (vuelve a arrancar con esa imagen y la base como estaba antes de actualizar: lo hecho"
-Write-Host "     después se pierde)"
+Write-Host "     (pide escribir RESTAURAR; vuelve a arrancar con esa imagen y la base como estaba antes"
+Write-Host "     de actualizar: lo hecho después se pierde)"
 if (-not $ready) { exit 1 }

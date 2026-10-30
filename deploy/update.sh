@@ -43,6 +43,10 @@ IMAGE="$(envValue SPIDERFOLIO_IMAGE)"
 BASE="${IMAGE%:*}"
 TAG="${IMAGE##*:}"
 NEW_IMAGE="$BASE:$VERSION"
+# Images before 0.5.0 don't say their version: a pinned tag does.
+if ! echo "$PREVIOUS" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' && echo "$TAG" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+  PREVIOUS="$TAG"
+fi
 
 # ─── 1. The new image and the plugins, before touching anything ──────────────
 echo "→ Descargando la imagen $NEW_IMAGE…"
@@ -155,7 +159,7 @@ cat <<EOF
 Si algo salió mal, para volver a la versión anterior:
   1. En .env: SPIDERFOLIO_IMAGE=$BASE:$PREVIOUS
   2. ./restore.sh $BACKUP
-     (vuelve a arrancar con esa imagen y la base como estaba antes de actualizar: lo hecho
-     después se pierde)
+     (pide escribir RESTAURAR; vuelve a arrancar con esa imagen y la base como estaba antes
+     de actualizar: lo hecho después se pierde)
 EOF
 [ -n "$READY" ] || exit 1
