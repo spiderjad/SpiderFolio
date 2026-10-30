@@ -1,6 +1,7 @@
 // PDF controlado: generarlo al publicar (job) o a pedido y descargarlo con la marca de agua.
 // Páginas: HTML → PDF con Gotenberg, guardado en el bucket (`pdfKey`). Archivos PDF: el original con
 // la hoja de control al principio. Solo las versiones publicadas u obsoletas tienen PDF controlado.
+import { zoneOf } from "../../lib/time-zone.ts";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { contentToHtml } from "@spiderfolio/content";
@@ -35,11 +36,6 @@ async function toBuffer(stream: Readable, max: number): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-function settingsZone(settings: unknown): string {
-  const raw = (settings as { timezone?: unknown } | null | undefined)?.timezone;
-  return typeof raw === "string" && raw !== "" ? raw : "UTC";
-}
-
 function formatter(timeZone: string, withTime: boolean): (date: Date) => string {
   const options: Intl.DateTimeFormatOptions = withTime
     ? { dateStyle: "short", timeStyle: "short" }
@@ -61,7 +57,7 @@ async function controlInfo(db: TenantDb, nodeId: string, version: number) {
     db.workspace.findFirst({ where: {}, select: { name: true, settings: true } }),
   ]);
   if (row === null || controlled === null || workspace === null) throw notFound();
-  const zone = settingsZone(workspace.settings);
+  const zone = zoneOf(workspace.settings);
   const day = formatter(zone, false);
   const approvals = await db.approval.findMany({
     where: {

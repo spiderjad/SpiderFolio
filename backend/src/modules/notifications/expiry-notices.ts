@@ -1,10 +1,13 @@
-// Job diario: avisa los accesos que vencen en los próximos 2 días, a quien los recibió (la persona, o
-// los miembros del departamento) y a quien los compartió. Una sola vez por acceso y vencimiento:
-// el job puede repetirse sin duplicar avisos (dedupeKey único por persona).
+// Daily notice at 8:00 in each company's zone (an hourly job that only takes the companies where it's 8
+// now): the access that expires in the next 2 days, to whoever received it (the person, or the
+// members of the department) and to whoever shared it. Once per access and expiry: the job can run
+// again without duplicating notices (dedupeKey unique per person).
 import type { WorkerDeps } from "../../jobs/handlers.ts";
+import { localHour, zoneOf } from "../../lib/time-zone.ts";
 import { parentMapOf, withDescendants } from "../departments/department-tree.ts";
 
 const NOTICE_DAYS = 2;
+const NOTICE_HOUR = 8;
 const BATCH = 200;
 
 export async function notifyExpiringAccess(
@@ -12,6 +15,15 @@ export async function notifyExpiringAccess(
   now: Date = new Date(),
 ): Promise<{ notified: number }> {
   const until = new Date(now.getTime() + NOTICE_DAYS * 24 * 60 * 60 * 1000);
+  const companies = (
+    await deps.prisma.workspace.findMany({
+      where: { deletedAt: null },
+      select: { id: true, settings: true },
+    })
+  )
+    .filter((workspace) => localHour(now, zoneOf(workspace.settings)) === NOTICE_HOUR)
+    .map((workspace) => workspace.id);
+  if (companies.length === 0) return { notified: 0 };
   const trees = new Map<string, ReturnType<typeof parentMapOf>>();
   const treeOf = async (workspaceId: string) => {
     const cached = trees.get(workspaceId);
@@ -30,7 +42,7 @@ export async function notifyExpiringAccess(
   let after: string | undefined;
   for (;;) {
     const permissions = await deps.prisma.permission.findMany({
-      where: { expiresAt: { gt: now, lte: until } },
+      where: { workspaceId: { in: companies }, expiresAt: { gt: now, lte: until } },
       orderBy: { id: "asc" },
       take: BATCH,
       ...(after === undefined ? {} : { cursor: { id: after }, skip: 1 }),

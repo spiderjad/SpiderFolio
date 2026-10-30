@@ -131,9 +131,13 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
   },
   security: {
     language: {
-      title: "Company language",
-      text: "Used by everyone who hasn't chosen one in My profile, and for invitations and controlled document PDFs.",
+      title: "Language and time zone",
+      text: "The language is used by everyone who hasn't chosen one in My profile, and for invitations and PDFs. The time zone sets every date and time in the app, the emails and the PDFs.",
       label: "Default language",
+      timeZoneLabel: "Time zone",
+      timeZoneHint:
+        "Where the company is, for example Europe/Madrid or America/Santiago. Daily notices go out at 8:00 in this zone. Type a city to search for it.",
+      timeZoneSearch: "Search a city",
     },
     title: "Security",
     subtitle: "Access and privacy rules for your workspace.",

@@ -2,6 +2,7 @@
 // documentos citados (los que existen en este workspace). Nunca el texto de la pregunta o la
 // respuesta, ni quién valoró: por eso quien valora guarda el id que se le devuelve y con él puede
 // cambiar o quitar su valoración (el id es aleatorio y solo vale dentro de la empresa).
+import { companyZone, endOfDayIn, startOfDayIn } from "../../lib/time-zone.ts";
 import { feedbackByNode, feedbackTotals } from "../../db/raw/bian-feedback.ts";
 import { notFound } from "../../lib/errors.ts";
 import { offsetArgs, pageOf, type Page, type PageQuery } from "../../lib/pagination.ts";
@@ -108,10 +109,17 @@ export async function feedbackStats(
   query: FeedbackStatsQuery,
   now: Date = new Date(),
 ): Promise<FeedbackStats> {
-  const since = query.from ?? new Date(now.getTime() - DEFAULT_DAYS * 24 * 3600 * 1000);
-  // «hasta» incluye el día entero.
+  // «From» and «to» are whole days in the company's zone («to» includes all of it).
+  const zone = await companyZone(ctx.db);
+  const dayOf = (date: Date) => date.toISOString().slice(0, 10);
+  const since =
+    query.from === undefined
+      ? new Date(now.getTime() - DEFAULT_DAYS * 24 * 3600 * 1000)
+      : startOfDayIn(dayOf(query.from), zone);
   const until =
-    query.to === undefined ? undefined : new Date(query.to.getTime() + 24 * 3600 * 1000);
+    query.to === undefined
+      ? undefined
+      : new Date(endOfDayIn(dayOf(query.to), zone).getTime() + 1000);
   const params = {
     workspaceId: ctx.tenant.workspaceId,
     since,

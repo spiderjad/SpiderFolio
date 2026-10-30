@@ -1,6 +1,7 @@
 // Autenticación (CLAUDE.md, secciones 7.1 a 7.3). Usa el cliente base: User, Session y
 // AuthToken son globales. Las transacciones que envían emails encolan dentro de la misma
 // transacción, así nunca sale un email de algo que se revirtió.
+import { zoneOf } from "../../lib/time-zone.ts";
 import type { z } from "zod";
 import {
   invitationMessages,
@@ -247,6 +248,7 @@ export function createAuthService(deps: AppDeps) {
             accentColor: m.workspace.accentColor,
             logoKey: m.workspace.logoKey,
             locale: readWorkspaceLocale(m.workspace.settings),
+            timeZone: zoneOf(m.workspace.settings),
           },
           role: { id: m.role.id, name: m.role.name, base: m.role.base },
           // El propietario tiene también las capacidades de los plugins instalados.

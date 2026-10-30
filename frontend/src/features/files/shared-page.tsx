@@ -17,7 +17,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { readChoice, useListParams, useSearchParam } from "@/features/admin/list-params";
 import { expiryText } from "@/features/notifications/notification-bell";
 import { sharingApi } from "@/features/sharing/api";
-import { cn, formatShortDate } from "@/lib/utils";
+import { cn, dayInputOf, endOfDay, formatShortDate } from "@/lib/utils";
 import { filesApi, filesKeys, previewKind, type SharedByMeItem, type SharedItem } from "./api";
 import { NodeIcon } from "./file-utils";
 import { texts } from "@/i18n";
@@ -31,12 +31,6 @@ const soon = (expiresAt: string): boolean => {
 const TABS = ["with-me", "by-me"] as const;
 
 const WEEK_MS = 7 * 86_400_000;
-const endOfDay = (value: string): string => new Date(`${value}T23:59:59`).toISOString();
-const dateInputOf = (iso: string): string => {
-  const date = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-};
 
 /** Vuelve a dar el mismo acceso con otro vencimiento (el servidor lo reemplaza). */
 function regrant(slug: string, item: SharedByMeItem, expiresAt: string | null) {
@@ -420,7 +414,7 @@ function ByMe() {
 function ChangeExpiry({ item, onDone }: { item: SharedByMeItem; onDone: () => Promise<unknown> }) {
   const t = texts.files.shared.byMe;
   const { workspaceSlug = "" } = useParams();
-  const [date, setDate] = useState(item.expiresAt === null ? "" : dateInputOf(item.expiresAt));
+  const [date, setDate] = useState(item.expiresAt === null ? "" : dayInputOf(item.expiresAt));
   const save = useMutation({
     mutationFn: () => regrant(workspaceSlug, item, date === "" ? null : endOfDay(date)),
     onSuccess: async () => {

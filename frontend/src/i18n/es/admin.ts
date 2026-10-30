@@ -127,9 +127,13 @@ export const adminTexts = {
   },
   security: {
     language: {
-      title: "Idioma de la empresa",
-      text: "Lo ven quienes no eligieron uno en Mi perfil. Se usa también en las invitaciones y en los PDF de documentos controlados.",
+      title: "Idioma y zona horaria",
+      text: "El idioma lo ven quienes no eligieron uno en Mi perfil, y se usa en las invitaciones y en los PDF. La zona horaria rige todas las fechas y horas de la app, los emails y los PDF.",
       label: "Idioma por defecto",
+      timeZoneLabel: "Zona horaria",
+      timeZoneHint:
+        "Donde está la empresa, por ejemplo Europa/Madrid o América/Santiago. Los avisos diarios salen a las 8:00 de esta hora. Escribe una ciudad para buscarla.",
+      timeZoneSearch: "Buscar una ciudad",
     },
     title: "Seguridad",
     subtitle: "Reglas de acceso y de privacidad de tu workspace.",

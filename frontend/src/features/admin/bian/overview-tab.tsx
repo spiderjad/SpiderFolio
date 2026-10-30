@@ -19,7 +19,7 @@ import {
   type LimitMode,
   type LimitView,
 } from "@/features/bian/bian-api";
-import { formatLongDate } from "@/lib/utils";
+import { formatUtcLongDate } from "@/lib/utils";
 import { texts } from "@/i18n";
 
 const select =
@@ -215,7 +215,7 @@ function MonthCard({ data, slug }: { data: BianOverview; slug: string }) {
         />
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        {t.renews(formatLongDate(renewsAt))}
+        {t.renews(formatUtcLongDate(renewsAt))}
       </p>
       <form
         className="mt-4 flex flex-wrap items-end gap-2"

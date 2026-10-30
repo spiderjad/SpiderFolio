@@ -2,6 +2,7 @@
 // empresa, y el job diario avisa los vencimientos una sola vez. Además, la vista «por espacio» de
 // Accesos y el nivel del jefe en la matriz.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { localHour } from "../../src/lib/time-zone.ts";
 import { notifyExpiringAccess } from "../../src/modules/notifications/expiry-notices.ts";
 import { addMember, createTestContext, type TestContext } from "./helpers.ts";
 import { pagesWorld, type PagesWorld } from "./pages-world.ts";
@@ -123,8 +124,16 @@ describe("campana de avisos", () => {
     expect(list.items[0]?.target).toBeNull();
   });
 
-  it("el job diario avisa los vencimientos a 2 días una sola vez, a quien recibió y a quien compartió", async () => {
+  /** The next whole hour that is 8:00 in Madrid (the test companies' zone). */
+  const eightInMadrid = () => {
+    let at = Math.ceil(Date.now() / 3_600_000) * 3_600_000;
+    while (localHour(new Date(at), "Europe/Madrid") !== 8) at += 3_600_000;
+    return at;
+  };
+
+  it("el job avisa los vencimientos a 2 días una sola vez, a las 8 de la empresa, a quien recibió y a quien compartió", async () => {
     const w = await pagesWorld(ctx, "Avisos vencimiento");
+    const eight = eightInMadrid();
     const shared = await folder(w, "Temporal");
     const near = await ctx.prisma.permission.create({
       data: {
@@ -133,7 +142,7 @@ describe("campana de avisos", () => {
         membershipId: w.stranger.membership.id,
         level: "VIEW",
         grantedById: w.ownerMembership.id,
-        expiresAt: new Date(Date.now() + 30 * 3600 * 1000),
+        expiresAt: new Date(eight + 30 * 3600 * 1000),
       },
     });
     const far = await folder(w, "Lejana");
@@ -144,12 +153,19 @@ describe("campana de avisos", () => {
         membershipId: w.stranger.membership.id,
         level: "VIEW",
         grantedById: w.ownerMembership.id,
-        expiresAt: new Date(Date.now() + 10 * 24 * 3600 * 1000),
+        expiresAt: new Date(eight + 10 * 24 * 3600 * 1000),
       },
     });
     const deps = { prisma: ctx.prisma, logger: ctx.deps.logger };
-    await notifyExpiringAccess(deps);
-    await notifyExpiringAccess(deps);
+    // At 9:00 in Madrid nothing goes out; at 8:00 it does, once even if the job runs again.
+    await notifyExpiringAccess(deps, new Date(eight + 3_600_000));
+    expect(
+      await ctx.prisma.notification.count({
+        where: { workspaceId: w.ws.workspaceId, permissionId: near.id },
+      }),
+    ).toBe(0);
+    await notifyExpiringAccess(deps, new Date(eight));
+    await notifyExpiringAccess(deps, new Date(eight));
     const rows = await ctx.prisma.notification.findMany({
       where: { workspaceId: w.ws.workspaceId, permissionId: near.id },
     });

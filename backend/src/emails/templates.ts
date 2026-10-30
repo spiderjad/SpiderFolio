@@ -1,6 +1,7 @@
 // Contenido de cada tipo de email. Los enlaces con token llevan el token en el fragmento
 // (#token=…): el navegador no lo envía al servidor, así no queda en logs ni en el Referer; la
 // app lo lee y lo manda por POST (CLAUDE.md, sección 7.3).
+import { formatDateTimeIn } from "../lib/time-zone.ts";
 import {
   emailChangeTexts,
   emailTexts,
@@ -23,6 +24,8 @@ export interface EmailContext {
   invitation?: { workspaceName: string; inviterName: string | null; roleName: string };
   /** Datos del inicio de sesión (new-login). */
   login?: { userAgent: string | null; at: Date };
+  /** The recipient's company zone: dates and times are written in it (UTC if unknown). */
+  timeZone?: string;
   /** Cambio de email: el nuevo (para el aviso al anterior). */
   newEmail?: string;
   /** Datos de la mención (mention). */
@@ -64,13 +67,9 @@ function requireToken(context: EmailContext): string {
   return context.token;
 }
 
-/** Fecha legible en UTC, sin depender de la zona del servidor. */
-function formatUtc(date: Date): string {
-  return new Intl.DateTimeFormat(currentLocale(), {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "UTC",
-  }).format(date);
+/** Date and time in the company's zone, naming it: an account email may reach someone elsewhere. */
+function formatWhen(date: Date, timeZone: string): string {
+  return `${formatDateTimeIn(date, timeZone, currentLocale())} (${timeZone})`;
 }
 
 /** Resumen del user agent: navegador y sistema, sin versiones. */
@@ -165,7 +164,11 @@ export function buildEmail(job: EmailJob, context: EmailContext): EmailContent {
       return renderEmail({
         subject: t.subject,
         title: t.title,
-        paragraphs: [t.greeting(name), t.body(context.workspaceName ?? emailTexts.yourCompany), t.warning],
+        paragraphs: [
+          t.greeting(name),
+          t.body(context.workspaceName ?? emailTexts.yourCompany),
+          t.warning,
+        ],
       });
     }
     case "password-changed": {
@@ -278,7 +281,7 @@ export function buildEmail(job: EmailJob, context: EmailContext): EmailContent {
         title: t.title,
         paragraphs: [
           t.greeting(name),
-          t.body(describeDevice(login.userAgent), formatUtc(login.at)),
+          t.body(describeDevice(login.userAgent), formatWhen(login.at, context.timeZone ?? "UTC")),
           t.warning,
         ],
       });

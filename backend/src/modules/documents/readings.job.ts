@@ -7,29 +7,12 @@ import type { Logger } from "pino";
 import { forTenant, type TenantDb } from "../../db/tenant.ts";
 import type { Jobs } from "../../jobs/boss.ts";
 import type { PrismaClient } from "../../lib/prisma.ts";
+import { localHour, zoneOf } from "../../lib/time-zone.ts";
 import { createDocumentNotices } from "../notifications/notifications.service.ts";
 import { expandRequirements, whoCanSee } from "./readings.core.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 const REMINDER_HOUR = 8;
-
-export function localHour(now: Date, timeZone: string): number {
-  try {
-    const hour = new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      hourCycle: "h23",
-      timeZone,
-    }).format(now);
-    return Number(hour);
-  } catch {
-    return now.getUTCHours();
-  }
-}
-
-const zoneOf = (settings: unknown): string => {
-  const raw = (settings as { timezone?: unknown } | null | undefined)?.timezone;
-  return typeof raw === "string" && raw !== "" ? raw : "UTC";
-};
 
 /** Manda un aviso una sola vez por persona y clave. */
 async function once(

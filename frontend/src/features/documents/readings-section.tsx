@@ -16,7 +16,7 @@ import { ComparisonLoader } from "./compare-view";
 import { adminApi } from "@/features/admin/api";
 import { adminErrorText, downloadTextFile } from "@/features/admin/admin-utils";
 import { useDepartmentSource } from "@/features/admin/sources";
-import { formatShortDate } from "@/lib/utils";
+import { endOfDay, formatShortDate } from "@/lib/utils";
 import {
   documentsApi,
   documentsKeys,
@@ -115,7 +115,6 @@ const STATUS_TONE: Record<ReadingStatus, "success" | "warning" | "danger" | "neu
   noAccess: "neutral",
 };
 
-const endOfDay = (value: string): string => new Date(`${value}T23:59:59`).toISOString();
 
 export function ReadingsSection({
   nodeId,

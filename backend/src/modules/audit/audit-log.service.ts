@@ -1,6 +1,7 @@
 // Administración › Registro de auditoría: lista filtrable del AuditLog del workspace (scroll infinito por
 // cursor del último elemento visto), su exportación a CSV y el recorte semanal según la retención que fija la
 // empresa (si fijó una). Solo lectura: nada acá modifica un evento. La metadata nunca lleva contenido ni secretos.
+import { companyZone, endOfDayIn, startOfDayIn } from "../../lib/time-zone.ts";
 import { z } from "zod";
 import { forTenant } from "../../db/tenant.ts";
 import type { Prisma } from "../../generated/prisma/client.ts";
@@ -55,9 +56,6 @@ export interface AuditEvent {
   metadata: unknown;
 }
 
-const dayStart = (day: string): Date => new Date(`${day}T00:00:00.000Z`);
-const dayEnd = (day: string): Date => new Date(`${day}T23:59:59.999Z`);
-
 /** El filtro por persona va por membresía; los eventos guardan el usuario. Sin esa persona: nada coincide. */
 async function actorFilter(ctx: AdminContext, filters: AuditFilters): Promise<string | undefined> {
   if (filters.memberId === undefined) return undefined;
@@ -68,14 +66,17 @@ async function actorFilter(ctx: AdminContext, filters: AuditFilters): Promise<st
   return member?.userId ?? "-";
 }
 
+/** «From» and «to» are whole days in the company's zone. */
 function whereOf(
   workspaceId: string,
   filters: AuditFilters,
   actorId: string | undefined,
+  zone: string,
 ): Prisma.AuditLogWhereInput {
   const created: Prisma.DateTimeFilter = {};
-  if (filters.from !== undefined) created.gte = dayStart(filters.from);
-  if (filters.to !== undefined) created.lte = dayEnd(filters.to);
+  if (filters.from !== undefined) created.gte = startOfDayIn(filters.from, zone);
+  if (filters.to !== undefined)
+    created.lte = new Date(endOfDayIn(filters.to, zone).getTime() + 999);
   return {
     workspaceId,
     ...(actorId === undefined ? {} : { actorId }),
@@ -159,7 +160,12 @@ const select = {
 } as const;
 
 export async function listAudit(ctx: AdminContext, deps: Deps, query: AuditListQuery) {
-  const where = whereOf(ctx.db.workspaceId, query, await actorFilter(ctx, query));
+  const where = whereOf(
+    ctx.db.workspaceId,
+    query,
+    await actorFilter(ctx, query),
+    await companyZone(ctx.db),
+  );
   const position = decodeCursor(query.cursor);
   if (query.cursor !== undefined && query.cursor !== "" && position === null) {
     throw new AppError("BAD_REQUEST", { message: auditExportLabels.invalidCursor });
@@ -203,7 +209,12 @@ export async function auditCsv(
   deps: Deps,
   filters: AuditFilters,
 ): Promise<{ fileName: string; csv: string }> {
-  const where = whereOf(ctx.db.workspaceId, filters, await actorFilter(ctx, filters));
+  const where = whereOf(
+    ctx.db.workspaceId,
+    filters,
+    await actorFilter(ctx, filters),
+    await companyZone(ctx.db),
+  );
   const total = await ctx.db.auditLog.count({ where });
   if (total > AUDIT_EXPORT_MAX) {
     throw new AppError("BAD_REQUEST", {

@@ -3,6 +3,7 @@
 // bloque más del contexto de Bian, para responder «¿cuándo se revisa?», «¿quién lo aprobó?» o «¿desde
 // cuándo está vigente?». Solo de documentos que la persona puede ver y solo de su versión vigente; se
 // cita como fuente «Ficha del documento».
+import { formatDayIn, zoneOf } from "../../lib/time-zone.ts";
 import { atLeast } from "../access/access.ts";
 import { accessFor } from "../access/access-context.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
@@ -17,10 +18,9 @@ export function codesIn(text: string): string[] {
   return [...new Set(found)].slice(0, 5);
 }
 
-const dateText = (date: Date | null): string =>
-  date === null
-    ? "sin fecha"
-    : new Intl.DateTimeFormat(currentLocale(), { dateStyle: "long", timeZone: "UTC" }).format(date);
+/** A day in the company's zone (where a review date was set as a whole day). */
+const dateText = (date: Date | null, zone: string): string =>
+  date === null ? "sin fecha" : formatDayIn(date, zone, currentLocale());
 
 /** Los documentos controlados y vigentes que la persona ve y cuyo código menciona la pregunta. */
 export async function mentionedDocuments(ctx: AdminContext, query: string): Promise<string[]> {
@@ -49,6 +49,8 @@ export async function documentCards(
 ): Promise<Map<string, Fragment>> {
   const cards = new Map<string, Fragment>();
   if (nodeIds.length === 0) return cards;
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
+  const zone = zoneOf(workspace?.settings);
   const documents = await ctx.db.controlledDocument.findMany({
     where: {
       nodeId: { in: [...nodeIds] },
@@ -125,10 +127,10 @@ export async function documentCards(
       `Tipo: ${typeName.get(document.docType) ?? document.docType}`,
       `Versión vigente: v${String(document.publishedVersion)}`,
       "Estado: Vigente",
-      `En vigor desde: ${dateText(version?.effectiveAt ?? version?.publishedAt ?? null)}`,
-      `Aprobado por: ${approvers.length === 0 ? "sin registro" : approvers.join(" y ")}${approvedAt === null ? "" : `, el ${dateText(approvedAt)}`}`,
+      `En vigor desde: ${dateText(version?.effectiveAt ?? version?.publishedAt ?? null, zone)}`,
+      `Aprobado por: ${approvers.length === 0 ? "sin registro" : approvers.join(" y ")}${approvedAt === null ? "" : `, el ${dateText(approvedAt, zone)}`}`,
       `Departamento responsable: ${document.ownerDepartmentId === null ? "sin departamento" : (departmentName.get(document.ownerDepartmentId) ?? "sin departamento")}`,
-      `Próxima revisión: ${document.reviewDueAt === null ? "sin fecha definida" : dateText(document.reviewDueAt)}`,
+      `Próxima revisión: ${document.reviewDueAt === null ? "sin fecha definida" : dateText(document.reviewDueAt, zone)}`,
     ];
     cards.set(document.nodeId, {
       chunkId: `card:${document.nodeId}`,

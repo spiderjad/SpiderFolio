@@ -55,7 +55,6 @@ const dayFormat = new Intl.DateTimeFormat(locale, {
   timeZone: "UTC",
 });
 const monthFormat = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
-const longDateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" });
 
 /** "2026-10-19" → "19 oct". */
 export function formatDay(isoDay: string): string {
@@ -67,32 +66,129 @@ export function formatMonth(isoMonth: string): string {
   return monthFormat.format(new Date(`${isoMonth.slice(0, 7)}-01T00:00:00Z`));
 }
 
-/** Fecha ISO completa → "19 de octubre de 2026". */
+// The company's time zone (Administración › Seguridad): every date and time in the app is shown in it,
+// wherever the browser is. A whole day (a deadline, a review) is stored as the end of that day in this
+// zone, so shown in it it's always that day.
+let zone: string | undefined;
+let formats = buildFormats(undefined);
+
+function buildFormats(timeZone: string | undefined) {
+  const withZone = timeZone === undefined ? {} : { timeZone };
+  return {
+    dateTime: new Intl.DateTimeFormat(locale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      ...withZone,
+    }),
+    short: new Intl.DateTimeFormat(locale, { dateStyle: "medium", ...withZone }),
+    long: new Intl.DateTimeFormat(locale, { dateStyle: "long", ...withZone }),
+    full: new Intl.DateTimeFormat(locale, { dateStyle: "full", ...withZone }),
+    parts: new Intl.DateTimeFormat("en-GB", {
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      ...withZone,
+    }),
+  };
+}
+
+/** Sets the company's zone (the app shell does it with the company being viewed). */
+export function setAppTimeZone(timeZone: string | undefined): void {
+  if (timeZone === zone) return;
+  try {
+    formats = buildFormats(timeZone);
+    zone = timeZone;
+  } catch {
+    // An unknown zone (shouldn't come from the server): the browser's.
+    formats = buildFormats(undefined);
+    zone = undefined;
+  }
+}
+
+/** The company's zone in use (the browser's if none). */
+export function appTimeZone(): string {
+  return zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/** Fecha ISO completa → "19 de octubre de 2026", en la zona de la empresa. */
 export function formatLongDate(iso: string): string {
-  return longDateFormat.format(new Date(iso));
+  return formats.long.format(new Date(iso));
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
-const shortDateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
-
-/** Fecha y hora ISO en la zona del navegador: "19 oct 2026, 10:30". */
+/** Fecha y hora ISO en la zona de la empresa: "19 oct 2026, 10:30". */
 export function formatDateTime(iso: string): string {
-  return dateTimeFormat.format(new Date(iso));
+  return formats.dateTime.format(new Date(iso));
 }
 
-/** Fecha ISO en la zona del navegador: "19 oct 2026". */
+/** Fecha ISO en la zona de la empresa: "19 oct 2026". */
 export function formatShortDate(iso: string): string {
-  return shortDateFormat.format(new Date(iso));
+  return formats.short.format(new Date(iso));
+}
+
+/** Hoy, completo, en la zona de la empresa: "viernes, 30 de octubre de 2026". */
+export function formatToday(now: Date = new Date()): string {
+  return formats.full.format(now);
+}
+
+function partsOf(date: Date) {
+  const parts = formats.parts.formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+  return {
+    year: get("year"),
+    month: get("month"),
+    day: get("day"),
+    hour: get("hour"),
+    minute: get("minute"),
+    second: get("second"),
+  };
+}
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** «YYYY-MM-DD» of an instant in the company's zone: the value of a date field. */
+export function dayInputOf(iso: string): string {
+  const { year, month, day } = partsOf(new Date(iso));
+  return `${String(year)}-${pad(month)}-${pad(day)}`;
+}
+
+/**
+ * The end of a day («YYYY-MM-DD», from a date field) in the company's zone, as ISO: a deadline or an
+ * expiry «until that day». The offset is the one at that moment, so the day the clocks change too.
+ */
+export function endOfDay(value: string): string {
+  const [year = 1970, month = 1, day = 1] = value.slice(0, 10).split("-").map(Number);
+  const wall = Date.UTC(year, month - 1, day, 23, 59, 59);
+  const offset = (at: number) => {
+    const p = partsOf(new Date(at));
+    return (
+      Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) -
+      Math.floor(at / 1000) * 1000
+    );
+  };
+  let instant = wall - offset(wall);
+  instant = wall - offset(instant);
+  return new Date(instant).toISOString();
 }
 
 const utcDateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" });
+const utcLongFormat = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" });
 
 /**
  * A calendar day stored as an instant in UTC (a license that runs until 2027-12-31T23:59:59Z): the
- * day itself, «31 dic 2027», wherever the browser is (in Madrid that instant is already 1 January).
+ * day itself, «31 dic 2027», in any zone (in Madrid that instant is already 1 January).
  */
 export function formatUtcDate(iso: string): string {
   return utcDateFormat.format(new Date(iso));
+}
+
+/** The same, long: «1 de noviembre de 2026» (Bian's monthly quota renews on the 1st, in UTC). */
+export function formatUtcLongDate(iso: string): string {
+  return utcLongFormat.format(new Date(iso));
 }
 
 const relativeFormat = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });

@@ -21,7 +21,7 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminApi } from "@/features/admin/api";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { filesApi, type AccessLevel } from "@/features/files/api";
-import { formatShortDate } from "@/lib/utils";
+import { endOfDay, formatShortDate } from "@/lib/utils";
 import {
   sharingApi,
   sharingKeys,
@@ -96,8 +96,6 @@ function LevelSelect({
   );
 }
 
-/** «yyyy-mm-dd» del campo de fecha → fin de ese día (hora local) en ISO. */
-const endOfDay = (value: string): string => new Date(`${value}T23:59:59`).toISOString();
 
 function ShareBody({ subject }: { subject: ShareSubject }) {
   const t = texts.sharing;

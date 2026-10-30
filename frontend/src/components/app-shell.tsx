@@ -65,8 +65,8 @@ import {
   type SidebarSection,
 } from "@/lib/sidebar";
 import { isDarkTheme, setThemePreference } from "@/lib/theme";
-import { cn } from "@/lib/utils";
-import { locale, texts } from "@/i18n";
+import { cn, formatToday, setAppTimeZone } from "@/lib/utils";
+import { texts } from "@/i18n";
 import { RestartBanner } from "./restart-banner";
 
 /** Transiciones con los tokens de movimiento (se anulan con prefers-reduced-motion). */
@@ -936,6 +936,8 @@ export function AppShell({
   onLogout: () => void;
   children: ReactNode;
 }) {
+  // Before the screens render: their dates and times are in the company's zone.
+  setAppTimeZone(membership.workspace.timeZone);
   const [collapsed, setCollapsed] = useState(readSidebarCollapsed);
   const toggle = useCallback(() => {
     // Al iniciar la transición no puede quedar ningún globo abierto (se quedaría pegado).
@@ -993,7 +995,7 @@ export function AppShell({
   }, [toggle]);
   const { pathname } = useLocation();
   useSharedToast(membership.workspace.slug);
-  const today = new Intl.DateTimeFormat(locale, { dateStyle: "full" }).format(new Date());
+  const today = formatToday();
   return (
     <div className="flex min-h-dvh w-full min-w-0 max-w-full bg-surface">
       <div

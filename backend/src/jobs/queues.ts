@@ -203,7 +203,7 @@ export const schedules = [
   { queue: "uploads-cleanup", cron: "*/15 * * * *", tz: "UTC" },
   { queue: "trash-expire", cron: "30 3 * * *", tz: "UTC" },
   { queue: "audit-retention", cron: "20 4 * * 0", tz: "UTC" },
-  { queue: "access-expiry-notices", cron: "0 11 * * *", tz: "UTC" },
+  { queue: "access-expiry-notices", cron: "10 * * * *", tz: "UTC" },
   { queue: "reading-reminders", cron: "5 * * * *", tz: "UTC" },
   { queue: "search-reindex", cron: "40 2 * * *", tz: "UTC" },
   { queue: "bian-index", cron: "* * * * *", tz: "UTC" },

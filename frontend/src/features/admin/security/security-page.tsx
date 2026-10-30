@@ -12,10 +12,24 @@ import { FormField, Switch } from "@/components/ui/form";
 import { adminApi, adminKeys, type SecuritySettings } from "../api";
 import { adminErrorText } from "../admin-utils";
 import { useMembership } from "@/features/home/workspace-layout";
+import { useAuth } from "@/auth/auth-context";
 import { cn } from "@/lib/utils";
 import { visibilityChoices } from "../choices";
 import { EmailTab } from "./email-tab";
 import { isLocale, LOCALE_NAMES, LOCALES, texts } from "@/i18n";
+
+/** «Europe/Madrid · GMT+1»: every zone the browser knows, with its offset now. */
+const timeZoneOptions = (() => {
+  const now = new Date();
+  const zones = Intl.supportedValuesOf("timeZone");
+  return zones.map((id) => {
+    const offset =
+      new Intl.DateTimeFormat("en", { timeZone: id, timeZoneName: "shortOffset" })
+        .formatToParts(now)
+        .find((part) => part.type === "timeZoneName")?.value ?? "";
+    return { id, label: `${id.replace(/_/gu, " ")} · ${offset}` };
+  });
+})();
 
 function SecurityGeneral() {
   const t = texts.admin.security;
@@ -24,8 +38,10 @@ function SecurityGeneral() {
     "company-language",
     LOCALES.map((id) => ({ id, label: LOCALE_NAMES[id] })),
   );
+  const timeZoneSource = useStaticSource("company-time-zone", timeZoneOptions);
   const { workspaceSlug = "" } = useParams();
   const queryClient = useQueryClient();
+  const { reloadAccount } = useAuth();
   const settings = useQuery({
     queryKey: adminKeys.security(workspaceSlug),
     queryFn: () => adminApi.securitySettings(workspaceSlug),
@@ -34,8 +50,10 @@ function SecurityGeneral() {
   const update = useMutation({
     mutationFn: (changes: Partial<SecuritySettings>) =>
       adminApi.updateSecuritySettings(workspaceSlug, changes),
-    onSuccess: async () => {
+    onSuccess: async (_saved, changes) => {
       await queryClient.invalidateQueries({ queryKey: adminKeys.security(workspaceSlug) });
+      // A new zone: the session's company data (and every date on screen) follows at once.
+      if (changes.timezone !== undefined) await reloadAccount();
       toast.success(texts.admin.common.saved);
     },
     onError: (error) => {
@@ -61,7 +79,7 @@ function SecurityGeneral() {
         {data === undefined ? (
           <Skeleton className="mt-5 h-10 w-full max-w-sm" />
         ) : (
-          <div className="mt-5 max-w-sm">
+          <div className="mt-5 grid max-w-sm gap-4">
             <FormField label={t.language.label}>
               {(control) => (
                 <Combobox
@@ -75,6 +93,24 @@ function SecurityGeneral() {
                   onChange={(option) => {
                     if (option !== null && isLocale(option.id)) {
                       update.mutate({ locale: option.id });
+                    }
+                  }}
+                />
+              )}
+            </FormField>
+            <FormField label={t.language.timeZoneLabel} hint={t.language.timeZoneHint}>
+              {(control) => (
+                <Combobox
+                  id={control.id}
+                  aria-describedby={control["aria-describedby"]}
+                  label={t.language.timeZoneLabel}
+                  placeholder={t.language.timeZoneSearch}
+                  disabled={update.isPending}
+                  source={timeZoneSource}
+                  value={data.timezone}
+                  onChange={(option) => {
+                    if (option !== null && option.id !== data.timezone) {
+                      update.mutate({ timezone: option.id });
                     }
                   }}
                 />

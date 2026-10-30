@@ -2,7 +2,7 @@
 import { z } from "zod";
 import type { TenantRoute } from "../../routes.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
-import { MemberVisibilitySchema } from "../workspaces/settings.ts";
+import { MemberVisibilitySchema, WorkspaceSettingsSchema } from "../workspaces/settings.ts";
 import { LOCALES } from "../../i18n/locales.ts";
 import { getSecuritySettings, updateSecuritySettings } from "./security.service.ts";
 import { validationMessages } from "../../i18n/index.ts";
@@ -15,6 +15,7 @@ const UpdateSecuritySchema = z
     bianEnabled: z.boolean().optional(),
     bianGuests: z.boolean().optional(),
     locale: z.enum(LOCALES).optional(),
+    timezone: WorkspaceSettingsSchema.shape.timezone.optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { error: () => validationMessages.noChanges });
 

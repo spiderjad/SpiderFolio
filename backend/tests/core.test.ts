@@ -147,6 +147,31 @@ describe("emails", () => {
     expect(email.subject).toBe("Tu contraseña de SpiderFolio cambió");
   });
 
+  it("el aviso de inicio de sesión dice la hora en la zona de la empresa, y cuál es", () => {
+    const at = new Date("2026-10-25T08:30:00Z"); // ya sin horario de verano en Madrid: 9:30
+    const email = buildEmail(
+      { kind: "new-login", userId: "u1", sessionId: "s1" },
+      {
+        recipientName: "Ana",
+        appUrl: "http://localhost:5173",
+        login: { userAgent: null, at },
+        timeZone: "Europe/Madrid",
+      },
+    );
+    expect(email.text).toContain("9:30");
+    expect(email.text).toContain("(Europe/Madrid)");
+    const santiago = buildEmail(
+      { kind: "new-login", userId: "u1", sessionId: "s1" },
+      {
+        recipientName: "Ana",
+        appUrl: "http://localhost:5173",
+        login: { userAgent: null, at },
+        timeZone: "America/Santiago",
+      },
+    );
+    expect(santiago.text).toContain("5:30");
+  });
+
   it("usa el color del workspace si se indica", () => {
     const email = renderEmail({
       subject: "s",

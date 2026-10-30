@@ -3,15 +3,7 @@
 import { z } from "zod";
 import { LOCALES } from "../../i18n/locales.ts";
 import { validationMessages } from "../../i18n/index.ts";
-
-const isTimeZone = (value: string) => {
-  try {
-    new Intl.DateTimeFormat("es", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-};
+import { isTimeZone } from "../../lib/time-zone.ts";
 
 /** Ingreso con usuario + PIN para tablets compartidas (7.6). Apagado hasta que el admin lo active. */
 export const PinLoginSettingsSchema = z.object({

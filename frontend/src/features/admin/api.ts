@@ -20,6 +20,8 @@ export interface SecuritySettings {
   bianGuests: boolean;
   /** Idioma por defecto de la empresa. */
   locale: Locale;
+  /** The company's time zone (IANA). */
+  timezone: string;
 }
 /** Cargo en un departamento: un solo jefe, uno o más subjefes y el resto miembros. */
 export type DepartmentPosition = "HEAD" | "DEPUTY" | "MEMBER";

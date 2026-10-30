@@ -15,6 +15,8 @@ export interface Membership {
     logoKey: string | null;
     /** Idioma por defecto de la empresa. */
     locale: Locale;
+    /** The company's time zone (IANA): every date and time in the app is shown in it. */
+    timeZone: string;
   };
   role: { id: string; name: string; base: SystemRole };
   capabilities: string[];

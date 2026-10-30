@@ -12,6 +12,7 @@ import {
   type MemberVisibility,
 } from "../workspaces/settings.ts";
 import { readWorkspaceLocale, type Locale } from "../../i18n/locales.ts";
+import { zoneOf } from "../../lib/time-zone.ts";
 
 export interface SecuritySettings {
   memberVisibility: MemberVisibility;
@@ -23,6 +24,8 @@ export interface SecuritySettings {
   bianGuests: boolean;
   /** Idioma por defecto de la empresa (docs/spec/i18n.md). */
   locale: Locale;
+  /** The company's time zone (IANA): dates, times and the 8:00 notices go by it. */
+  timezone: string;
 }
 
 function read(settings: unknown): SecuritySettings {
@@ -33,6 +36,7 @@ function read(settings: unknown): SecuritySettings {
     bianEnabled: readBianEnabled(settings),
     bianGuests: readBianGuests(settings),
     locale: readWorkspaceLocale(settings),
+    timezone: zoneOf(settings),
   };
 }
 
@@ -57,6 +61,7 @@ export async function updateSecuritySettings(
     bianEnabled: changes.bianEnabled ?? before.bianEnabled,
     bianGuests: changes.bianGuests ?? before.bianGuests,
     locale: changes.locale ?? before.locale,
+    timezone: changes.timezone ?? before.timezone,
   };
   const current =
     typeof workspace.settings === "object" && workspace.settings !== null

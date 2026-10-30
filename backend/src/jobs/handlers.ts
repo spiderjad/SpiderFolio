@@ -1,4 +1,5 @@
 // Handlers del worker. Reciben sus dependencias por parámetro para poder probarlos.
+import { formatDayIn, zoneOf } from "../lib/time-zone.ts";
 import * as Sentry from "@sentry/node";
 import type { Logger } from "pino";
 import { renderEmail } from "../emails/layout.ts";
@@ -356,6 +357,10 @@ async function sendDocumentNoticeEmail(
   }
   const loaded = await loadTenantContext(deps.prisma, { id: notice.workspaceId }, recipient.userId);
   if (loaded === null) return;
+  const workspace = await deps.prisma.workspace.findUnique({
+    where: { id: notice.workspaceId },
+    select: { settings: true },
+  });
   const access = await loadAccess(loaded.db, accessActorOf({ tenant: loaded.tenant }), {
     nodeIds: [node.id],
     spaceIds: [node.spaceId],
@@ -374,12 +379,11 @@ async function sendDocumentNoticeEmail(
     documentNotice: {
       kind,
       who: actor?.user.name ?? emailTexts.someone,
+      // A deadline is the end of a day in the company's zone: that day, written in it.
       due:
         notice.expiresAt === null
           ? null
-          : new Intl.DateTimeFormat(currentLocale(), { dateStyle: "long", timeZone: "UTC" }).format(
-              notice.expiresAt,
-            ),
+          : formatDayIn(notice.expiresAt, zoneOf(workspace?.settings), currentLocale()),
       what: node.name,
       code: controlled.code,
       version: notice.version,
@@ -457,6 +461,13 @@ async function sendEmail(deps: WorkerDeps, job: EmailJob): Promise<void> {
       select: { userAgent: true, createdAt: true },
     });
     context.login = { userAgent: session?.userAgent ?? null, at: session?.createdAt ?? new Date() };
+    // An account email: the zone of the person's first company (UTC without one).
+    const membership = await deps.prisma.membership.findFirst({
+      where: { userId: job.userId, status: "ACTIVE", workspace: { deletedAt: null } },
+      orderBy: { createdAt: "asc" },
+      select: { workspace: { select: { settings: true } } },
+    });
+    context.timeZone = zoneOf(membership?.workspace.settings);
   }
   const email = buildEmail(job, context);
   await deps.mailer.send({ to: user.email, ...email });

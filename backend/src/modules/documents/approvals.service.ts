@@ -5,6 +5,7 @@
 import type { NodeType } from "../../generated/prisma/client.ts";
 import type { Jobs } from "../../jobs/boss.ts";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
+import { dayMonthsLater, zoneOf } from "../../lib/time-zone.ts";
 import { contentMessages } from "../../i18n/index.ts";
 import { offsetArgs, pageOf, type Page } from "../../lib/pagination.ts";
 import { atLeast } from "../access/access.ts";
@@ -376,12 +377,6 @@ export async function withdraw(ctx: AdminContext, nodeId: string): Promise<void>
   });
 }
 
-function addMonths(date: Date, months: number): Date {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
-}
-
 /**
  * Publica la versión aprobada: pasa a ser la única vigente y la anterior queda obsoleta (no se
  * borra). Lo hace quien puede aprobar este documento. Por defecto se pide nueva lectura a quienes
@@ -414,6 +409,9 @@ export async function publish(
     select: { reviewMonths: true },
   });
   const now = new Date();
+  // The next review is a whole day in the company's zone: it never moves to the day before or after.
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
+  const zone = zoneOf(workspace?.settings);
   const carried = await ctx.db.$transaction(async (tx) => {
     // Primero la anterior: el índice parcial no admite dos publicadas a la vez.
     await tx.documentVersion.updateMany({
@@ -434,7 +432,7 @@ export async function publish(
       where: { id: controlled.id },
       data: {
         publishedVersion: latest.version,
-        reviewDueAt: addMonths(now, type?.reviewMonths ?? 12),
+        reviewDueAt: dayMonthsLater(now, type?.reviewMonths ?? 12, zone),
       },
     });
     // Hay que volver a leer la versión nueva: los requisitos de la anterior pasan a ella.
