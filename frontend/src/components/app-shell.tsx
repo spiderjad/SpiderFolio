@@ -773,9 +773,21 @@ function SidebarContent({
                 active={false}
               />
               <SectionLabel collapsed={collapsed}>{texts.shell.admin}</SectionLabel>
-              {adminItems.map(({ to, label, icon }) => (
-                <NavItem key={to} to={to} label={label} icon={icon} collapsed={collapsed} />
-              ))}
+              {adminItems
+                .filter((item) => item.plugins !== true)
+                .map(({ to, label, icon }) => (
+                  <NavItem key={to} to={to} label={label} icon={icon} collapsed={collapsed} />
+                ))}
+              {adminItems.some((item) => item.plugins === true) && (
+                <>
+                  <SectionLabel collapsed={collapsed}>{texts.shell.adminPlugins}</SectionLabel>
+                  {adminItems
+                    .filter((item) => item.plugins === true)
+                    .map(({ to, label, icon }) => (
+                      <NavItem key={to} to={to} label={label} icon={icon} collapsed={collapsed} />
+                    ))}
+                </>
+              )}
             </>
           ) : (
             <>
@@ -816,7 +828,11 @@ function SidebarContent({
                     <FavoriteRows slug={slug} spaces={favoriteSpaces} collapsed={collapsed} />
                   </CollapsibleSection>
                   {recentItems.length > 0 && !collapsed && (
-                    <CollapsibleSection id="recents" label={texts.shell.recents} collapsed={collapsed}>
+                    <CollapsibleSection
+                      id="recents"
+                      label={texts.shell.recents}
+                      collapsed={collapsed}
+                    >
                       {recentItems.map((item) => (
                         <RecentRow key={item.node.id} slug={slug} item={item} />
                       ))}

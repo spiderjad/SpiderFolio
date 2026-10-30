@@ -40,6 +40,10 @@ export interface PluginServerView {
   restartAt: string | null;
   /** Installed on disk, loaded on the next restart. */
   waiting: { id: string; version: string }[];
+  /** Uploaded plugins the owner can remove from the server. */
+  removable: string[];
+  /** Removed from disk, unloaded on the next restart. */
+  removing: string[];
 }
 
 export interface LicenseOverview {
@@ -104,6 +108,11 @@ export const licenseApi = {
         uploaded: { id: string; version: string; previousVersion: string | null };
       }
     >(w(slug, "/admin/plugins/packages"), { method: "POST", file }),
+  removePlugin: (slug: string, pluginId: string) =>
+    api<LicenseOverview & { restartAt: string | null }>(
+      w(slug, `/admin/plugins/${encodeURIComponent(pluginId)}`),
+      { method: "DELETE" },
+    ),
   restart: (slug: string) =>
     api<{ restartAt: string }>(w(slug, "/admin/server/restart"), { method: "POST" }),
   limits: (slug: string) => api<LimitsOverview>(w(slug, "/admin/limits")),

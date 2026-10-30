@@ -1,30 +1,40 @@
-// Admin › License and plugins (owner only): the license status, the plugins installed on this server,
-// loading, replacing or removing the license, turning on community plugins, the company id the license
-// is issued for, uploading a signed plugin (.sfplugin) and the restart that loads it. The server does
-// every check, offline (docs/spec/plugins.md).
+// Admin › License and plugins (owner only): one compact list of the plugins on this server, each with
+// what it needs (its license and when it expires, turning it on, its guide, removing it), uploading a
+// signed plugin (.sfplugin) and the restart that loads or unloads them, and the company id the license
+// is issued for. The server does every check, offline (docs/spec/plugins.md).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Building2,
   Copy,
   KeyRound,
+  MoreHorizontal,
   Puzzle,
   RotateCw,
+  Search,
   ServerCrash,
   ShieldAlert,
+  Trash2,
   Upload,
 } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Badge, Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
-import { FormField, Textarea } from "@/components/ui/form";
+import { Badge, Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
+import { FormField, Input, Textarea } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { ConfirmCodeDialog } from "@/features/profile/two-factor-section";
 import { ApiError } from "@/lib/api";
 import { pluginKeys } from "@/plugins/registry";
-import { formatDateTime, formatUtcDate } from "@/lib/utils";
+import { cn, formatDateTime, formatUtcDate } from "@/lib/utils";
 import { pluginsUrl } from "@/lib/web-url";
 import {
   licenseApi,
@@ -36,29 +46,26 @@ import { texts } from "@/i18n";
 
 const t = texts.license.license;
 
+/** A license that expires within this many days is shown as about to expire. */
+const EXPIRES_SOON_DAYS = 30;
+/** From this many plugins on, the list gets a search box. */
+const SEARCH_FROM = 8;
+
+type MfaAction =
+  { kind: "upload"; file: File } | { kind: "restart" } | { kind: "remove"; id: string };
+
 export function LicensePage() {
   const { workspaceSlug = "" } = useParams();
   const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [removing, setRemoving] = useState(false);
   const overview = useQuery({
     queryKey: licenseKeys.license(workspaceSlug),
     queryFn: () => licenseApi.overview(workspaceSlug),
   });
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: licenseKeys.license(workspaceSlug) });
-    // El menú y las pantallas de los plugins dependen de qué está activo.
+    // The menu and the plugins' screens depend on what's active.
     await queryClient.invalidateQueries({ queryKey: pluginKeys.active(workspaceSlug) });
   };
-  const remove = useMutation({
-    mutationFn: () => licenseApi.remove(workspaceSlug),
-    onSuccess: async () => {
-      setRemoving(false);
-      await refresh();
-      toast.success(t.removed);
-    },
-    onError: (error) => toast.error(adminErrorText(error)),
-  });
   const data = overview.data;
 
   return (
@@ -76,161 +83,13 @@ export function LicensePage() {
       ) : data === undefined ? (
         <Skeleton className="h-64 w-full" />
       ) : (
-        <>
-          <LicenseCard
-            data={data}
-            onEdit={() => {
-              setEditing(true);
-            }}
-            onRemove={() => {
-              setRemoving(true);
-            }}
-          />
-          {editing && (
-            <LicenseForm
-              slug={workspaceSlug}
-              onDone={async () => {
-                setEditing(false);
-                await refresh();
-              }}
-              onCancel={() => {
-                setEditing(false);
-              }}
-            />
-          )}
-          <CompanyCard id={data.workspaceId} />
-          <PluginsCard data={data} slug={workspaceSlug} onChanged={refresh} />
-          {data.server.uploadEnabled && (
-            <UploadCard data={data} slug={workspaceSlug} onChanged={refresh} />
-          )}
-          <ConfirmDialog
-            open={removing}
-            onOpenChange={setRemoving}
-            icon={KeyRound}
-            tone="destructive"
-            title={t.removeTitle}
-            description={t.removeText}
-            confirmLabel={t.remove}
-            pendingLabel={t.saving}
-            onConfirm={() => {
-              remove.mutate();
-            }}
-          />
-        </>
+        <Plugins data={data} slug={workspaceSlug} onChanged={refresh} />
       )}
     </div>
   );
 }
 
-function LicenseCard({
-  data,
-  onEdit,
-  onRemove,
-}: {
-  data: LicenseOverview;
-  onEdit: () => void;
-  onRemove: () => void;
-}) {
-  const { license } = data;
-  const has = license.state !== "none";
-  return (
-    <Card className="grid gap-3 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <KeyRound
-            className="mt-0.5 size-5 shrink-0 text-primary"
-            strokeWidth={1.75}
-            aria-hidden="true"
-          />
-          <div className="min-w-0 break-words">
-            <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-              {t.status[license.state]}
-              {license.id !== undefined && <Badge>{license.id}</Badge>}
-            </CardTitle>
-            {license.customer !== undefined && (
-              <p className="text-sm text-muted-foreground">{t.customer(license.customer)}</p>
-            )}
-            {(license.state === "valid" || license.state === "expired") && (
-              <p className="text-xs text-muted-foreground">
-                {license.expiresAt === null || license.expiresAt === undefined
-                  ? t.noExpiry
-                  : t.expires(formatUtcDate(license.expiresAt))}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {has && (
-            <Button variant="outline" onClick={onRemove}>
-              {t.remove}
-            </Button>
-          )}
-          <Button onClick={onEdit}>{has ? t.replace : t.load}</Button>
-        </div>
-      </div>
-      {license.state === "expired" && <Banner tone="warning">{t.expiredNote}</Banner>}
-      {license.state === "invalid" && (
-        <Banner tone="warning">
-          {license.reason === "workspace" ? t.invalidWorkspace : t.invalidNote}
-        </Banner>
-      )}
-    </Card>
-  );
-}
-
-function LicenseForm({
-  slug,
-  onDone,
-  onCancel,
-}: {
-  slug: string;
-  onDone: () => Promise<void>;
-  onCancel: () => void;
-}) {
-  const [token, setToken] = useState("");
-  const save = useMutation({
-    mutationFn: () => licenseApi.save(slug, token.trim()),
-    onSuccess: async () => {
-      toast.success(t.saved);
-      await onDone();
-    },
-    onError: (error) => toast.error(adminErrorText(error)),
-  });
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (token.trim() !== "") save.mutate();
-  };
-  return (
-    <Card className="p-5">
-      <form className="grid max-w-2xl gap-3" onSubmit={submit}>
-        <FormField label={t.tokenLabel} hint={t.tokenHint}>
-          {(control) => (
-            <Textarea
-              {...control}
-              value={token}
-              rows={4}
-              spellCheck={false}
-              className="font-mono text-xs"
-              onChange={(event) => {
-                setToken(event.target.value);
-              }}
-            />
-          )}
-        </FormField>
-        <div className="flex gap-2">
-          <Button type="submit" disabled={save.isPending || token.trim() === ""}>
-            {save.isPending ? t.saving : t.save}
-          </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
-            {t.cancel}
-          </Button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
-function PluginsCard({
+function Plugins({
   data,
   slug,
   onChanged,
@@ -239,180 +98,16 @@ function PluginsCard({
   slug: string;
   onChanged: () => Promise<void>;
 }) {
-  const c = t.community;
-  // Plugin community a activar: pide confirmar que no está verificado y tiene acceso al servidor.
-  const [confirming, setConfirming] = useState<InstalledPluginView | null>(null);
-  const toggle = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      licenseApi.setActivation(slug, id, enabled, confirming?.id === id),
-    onSuccess: async (_data, { enabled }) => {
-      setConfirming(null);
-      await onChanged();
-      toast.success(enabled ? c.enabled : c.disabled);
-    },
-  });
-  return (
-    <Card className="grid gap-3 p-5">
-      <div className="flex items-center gap-2">
-        <Puzzle className="size-4 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />
-        <h2 className="font-medium">{t.pluginsTitle}</h2>
-      </div>
-      {data.installed.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t.noPlugins}</p>
-      ) : (
-        <ul className="grid gap-2">
-          {data.installed.map((plugin) => (
-            <li
-              key={plugin.id}
-              className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3"
-            >
-              <div className="min-w-0">
-                <p className="flex flex-wrap items-center gap-2 font-medium">
-                  {plugin.name}{" "}
-                  <span className="text-xs text-muted-foreground">v{plugin.version}</span>
-                  {plugin.distribution === "community" ? (
-                    <Badge tone="warning">{c.unverified}</Badge>
-                  ) : (
-                    <Badge>{plugin.distribution === "free" ? t.badge.free : t.badge.paid}</Badge>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">{plugin.description}</p>
-                {plugin.replacedBy !== null ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t.replacedHint(plugin.replacedBy)}
-                  </p>
-                ) : plugin.distribution === "community" ? (
-                  <p className="text-xs text-muted-foreground">{c.hint}</p>
-                ) : plugin.distribution === "free" ? (
-                  <p className="text-xs text-muted-foreground">{t.freeHint}</p>
-                ) : null}
-                {plugin.guide !== null && (
-                  <a
-                    href={plugin.guide}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    {t.guide}
-                  </a>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={plugin.active ? "success" : "neutral"}>
-                  {plugin.replacedBy !== null
-                    ? t.pluginState.replaced(plugin.replacedBy)
-                    : plugin.active
-                      ? t.pluginState.active
-                      : plugin.distribution !== "commercial"
-                        ? t.pluginState.off
-                        : plugin.licensed
-                          ? t.pluginState.licensed
-                          : t.pluginState.inactive}
-                </Badge>
-                {plugin.distribution !== "commercial" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={toggle.isPending}
-                    onClick={() => {
-                      if (plugin.enabled || plugin.distribution === "free") {
-                        toggle.mutate(
-                          { id: plugin.id, enabled: !plugin.enabled },
-                          { onError: (error) => toast.error(adminErrorText(error)) },
-                        );
-                      } else {
-                        setConfirming(plugin);
-                      }
-                    }}
-                  >
-                    {plugin.enabled ? c.disable : c.enable}
-                  </Button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      <a
-        href={pluginsUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-      >
-        {t.catalogLink}
-      </a>
-      <ConfirmDialog
-        open={confirming !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirming(null);
-        }}
-        icon={ShieldAlert}
-        tone="warning"
-        title={c.confirmTitle(confirming?.name ?? "")}
-        description={c.confirmText}
-        confirmLabel={c.confirm}
-        pendingLabel={c.enabling}
-        onConfirm={async () => {
-          if (confirming !== null) {
-            await toggle.mutateAsync({ id: confirming.id, enabled: true });
-          }
-        }}
-      />
-    </Card>
-  );
-}
-
-/** The id the license is issued for: the owner sends it to SpiderJAD. */
-function CompanyCard({ id }: { id: string }) {
-  const c = t.company;
-  return (
-    <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
-      <div className="flex min-w-0 items-start gap-3">
-        <Building2
-          className="mt-0.5 size-5 shrink-0 text-primary"
-          strokeWidth={1.75}
-          aria-hidden="true"
-        />
-        <div className="min-w-0 break-words">
-          <CardTitle className="text-base">{c.title}</CardTitle>
-          <p className="font-mono text-sm">{id}</p>
-          <p className="text-xs text-muted-foreground">{c.hint}</p>
-        </div>
-      </div>
-      <Button
-        variant="outline"
-        onClick={() => {
-          void navigator.clipboard.writeText(id).then(() => toast.success(c.copied));
-        }}
-      >
-        <Copy className="size-4" aria-hidden="true" />
-        {c.copy}
-      </Button>
-    </Card>
-  );
-}
-
-/**
- * Upload a signed plugin and restart to load it. Both need the owner's own two-step verification,
- * confirmed recently: on MFA_RECENT_REQUIRED the code is asked for and the action retried.
- */
-function UploadCard({
-  data,
-  slug,
-  onChanged,
-}: {
-  data: LicenseOverview;
-  slug: string;
-  onChanged: () => Promise<void>;
-}) {
-  const u = t.upload;
-  const r = t.restart;
-  const { server } = data;
-  const input = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [askCode, setAskCode] = useState<"upload" | "restart" | null>(null);
+  const { server, license } = data;
+  const [query, setQuery] = useState("");
+  const [licenseOpen, setLicenseOpen] = useState(false);
+  const [enabling, setEnabling] = useState<InstalledPluginView | null>(null);
+  const [removing, setRemoving] = useState<InstalledPluginView | null>(null);
+  const [askCode, setAskCode] = useState<MfaAction | null>(null);
   const [confirmRestart, setConfirmRestart] = useState(false);
-  const onMfa = (action: "upload" | "restart") => (error: Error) => {
+  const input = useRef<HTMLInputElement>(null);
+
+  const onMfa = (action: MfaAction) => (error: Error) => {
     if (error instanceof ApiError && error.code === "MFA_RECENT_REQUIRED") {
       setAskCode(action);
       return;
@@ -420,14 +115,15 @@ function UploadCard({
     toast.error(adminErrorText(error));
   };
   const upload = useMutation({
-    mutationFn: (chosen: File) => licenseApi.uploadPlugin(slug, chosen),
+    mutationFn: (file: File) => licenseApi.uploadPlugin(slug, file),
     onSuccess: async (result) => {
-      setFile(null);
       const name = result.installed.find((plugin) => plugin.id === result.uploaded.id)?.name;
-      toast.success(u.uploaded(name ?? result.uploaded.id, result.uploaded.version));
+      toast.success(t.upload.uploaded(name ?? result.uploaded.id, result.uploaded.version));
       await onChanged();
     },
-    onError: onMfa("upload"),
+    onError: (error, file) => {
+      onMfa({ kind: "upload", file })(error);
+    },
   });
   const restart = useMutation({
     mutationFn: () => licenseApi.restart(slug),
@@ -437,91 +133,247 @@ function UploadCard({
     },
     onError: (error) => {
       setConfirmRestart(false);
-      onMfa("restart")(error);
+      onMfa({ kind: "restart" })(error);
     },
   });
-  const waiting = server.waiting
-    .map(
-      (plugin) =>
-        `${data.installed.find((p) => p.id === plugin.id)?.name ?? plugin.id} ${plugin.version}`,
-    )
-    .join(", ");
+  const remove = useMutation({
+    mutationFn: (id: string) => licenseApi.removePlugin(slug, id),
+    onSuccess: async (_result, id) => {
+      setRemoving(null);
+      toast.success(t.removeDialog.done(data.installed.find((p) => p.id === id)?.name ?? id));
+      await onChanged();
+    },
+    onError: (error, id) => {
+      setRemoving(null);
+      onMfa({ kind: "remove", id })(error);
+    },
+  });
+  const toggle = useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      licenseApi.setActivation(slug, id, enabled, enabling?.id === id),
+    onSuccess: async (_data, { enabled }) => {
+      setEnabling(null);
+      await onChanged();
+      toast.success(enabled ? t.enabled : t.disabled);
+    },
+  });
+
+  const shown = useMemo(() => {
+    const words = query.trim().toLowerCase();
+    if (words === "") return data.installed;
+    return data.installed.filter((plugin) =>
+      `${plugin.name} ${plugin.description}`.toLowerCase().includes(words),
+    );
+  }, [data.installed, query]);
+  const pending = server.waiting.length + server.removing.length;
+
   return (
-    <Card className="grid gap-3 p-5">
-      <div className="flex items-start gap-3">
-        <Upload
-          className="mt-0.5 size-5 shrink-0 text-primary"
-          strokeWidth={1.75}
-          aria-hidden="true"
-        />
-        <div className="min-w-0 break-words">
-          <CardTitle className="text-base">{u.title}</CardTitle>
-          <p className="text-xs text-muted-foreground">{u.text}</p>
-        </div>
-      </div>
-      {server.multiCompany && <Banner tone="warning">{u.multiCompany}</Banner>}
-      {!server.ownMfa && <Banner tone="warning">{u.needsMfa}</Banner>}
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={input}
-          type="file"
-          accept=".sfplugin"
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(event) => {
-            const chosen = event.target.files?.[0] ?? null;
-            event.target.value = "";
-            if (chosen === null) return;
-            setFile(chosen);
-            upload.mutate(chosen);
-          }}
-        />
-        <Button
-          disabled={!server.ownMfa || upload.isPending}
-          onClick={() => {
-            input.current?.click();
-          }}
+    <>
+      {!server.ownMfa && server.uploadEnabled && (
+        <Banner tone="warning">{t.upload.needsMfa}</Banner>
+      )}
+      {license.state === "invalid" && (
+        <Banner
+          tone="warning"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setLicenseOpen(true);
+              }}
+            >
+              {t.loadLicense}
+            </Button>
+          }
         >
-          {upload.isPending ? u.uploading : u.choose}
-        </Button>
-        {file !== null && <span className="text-xs text-muted-foreground">{file.name}</span>}
-      </div>
-      <p className="text-xs text-muted-foreground">{u.communityNote}</p>
-      {server.waiting.length > 0 && (
-        <div className="grid gap-2 rounded-lg border border-border p-3">
-          <p className="text-sm">{r.waiting(waiting)}</p>
-          {server.restartAt !== null ? (
-            <p className="text-xs text-muted-foreground">
-              {r.scheduled(formatDateTime(server.restartAt))}
-            </p>
-          ) : server.restartSupported ? (
-            <div>
+          {license.reason === "workspace" ? t.invalidWorkspace : t.invalid}
+        </Banner>
+      )}
+      {pending > 0 && (
+        <Banner
+          tone="info"
+          icon={RotateCw}
+          action={
+            server.restartAt === null && server.restartSupported ? (
               <Button
+                size="sm"
                 variant="outline"
                 disabled={!server.ownMfa}
                 onClick={() => {
                   setConfirmRestart(true);
                 }}
               >
-                <RotateCw className="size-4" aria-hidden="true" />
-                {r.now}
+                {t.restart.now}
               </Button>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">{r.manual}</p>
-          )}
-        </div>
+            ) : undefined
+          }
+        >
+          {t.restart.waiting(pending)}{" "}
+          {server.restartAt !== null
+            ? t.restart.scheduled(formatDateTime(server.restartAt))
+            : server.restartSupported
+              ? ""
+              : t.restart.manual}
+        </Banner>
       )}
+
+      <Card className="grid gap-0 p-0">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+          <Puzzle className="size-4 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />
+          <h2 className="font-medium">{t.pluginsTitle}</h2>
+          <span className="text-xs text-muted-foreground">
+            {t.count(shown.length, data.installed.length)}
+          </span>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {data.installed.length >= SEARCH_FROM && (
+              <label className="relative">
+                <span className="sr-only">{t.search}</span>
+                <Search
+                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  value={query}
+                  placeholder={t.search}
+                  className="h-8 w-48 pl-8 text-sm"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                  }}
+                />
+              </label>
+            )}
+            {server.uploadEnabled && (
+              <>
+                <input
+                  ref={input}
+                  type="file"
+                  accept=".sfplugin"
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  onChange={(event) => {
+                    const chosen = event.target.files?.[0] ?? null;
+                    event.target.value = "";
+                    if (chosen !== null) upload.mutate(chosen);
+                  }}
+                />
+                <Button
+                  size="sm"
+                  title={t.upload.hint}
+                  disabled={!server.ownMfa || upload.isPending}
+                  onClick={() => {
+                    input.current?.click();
+                  }}
+                >
+                  <Upload className="size-4" aria-hidden="true" />
+                  {upload.isPending ? t.upload.uploading : t.upload.choose}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+        {data.installed.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-muted-foreground">{t.noPlugins}</p>
+        ) : shown.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-muted-foreground">{t.noMatches}</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {shown.map((plugin) => (
+              <PluginRow
+                key={plugin.id}
+                plugin={plugin}
+                data={data}
+                busy={toggle.isPending}
+                onLicense={() => {
+                  setLicenseOpen(true);
+                }}
+                onToggle={() => {
+                  if (plugin.enabled || plugin.distribution === "free") {
+                    toggle.mutate(
+                      { id: plugin.id, enabled: !plugin.enabled },
+                      { onError: (error) => toast.error(adminErrorText(error)) },
+                    );
+                  } else {
+                    setEnabling(plugin);
+                  }
+                }}
+                onRemove={() => {
+                  setRemoving(plugin);
+                }}
+              />
+            ))}
+          </ul>
+        )}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 text-xs text-muted-foreground">
+          <CompanyId id={data.workspaceId} />
+          <a
+            href={pluginsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t.catalogLink}
+          </a>
+        </div>
+      </Card>
+      {server.multiCompany && (
+        <p className="text-xs text-muted-foreground">{t.upload.multiCompany}</p>
+      )}
+
+      <LicenseDialog
+        open={licenseOpen}
+        onOpenChange={setLicenseOpen}
+        slug={slug}
+        hasLicense={license.state !== "none"}
+        onChanged={onChanged}
+      />
+      <ConfirmDialog
+        open={enabling !== null}
+        onOpenChange={(open) => {
+          if (!open) setEnabling(null);
+        }}
+        icon={ShieldAlert}
+        tone="warning"
+        title={t.community.confirmTitle(enabling?.name ?? "")}
+        description={t.community.confirmText}
+        confirmLabel={t.community.confirm}
+        pendingLabel={t.community.enabling}
+        onConfirm={async () => {
+          if (enabling !== null) await toggle.mutateAsync({ id: enabling.id, enabled: true });
+        }}
+      />
+      <ConfirmDialog
+        open={removing !== null}
+        onOpenChange={(open) => {
+          if (!open) setRemoving(null);
+        }}
+        icon={Trash2}
+        tone="destructive"
+        title={t.removeDialog.title(removing?.name ?? "")}
+        description={[
+          t.removeDialog.text,
+          server.restartSupported ? t.removeDialog.scheduled : t.removeDialog.manual,
+          server.multiCompany ? t.removeDialog.multiCompany : "",
+          removing?.distribution === "commercial" ? t.removeDialog.licenseKept : "",
+        ]
+          .filter((line) => line !== "")
+          .join(" ")}
+        confirmLabel={t.removeDialog.confirm}
+        pendingLabel={t.removeDialog.pending}
+        onConfirm={async () => {
+          if (removing !== null) await remove.mutateAsync(removing.id).catch(() => undefined);
+        }}
+      />
       <ConfirmDialog
         open={confirmRestart}
         onOpenChange={setConfirmRestart}
         icon={RotateCw}
         tone="warning"
-        title={r.confirmTitle}
-        description={r.confirmText}
-        confirmLabel={r.confirm}
-        pendingLabel={r.scheduling}
+        title={t.restart.confirmTitle}
+        description={t.restart.confirmText}
+        confirmLabel={t.restart.confirm}
+        pendingLabel={t.restart.scheduling}
         onConfirm={async () => {
           await restart.mutateAsync().catch(() => undefined);
         }}
@@ -534,11 +386,291 @@ function UploadCard({
           onConfirmed={() => {
             const action = askCode;
             setAskCode(null);
-            if (action === "upload" && file !== null) upload.mutate(file);
-            if (action === "restart") restart.mutate();
+            if (action.kind === "upload") upload.mutate(action.file);
+            if (action.kind === "restart") restart.mutate();
+            if (action.kind === "remove") remove.mutate(action.id);
           }}
         />
       )}
-    </Card>
+    </>
+  );
+}
+
+/** Days from now until a date (rounded up); negative once it's past. */
+const daysUntil = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+
+function PluginRow({
+  plugin,
+  data,
+  busy,
+  onLicense,
+  onToggle,
+  onRemove,
+}: {
+  plugin: InstalledPluginView;
+  data: LicenseOverview;
+  busy: boolean;
+  onLicense: () => void;
+  onToggle: () => void;
+  onRemove: () => void;
+}) {
+  const { license, server } = data;
+  const paid = plugin.distribution === "commercial";
+  const replaced = plugin.replacedBy !== null;
+  const removing = server.removing.includes(plugin.id);
+  const waiting = server.waiting.some((entry) => entry.id === plugin.id);
+  const removable = server.uploadEnabled && server.removable.includes(plugin.id) && !removing;
+  // A paid plugin shows the company's license when it covers it.
+  const covered =
+    paid &&
+    (license.state === "valid" || license.state === "expired") &&
+    license.plugins?.includes(plugin.id) === true;
+  const days =
+    covered && license.expiresAt !== undefined && license.expiresAt !== null
+      ? daysUntil(license.expiresAt)
+      : null;
+  const expired = covered && license.state === "expired";
+  const soonDays = days !== null && days > 0 && days <= EXPIRES_SOON_DAYS ? days : null;
+  const soon = soonDays !== null;
+
+  const state = removing
+    ? { label: t.pluginState.removing, tone: "warning" as const }
+    : replaced
+      ? { label: t.replacedBy(plugin.replacedBy ?? ""), tone: "neutral" as const }
+      : plugin.active
+        ? { label: t.pluginState.active, tone: "success" as const }
+        : waiting
+          ? { label: t.pluginState.waiting, tone: "primary" as const }
+          : paid
+            ? expired
+              ? { label: t.pluginState.expired, tone: "danger" as const }
+              : { label: t.pluginState.noLicense, tone: "neutral" as const }
+            : { label: t.pluginState.off, tone: "neutral" as const };
+
+  const canToggle = !paid && !replaced && !removing;
+  return (
+    <li className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
+      <div className="min-w-0">
+        <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="truncate font-medium">{plugin.name}</span>
+          <span className="text-xs text-muted-foreground">v{plugin.version}</span>
+          <Badge tone={plugin.distribution === "community" ? "warning" : "neutral"}>
+            {plugin.distribution === "community"
+              ? t.badge.unverified
+              : paid
+                ? t.badge.paid
+                : t.badge.free}
+          </Badge>
+          <Badge tone={state.tone}>{state.label}</Badge>
+        </p>
+        <p className="truncate text-xs text-muted-foreground" title={plugin.description}>
+          {replaced
+            ? t.replacedHint(plugin.replacedBy ?? "")
+            : plugin.distribution === "community"
+              ? t.community.hint
+              : plugin.description}
+        </p>
+        {paid && !replaced && (
+          <p
+            className={cn(
+              "text-xs",
+              expired
+                ? "text-danger"
+                : soon
+                  ? "text-warning-soft-foreground"
+                  : "text-muted-foreground",
+            )}
+          >
+            {covered && license.id !== undefined ? (
+              <>
+                <KeyRound className="mr-1 inline size-3" aria-hidden="true" />
+                {t.licenseLine(license.id)}
+                {" · "}
+                {license.expiresAt === null || license.expiresAt === undefined
+                  ? t.noExpiry
+                  : expired
+                    ? t.expired(formatUtcDate(license.expiresAt))
+                    : soonDays !== null
+                      ? t.expiresSoon(soonDays)
+                      : t.expires(formatUtcDate(license.expiresAt))}
+              </>
+            ) : (
+              t.noLicense
+            )}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        {plugin.guide !== null && (
+          <Button asChild size="sm" variant="ghost">
+            <a href={plugin.guide} target="_blank" rel="noreferrer">
+              {t.guide}
+            </a>
+          </Button>
+        )}
+        {paid && !replaced && (
+          <Button
+            size="sm"
+            variant={expired || soon || !covered ? "primary" : "outline"}
+            onClick={onLicense}
+          >
+            {covered ? t.renew : t.loadLicense}
+          </Button>
+        )}
+        {canToggle && (
+          <Button size="sm" variant="outline" disabled={busy} onClick={onToggle}>
+            {plugin.enabled ? t.disable : t.enable}
+          </Button>
+        )}
+        {removable && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                aria-label={t.more(plugin.name)}
+              >
+                <MoreHorizontal className="size-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="text-danger" onSelect={onRemove}>
+                <Trash2 className="size-4" aria-hidden="true" />
+                {t.remove}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/** Paste a new license (all the company's paid plugins in one) or remove it. */
+function LicenseDialog({
+  open,
+  onOpenChange,
+  slug,
+  hasLicense,
+  onChanged,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  slug: string;
+  hasLicense: boolean;
+  onChanged: () => Promise<void>;
+}) {
+  const d = t.licenseDialog;
+  const [token, setToken] = useState("");
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const save = useMutation({
+    mutationFn: () => licenseApi.save(slug, token.trim()),
+    onSuccess: async () => {
+      toast.success(d.saved);
+      setToken("");
+      onOpenChange(false);
+      await onChanged();
+    },
+    onError: (error) => toast.error(adminErrorText(error)),
+  });
+  const remove = useMutation({
+    mutationFn: () => licenseApi.remove(slug),
+    onSuccess: async () => {
+      toast.success(d.removed);
+      setConfirmRemove(false);
+      onOpenChange(false);
+      await onChanged();
+    },
+    onError: (error) => toast.error(adminErrorText(error)),
+  });
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (token.trim() !== "") save.mutate();
+  };
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          title={d.title}
+          description={d.text}
+          footer={
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+              {hasLicense ? (
+                <Button
+                  variant="ghost"
+                  className="text-danger"
+                  onClick={() => {
+                    setConfirmRemove(true);
+                  }}
+                >
+                  {d.removeLicense}
+                </Button>
+              ) : (
+                <span />
+              )}
+              <Button
+                type="submit"
+                form="license-form"
+                disabled={save.isPending || token.trim() === ""}
+              >
+                {save.isPending ? d.saving : d.save}
+              </Button>
+            </div>
+          }
+        >
+          <form id="license-form" onSubmit={submit}>
+            <FormField label={d.tokenLabel} hint={d.tokenHint}>
+              {(control) => (
+                <Textarea
+                  {...control}
+                  value={token}
+                  rows={5}
+                  spellCheck={false}
+                  className="font-mono text-xs"
+                  onChange={(event) => {
+                    setToken(event.target.value);
+                  }}
+                />
+              )}
+            </FormField>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmRemove}
+        onOpenChange={setConfirmRemove}
+        icon={KeyRound}
+        tone="destructive"
+        title={d.removeTitle}
+        description={d.removeText}
+        confirmLabel={d.removeLicense}
+        pendingLabel={d.removing}
+        onConfirm={async () => {
+          await remove.mutateAsync();
+        }}
+      />
+    </>
+  );
+}
+
+/** The id the license is issued for, small at the bottom: the owner sends it to SpiderJAD. */
+function CompanyId({ id }: { id: string }) {
+  const c = t.company;
+  return (
+    <p className="flex min-w-0 flex-wrap items-center gap-x-2" title={c.hint}>
+      <span>{c.label}:</span>
+      <code className="font-mono text-foreground">{id}</code>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 rounded px-1 font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        onClick={() => {
+          void navigator.clipboard.writeText(id).then(() => toast.success(c.copied));
+        }}
+      >
+        <Copy className="size-3.5" aria-hidden="true" />
+        {c.copy}
+      </button>
+    </p>
   );
 }

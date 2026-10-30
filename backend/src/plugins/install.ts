@@ -5,7 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { compareVersions } from "@spiderfolio/plugin-sdk";
+import { compareVersions, PluginIdSchema } from "@spiderfolio/plugin-sdk";
 import type { Env } from "../config/env.ts";
 import { DEFAULT_PLUGINS_DIR, type InstalledPlugin } from "./loader.ts";
 import type { VerifiedPackage } from "./package.ts";
@@ -43,6 +43,38 @@ const isInside = (folder: string, path: string) => {
   const rel = relative(resolve(folder), resolve(path));
   return rel !== "" && rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
 };
+
+/** A loaded plugin that came from the install folder (uploaded), so it can be removed from here. */
+export function isUploaded(installDir: string, plugin: InstalledPlugin): boolean {
+  return isInside(installDir, plugin.dir);
+}
+
+/**
+ * Removes an uploaded plugin from the install folder: it stops loading on the next restart. Its data
+ * (settings, secrets, its schema) is kept, so uploading it again brings it back as it was. A plugin
+ * built into the image can't be removed here (builtIn); null if it isn't in the install folder.
+ */
+export function uninstallPackage(input: {
+  installDir: string;
+  id: string;
+  loaded: readonly InstalledPlugin[];
+}): { version: string } | null {
+  const { installDir, id } = input;
+  // Only a plugin id names a folder here: never a path out of the install folder.
+  if (!PluginIdSchema.safeParse(id).success || !isInside(installDir, join(installDir, id))) {
+    return null;
+  }
+  const loaded = input.loaded.find((plugin) => plugin.manifest.id === id);
+  if (loaded !== undefined && !isInside(installDir, loaded.dir)) throw new InstallError("builtIn");
+  const version = versionOnDisk(installDir, id);
+  if (version === null) return null;
+  const target = join(installDir, id);
+  const removed = join(installDir, `.removed-${id}-${randomUUID()}`);
+  // A rename first: the loader never sees a half-deleted folder.
+  renameSync(target, removed);
+  rmSync(removed, { recursive: true, force: true });
+  return { version };
+}
 
 export function installPackage(input: {
   installDir: string;

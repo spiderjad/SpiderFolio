@@ -114,6 +114,7 @@ export const auditEs: Catalog<typeof EsAudit> = {
     "plugin.community.enable": "Turned on an unverified plugin",
     "plugin.community.disable": "Turned off an unverified plugin",
     "plugin.package.upload": "Uploaded a signed plugin",
+    "plugin.package.remove": "Removed a plugin from the server",
     "plugin.package.rejected": "Tried to upload a plugin that was rejected",
     "server.restart.request": "Scheduled a server restart",
     "directory.member.create": "The directory added someone",

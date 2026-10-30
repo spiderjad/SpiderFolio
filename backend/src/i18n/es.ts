@@ -525,6 +525,9 @@ export const pluginTexts = {
   restartUnsupported:
     "Este servidor no se reinicia solo: reinicia la app y el worker desde el servidor para cargar los plugins.",
   restartPending: "Ya hay un reinicio programado.",
+  removeBuiltIn:
+    "Este plugin viene incluido en la imagen del servidor: no se puede quitar desde la app.",
+  removeNotInstalled: "Este plugin no está entre los subidos desde la app.",
 } as const;
 
 /** Mensajes de validación (Zod) que vuelven a la app en `details.issues`. */

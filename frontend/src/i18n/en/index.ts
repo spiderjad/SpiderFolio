@@ -209,6 +209,7 @@ export const en: Messages = {
     search: "Search",
     admin: "Administration",
     adminBack: "Back to the app",
+    adminPlugins: "Plugins",
     company: {
       label: "Company",
       settings: "Company settings",

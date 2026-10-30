@@ -209,6 +209,7 @@ export const es = {
     search: "Buscar",
     admin: "Administración",
     adminBack: "Volver a la app",
+    adminPlugins: "Plugins",
     company: {
       label: "Empresa",
       settings: "Configuración de la empresa",

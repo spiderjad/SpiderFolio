@@ -111,6 +111,7 @@ export const auditEs = {
     "plugin.community.enable": "Activó un plugin no verificado",
     "plugin.community.disable": "Desactivó un plugin no verificado",
     "plugin.package.upload": "Subió un plugin firmado",
+    "plugin.package.remove": "Quitó un plugin del servidor",
     "plugin.package.rejected": "Intentó subir un plugin que se rechazó",
     "server.restart.request": "Programó un reinicio del servidor",
     "directory.member.create": "El directorio dio de alta a una persona",

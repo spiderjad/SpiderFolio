@@ -30,6 +30,8 @@ export interface NavItem {
   end?: boolean;
   /** Etiqueta del grupo (en mayúsculas espaciadas); sin grupo, va arriba. */
   group?: string;
+  /** In the admin menu: listed under «Plugins» (License and plugins and the plugins' sections). */
+  plugins?: true;
 }
 
 /** Capacidades que abren cada sección del panel: alcanza con una. */
@@ -89,7 +91,11 @@ export function navItems(
   ];
   // Quien puede aprobar documentos (por capacidad o por cargo de jefe) tiene su bandeja.
   if (person.capabilities.includes("documents.approve") || person.leadsDepartments) {
-    items.push({ to: `/app/${slug}/aprobaciones`, label: texts.documents.nav, icon: ClipboardCheck });
+    items.push({
+      to: `/app/${slug}/aprobaciones`,
+      label: texts.documents.nav,
+      icon: ClipboardCheck,
+    });
   }
   if (canSee(person, "members")) {
     items.push({ to: `/app/${slug}/admin/members`, label: t.members, icon: Users, group: t.group });
@@ -159,6 +165,7 @@ export function navItems(
       label: t.license,
       icon: KeyRound,
       group: t.group,
+      plugins: true,
     });
   }
   if (canSee(person, "audit")) {
@@ -183,6 +190,7 @@ export function navItems(
         label: section.label,
         icon: section.icon,
         group: t.group,
+        plugins: true,
       });
     }
   }

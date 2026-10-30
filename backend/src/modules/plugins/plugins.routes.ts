@@ -18,6 +18,7 @@ import {
 } from "./plugins.service.ts";
 import {
   pluginServerView,
+  removePluginPackage,
   requestRestart,
   uploadPluginPackage,
 } from "./plugin-packages.service.ts";
@@ -101,6 +102,17 @@ export function pluginRoutes(deps: AppDeps): TenantRoute[] {
           req.body,
         );
         res.status(201).json({ ...(await overview(req)), uploaded });
+      },
+    },
+    {
+      // Removes an uploaded plugin from the server and schedules the restart that unloads it.
+      method: "delete",
+      path: "/admin/plugins/:pluginId",
+      ownerOnly: true,
+      handler: async (req, res) => {
+        const { pluginId } = PluginParamsSchema.parse(req.params);
+        const removed = await removePluginPackage(adminContextOf(req), deps, authOf(req), pluginId);
+        res.json({ ...(await overview(req)), ...removed });
       },
     },
     {

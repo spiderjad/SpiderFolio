@@ -556,6 +556,8 @@ export const pluginTexts: Catalog<typeof Es.pluginTexts> = {
   restartUnsupported:
     "This server doesn't restart on its own: restart the app and the worker on the server to load the plugins.",
   restartPending: "A restart is already scheduled.",
+  removeBuiltIn: "This plugin comes built into the server image: it can't be removed from the app.",
+  removeNotInstalled: "This plugin isn't one of those uploaded from the app.",
 };
 
 /** Validation (Zod) messages returned to the app in `details.issues`. */

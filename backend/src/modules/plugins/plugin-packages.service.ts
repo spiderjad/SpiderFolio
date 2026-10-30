@@ -7,6 +7,8 @@ import {
   pluginInstallDir,
   installPackage,
   InstallError,
+  isUploaded,
+  uninstallPackage,
   versionOnDisk,
 } from "../../plugins/install.ts";
 import {
@@ -46,6 +48,10 @@ export interface PluginServerView {
   restartAt: string | null;
   /** Plugins installed on disk that this process hasn't loaded (they load on the next restart). */
   waiting: { id: string; version: string }[];
+  /** Loaded plugins that were uploaded here, so the owner can remove them. */
+  removable: string[];
+  /** Removed from disk, still loaded until the next restart. */
+  removing: string[];
 }
 
 async function ownMfa(deps: PackageDeps, auth: AuthContext): Promise<boolean> {
@@ -90,6 +96,14 @@ export async function pluginServerView(
     restartSupported: deps.env.SPIDERFOLIO_SUPERVISED,
     restartAt: pending?.restartAt ?? null,
     waiting: waitingPlugins(installDir, deps.plugins),
+    removable: deps.plugins.installed
+      .filter((plugin) => isUploaded(installDir, plugin))
+      .filter((plugin) => versionOnDisk(installDir, plugin.manifest.id) !== null)
+      .map((plugin) => plugin.manifest.id),
+    removing: deps.plugins.installed
+      .filter((plugin) => isUploaded(installDir, plugin))
+      .filter((plugin) => versionOnDisk(installDir, plugin.manifest.id) === null)
+      .map((plugin) => plugin.manifest.id),
   };
 }
 
@@ -173,6 +187,52 @@ export async function uploadPluginPackage(
     },
   });
   return result;
+}
+
+/**
+ * Removes an uploaded plugin from this server (for every company on it) and, where the server restarts
+ * on its own, announces the restart that unloads it. Its data stays: uploading it again brings it back.
+ */
+export async function removePluginPackage(
+  ctx: AdminContext,
+  deps: PackageDeps,
+  auth: AuthContext,
+  id: string,
+): Promise<{ restartAt: string | null }> {
+  if (!deps.env.PLUGIN_UPLOAD_ENABLED) {
+    throw new AppError("FORBIDDEN", { message: pluginTexts.uploadDisabled });
+  }
+  await requireOwnRecentMfa(deps, auth);
+  const installDir = pluginInstallDir(deps.env);
+  let removed: { version: string } | null;
+  try {
+    removed = uninstallPackage({ installDir, id, loaded: deps.plugins.installed });
+  } catch (error) {
+    if (error instanceof InstallError) {
+      throw new AppError("BAD_REQUEST", { message: pluginTexts.removeBuiltIn });
+    }
+    throw error;
+  }
+  if (removed === null) {
+    throw new AppError("BAD_REQUEST", { message: pluginTexts.removeNotInstalled });
+  }
+  await auditAdmin(ctx, {
+    action: "plugin.package.remove",
+    entityType: "Plugin",
+    entityId: id,
+    metadata: { version: removed.version },
+  });
+  if (!deps.env.SPIDERFOLIO_SUPERVISED) return { restartAt: null };
+  const pending = announcedRestart(installDir);
+  if (pending !== null) return { restartAt: pending.restartAt };
+  const plan = scheduleRestart(installDir);
+  await auditAdmin(ctx, {
+    action: "server.restart.request",
+    entityType: "Server",
+    entityId: "server",
+    metadata: { restartAt: plan.restartAt, removed: id },
+  });
+  return { restartAt: plan.restartAt };
 }
 
 /** Announces a restart of the API and the worker (RESTART_NOTICE_MS ahead) to load the plugins. */
