@@ -106,7 +106,7 @@ export const PLUGINS: readonly CatalogPlugin[] = [
     icon: "sparkles",
     price: "free",
     version: "1.0.0",
-    minCore: "0.4.0",
+    minCore: "0.4.1",
     file: "claude-connector-1.0.0.sfplugin",
     guide: "pluginClaudeConnector",
     screenshot: "plugin-claude",
@@ -126,7 +126,7 @@ export const PLUGINS: readonly CatalogPlugin[] = [
     icon: "sparkles",
     price: "paid",
     version: "0.2.0",
-    minCore: "0.4.0",
+    minCore: "0.4.1",
     guide: "pluginMcpConnector",
     screenshot: "autorizar-app",
     text: {
