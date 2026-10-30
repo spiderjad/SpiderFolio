@@ -413,7 +413,7 @@ describe("tokens", () => {
 });
 
 describe("/mcp", () => {
-  it("sin token: 401 con el puntero a los metadatos (así Claude inicia el login)", async () => {
+  it("sin token: 401 con el puntero a los metadatos y los dos alcances (así Claude inicia el login)", async () => {
     const res = await request(app)
       .post("/mcp")
       .send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
@@ -421,6 +421,8 @@ describe("/mcp", () => {
     expect(res.headers["www-authenticate"]).toContain(
       `resource_metadata="${appUrl}/.well-known/oauth-protected-resource/mcp"`,
     );
+    // Claude asks for exactly these: naming only reading left every connection read-only.
+    expect(res.headers["www-authenticate"]).toContain('scope="docs:read docs:write"');
   });
 
   it("un Origin ajeno se rechaza", async () => {

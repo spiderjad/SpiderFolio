@@ -28,7 +28,7 @@ si queda solo el gratis, la misma conexión pierde la escritura y la recupera al
     `/.well-known/oauth-protected-resource`, con `resource` = `APP_URL/mcp` exacto,
     `authorization_servers` = [`APP_URL`] y `scopes_supported`.
   - Un pedido sin token o con uno inválido responde **401** con
-    `WWW-Authenticate: Bearer resource_metadata="…", scope="docs:read"`. Claude solo inicia el login con
+    `WWW-Authenticate: Bearer resource_metadata="…", scope="docs:read docs:write"` (Claude pide justo esos; la pantalla de autorizar concede escribir solo a quien puede). Claude solo inicia el login con
     un 401. Alcance insuficiente: **403** con `error="insufficient_scope"` y el alcance que falta.
   - Metadatos del servidor de autorización (RFC 8414) en `/.well-known/oauth-authorization-server`, con
     `issuer` = `APP_URL`, `code_challenge_methods_supported: ["S256"]`,

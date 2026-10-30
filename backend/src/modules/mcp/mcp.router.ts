@@ -9,7 +9,7 @@ import express, { type Request, type Response, type Router } from "express";
 import type { IncomingMessage } from "node:http";
 import { incrementBucket } from "../../db/raw/rate-limit.ts";
 import type { AppDeps } from "../../routes.ts";
-import { MCP_PATH, SCOPES, type Scope } from "../oauth/oauth.config.ts";
+import { MCP_PATH, SCOPES } from "../oauth/oauth.config.ts";
 import type { McpPrincipal, OAuthService } from "../oauth/oauth.service.ts";
 import { contextFor, failure } from "./mcp.common.ts";
 import { readTools, runTool, type ToolDefinition } from "./tools.read.ts";
@@ -30,12 +30,11 @@ export function mcpRouter(
   const { urls } = oauth;
   const tools = [...readTools(deps), ...extraTools(deps)];
 
-  const challenge = (
-    res: Response,
-    status: 401 | 403,
-    description: string,
-    scope: Scope = SCOPES.read,
-  ) => {
+  // The 401 names every scope: clients ask for exactly what it says, and the consent screen grants
+  // writing only to whoever can write in the chosen company. Naming only reading left every
+  // connection read-only, with no write tool that could ever trigger a step-up.
+  const challenge = (res: Response, status: 401 | 403, description: string) => {
+    const scope = status === 401 ? `${SCOPES.read} ${SCOPES.write}` : SCOPES.read;
     const parts = [
       `resource_metadata="${urls.resourceMetadata}"`,
       `scope="${scope}"`,
