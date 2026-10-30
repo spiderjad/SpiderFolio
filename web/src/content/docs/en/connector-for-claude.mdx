@@ -1,0 +1,115 @@
+---
+title: "Plugin: Connector for Claude"
+description: "Connect SpiderFolio with Claude step by step: each person asks Claude about the company's documents with their own permissions. Free, read-only."
+group: administracion
+order: 12
+icon: sparkles
+---
+
+import Shot from "../../../components/Shot.astro";
+
+With the **Connector for Claude**, each person in your company connects their [Claude](https://claude.ai)
+to SpiderFolio and asks it about the documents: «What's the current cleaning procedure?», «Which readings
+do I have pending?», «Which documents are due for review this month?».
+
+- **It's free** and signed by SpiderJAD.
+- **Claude only reads**, and only what that person can see in SpiderFolio. For Claude to create and edit
+  pages too, there's [Connector for Claude: editing](/en/docs/connector-for-claude-editing).
+- What Claude looks up is in the audit log as «Ana Ruiz via Claude».
+
+## Before you start
+
+- **Your SpiderFolio has to be on the internet with HTTPS.** Claude connects from Anthropic's servers, not
+  from your computer: your SpiderFolio's address (for example, `https://docs.yourcompany.com`) has to open
+  from outside the company. The [Docker install with Caddy](/en/docs/proxy-and-https) already is. An
+  install that only answers inside the company's network won't work.
+- **Claude with custom connectors**: Free (one connector), Pro, Max, Team and Enterprise plans.
+- **Guests** can't connect Claude. People with a **reader** seat connect for reading only.
+
+## 1. Install the plugin (the owner, once)
+
+1. Download the `.sfplugin` file from the [plugin catalog](/en/plugins).
+2. In **Administration › License and plugins**, click **Upload a plugin** and pick it.
+3. Click **Restart now**. A minute later **Connector for Claude** shows in the Administration menu, with
+   the address to connect and the steps.
+
+<Shot name="plugin-claude" alt="The Connector for Claude screen with the connector URL, the Copy button and the steps to connect Claude" />
+
+The connector is on for the company. You can turn it off at any time in **Administration › Security ›
+Connector for Claude**: new connections and calls from existing ones are refused at once.
+
+## 2. Connect Claude (each person)
+
+The **connector URL** is your SpiderFolio's address followed by `/mcp`, for example
+`https://docs.yourcompany.com/mcp`. You see it, with a **Copy** button, in **My profile › Connected apps**.
+
+**On a real server, use its own address**: `https://your-domain/mcp`, that is, the installation's
+`APP_URL` from its `.env` file with `/mcp` at the end (for example, `https://docs.yourcompany.com/mcp`).
+Never `localhost` or an internal IP: Claude can't reach them. `https://….trycloudflare.com` addresses are
+only for [testing the connector from a PC](/en/docs/test-the-connector) and change every time. If your
+SpiderFolio's address changes, each person edits the connector in Claude and connects again.
+
+In Claude:
+
+1. Open **Customize › Connectors** and click **Add custom connector**.
+2. **Name**: `SpiderFolio`. **MCP server URL**: paste the connector URL. Nothing else is needed: leave the
+   authentication as it comes.
+3. Click **Add**, then **Connect**.
+4. SpiderFolio opens. Sign in if asked, pick the **company** and click **Allow**.
+
+<Shot name="autorizar-app" alt="The Connect an app screen: Claude asks for access, the company is picked and Allow is clicked" />
+
+Done: Claude goes back to the conversation and can now look things up in SpiderFolio.
+
+**On Team or Enterprise plans**, an Owner of the Claude organization adds the connector in **Organization
+settings › Connectors** with the same URL; then each person clicks **Connect** in **Customize ›
+Connectors**.
+
+## 3. Use it
+
+Ask Claude as usual. For example:
+
+- «Summarize the current purchasing procedure.»
+- «Which documents do I have to read or approve?»
+- «Find everything we have about the meat slicer.»
+- «Which controlled documents are due for review in the next 30 days?»
+
+Claude can: search, see spaces and folders, read pages (as Markdown) and files' text (PDF, Word, Excel…),
+see the version history, your pending approvals and readings, and upcoming reviews. Always with your
+permissions: what you can't see, Claude can't either.
+
+Claude can **never** publish or approve documents, confirm readings on your behalf, delete or trash, or
+change permissions, members or settings.
+
+## 4. See and disconnect
+
+Each person sees their connected apps in **My profile › Connected apps** and removes one with
+**Disconnect**: access stops at once.
+
+<Shot name="aplicaciones-conectadas" alt="My profile, Connected apps section, with the URL to connect Claude and a connection with the Disconnect button" />
+
+The owner sees **every** connection in the company, who made it and when it was last used, in
+**Administration › Security**. There they can also disconnect any of them or turn the connector off.
+
+<Shot name="conector-seguridad" alt="Administration › Security: the connector on and the company's connections" />
+
+## Security
+
+- Each connection is one person in one company, with their permissions, checked on every lookup.
+- Documents' text reaches Claude marked as **data**, not instructions: a document can't «give orders» to
+  Claude.
+- At most 60 lookups a minute per connection.
+- Everything is in **Administration › Audit log**, as «name via Claude».
+
+## Common problems
+
+- **Claude says «Couldn't reach the MCP server»**: your SpiderFolio doesn't open from the internet, or has
+  no HTTPS. Try opening the connector URL from your phone off the company's wifi: it has to answer (even
+  with a «not authorized» error).
+- **When connecting it says you have no company where the connector can be used**: the plugin isn't
+  installed or on, the owner turned it off, or you're a guest.
+- **Claude can no longer look things up**: someone disconnected the app or the owner turned the connector
+  off. Click **Connect** again in Claude.
+- **Claude says something «wasn't found»**: you don't have access to that document in SpiderFolio (or it
+  no longer exists). Claude doesn't see more than you.
+- **«Too many calls»**: more than 60 lookups in a minute. Wait a minute.

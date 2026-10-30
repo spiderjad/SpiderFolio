@@ -59,15 +59,21 @@ export interface Ids {
 }
 
 /** Textos de la app (frontend/src/i18n/<idioma>) para abrir los diálogos. */
-export const LABELS: Record<Locale, { more: string; share: string; control: string; qr: string }> = {
-  es: {
-    more: "Más acciones",
-    share: "Compartir",
-    control: "Control de documento",
-    qr: "Generar QR",
-  },
-  en: { more: "More actions", share: "Share", control: "Document control", qr: "Generate QR code" },
-};
+export const LABELS: Record<Locale, { more: string; share: string; control: string; qr: string }> =
+  {
+    es: {
+      more: "Más acciones",
+      share: "Compartir",
+      control: "Control de documento",
+      qr: "Generar QR",
+    },
+    en: {
+      more: "More actions",
+      share: "Share",
+      control: "Document control",
+      qr: "Generate QR code",
+    },
+  };
 
 export async function fromMenu(page: Page, locale: Locale, item: string): Promise<void> {
   await page.getByRole("button", { name: LABELS[locale].more }).click();
@@ -179,11 +185,12 @@ const LOADING = '[aria-busy="true"], .animate-pulse, .skeleton';
  * ready. Throws instead of letting a half-loaded screen through.
  */
 
-export async function waitUntilReady(page: Page): Promise<void> {
+/** `prefix`: where the screen lives (the app by default; the consent screen is outside it). */
+export async function waitUntilReady(page: Page, prefix = "/app/"): Promise<void> {
   try {
     await page.waitForFunction(
-      (loading) => {
-        if (!window.location.pathname.startsWith("/app/")) return false;
+      ([loading, where]) => {
+        if (!window.location.pathname.startsWith(where)) return false;
         const main = document.querySelector("main");
         if (main === null || main.innerText.trim() === "") return false;
         if (document.querySelector(loading) !== null) return false;
@@ -194,12 +201,12 @@ export async function waitUntilReady(page: Page): Promise<void> {
         }
         return document.fonts.status === "loaded";
       },
-      LOADING,
+      [LOADING, prefix] as const,
       { timeout: 30_000 },
     );
   } catch {
     const path = new URL(page.url()).pathname;
-    if (!path.startsWith("/app/")) throw new Error(`la sesión no se abrió: quedó en ${path}`);
+    if (!path.startsWith(prefix)) throw new Error(`la sesión no se abrió: quedó en ${path}`);
     const state = await page.evaluate(
       (loading) => ({
         main: document.querySelector("main") !== null,

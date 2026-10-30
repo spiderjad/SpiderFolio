@@ -28,6 +28,8 @@ export const routes: LocaleRoutes = {
     pluginMicrosoftSignIn: "sign-in-with-microsoft",
     pluginCorporateDirectory: "corporate-directory",
     pluginLdaps: "enable-ldaps",
+    pluginClaudeConnector: "connector-for-claude",
+    pluginMcpConnector: "connector-for-claude-editing",
     limits: "limits",
     configuration: "configuration",
     firstAdmin: "first-administrator",
@@ -53,5 +55,6 @@ export const routes: LocaleRoutes = {
     architecture: "architecture",
     contributing: "contributing",
     createPlugin: "create-a-plugin",
+    testConnector: "test-the-connector",
   },
 };

@@ -84,7 +84,7 @@ test("plugins y servicios: catálogo sin precios, descarga en los gratis y conta
   await page.goto("/es/plugins");
   await expect(page.getByRole("heading", { level: 1, name: "Plugins y servicios" })).toBeVisible();
   const plugins = page.getByRole("region", { name: "Plugins" }).locator("article");
-  await expect(plugins).toHaveCount(7);
+  await expect(plugins).toHaveCount(8);
   // The free plugin downloads from the «plugins» Release, never from «latest».
   const free = page.locator("article#microsoft-sign-in");
   await expect(free.getByText("Gratis")).toBeVisible();

@@ -1,0 +1,105 @@
+---
+title: "Test the connector from your PC"
+description: "Connect Claude to a test installation on your computer with a Cloudflare tunnel that needs no account, or try it offline with MCP Inspector."
+group: desarrolladores
+order: 4
+icon: sparkles
+---
+
+Claude connects from Anthropic's servers, so it can't reach `http://localhost`. To test the
+[connector for Claude](/en/docs/connector-for-claude) with an installation on your computer, you expose it
+for a while with a **Cloudflare quick tunnel** (free, no account), which gives it a
+`https://….trycloudflare.com` address. A real server needs none of this: it uses its own address,
+`https://your-domain/mcp`.
+
+**Important:** while the tunnel is open, **your test installation can be reached from the internet** by
+anyone who knows the address. Use it only with a test installation (never with real data), with two-step
+verification on for the owner, and close it when you're done.
+
+## Before you start
+
+- A Docker installation on your PC answering at `http://localhost:8080` (the one from
+  [Install](/en/docs/install)), on version 0.4.1 or later.
+- The [Connector for Claude](/en/docs/connector-for-claude) plugin installed in the company (or
+  [Connector for Claude: editing](/en/docs/connector-for-claude-editing) to test writing).
+- The owner with [two-step verification](/en/docs/security-and-2fa) on.
+- A Claude account with custom connectors (the Free plan allows one).
+
+## 1. Install cloudflared (once)
+
+- **Windows**: `winget install --id Cloudflare.cloudflared`, then open a new PowerShell window.
+- **Mac**: `brew install cloudflared`.
+- **Linux**: the package from [Cloudflare's downloads page](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+
+## 2. Open the tunnel
+
+In a terminal (leave it open while you test):
+
+```sh
+cloudflared tunnel --no-autoupdate --url http://localhost:8080
+```
+
+After a few seconds it prints a line with the address, for example
+`https://random-words-here.trycloudflare.com`. It changes every time you open the tunnel.
+
+## 3. Put that address in APP_URL
+
+SpiderFolio builds links and checks sign-in with `APP_URL`, so it has to be the tunnel's:
+
+1. In the installation folder, edit `.env` and change the `APP_URL` line:
+   ```sh
+   APP_URL=https://random-words-here.trycloudflare.com
+   ```
+2. Restart the app (in another terminal, from that folder):
+   ```sh
+   docker compose up -d app worker
+   ```
+3. Check it answers through the tunnel: open `https://random-words-here.trycloudflare.com/api/health`.
+
+While the test lasts, **open SpiderFolio through the tunnel address on your PC too**. Through
+`localhost:8080` you're signed out every time you reload the page, because the server only renews the
+session from `APP_URL` (protection against requests from other sites).
+
+## 4. Connect Claude
+
+1. In Claude: **Customize › Connectors › Add custom connector**.
+2. **Name**: `SpiderFolio`. **MCP server URL**: the tunnel's with `/mcp` at the end, for example
+   `https://random-words-here.trycloudflare.com/mcp`.
+3. **Add** and **Connect**. SpiderFolio opens: sign in, pick the company and click **Allow**.
+
+To try it, ask for example:
+
+- "Which documents do I have pending to read?"
+- "What expires in the next 30 days?"
+- "Find the cleaning procedure and summarize it."
+- With the editing plugin: "Create a draft called 'Claude test' in the Quality space with three points
+  about cleaning the slicer."
+
+What Claude did shows in **Administration › Audit** as "*name* via Claude".
+
+## 5. Close
+
+1. In the tunnel's terminal, **Ctrl+C**.
+2. In `.env`, set `APP_URL=http://localhost:8080` again and restart: `docker compose up -d app worker`.
+3. In Claude, remove the test connector: that address no longer exists.
+
+## Offline: MCP Inspector
+
+To check the tools without Claude or a tunnel, with `APP_URL=http://localhost:8080`:
+
+```sh
+npx @modelcontextprotocol/inspector
+```
+
+In the Inspector pick **Streamable HTTP**, URL `http://localhost:8080/mcp`, and click **Connect**: it goes
+through the same sign-in (OAuth) as Claude. **List Tools** shows that connection's tools: 8 for reading,
+and 7 more for writing if the company has the editing plugin and the person a full seat.
+
+## Common problems
+
+- **"The app that asked to connect is not recognized"**: the installation is older than 0.4.1, or it
+  can't reach the internet to read Claude's client document (`https://claude.ai/oauth/…`).
+- **Claude only reads even with the editing plugin**: the connection was made before installing it (or
+  with a version older than 0.4.1). In Claude, disconnect and connect again; the authorize screen has to
+  say it asks to create and edit.
+- **You're signed out on reload**: you're using `localhost` with the tunnel open (step 3).

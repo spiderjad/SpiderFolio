@@ -1,0 +1,100 @@
+---
+title: "Plugin: Conector para Claude: edición"
+description: "Que Claude también cree y edite documentación de la empresa con los permisos de cada persona: páginas, carpetas, archivos, comentarios y envío a revisión. Paso a paso y problemas frecuentes."
+group: administracion
+order: 13
+icon: sparkles
+---
+
+import Shot from "../../../components/Shot.astro";
+
+**Conector para Claude: edición** hace todo lo del [Conector para Claude](/es/docs/conector-para-claude)
+(buscar y leer) y además deja que Claude **cree y edite** documentación, siempre con los permisos de la
+persona que lo conectó:
+
+- crear páginas a partir de lo que le pidas («Crea un borrador de instructivo para el autoelevador en la
+  carpeta de Seguridad»);
+- editar páginas: reemplazarlas, agregar al final o cambiar un fragmento;
+- crear carpetas y mover páginas, carpetas y archivos;
+- subir archivos pequeños (hasta 10 MB);
+- comentar en una página;
+- enviar el borrador de un documento controlado a revisión.
+
+Es un plugin **de pago**. Incluye el gratis: si tenías el Conector para Claude, las conexiones siguen
+funcionando y ganan la edición sin volver a conectar nada.
+
+## Lo que nunca hace
+
+Claude no puede **publicar ni aprobar** documentos, confirmar lecturas en nombre de nadie, **borrar** o
+mandar a la papelera, ni cambiar permisos, miembros o la configuración. Esas acciones las hace siempre una
+persona en SpiderFolio.
+
+En un **documento controlado publicado**, una edición de Claude crea un **borrador nuevo**: la versión
+vigente no cambia hasta que alguien lo apruebe y lo publique.
+
+## 1. Instalar el plugin (el propietario)
+
+1. En **Administración › Licencia y plugins**, copia el **ID de la empresa** y envíanoslo
+   ([contacto](mailto:contacto@spiderjad.com)).
+2. Te enviamos un `.sfplugin` firmado para tu empresa. Súbelo en **Subir un plugin** y pulsa **Reiniciar
+   ahora**.
+
+En **Administración › Seguridad › Conector para Claude** dice entonces «Claude puede leer y editar».
+
+## 2. Conectar Claude (cada persona)
+
+Igual que con el gratis (los pasos completos, con capturas, están en
+[Conector para Claude](/es/docs/conector-para-claude#2-conectar-claude-cada-persona)):
+
+1. En Claude: **Personalizar › Conectores › Agregar conector personalizado** (Customize › Connectors ›
+   Add custom connector).
+2. **Nombre**: `SpiderFolio`; **URL del servidor MCP**: la de **Mi perfil › Aplicaciones conectadas**
+   (por ejemplo, `https://docs.tuempresa.com/mcp`).
+3. **Agregar** y **Conectar**; en SpiderFolio elige la empresa y pulsa **Permitir**.
+
+**En un servidor real se usa su propia dirección**: `https://su-dominio/mcp`, es decir, el `APP_URL` del
+archivo `.env` de la instalación con `/mcp` al final (por ejemplo, `https://docs.tuempresa.com/mcp`).
+Nunca `localhost` ni una IP interna: Claude no las alcanza. Las direcciones `https://….trycloudflare.com`
+son solo para [probar el conector desde una PC](/es/docs/probar-el-conector) y cambian cada vez. Si la
+dirección de tu SpiderFolio cambia, cada persona edita el conector en Claude y vuelve a conectar.
+
+<Shot name="autorizar-app" alt="La pantalla Conectar una aplicación de SpiderFolio, donde se elige la empresa y se pulsa Permitir" />
+
+La pantalla dice qué podrá hacer Claude. Quien tiene plaza de **lector** solo puede dar lectura, aunque
+el plugin de edición esté instalado.
+
+**Si ya estaba conectado con el plugin gratis**, no hace falta hacer nada: la misma conexión ya puede
+editar.
+
+## 3. Usarlo
+
+Pídeselo a Claude con normalidad. Por ejemplo:
+
+- «Crea en el espacio Calidad una página "Instructivo del autoelevador" con los pasos de revisión diaria.»
+- «Agrega al final del procedimiento de compras una sección sobre proveedores nuevos.»
+- «Mueve el instructivo de la cortadora a la carpeta Planta.»
+- «Comenta en el procedimiento de limpieza que falta la frecuencia del fin de semana.»
+- «Envía el borrador del PRC-002 a revisión.» (Claude te pregunta quién lo aprueba.)
+
+Claude escribe en **Markdown**: títulos, listas, citas, código, enlaces, negrita y cursiva. Las imágenes
+y el HTML no se agregan; Claude te avisa si dejó algo afuera.
+
+**Si alguien cambió la página mientras tanto**, Claude no guarda nada: recibe la versión actual y te
+pregunta cómo seguir. Así nunca pisa el trabajo de otra persona.
+
+## Si la licencia vence
+
+Claude vuelve a solo **leer**, si tienes instalado el Conector para Claude (gratis): las conexiones siguen
+funcionando. Sin el gratis, el conector deja de responder hasta que cargues una licencia nueva.
+
+## Problemas frecuentes
+
+- **Claude dice que no puede crear o editar**: la persona no tiene permiso de edición en esa carpeta o
+  página, o tiene plaza de lector. Claude nunca puede más que la persona.
+- **«Conflict»**: alguien cambió la página. Pídele a Claude que vuelva a leerla y repita el cambio.
+- **No sube un archivo**: más de 10 MB, un tipo que la empresa no permite, o se llegó al límite de
+  almacenamiento. Súbelo desde SpiderFolio.
+- **No puede editar un documento controlado**: está en revisión o aprobado y esperando publicación. Se
+  edita cuando vuelve a borrador o después de publicarse.
+- Para lo demás (no se conecta, «Couldn't reach the MCP server», «Too many calls»), ver los problemas
+  frecuentes del [Conector para Claude](/es/docs/conector-para-claude#problemas-frecuentes).

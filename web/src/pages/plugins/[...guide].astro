@@ -22,6 +22,8 @@ export function getStaticPaths() {
     ["microsoft-sign-in", "pluginMicrosoftSignIn"],
     ["corporate-directory", "pluginCorporateDirectory"],
     ["corporate-directory/ldaps", "pluginLdaps"],
+    ["claude-connector", "pluginClaudeConnector"],
+    ["mcp-connector", "pluginMcpConnector"],
   ];
   return guides.map(([guide, key]) => ({ params: { guide }, props: { key } }));
 }

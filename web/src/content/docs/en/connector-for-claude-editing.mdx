@@ -1,0 +1,98 @@
+---
+title: "Plugin: Connector for Claude: editing"
+description: "Let Claude also create and edit the company's documentation with each person's permissions: pages, folders, files, comments and sending for review. Step by step and common problems."
+group: administracion
+order: 13
+icon: sparkles
+---
+
+import Shot from "../../../components/Shot.astro";
+
+**Connector for Claude: editing** does everything the [Connector for Claude](/en/docs/connector-for-claude)
+does (search and read) and also lets Claude **create and edit** documentation, always with the
+permissions of the person who connected it:
+
+- create pages from what you ask («Create a draft work instruction for the forklift in the Safety
+  folder»);
+- edit pages: replace them, add at the end or change a piece;
+- create folders and move pages, folders and files;
+- upload small files (up to 10 MB);
+- comment on a page;
+- send the draft of a controlled document for review.
+
+It's a **paid** plugin. It includes the free one: if you had the Connector for Claude, connections keep
+working and gain editing without connecting anything again.
+
+## What it never does
+
+Claude can't **publish or approve** documents, confirm readings on anyone's behalf, **delete** or trash,
+or change permissions, members or settings. A person always does those in SpiderFolio.
+
+In a **published controlled document**, an edit by Claude creates a **new draft**: the current version
+doesn't change until someone approves and publishes it.
+
+## 1. Install the plugin (the owner)
+
+1. In **Administration › License and plugins**, copy the **Company ID** and send it to us
+   ([contact](mailto:contacto@spiderjad.com)).
+2. We send you a `.sfplugin` signed for your company. Upload it in **Upload a plugin** and click **Restart
+   now**.
+
+**Administration › Security › Connector for Claude** then says «Claude can read and edit».
+
+## 2. Connect Claude (each person)
+
+Same as with the free one (the full steps, with screenshots, are in
+[Connector for Claude](/en/docs/connector-for-claude#2-connect-claude-each-person)):
+
+1. In Claude: **Customize › Connectors › Add custom connector**.
+2. **Name**: `SpiderFolio`; **MCP server URL**: the one in **My profile › Connected apps** (for example,
+   `https://docs.yourcompany.com/mcp`).
+3. **Add** and **Connect**; in SpiderFolio pick the company and click **Allow**.
+
+**On a real server, use its own address**: `https://your-domain/mcp`, that is, the installation's
+`APP_URL` from its `.env` file with `/mcp` at the end (for example, `https://docs.yourcompany.com/mcp`).
+Never `localhost` or an internal IP: Claude can't reach them. `https://….trycloudflare.com` addresses are
+only for [testing the connector from a PC](/en/docs/test-the-connector) and change every time. If your
+SpiderFolio's address changes, each person edits the connector in Claude and connects again.
+
+<Shot name="autorizar-app" alt="SpiderFolio's Connect an app screen, where the company is picked and Allow is clicked" />
+
+The screen says what Claude will be able to do. People with a **reader** seat can only give reading, even
+with the editing plugin installed.
+
+**If it was already connected with the free plugin**, nothing needs doing: the same connection can now
+edit.
+
+## 3. Use it
+
+Ask Claude as usual. For example:
+
+- «Create in the Quality space a page "Forklift work instruction" with the daily check steps.»
+- «Add a section about new suppliers at the end of the purchasing procedure.»
+- «Move the slicer work instruction to the Plant folder.»
+- «Comment on the cleaning procedure that the weekend frequency is missing.»
+- «Send the PRC-002 draft for review.» (Claude asks you who approves it.)
+
+Claude writes in **Markdown**: headings, lists, quotes, code, links, bold and italic. Images and HTML
+aren't added; Claude tells you if it left something out.
+
+**If someone changed the page in the meantime**, Claude saves nothing: it gets the current version and
+asks you how to go on. That way it never overwrites anyone's work.
+
+## If the license expires
+
+Claude goes back to **reading** only, if you have the Connector for Claude (free) installed: connections
+keep working. Without the free one, the connector stops answering until you load a new license.
+
+## Common problems
+
+- **Claude says it can't create or edit**: the person can't edit that folder or page, or has a reader
+  seat. Claude can never do more than the person.
+- **«Conflict»**: someone changed the page. Ask Claude to read it again and redo the change.
+- **A file doesn't upload**: over 10 MB, a type the company doesn't allow, or the storage limit was
+  reached. Upload it from SpiderFolio.
+- **It can't edit a controlled document**: it's in review, or approved and waiting to be published. It can
+  be edited when it's back to draft or after it's published.
+- For the rest (it doesn't connect, «Couldn't reach the MCP server», «Too many calls»), see the common
+  problems of the [Connector for Claude](/en/docs/connector-for-claude#common-problems).
