@@ -165,19 +165,27 @@ export function isPublicAddress(address: string): boolean {
   );
 }
 
-/** DNS lookup that fails for non-public addresses: the check holds for the address connected to. */
-const publicOnlyLookup: LookupFunction = (hostname, options, callback) => {
-  lookup(hostname, { ...options, all: false }, (error, address, family) => {
+/**
+ * DNS lookup that fails if any resolved address isn't public: the check holds for the address connected
+ * to. Node asks for every address (`all: true`, for autoSelectFamily) or for one, and expects the
+ * answer in the same shape.
+ */
+export const publicOnlyLookup: LookupFunction = (hostname, options, callback) => {
+  lookup(hostname, { ...options, all: true }, (error, addresses) => {
     if (error !== null) {
       callback(error, "", 0);
       return;
     }
-    const text = typeof address === "string" ? address : "";
-    if (!isPublicAddress(text)) {
+    const [first] = addresses;
+    if (first === undefined || !addresses.every((entry) => isPublicAddress(entry.address))) {
       callback(new Error("Dirección no pública"), "", 0);
       return;
     }
-    callback(null, text, family);
+    if (options.all === true) {
+      callback(null, addresses);
+      return;
+    }
+    callback(null, first.address, first.family);
   });
 };
 
@@ -186,6 +194,12 @@ export type MetadataFetcher = (url: string) => Promise<unknown>;
 
 export const fetchMetadataDocument: MetadataFetcher = (url) =>
   new Promise((resolve, reject) => {
+    // Node doesn't call `lookup` for an IP literal, so that address is checked here.
+    const host = new URL(url).hostname.replace(/^\[|\]$/g, "");
+    if (isIP(host) !== 0 && !isPublicAddress(host)) {
+      reject(new Error("Dirección no pública"));
+      return;
+    }
     const req = request(
       url,
       {

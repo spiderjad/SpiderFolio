@@ -7,7 +7,12 @@ import { defineBackendPlugin } from "@spiderfolio/plugin-sdk/backend";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
-import { isPublicAddress, redirectUriAllowed } from "../../src/modules/oauth/oauth.clients.ts";
+import {
+  fetchMetadataDocument,
+  isPublicAddress,
+  publicOnlyLookup,
+  redirectUriAllowed,
+} from "../../src/modules/oauth/oauth.clients.ts";
 import {
   addMember,
   createTestContext,
@@ -220,6 +225,31 @@ describe("metadatos y registro", () => {
       expect(isPublicAddress(address)).toBe(false);
     }
     expect(isPublicAddress("160.79.104.10")).toBe(true);
+  });
+
+  it("la búsqueda DNS responde como pide Node (una dirección o todas) y corta las privadas", async () => {
+    const ask = (hostname: string, all: boolean) =>
+      new Promise<unknown>((resolve, reject) => {
+        publicOnlyLookup(hostname, { all }, (error: Error | null, address: unknown) => {
+          if (error === null) resolve(address);
+          else reject(error);
+        });
+      });
+    // Node 24 connects with autoSelectFamily: it asks for every address and needs a list back.
+    await expect(ask("160.79.104.10", true)).resolves.toEqual([
+      { address: "160.79.104.10", family: 4 },
+    ]);
+    await expect(ask("160.79.104.10", false)).resolves.toBe("160.79.104.10");
+    await expect(ask("127.0.0.1", true)).rejects.toThrow("Dirección no pública");
+    await expect(ask("127.0.0.1", false)).rejects.toThrow("Dirección no pública");
+    // An IP literal skips the DNS lookup: it's checked before connecting.
+    for (const url of [
+      "https://127.0.0.1/cliente",
+      "https://[::1]/cliente",
+      "https://2130706433/c",
+    ]) {
+      await expect(fetchMetadataDocument(url)).rejects.toThrow("Dirección no pública");
+    }
   });
 });
 
