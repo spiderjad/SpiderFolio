@@ -86,7 +86,8 @@ async function documentNode(ctx: AdminContext, nodeId: string) {
     select: { id: true, name: true, type: true, spaceId: true },
   });
   if (node === null) throw notFound();
-  if (node.type === "FOLDER") {
+  // A form's QR (it opens the form to fill it) comes with filling forms.
+  if (node.type === "FOLDER" || node.type === "FORM") {
     throw new AppError("BAD_REQUEST", { message: qrTexts.onlyDocuments });
   }
   return node;
@@ -288,7 +289,7 @@ export async function scanQr(
     where: { id: row.nodeId, trashedAt: null },
     select: { id: true, name: true, type: true, spaceId: true },
   });
-  if (node === null || node.type === "FOLDER") throw notFound();
+  if (node === null || node.type === "FOLDER" || node.type === "FORM") throw notFound();
   const count = () =>
     db.qrCode.updateMany({
       where: { id: row.id, revokedAt: null },

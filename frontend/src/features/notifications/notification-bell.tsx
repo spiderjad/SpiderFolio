@@ -123,6 +123,7 @@ function pathOf(
   const base = `/app/${slug}/files/${target.spaceId}`;
   if (target.type === "space") return base;
   if (target.nodeType === "PAGE") return `${base}/p/${target.id}`;
+  if (target.nodeType === "FORM") return `${base}/form/${target.id}`;
   if (target.nodeType === "FOLDER") return `${base}/f/${target.id}`;
   return target.parentId === null ? base : `${base}/f/${target.parentId}`;
 }

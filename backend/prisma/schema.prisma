@@ -241,6 +241,7 @@ model Workspace {
   downloadTokens      DownloadToken[]
   zipExports          ZipExport[]
   pageContents        PageContent[]
+  formVersions        FormVersion[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -443,6 +444,8 @@ enum NodeType {
   FOLDER
   FILE
   PAGE
+  /// A form (docs/spec/formularios.md): its fields live in FormVersion.
+  FORM
 }
 
 /// Espacio: la raíz de un árbol de carpetas, archivos y páginas. Privado = solo con permiso
@@ -549,6 +552,7 @@ model Node {
   permissions         Permission[]
   versions            FileVersion[]
   pageContent         PageContent?
+  formVersions        FormVersion[]
   pageImages          PageImage[]
   threads             CommentThread[]
   mentions            Mention[]
@@ -717,6 +721,26 @@ model ZipExport {
 
   @@index([workspaceId, membershipId, createdAt])
   @@index([expiresAt])
+}
+
+/// One version of a form's template (node FORM): its fields, validated by modules/forms. Saving a changed
+/// template adds a version; Node.currentVersion is the latest. Versions are never edited or deleted (a
+/// record keeps the version it was filled with).
+model FormVersion {
+  id          String   @id @default(cuid())
+  workspaceId String
+  nodeId      String
+  version     Int
+  fields      Json
+  /// Membership that saved it.
+  createdById String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([nodeId, version])
+  @@index([workspaceId])
 }
 
 /// El texto de una página (nodo PAGE): documento Tiptap/ProseMirror validado por packages/content.

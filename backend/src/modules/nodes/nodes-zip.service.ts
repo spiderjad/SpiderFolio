@@ -13,7 +13,7 @@ import { fileMessages } from "../../i18n/index.ts";
 interface Collected {
   id: string;
   parentId: string | null;
-  type: "FOLDER" | "FILE" | "PAGE";
+  type: "FOLDER" | "FILE" | "PAGE" | "FORM";
   name: string;
   updatedAt: Date;
 }

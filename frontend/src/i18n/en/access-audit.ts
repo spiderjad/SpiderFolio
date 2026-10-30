@@ -121,7 +121,7 @@ export const accessAuditTexts: Catalog<typeof EsAccessAudit> = {
       level: "Level",
       expires: "Expires",
     },
-    kindLabel: { space: "Space", FOLDER: "Folder", PAGE: "Page", FILE: "File" },
+    kindLabel: { space: "Space", FOLDER: "Folder", PAGE: "Page", FORM: "Form", FILE: "File" },
     empty: "Nothing in this report.",
     person: "Only one person",
     clearPerson: "Show everyone",

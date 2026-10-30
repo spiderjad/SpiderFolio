@@ -79,7 +79,9 @@ export function readTools(deps: AppDeps): ToolDefinition[] {
             link:
               hit.type === "PAGE"
                 ? link.page(hit.spaceId, hit.id)
-                : hit.type === "FOLDER"
+                : hit.type === "FORM"
+                  ? link.form(hit.spaceId, hit.id)
+                  : hit.type === "FOLDER"
                   ? link.folder(hit.spaceId, hit.id)
                   : link.folder(hit.spaceId, hit.parentId),
           })),

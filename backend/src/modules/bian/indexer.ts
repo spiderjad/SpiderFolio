@@ -42,7 +42,9 @@ export async function sourceOf(
     where: { id: nodeId },
     select: { type: true, trashedAt: true, currentVersion: true },
   });
-  if (node === null || node.trashedAt !== null || node.type === "FOLDER") return null;
+  if (node === null || node.trashedAt !== null || node.type === "FOLDER" || node.type === "FORM") {
+    return null;
+  }
 
   const controlled = await db.controlledDocument.findFirst({
     where: { nodeId },

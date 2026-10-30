@@ -16,6 +16,8 @@ interface Ids {
   nodeId: string;
   /** Una página de B (con texto). */
   pageId: string;
+  /** A form of B (with its version 1). */
+  formId: string;
 }
 
 interface IsolationCase {
@@ -416,6 +418,26 @@ const cases: IsolationCase[] = [
     url: (ids) => `/pages/${ids.pageId}/duplicate`,
   },
   { method: "get", path: "/pages/:id", url: (ids) => `/pages/${ids.pageId}` },
+  // Forms: B's form never reaches A, nor does creating one in B's space.
+  {
+    method: "post",
+    path: "/spaces/:id/forms",
+    url: (ids) => `/spaces/${ids.spaceId}/forms`,
+    body: {},
+  },
+  { method: "get", path: "/forms/:id", url: (ids) => `/forms/${ids.formId}` },
+  {
+    method: "put",
+    path: "/forms/:id/template",
+    url: (ids) => `/forms/${ids.formId}/template`,
+    body: { baseVersion: 1, fields: [] },
+  },
+  { method: "get", path: "/forms/:id/versions", url: (ids) => `/forms/${ids.formId}/versions` },
+  {
+    method: "get",
+    path: "/forms/:id/versions/:version",
+    url: (ids) => `/forms/${ids.formId}/versions/1`,
+  },
   {
     method: "put",
     path: "/pages/:id/content",
@@ -784,6 +806,7 @@ let bDepartmentId = "";
 let bSpaceId = "";
 let bNodeId = "";
 let bPageId = "";
+let bFormId = "";
 
 beforeAll(async () => {
   ctx = await createTestContext();
@@ -842,6 +865,30 @@ beforeAll(async () => {
       updatedById: b.membershipId,
     },
   });
+  bFormId = (
+    await ctx.prisma.node.create({
+      data: {
+        workspaceId: b.workspaceId,
+        spaceId: bSpaceId,
+        type: "FORM",
+        name: "Formulario",
+        nameKey: "formulario",
+        position: "X",
+        currentVersion: 1,
+        createdById: b.membershipId,
+        updatedById: b.membershipId,
+      },
+    })
+  ).id;
+  await ctx.prisma.formVersion.create({
+    data: {
+      nodeId: bFormId,
+      workspaceId: b.workspaceId,
+      version: 1,
+      fields: [],
+      createdById: b.membershipId,
+    },
+  });
 });
 
 afterAll(async () => {
@@ -863,6 +910,7 @@ describe("aislamiento entre tenants", () => {
       spaceId: bSpaceId,
       nodeId: bNodeId,
       pageId: bPageId,
+      formId: bFormId,
     })}`;
     const res = await request(app)
       [c.method](url)
@@ -885,6 +933,7 @@ describe("aislamiento entre tenants", () => {
             spaceId: bSpaceId,
             nodeId: bNodeId,
             pageId: bPageId,
+            formId: bFormId,
           })}`,
         )
         .set("Authorization", `Bearer ${b.token}`);

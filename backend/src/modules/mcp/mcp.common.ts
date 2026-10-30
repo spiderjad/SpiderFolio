@@ -74,6 +74,7 @@ export function appLinks(appUrl: string, slug: string) {
   return {
     space: (spaceId: string) => `${base}/${spaceId}`,
     page: (spaceId: string, pageId: string) => `${base}/${spaceId}/p/${pageId}`,
+    form: (spaceId: string, formId: string) => `${base}/${spaceId}/form/${formId}`,
     folder: (spaceId: string, folderId: string | null) =>
       folderId === null ? `${base}/${spaceId}` : `${base}/${spaceId}/f/${folderId}`,
   };

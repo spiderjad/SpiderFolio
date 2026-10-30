@@ -711,7 +711,9 @@ const targetKindLabel = (row: ReportRow): string => {
       ? kinds.FOLDER
       : row.target.nodeType === "PAGE"
         ? kinds.PAGE
-        : kinds.FILE;
+        : row.target.nodeType === "FORM"
+          ? kinds.FORM
+          : kinds.FILE;
 };
 
 const levelLabel = (level: AccessLevel): string => accessExportLabels.levels[level];

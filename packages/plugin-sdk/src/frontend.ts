@@ -57,7 +57,7 @@ export interface PluginAdminSection {
   component: LazyComponent<PluginScreenProps>;
 }
 
-export type PluginNodeType = "FOLDER" | "FILE" | "PAGE" | "LINK";
+export type PluginNodeType = "FOLDER" | "FILE" | "PAGE" | "FORM" | "LINK";
 
 /** El elemento sobre el que se abre la acción (fila del explorador o documento abierto). */
 export interface PluginNodeContext {

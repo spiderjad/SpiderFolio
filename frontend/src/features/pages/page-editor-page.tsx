@@ -837,7 +837,9 @@ function Subpages({
                 to={
                   child.type === "PAGE"
                     ? `/app/${workspaceSlug}/files/${spaceId}/p/${child.id}`
-                    : `/app/${workspaceSlug}/files/${spaceId}/f/${child.id}`
+                    : child.type === "FORM"
+                      ? `/app/${workspaceSlug}/files/${spaceId}/form/${child.id}`
+                      : `/app/${workspaceSlug}/files/${spaceId}/f/${child.id}`
                 }
                 className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >

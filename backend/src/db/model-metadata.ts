@@ -56,6 +56,7 @@ export const modelMetadata = {
       downloadTokens: "DownloadToken",
       zipExports: "ZipExport",
       pageContents: "PageContent",
+      formVersions: "FormVersion",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -145,6 +146,7 @@ export const modelMetadata = {
       permissions: "Permission",
       versions: "FileVersion",
       pageContent: "PageContent",
+      formVersions: "FormVersion",
       pageImages: "PageImage",
       threads: "CommentThread",
       mentions: "Mention",
@@ -170,6 +172,7 @@ export const modelMetadata = {
   },
   ZipExport: { scope: "tenant", relations: { workspace: "Workspace" } },
   PageContent: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
+  FormVersion: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {
     scope: "tenant",

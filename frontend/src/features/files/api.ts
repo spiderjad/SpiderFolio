@@ -4,7 +4,7 @@ import type { SharingSummary } from "@/features/sharing/shared-mark";
 import { api } from "@/lib/api";
 
 export type AccessLevel = "MANAGE" | "EDIT" | "COMMENT" | "VIEW";
-export type NodeType = "FOLDER" | "FILE" | "PAGE";
+export type NodeType = "FOLDER" | "FILE" | "PAGE" | "FORM";
 
 export interface Page<T> {
   items: T[];

@@ -118,8 +118,11 @@ async function ancestorsOf(
   return chain;
 }
 
-/** Carpetas primero, después páginas y al final archivos; dentro de cada grupo, el orden pedido. */
-const TYPE_ORDER = ["FOLDER", "PAGE", "FILE"] as const;
+/** Carpetas primero, después páginas, formularios y al final archivos; dentro de cada grupo, el orden pedido. */
+const TYPE_ORDER = ["FOLDER", "PAGE", "FORM", "FILE"] as const;
+
+/** What can hold other things (folders and pages); files and forms are leaves. */
+const isContainer = (type: NodeType) => type === "FOLDER" || type === "PAGE";
 
 /**
  * El orden por tipo no es el del enum de la base: se arma la página recorriendo los tres grupos en
@@ -220,7 +223,7 @@ export async function listChildren(
   const { rows, total } = await pagedByType(ctx, where, order, query);
   const access = await accessFor(ctx, { nodeIds: rows.map((row) => row.id), spaceIds: [spaceId] });
   // Carpetas y páginas pueden tener cosas adentro.
-  const folderIds = rows.filter((row) => row.type !== "FILE").map((row) => row.id);
+  const folderIds = rows.filter((row) => isContainer(row.type)).map((row) => row.id);
   const [counts, people] = await Promise.all([
     folderIds.length === 0
       ? []
@@ -239,7 +242,7 @@ export async function listChildren(
   for (const row of counts) {
     if (row.parentId === null) continue;
     childCounts.set(row.parentId, (childCounts.get(row.parentId) ?? 0) + row._count._all);
-    if (row.type !== "FILE") {
+    if (isContainer(row.type)) {
       folderCounts.set(row.parentId, (folderCounts.get(row.parentId) ?? 0) + row._count._all);
     }
   }
@@ -257,9 +260,9 @@ export async function listChildren(
     return [
       {
         ...toView(rest, level),
-        childCount: row.type !== "FILE" ? (childCounts.get(row.id) ?? 0) : null,
-        folderCount: row.type !== "FILE" ? (folderCounts.get(row.id) ?? 0) : null,
-        totalBytes: row.type !== "FILE" ? (totals.get(row.id) ?? null) : null,
+        childCount: isContainer(row.type) ? (childCounts.get(row.id) ?? 0) : null,
+        folderCount: isContainer(row.type) ? (folderCounts.get(row.id) ?? 0) : null,
+        totalBytes: isContainer(row.type) ? (totals.get(row.id) ?? null) : null,
         sharing: sharing.get(row.id) ?? null,
         updatedVia: viaOf({ updatedAt: row.updatedAt, updatedVia, updatedViaAt }),
         updatedBy:
@@ -308,7 +311,7 @@ async function folderTotals(
       const root = child.parentId === null ? undefined : rootOf.get(child.parentId);
       if (root === undefined) continue;
       rootOf.set(child.id, root);
-      if (child.type !== "FILE") next.push(child.id);
+      if (isContainer(child.type)) next.push(child.id);
       else if (child.sizeBytes !== null) {
         files.push({ id: child.id, root, size: bytesToJson(child.sizeBytes) });
       }

@@ -4,7 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-export type NodeType = "PAGE" | "FILE" | "FOLDER";
+export type NodeType = "PAGE" | "FILE" | "FOLDER" | "FORM";
 
 export interface NodeRef {
   id: string;

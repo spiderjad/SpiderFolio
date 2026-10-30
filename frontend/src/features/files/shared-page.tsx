@@ -48,6 +48,7 @@ function regrant(slug: string, item: SharedByMeItem, expiresAt: string | null) {
 function pathOf(slug: string, item: SharedItem): string | null {
   const base = `/app/${slug}/files/${item.spaceId}`;
   if (item.type === "PAGE") return `${base}/p/${item.id}`;
+  if (item.type === "FORM") return `${base}/form/${item.id}`;
   if (item.type === "FOLDER") return `${base}/f/${item.id}`;
   return null;
 }
@@ -250,6 +251,7 @@ function ByMe() {
     const base = `/app/${workspaceSlug}/files/${item.target.spaceId}`;
     if (item.target.type === "space") return base;
     if (item.target.nodeType === "PAGE") return `${base}/p/${item.target.id}`;
+    if (item.target.nodeType === "FORM") return `${base}/form/${item.target.id}`;
     return `${base}/f/${item.target.id}`;
   };
   return (

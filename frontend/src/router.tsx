@@ -162,6 +162,10 @@ export const routes = [
                     lazy: page(() => import("@/features/pages/page-editor-page"), "PageEditorPage"),
                   },
                   {
+                    path: ":spaceId/form/:formId",
+                    lazy: page(() => import("@/features/forms/form-editor-page"), "FormEditorPage"),
+                  },
+                  {
                     path: ":spaceId/trash",
                     lazy: page(() => import("@/features/files/trash-page"), "TrashPage"),
                   },

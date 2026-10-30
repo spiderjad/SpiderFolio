@@ -1,5 +1,6 @@
 // Ícono por tipo de archivo y utilidades de arrastre del explorador.
 import {
+  ClipboardList,
   File as FileIcon,
   FileArchive,
   FileImage,
@@ -53,6 +54,7 @@ export function extensionOf(name: string): string {
 export function iconOf(node: Pick<NodeView, "type" | "name">): LucideIcon {
   if (node.type === "FOLDER") return Folder;
   if (node.type === "PAGE") return NotebookText;
+  if (node.type === "FORM") return ClipboardList;
   switch (extensionOf(node.name)) {
     case "pdf":
     case "doc":
@@ -92,7 +94,9 @@ export function NodeIcon({
     <Icon
       className={cn(
         "size-5 shrink-0",
-        node.type === "FOLDER" || node.type === "PAGE" ? "text-primary" : "text-muted-foreground",
+        node.type === "FOLDER" || node.type === "PAGE" || node.type === "FORM"
+          ? "text-primary"
+          : "text-muted-foreground",
         className,
       )}
       strokeWidth={1.75}

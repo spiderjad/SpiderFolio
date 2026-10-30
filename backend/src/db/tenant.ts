@@ -83,6 +83,7 @@ export interface TenantDb {
   downloadToken: TenantDelegate<PrismaClient["downloadToken"], Op>;
   zipExport: TenantDelegate<PrismaClient["zipExport"], Op>;
   pageContent: TenantDelegate<PrismaClient["pageContent"], Op>;
+  formVersion: TenantDelegate<PrismaClient["formVersion"], "findFirst" | "findMany" | "count" | "create">;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -163,6 +164,8 @@ const delegates = {
   downloadToken: { model: "DownloadToken", ops: [...readOps, ...writeOps] },
   zipExport: { model: "ZipExport", ops: [...readOps, ...writeOps] },
   pageContent: { model: "PageContent", ops: [...readOps, ...writeOps] },
+  // Versions are never edited or deleted: only read and added.
+  formVersion: { model: "FormVersion", ops: ["findFirst", "findMany", "count", "create"] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

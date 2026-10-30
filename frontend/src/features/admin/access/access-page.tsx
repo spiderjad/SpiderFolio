@@ -541,7 +541,9 @@ function PersonItems({ membershipId }: { membershipId: string }) {
                   to={
                     item.node.type === "PAGE"
                       ? `/app/${workspaceSlug}/files/${item.node.spaceId}/p/${item.node.id}`
-                      : `/app/${workspaceSlug}/files/${item.node.spaceId}/f/${item.node.id}`
+                      : item.node.type === "FORM"
+                        ? `/app/${workspaceSlug}/files/${item.node.spaceId}/form/${item.node.id}`
+                        : `/app/${workspaceSlug}/files/${item.node.spaceId}/f/${item.node.id}`
                   }
                   className="block truncate text-sm font-medium hover:underline focus-visible:outline-none focus-visible:underline"
                 >

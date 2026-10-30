@@ -164,7 +164,7 @@ async function nodeInfo(ctx: AdminContext, nodeId: string) {
       controlled: { select: { code: true, publishedVersion: true } },
     },
   });
-  if (node === null || node.type === "FOLDER") {
+  if (node === null || node.type === "FOLDER" || node.type === "FORM") {
     throw new AppError("BAD_REQUEST", { message: bianTexts.notADocument });
   }
   return node;

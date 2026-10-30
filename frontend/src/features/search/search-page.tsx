@@ -1,7 +1,7 @@
 // /app/:slug/search?q= — resultados de la búsqueda de texto completo: título, código y contenido de
 // páginas, PDF y DOCX, con un fragmento y la palabra resaltada, por relevancia y de a páginas. El
 // servidor ya filtra por lo que la persona ve; acá solo se muestra.
-import { File, FileText, Folder, Search } from "lucide-react";
+import { ClipboardList, File, FileText, Folder, Search } from "lucide-react";
 import { Fragment } from "react";
 import { Link, useParams } from "react-router";
 import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/display";
@@ -34,6 +34,7 @@ function Highlighted({ segments }: { segments: Segment[] }) {
 function hrefOf(slug: string, hit: FullTextHit): string {
   const base = `/app/${slug}/files/${hit.spaceId}`;
   if (hit.type === "PAGE") return `${base}/p/${hit.id}`;
+  if (hit.type === "FORM") return `${base}/form/${hit.id}`;
   if (hit.type === "FOLDER") return `${base}/f/${hit.id}`;
   return hit.parentId === null ? base : `${base}/f/${hit.parentId}`;
 }
@@ -89,7 +90,14 @@ export function SearchPage() {
         ) : (
           <ul className="m-0 list-none divide-y divide-border p-0">
             {list.items.map((hit) => {
-              const Icon = hit.type === "PAGE" ? FileText : hit.type === "FOLDER" ? Folder : File;
+              const Icon =
+                hit.type === "PAGE"
+                  ? FileText
+                  : hit.type === "FORM"
+                    ? ClipboardList
+                    : hit.type === "FOLDER"
+                      ? Folder
+                      : File;
               return (
                 <li key={hit.id}>
                   <Link

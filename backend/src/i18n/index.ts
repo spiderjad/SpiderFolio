@@ -56,3 +56,4 @@ export const auditExportLabels = localized("auditExportLabels");
 export const readingExportLabels = localized("readingExportLabels");
 export const bianAdminTexts = localized("bianAdminTexts");
 export const defaultDataTexts = localized("defaultDataTexts");
+export const formMessages = localized("formMessages");

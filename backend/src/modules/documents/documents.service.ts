@@ -166,7 +166,7 @@ export async function getControlled(ctx: AdminContext, nodeId: string): Promise<
   const level = requireLevel(await levelOfNode(ctx, nodeId), "VIEW");
   const row = await ctx.db.controlledDocument.findFirst({ where: { nodeId } });
   if (row === null) {
-    const canConvert = atLeast(level, "MANAGE") && node.type !== "FOLDER";
+    const canConvert = atLeast(level, "MANAGE") && (node.type === "PAGE" || node.type === "FILE");
     return {
       controlled: null,
       types: canConvert ? await listDocumentTypes(ctx) : [],
@@ -321,7 +321,7 @@ export async function makeControlled(
   requireLevel(await levelOfNode(ctx, nodeId), "MANAGE");
   await assertSpaceWritable(ctx, node.spaceId);
   const nodeType: NodeType = node.type;
-  if (nodeType === "FOLDER") {
+  if (nodeType === "FOLDER" || nodeType === "FORM") {
     throw new AppError("BAD_REQUEST", { message: contentMessages.controlledOnlyPagesFiles });
   }
   if ((await ctx.db.controlledDocument.count({ where: { nodeId } })) > 0) {

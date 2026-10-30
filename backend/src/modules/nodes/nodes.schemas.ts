@@ -24,7 +24,7 @@ export const NodeParamsSchema = z.object({ id: Id });
 export const ListNodesQuerySchema = z.object({
   parent: z.union([z.literal("root"), Id]).default("root"),
   /** CONTAINER: carpetas y páginas (lo que puede tener cosas adentro). */
-  type: z.enum(["FOLDER", "FILE", "PAGE", "CONTAINER"]).optional(),
+  type: z.enum(["FOLDER", "FILE", "PAGE", "FORM", "CONTAINER"]).optional(),
   q: SearchParam,
   /** Filtro rápido del explorador: las carpetas siempre se ven (para poder navegar). */
   kind: z.enum(["all", "pages", "files"]).default("all"),

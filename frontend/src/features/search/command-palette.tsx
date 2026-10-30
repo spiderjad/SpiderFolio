@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Command } from "cmdk";
 import {
+  ClipboardList,
   ArrowLeft,
   File,
   FilePlus2,
@@ -45,13 +46,21 @@ const norm = (text: string): string => text.normalize("NFD").replace(/\p{M}/gu, 
 function pathOf(slug: string, hit: Pick<QuickNodeHit, "id" | "type" | "spaceId" | "parentId">) {
   const base = `/app/${slug}/files/${hit.spaceId}`;
   if (hit.type === "PAGE") return `${base}/p/${hit.id}`;
+  if (hit.type === "FORM") return `${base}/form/${hit.id}`;
   if (hit.type === "FOLDER") return `${base}/f/${hit.id}`;
   // Un archivo se ve en su carpeta.
   return hit.parentId === null ? base : `${base}/f/${hit.parentId}`;
 }
 
 function NodeIcon({ type }: { type: QuickNodeHit["type"] }) {
-  const Icon = type === "PAGE" ? FileText : type === "FOLDER" ? Folder : File;
+  const Icon =
+    type === "PAGE"
+      ? FileText
+      : type === "FORM"
+        ? ClipboardList
+        : type === "FOLDER"
+          ? Folder
+          : File;
   return <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />;
 }
 

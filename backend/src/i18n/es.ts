@@ -613,7 +613,13 @@ export const accessExportLabels = {
     guests: "Accesos de invitados",
     expiring: "Accesos que vencen pronto",
   },
-  targetKinds: { space: "Espacio", FOLDER: "Carpeta", PAGE: "Página", FILE: "Archivo" },
+  targetKinds: {
+    space: "Espacio",
+    FOLDER: "Carpeta",
+    PAGE: "Página",
+    FORM: "Formulario",
+    FILE: "Archivo",
+  },
   subjectKinds: { person: "Persona", department: "Departamento" },
   levels: { VIEW: "Ver", COMMENT: "Comentar", EDIT: "Editar", MANAGE: "Gestionar" },
   reportHeaders: [
@@ -718,4 +724,15 @@ export const directorySignInTexts = {
     "El servidor no tiene configurada la clave de cifrado (EMAIL_ENCRYPTION_KEY): no se pueden guardar secretos.",
   unknownRole: "Ese rol no existe en la empresa o es el de propietario.",
   unknownDepartment: "Alguno de esos departamentos no existe en la empresa.",
+} as const;
+
+/** Formularios y registros (docs/spec/formularios.md). */
+export const formMessages = {
+  untitledForm: "Formulario sin título",
+  notAForm: "Esto no es un formulario.",
+  templateChanged:
+    "Alguien cambió este formulario mientras lo editabas. Recarga para ver la versión actual y vuelve a hacer tus cambios.",
+  duplicateId: "Hay dos campos u opciones con el mismo identificador.",
+  rangeInverted: "El mínimo no puede ser mayor que el máximo.",
+  unknownOption: "Una opción marcada como no conforme no existe en el campo.",
 } as const;

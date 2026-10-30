@@ -284,8 +284,10 @@ async function sendSharedEmail(
       ? base
       : node.type === "PAGE"
         ? `${base}/p/${node.id}`
-        : node.type === "FOLDER"
-          ? `${base}/f/${node.id}`
+        : node.type === "FORM"
+          ? `${base}/form/${node.id}`
+          : node.type === "FOLDER"
+            ? `${base}/f/${node.id}`
           : node.parentId === null
             ? base
             : `${base}/f/${node.parentId}`;
@@ -370,7 +372,9 @@ async function sendDocumentNoticeEmail(
   const path =
     node.type === "PAGE"
       ? `${base}/p/${node.id}`
-      : node.parentId === null
+      : node.type === "FORM"
+        ? `${base}/form/${node.id}`
+        : node.parentId === null
         ? base
         : `${base}/f/${node.parentId}`;
   const email = buildEmail(job, {

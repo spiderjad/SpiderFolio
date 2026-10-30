@@ -2,7 +2,7 @@
 import { api, ApiError, apiStream, apiText } from "@/lib/api";
 import type { Page } from "@/features/files/api";
 
-export type NodeType = "PAGE" | "FILE" | "FOLDER";
+export type NodeType = "PAGE" | "FILE" | "FOLDER" | "FORM";
 
 export interface BianSource {
   n: number;

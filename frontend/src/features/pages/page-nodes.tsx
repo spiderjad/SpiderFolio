@@ -125,6 +125,7 @@ export function useNodeRef(slug: string, id: string) {
 export function hrefOfNode(slug: string, node: NodeRef): string {
   const base = `/app/${slug}/files/${node.spaceId}`;
   if (node.type === "PAGE") return `${base}/p/${node.id}`;
+  if (node.type === "FORM") return `${base}/form/${node.id}`;
   if (node.type === "FOLDER") return `${base}/f/${node.id}`;
   return node.parentId === null ? base : `${base}/f/${node.parentId}`;
 }

@@ -334,7 +334,9 @@ function CellDetail({ cell }: { cell: OpenCell }) {
                         to={
                           item.node.type === "PAGE"
                             ? `/app/${workspaceSlug}/files/${cell.space.id}/p/${item.node.id}`
-                            : `/app/${workspaceSlug}/files/${cell.space.id}/f/${item.node.id}`
+                            : item.node.type === "FORM"
+                              ? `/app/${workspaceSlug}/files/${cell.space.id}/form/${item.node.id}`
+                              : `/app/${workspaceSlug}/files/${cell.space.id}/f/${item.node.id}`
                         }
                         aria-label={t.open(item.node.name)}
                         className="block truncate text-sm font-medium hover:underline focus-visible:outline-none focus-visible:underline"

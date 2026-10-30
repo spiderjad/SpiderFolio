@@ -161,7 +161,9 @@ function SpaceCard({ space, onShare }: { space: SpaceOverview; onShare: () => vo
                   to={
                     item.node.type === "PAGE"
                       ? `/app/${workspaceSlug}/files/${space.id}/p/${item.node.id}`
-                      : `/app/${workspaceSlug}/files/${space.id}/f/${item.node.id}`
+                      : item.node.type === "FORM"
+                        ? `/app/${workspaceSlug}/files/${space.id}/form/${item.node.id}`
+                        : `/app/${workspaceSlug}/files/${space.id}/f/${item.node.id}`
                   }
                   className="font-medium hover:underline focus-visible:outline-none focus-visible:underline"
                 >

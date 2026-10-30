@@ -4,6 +4,7 @@
 // hacer lo decide el servidor (nivel de acceso de cada nodo); acá solo se oculta lo que no vale.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ClipboardList,
   Download,
   FolderUp,
   Eye,
@@ -70,6 +71,7 @@ import { FolderTree } from "./folder-tree";
 import { SpaceMark } from "./space-mark";
 import { ImportReportDialog, relativePathOf, useFolderImport, ZipImportDialog } from "./imports";
 import { NewFolderDialog, RenameDialog } from "./node-dialogs";
+import { NewFormDialog } from "@/features/forms/new-form-dialog";
 import { cutClipboard, MoveDialog, useCutNodes, useMover, type MoveTarget } from "./move";
 import { PreviewDialog } from "./preview-dialog";
 import { useBian } from "../bian/bian-context";
@@ -148,6 +150,7 @@ export function ExplorerPage() {
 
   const [creating, setCreating] = useState(false);
   const [choosingTemplate, setChoosingTemplate] = useState(false);
+  const [creatingForm, setCreatingForm] = useState(false);
   const [renaming, setRenaming] = useState<NodeView | null>(null);
   const [moving, setMoving] = useState<NodeView[] | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -199,6 +202,8 @@ export function ExplorerPage() {
   const goToNode = (node: { id: string; type: NodeType } | null) => {
     if (node?.type === "PAGE") {
       void navigate(`/app/${workspaceSlug}/files/${spaceId}/p/${node.id}`);
+    } else if (node?.type === "FORM") {
+      void navigate(`/app/${workspaceSlug}/files/${spaceId}/form/${node.id}`);
     } else {
       goTo(node?.id ?? null);
     }
@@ -243,7 +248,7 @@ export function ExplorerPage() {
   };
   const open = (node: NodeView) => {
     if (node.type === "FOLDER") goTo(node.id);
-    else if (node.type === "PAGE") goToNode(node);
+    else if (node.type === "PAGE" || node.type === "FORM") goToNode(node);
     else if (previewKind(node.mimeType) !== null) setPreviewing(node);
     else void download(node);
   };
@@ -599,6 +604,14 @@ export function ExplorerPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
+                    setCreatingForm(true);
+                  }}
+                >
+                  <ClipboardList aria-hidden="true" />
+                  {texts.forms.newForm}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
                     setCreating(true);
                   }}
                 >
@@ -848,6 +861,14 @@ export function ExplorerPage() {
         parentId={folderId ?? null}
         onClose={() => {
           setChoosingTemplate(false);
+        }}
+      />
+      <NewFormDialog
+        open={creatingForm}
+        spaceId={spaceId}
+        parentId={folderId ?? null}
+        onClose={() => {
+          setCreatingForm(false);
         }}
       />
       <NewFolderDialog
@@ -1411,15 +1432,17 @@ function ListView({
               >
                 {node.type === "PAGE"
                   ? texts.files.explorer.pageLabel
-                  : node.type === "FOLDER"
-                    ? node.totalBytes === undefined
-                      ? ""
-                      : node.totalBytes === null
-                        ? "—"
-                        : formatBytes(node.totalBytes)
-                    : node.sizeBytes === null
-                      ? ""
-                      : formatBytes(node.sizeBytes)}
+                  : node.type === "FORM"
+                    ? texts.forms.newForm
+                    : node.type === "FOLDER"
+                      ? node.totalBytes === undefined
+                        ? ""
+                        : node.totalBytes === null
+                          ? "—"
+                          : formatBytes(node.totalBytes)
+                      : node.sizeBytes === null
+                        ? ""
+                        : formatBytes(node.sizeBytes)}
               </span>
               <div role="cell" className="justify-self-end">
                 <NodeMenu node={node} {...props} />

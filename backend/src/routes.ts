@@ -31,6 +31,7 @@ import { documentRoutes } from "./modules/documents/documents.routes.ts";
 import { searchRoutes } from "./modules/search/search.routes.ts";
 import { qrRoutes } from "./modules/qr/qr.routes.ts";
 import { pageRoutes } from "./modules/nodes/pages.routes.ts";
+import { formRoutes } from "./modules/forms/forms.routes.ts";
 import { spaceRoutes } from "./modules/spaces/spaces.routes.ts";
 import type { RestartWatch } from "./plugins/restart.ts";
 import { securityRoutes } from "./modules/security/security.routes.ts";
@@ -114,6 +115,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...adminDocumentRoutes(),
     ...notificationRoutes(),
     ...pageRoutes(deps),
+    ...formRoutes(),
     ...commentRoutes(deps),
     ...fileRoutes(deps),
     ...trashRoutes(deps),

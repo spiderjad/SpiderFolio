@@ -642,7 +642,7 @@ export const accessExportLabels: Catalog<typeof Es.accessExportLabels> = {
     guests: "Guest access",
     expiring: "Access expiring soon",
   },
-  targetKinds: { space: "Space", FOLDER: "Folder", PAGE: "Page", FILE: "File" },
+  targetKinds: { space: "Space", FOLDER: "Folder", PAGE: "Page", FORM: "Form", FILE: "File" },
   subjectKinds: { person: "Person", department: "Department" },
   levels: { VIEW: "View", COMMENT: "Comment", EDIT: "Edit", MANAGE: "Manage" },
   reportHeaders: [
@@ -746,4 +746,14 @@ export const directorySignInTexts: Catalog<typeof Es.directorySignInTexts> = {
     "The server has no encryption key configured (EMAIL_ENCRYPTION_KEY): secrets can't be saved.",
   unknownRole: "That role doesn't exist in the company or is the owner role.",
   unknownDepartment: "Some of those departments don't exist in the company.",
+};
+
+export const formMessages: Catalog<typeof Es.formMessages> = {
+  untitledForm: "Untitled form",
+  notAForm: "This isn't a form.",
+  templateChanged:
+    "Someone changed this form while you were editing it. Reload to see the current version and make your changes again.",
+  duplicateId: "Two fields or options have the same identifier.",
+  rangeInverted: "The minimum can't be greater than the maximum.",
+  unknownOption: "An option marked as non-conforming doesn't exist in the field.",
 };
