@@ -153,6 +153,7 @@ export const formsTexts = {
       person: "Persona",
       anyPerson: "Cualquier persona",
       version: "Versión",
+      anyVersion: "Cualquier versión",
       nonConforming: "Solo no conformes",
       status: "Estado",
       statuses: { all: "Todos", valid: "Sin anular", voided: "Anulados" },

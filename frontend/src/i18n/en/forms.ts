@@ -157,6 +157,7 @@ export const formsTexts: typeof es = {
       person: "Person",
       anyPerson: "Anyone",
       version: "Version",
+      anyVersion: "Any version",
       nonConforming: "Only non-conforming",
       status: "Status",
       statuses: { all: "All", valid: "Not voided", voided: "Voided" },

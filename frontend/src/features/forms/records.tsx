@@ -113,6 +113,23 @@ export function RecordsList({
     }),
     [workspaceSlug],
   );
+  const versionSource = useMemo<ComboboxSource>(
+    () => ({
+      key: [...formsKeys.versions(workspaceSlug, formId), "options"],
+      search: async (_q, cursor, signal) => {
+        const page = await formsApi.versions(workspaceSlug, formId, cursor, signal);
+        return {
+          items: page.items.map((v) => ({
+            id: String(v.version),
+            label: t.records.version(v.version),
+          })),
+          nextCursor: page.nextCursor,
+        };
+      },
+      byIds: () => Promise.resolve([]),
+    }),
+    [workspaceSlug, formId],
+  );
   const list = useInfiniteList({
     queryKey: recordsKeys.list(workspaceSlug, formId, filters),
     fetchPage: (cursor, signal) => recordsApi.list(workspaceSlug, formId, filters, cursor, signal),
@@ -217,14 +234,20 @@ export function RecordsList({
         )}
         <LabeledField label={f.version}>
           {(field) => (
-            <Input
+            <Combobox
               {...field}
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={filters.version ?? ""}
-              onChange={(event) => {
-                patch({ version: event.target.value });
+              compact
+              label={f.version}
+              placeholder={f.anyVersion}
+              source={versionSource}
+              searchable={false}
+              value={filters.version === undefined ? null : String(filters.version)}
+              valueLabel={
+                filters.version === undefined ? undefined : t.records.version(filters.version)
+              }
+              clearable
+              onChange={(option) => {
+                patch({ version: option?.id });
               }}
             />
           )}
