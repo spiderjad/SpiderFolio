@@ -109,13 +109,13 @@ export const formsApi = {
   pending: (slug: string) => api<{ items: PendingForm[] }>(w(slug, "/forms/pending")),
   saveTemplate: (slug: string, id: string, body: { baseVersion: number; fields: FormField[] }) =>
     api<{ form: FormDetail }>(w(slug, `/forms/${id}/template`), { method: "PUT", body }),
-  versions: (slug: string, id: string, cursor: string | undefined, signal: AbortSignal) =>
+  versions: (slug: string, id: string, cursor: string | undefined, signal?: AbortSignal) =>
     api<CursorPage<FormVersionSummary>>(
       w(
         slug,
         `/forms/${id}/versions${cursor === undefined ? "" : `?cursor=${encodeURIComponent(cursor)}`}`,
       ),
-      { signal },
+      signal === undefined ? {} : { signal },
     ),
   version: (slug: string, id: string, version: number) =>
     api<{ version: FormVersionView }>(w(slug, `/forms/${id}/versions/${String(version)}`)),
