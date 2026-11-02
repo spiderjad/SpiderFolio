@@ -1,4 +1,6 @@
-# Publica la web pública (web/) en el hosting por FTP al cambiar en main, o a mano desde Actions.
+# Publica la web pública (web/) en el hosting por FTP al publicar una Release del núcleo (vX.Y.Z), con
+# la web de esa versión, o a mano desde Actions (para un cambio de la web que no espera una versión). Un
+# push a main no la publica: así las guías de lo que todavía no salió no llegan a la web antes de tiempo.
 # Las credenciales viven solo en los secretos del repositorio (Settings › Secrets and variables ›
 # Actions), nunca en el código:
 #   FTP_SERVER    host del FTP (ej. ftp.spiderjad.com)
@@ -9,13 +11,8 @@
 name: Publicar web
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
-      - "packages/tailwind-preset/**"
-      - "brand/**"
-      - ".github/workflows/deploy-web.yml"
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -28,6 +25,8 @@ concurrency:
 jobs:
   deploy:
     name: Compilar y subir
+    # Only core versions (vX.Y.Z), never the «plugins» prerelease of the free plugins.
+    if: github.event_name == 'workflow_dispatch' || (startsWith(github.event.release.tag_name, 'v') && !github.event.release.prerelease)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

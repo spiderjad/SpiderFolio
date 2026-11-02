@@ -10,7 +10,7 @@ Esto es solo la web del proyecto. La app de cada empresa se instala aparte (ver 
 
 | Archivo                            | Para qué                                                                                                                                                                    |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/deploy-web.yml` | Compila la web y la sube por FTP con TLS (lftp) en cada push a `main` que toque la web.                                                                                     |
+| `.github/workflows/deploy-web.yml` | Compila la web y la sube por FTP con TLS (lftp) al publicar una Release del núcleo (`vX.Y.Z`) o a mano desde Actions.                                                      |
 | `.nvmrc` (raíz)                    | Versión de Node del build en Actions.                                                                                                                                       |
 | `web/public/.htaccess`             | Cabeceras de seguridad (CSP, nosniff, Referrer-Policy, X-Frame-Options, HSTS), caché, HTTPS, URLs sin `.html`, portada por idioma y redirecciones 301 de las URLs antiguas. |
 | `web/public/lang-redirect.js`      | La portada `/` elige el idioma cuando el servidor no pudo (ver más abajo).                                                                                                  |
@@ -69,9 +69,10 @@ dominio, se cambia ahí, en `domain` de `web/src/config/site.ts` y en la línea 
 
 ### 3. Publicar
 
-- Automático: cada push a `main` que cambie `web/`, `packages/tailwind-preset/`, `brand/` o el propio
-  workflow.
-- A mano: **Actions › Publicar web › Run workflow**.
+- Automático: al publicar una Release del núcleo (`vX.Y.Z`, nunca la prerelease `plugins`), con la web de
+  esa versión. Un push a `main` no publica: las guías de lo que todavía no salió esperan a la versión.
+- A mano: **Actions › Publicar web › Run workflow** (elige la rama o la etiqueta), para un cambio de la web
+  que no espera una versión (por ejemplo, la página de un plugin gratis ya probado).
 
 El workflow hace `npm ci`, `npm run build:web` (compila, verifica con `check-dist.ts` y genera el índice
 de Pagefind) y `lftp mirror --reverse --delete web/dist/ $FTP_DIR`: el servidor queda igual que
