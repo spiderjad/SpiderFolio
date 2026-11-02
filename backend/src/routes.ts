@@ -100,7 +100,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...auditLogRoutes(deps),
     ...departmentRoutes(),
     ...positionRoutes(),
-    ...safetyRoutes(),
+    ...safetyRoutes(deps),
     ...invitationRoutes(deps),
     ...memberRoutes(deps),
     ...directoryRoutes(),

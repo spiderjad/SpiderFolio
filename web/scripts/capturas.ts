@@ -174,6 +174,110 @@ const POSITIONS: Record<Locale, [string, number][]> = {
   ],
 };
 
+/** The demo PPE (not in the seed): item, category, by size, life in months and the positions (by index). */
+const PPE: Record<Locale, [string, string, boolean, number | null, number[]][]> = {
+  es: [
+    ["Guantes anticorte", "Manos", true, 6, [0]],
+    ["Calzado de seguridad", "Pies", true, 12, [0, 1, 4]],
+    ["Chaqueta para cámara frigorífica", "Cuerpo", true, 24, [1]],
+    ["Protección auditiva", "Oídos", false, 1, [0, 2]],
+    ["Gafas de seguridad", "Ojos", false, 12, [2]],
+  ],
+  en: [
+    ["Cut-resistant gloves", "Hands", true, 6, [0]],
+    ["Safety footwear", "Feet", true, 12, [0, 1, 4]],
+    ["Cold room jacket", "Body", true, 24, [1]],
+    ["Hearing protection", "Ears", false, 1, [0, 2]],
+    ["Safety glasses", "Eyes", false, 12, [2]],
+  ],
+};
+/** Who gets the sheet capture and who the new handout capture (membership ids). */
+const demoSafetyPeople = new Map<Locale, { sheet: string; next: string }>();
+
+/** A drawn signature, as the app sends it. */
+async function signaturePng(): Promise<string> {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="160"><rect width="600" height="160" fill="#fff"/><path d="M30 110 C 70 20, 100 150, 140 70 S 210 40, 240 105 S 310 130, 350 60 S 430 95, 470 82 L 560 78" stroke="#111" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+  const png = await sharp(Buffer.from(svg)).png().toBuffer();
+  return `data:image/png;base64,${png.toString("base64")}`;
+}
+
+/** Turns the module on and creates the catalog and three handouts through the API, the first time. */
+async function demoSafety(locale: Locale, slug: string): Promise<void> {
+  if (demoSafetyPeople.has(locale)) return;
+  await demoPositions(locale, slug);
+  const owner = await ownerToken(locale);
+  await formCall(owner, slug, "PUT", "/admin/safety", { enabled: true, terms: "es" });
+  const holders = await db.query<{ id: string; position: string }>(
+    `SELECT m.id, p.name AS position FROM "Membership" m JOIN "Position" p ON p.id = m."positionId"
+       JOIN "Workspace" w ON w.id = m."workspaceId" WHERE w.slug = $1 ORDER BY m."createdAt", m.id`,
+    [slug],
+  );
+  const names = POSITIONS[locale].map(([name]) => name);
+  const holder = (position: number, nth = 0) =>
+    holders.rows.filter((row) => row.position === names[position])[nth]?.id ?? "";
+  const people = { sheet: holder(0), next: holder(2) };
+  const { rows } = await db.query<{ count: string }>(
+    `SELECT count(*) FROM "SafetyItem" i JOIN "Workspace" w ON w.id = i."workspaceId" WHERE w.slug = $1`,
+    [slug],
+  );
+  if (Number(rows[0]?.count ?? 0) > 0) {
+    demoSafetyPeople.set(locale, people);
+    return;
+  }
+  const positionIds = new Map(
+    (
+      await db.query<{ id: string; name: string }>(
+        `SELECT p.id, p.name FROM "Position" p JOIN "Workspace" w ON w.id = p."workspaceId" WHERE w.slug = $1`,
+        [slug],
+      )
+    ).rows.map((row) => [row.name, row.id]),
+  );
+  const items: string[] = [];
+  for (const [name, category, hasSizes, lifeMonths, positions] of PPE[locale]) {
+    const { item } = (await formCall(owner, slug, "POST", "/safety/items", {
+      name,
+      category,
+      hasSizes,
+      lifeMonths,
+      positionIds: positions.flatMap((index) => positionIds.get(names[index] ?? "") ?? []),
+    })) as { item: { id: string } };
+    items.push(item.id);
+  }
+  const signature = await signaturePng();
+  const hand = (membershipId: string, lines: [number, number, string | null][]) =>
+    formCall(owner, slug, "POST", "/safety/deliveries", {
+      membershipId,
+      lines: lines.map(([index, quantity, size]) => ({ itemId: items[index], quantity, size })),
+      signature,
+    });
+  await hand(holder(0), [
+    [0, 2, "8"],
+    [3, 10, null],
+  ]);
+  await hand(holder(0, 1), [
+    [0, 2, "9"],
+    [1, 1, "43"],
+    [3, 10, null],
+  ]);
+  await hand(holder(1), [
+    [2, 1, "L"],
+    [1, 1, "39"],
+  ]);
+  // The sheet's hearing protection is about to be replaced.
+  await db.query(
+    `UPDATE "SafetyDeliveryLine" l SET "replaceOn" = current_date + 5
+       FROM "SafetyDelivery" d WHERE d.id = l."deliveryId" AND d."membershipId" = $1 AND l."itemId" = $2`,
+    [holder(0), items[3]],
+  );
+  demoSafetyPeople.set(locale, people);
+}
+
+const safetyPeopleOf = (locale: Locale) => {
+  const people = demoSafetyPeople.get(locale);
+  if (people === undefined) throw new Error("demoSafety todavía no corrió");
+  return people;
+};
+
 /** Creates the positions through the API the first time and gives them to some members. */
 async function demoPositions(locale: Locale, slug: string): Promise<void> {
   const { rows } = await db.query<{ count: string }>(
@@ -342,6 +446,31 @@ const CAPTURES: Capture[] = [
   { name: "accesos", who: "owner", path: (i) => `/app/${i.slug}/admin/access` },
   { name: "miembros", who: "owner", path: (i) => `/app/${i.slug}/admin/members` },
   { name: "departamentos", who: "owner", path: (i) => `/app/${i.slug}/admin/departments` },
+  {
+    name: "epis",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/epis`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
+  {
+    name: "epis-catalogo",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/epis/catalogo`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
+  {
+    name: "epis-nueva",
+    who: "owner",
+    path: (i, locale) =>
+      `/app/${i.slug}/seguridad/epis/nueva?persona=${safetyPeopleOf(locale).next}`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
+  {
+    name: "epis-ficha",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/personas/${safetyPeopleOf(locale).sheet}`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
   {
     name: "puestos",
     who: "owner",

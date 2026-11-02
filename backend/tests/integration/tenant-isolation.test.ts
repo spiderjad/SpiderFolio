@@ -72,6 +72,56 @@ const cases: IsolationCase[] = [
     url: () => "/admin/positions/x",
   },
   { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
+  // The module is off in B: its own screens are 404 too.
+  { method: "get", path: "/safety/items", url: () => "/safety/items", ownStatus: 404 },
+  { method: "post", path: "/safety/items", url: () => "/safety/items", body: { name: "Ajeno" } },
+  {
+    method: "patch",
+    path: "/safety/items/:id",
+    url: () => "/safety/items/x",
+    body: { name: "Ajeno" },
+  },
+  { method: "get", path: "/safety/deliveries", url: () => "/safety/deliveries", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/safety/deliveries",
+    url: () => "/safety/deliveries",
+    body: {
+      membershipId: "x",
+      lines: [{ itemId: "x", quantity: 1 }],
+      signature: "data:image/png;base64,AA==",
+    },
+  },
+  {
+    method: "get",
+    path: "/safety/deliveries/:id",
+    url: () => "/safety/deliveries/x",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/safety/deliveries/:id/signature",
+    url: () => "/safety/deliveries/x/signature",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/safety/deliveries/:id/pdf",
+    url: () => "/safety/deliveries/x/pdf",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/safety/deliveries/:id/void",
+    url: () => "/safety/deliveries/x/void",
+    body: { reason: "Ajeno" },
+  },
+  {
+    method: "get",
+    path: "/safety/people/:id/ppe",
+    url: (ids) => `/safety/people/${ids.memberId}/ppe`,
+    ownStatus: 404,
+  },
   {
     method: "put",
     path: "/admin/safety",

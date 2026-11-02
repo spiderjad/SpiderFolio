@@ -247,6 +247,9 @@ model Workspace {
   formSettings        FormSettings[]
   positions           Position[]
   expiries            Expiry[]
+  safetyItems         SafetyItem[]
+  safetyDeliveries    SafetyDelivery[]
+  safetyDeliveryLines SafetyDeliveryLine[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -420,6 +423,75 @@ model Expiry {
   @@unique([workspaceId, kind, subjectId])
   @@index([workspaceId, dueOn])
   @@index([workspaceId, membershipId])
+}
+
+/// Personal protective equipment of the company's catalog (docs/spec/seguridad-salud.md, «EPIs»).
+/// Archived instead of deleted once it was handed out.
+model SafetyItem {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  nameKey     String
+  category    String?
+  /// Handed out by size (gloves, footwear…).
+  hasSizes    Boolean   @default(false)
+  /// Months until it has to be replaced; null: no replacement date.
+  lifeMonths  Int?
+  /// The positions that require it («Le falta»).
+  positionIds String[]
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lines     SafetyDeliveryLine[]
+
+  @@unique([workspaceId, nameKey])
+  @@unique([id, workspaceId])
+}
+
+/// A PPE handout to a person, signed by whoever receives it. Never changed or deleted: voided with a
+/// reason.
+model SafetyDelivery {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  /// Who receives it (membership; no FK).
+  membershipId  String
+  /// Who hands it out (membership; no FK).
+  deliveredById String
+  deliveredAt   DateTime  @default(now())
+  note          String?
+  /// The recipient's signature, a PNG.
+  signature     Bytes
+  voidedAt      DateTime?
+  voidedById    String?
+  voidReason    String?
+
+  workspace Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lines     SafetyDeliveryLine[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, membershipId, deliveredAt])
+  @@index([workspaceId, deliveredAt])
+}
+
+/// One PPE of a handout: how many, the size and, with the item's life, the day to replace it.
+model SafetyDeliveryLine {
+  id          String    @id @default(cuid())
+  workspaceId String
+  deliveryId  String
+  itemId      String
+  quantity    Int
+  size        String?
+  /// Company day to replace it (handout + the item's life); null: no date.
+  replaceOn   DateTime? @db.Date
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  delivery  SafetyDelivery @relation(fields: [deliveryId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  item      SafetyItem     @relation(fields: [itemId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@index([workspaceId, deliveryId])
+  @@index([workspaceId, itemId])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único

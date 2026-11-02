@@ -4,16 +4,14 @@
 // metadata) and a signature drawn with a finger. What's out of range shows as it's typed; the server
 // checks everything again and works out what's non-conforming.
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ImagePlus, Loader2, ServerCrash, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { CheckCircle2, ImagePlus, Loader2, ServerCrash, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
 import { Checkbox, Input, Textarea } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { useMembership } from "@/features/home/workspace-layout";
-import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/lib/api";
 import { loadBitmap, renderCover } from "@/lib/image-crop";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -28,6 +26,7 @@ import {
   type FormField,
   type RecordView,
 } from "./forms-api";
+import { SignaturePad } from "@/components/signature-pad";
 import { texts } from "@/i18n";
 
 const t = texts.forms.fill;
@@ -572,109 +571,6 @@ function dataUrlOf(blob: Blob): Promise<string> {
     };
     reader.readAsDataURL(blob);
   });
-}
-
-/** A signature drawn with a finger, a pen or the mouse; read as a PNG when the form is sent. */
-function SignaturePad({
-  label,
-  register,
-}: {
-  label: string;
-  register: (read: () => Promise<Blob | null>) => void;
-}) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
-  const [empty, setEmpty] = useState(true);
-  const membership = useMembership();
-  const { account } = useAuth();
-
-  useEffect(() => {
-    const element = canvas.current;
-    if (element === null) return;
-    // Sharp on any screen: the drawing buffer follows the device's pixels.
-    const ratio = window.devicePixelRatio || 1;
-    element.width = element.clientWidth * ratio;
-    element.height = element.clientHeight * ratio;
-    const context = element.getContext("2d");
-    if (context === null) return;
-    context.scale(ratio, ratio);
-    context.lineWidth = 2.2;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.strokeStyle = "#111";
-  }, []);
-
-  useEffect(() => {
-    register(async () => {
-      if (empty || canvas.current === null) return null;
-      const element = canvas.current;
-      return await new Promise<Blob | null>((resolve) => {
-        element.toBlob((blob) => {
-          resolve(blob);
-        }, "image/png");
-      });
-    });
-  }, [empty, register]);
-
-  const point = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
-  };
-  const context = () => canvas.current?.getContext("2d") ?? null;
-
-  return (
-    <div className="grid gap-2">
-      <canvas
-        ref={canvas}
-        role="img"
-        aria-label={`${label}. ${t.signHere}`}
-        className="h-40 w-full touch-none rounded-xl border border-dashed border-border bg-white"
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          drawing.current = true;
-          const ctx = context();
-          const { x, y } = point(event);
-          ctx?.beginPath();
-          ctx?.moveTo(x, y);
-        }}
-        onPointerMove={(event) => {
-          if (!drawing.current) return;
-          const ctx = context();
-          const { x, y } = point(event);
-          ctx?.lineTo(x, y);
-          ctx?.stroke();
-          if (empty) setEmpty(false);
-        }}
-        onPointerUp={() => {
-          drawing.current = false;
-        }}
-        onPointerCancel={() => {
-          drawing.current = false;
-        }}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>
-          {empty ? t.signHere : t.signedAs(account?.user.name ?? membership.workspace.name)}
-        </span>
-        {!empty && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              const element = canvas.current;
-              const ctx = context();
-              if (element !== null && ctx !== null)
-                ctx.clearRect(0, 0, element.width, element.height);
-              setEmpty(true);
-            }}
-          >
-            <Trash2 className="size-4" aria-hidden="true" />
-            {t.clearSignature}
-          </Button>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function Sent({

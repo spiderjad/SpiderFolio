@@ -48,6 +48,7 @@ export const DOC_KEYS = [
   "myDocuments",
   "qr",
   "forms",
+  "safety",
   "search",
   "bian",
   "security2fa",

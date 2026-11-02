@@ -11,6 +11,7 @@ import { accessFor } from "../access/access-context.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
 import { parentMapOf, withDescendants } from "../departments/department-tree.ts";
 import { expiryKindOf } from "../expiries/expiries.service.ts";
+import "../expiries/kinds.ts";
 import type { NotificationsQuery } from "./notifications.schemas.ts";
 
 /** Hasta cuántas personas reciben un aviso por un acceso dado a un departamento. */

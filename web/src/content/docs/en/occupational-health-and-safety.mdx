@@ -1,0 +1,105 @@
+---
+title: "Occupational health and safety"
+description: "Turn on the health and safety module, the PPE catalog, signed handouts with their receipt, replacement and what each person lacks for their position."
+group: uso-diario
+order: 9.6
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+The **occupational health and safety** module (PRL in Spain, SST in Latin America) brings together what
+prevention on the shop floor needs: handing out personal protective equipment signed by whoever receives it,
+replacing it, and what each person lacks for their position. It builds on
+[positions](/en/docs/departments#positions), controlled documents and forms.
+
+For now it covers **PPE** handouts. Accidents, training and fitness for work come in the next versions.
+
+## Turn it on
+
+The owner turns it on in **Administration** › **Security** › **General**, under **Occupational health and
+safety** ([Security and two-step verification](/en/docs/security-and-2fa)). There they also choose the
+**Terms**: **Spain: PRL and EPI** or **Latin America: SST and EPP**. In English the app always says PPE.
+
+With the module on, **Health & safety** shows in the side menu. Turning it off hides it, with its notices,
+without deleting anything.
+
+## Who sees what
+
+| Who | What they see |
+|---|---|
+| With **Manage occupational health and safety** | Every handout and the catalog; records and voids handouts. |
+| Heads and deputies | The handouts and PPE of the people in their area (and sub-areas). |
+| Everyone else | Their own handouts and PPE. |
+
+The capability is given in [Roles and permissions](/en/docs/roles-and-permissions); the Admin role already
+has it.
+
+## The catalog
+
+Under **Handouts** › **Catalog** are your company's items. Click **New item** and fill in:
+
+- **Name** (“Cut-resistant gloves”) and, if you like, a **Category** (“Hands”).
+- **Handed out by size**: the size is asked for at each handout.
+- **Life in months**: it's replaced N months after each handout, with notices (see below). Without a life,
+  there's no replacement.
+- **Positions that need it**: whoever has one of those positions and hasn't received it shows it under
+  **Missing**.
+
+An item no longer used is **Archived**: it's no longer offered at handouts and the earlier ones are kept.
+**Show archived** lists them, and from each one you can **Restore** it.
+
+<Shot name="epis-catalogo" alt="The PPE catalog, with each item's life and positions" />
+
+## Record a handout
+
+1. In **Handouts**, click **New handout**.
+2. Under **Received by**, choose the person. If something their position requires is missing, it shows at
+   the top (“Missing: …”).
+3. Add the **Items** with their **Quantity** and, if they go by size, the **Size**.
+4. The person reads the statement and **signs in the box** with a finger (on a tablet or phone) or the mouse.
+5. Click **Record handout**.
+
+The handout keeps who received it, who handed it out, the company's date and time, and the signature. It's
+never changed or deleted.
+
+<Shot name="epis-nueva" alt="New handout: the person, what they lack, the items and the signature" />
+
+## View a handout and its receipt
+
+Opening a handout shows the items, the size, the **Replace on** day and the signature. **PDF receipt**
+downloads the signed receipt to file or print; it needs [Gotenberg](/en/docs/gotenberg). Downloading it is
+recorded in the audit log.
+
+If it was entered wrongly (another person, another item), whoever manages the module can **Void** it with a
+**Reason**. It still shows, marked as voided, and no longer counts for replacement.
+
+<Shot name="epis" alt="The list of PPE handouts with its filters" />
+
+## Each person's sheet
+
+From a handout (or from **Received by** in the list) the person's sheet opens:
+
+- **Missing**: what their position requires and they don't have, or have expired.
+- **PPE they have**: the latest of each item, with its replacement day and its state (**Valid**, **Due
+  soon** or **Expired**).
+- **Handouts**: every one they received.
+
+Each person sees their own by opening **Health & safety** in the menu.
+
+<Shot name="epis-ficha" alt="A person's sheet: what they lack, their PPE with replacement days and their handouts" />
+
+## Replacement notices
+
+When an item with a life gets close to its replacement day, the person and whoever handed it out get a notice
+in the bell and by email: 30 days before, 7 days before and on the day, at 8:00 in the company's time zone. A
+new handout of the same item to the same person replaces the earlier one, and voiding a handout removes its
+notice.
+
+## Related
+
+- [Departments and positions](/en/docs/departments)
+- [Roles and permissions](/en/docs/roles-and-permissions)
+- [Forms and records](/en/docs/forms)

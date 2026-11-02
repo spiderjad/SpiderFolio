@@ -119,6 +119,48 @@ export const routes = [
                 lazy: page(() => import("@/features/home/dashboard-page"), "DashboardPage"),
               },
               {
+                // Occupational health and safety (docs/spec/seguridad-salud.md): only while it's on.
+                path: "seguridad",
+                lazy: page(() => import("@/features/safety/safety-common"), "RequireSafety"),
+                children: [
+                  {
+                    index: true,
+                    lazy: page(() => import("@/features/safety/safety-common"), "SafetyHome"),
+                  },
+                  {
+                    path: "epis",
+                    lazy: page(() => import("@/features/safety/deliveries-page"), "DeliveriesPage"),
+                  },
+                  {
+                    lazy: page(
+                      () => import("@/features/safety/safety-common"),
+                      "RequireSafetyManager",
+                    ),
+                    children: [
+                      {
+                        path: "epis/catalogo",
+                        lazy: page(() => import("@/features/safety/catalog-page"), "CatalogPage"),
+                      },
+                      {
+                        path: "epis/nueva",
+                        lazy: page(
+                          () => import("@/features/safety/new-delivery-page"),
+                          "NewDeliveryPage",
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: "epis/:deliveryId",
+                    lazy: page(() => import("@/features/safety/delivery-page"), "DeliveryPage"),
+                  },
+                  {
+                    path: "personas/:membershipId",
+                    lazy: page(() => import("@/features/safety/person-page"), "PersonPage"),
+                  },
+                ],
+              },
+              {
                 path: "mis-documentos",
                 lazy: page(
                   () => import("@/features/documents/my-documents-page"),

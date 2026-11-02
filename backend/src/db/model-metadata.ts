@@ -62,6 +62,9 @@ export const modelMetadata = {
       formSettings: "FormSettings",
       positions: "Position",
       expiries: "Expiry",
+      safetyItems: "SafetyItem",
+      safetyDeliveries: "SafetyDelivery",
+      safetyDeliveryLines: "SafetyDeliveryLine",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -192,6 +195,18 @@ export const modelMetadata = {
   FormSettings: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   Position: { scope: "tenant", relations: { workspace: "Workspace" } },
   Expiry: { scope: "tenant", relations: { workspace: "Workspace" } },
+  SafetyItem: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", lines: "SafetyDeliveryLine" },
+  },
+  SafetyDelivery: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", lines: "SafetyDeliveryLine" },
+  },
+  SafetyDeliveryLine: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", delivery: "SafetyDelivery", item: "SafetyItem" },
+  },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {
     scope: "tenant",

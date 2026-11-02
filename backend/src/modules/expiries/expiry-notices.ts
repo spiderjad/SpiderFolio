@@ -9,6 +9,7 @@ import type { PrismaClient } from "../../lib/prisma.ts";
 import { dayIn, localHour, zoneOf } from "../../lib/time-zone.ts";
 import { dayOf, defaultRecipients, expiryKindOf } from "./expiries.service.ts";
 import { daysUntil, noticeFor } from "./expiry-rules.ts";
+import "./kinds.ts";
 
 const NOTICE_HOUR = 8;
 const BATCH = 500;
@@ -44,7 +45,7 @@ export async function sendExpiryNotices(
       cursor = rows.at(-1)?.id;
       for (const expiry of rows) {
         const kind = expiryKindOf(expiry.kind);
-        if (kind === undefined) continue;
+        if (kind === undefined || (await kind.paused?.(db)) === true) continue;
         const left = daysUntil(today, dayOf(expiry.dueOn));
         const notice = noticeFor(left, expiry.noticeDays, expiry.noticesSent);
         if (!notice.notify) continue;

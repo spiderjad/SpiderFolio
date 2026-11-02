@@ -16,6 +16,7 @@ import { sharingTexts } from "./sharing";
 import { profileTexts } from "./profile";
 import { connectorTexts } from "./connector";
 import { formsTexts } from "./forms";
+import { safetyTexts } from "./safety";
 import { termsTexts } from "./terms";
 
 export const en: Messages = {
@@ -35,6 +36,7 @@ export const en: Messages = {
   profile: profileTexts,
   connector: connectorTexts,
   forms: formsTexts,
+  safety: safetyTexts,
   terms: termsTexts,
   app: { name: "SpiderFolio", loading: "Loading SpiderFolio…" },
   kiosk: {

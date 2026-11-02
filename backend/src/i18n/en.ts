@@ -794,6 +794,31 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
     "Maintenance technician",
     "Shift supervisor",
   ],
+  ppe: { es: "PPE", latam: "PPE" },
+  messages: {
+    itemNameTaken: "There's already an item with that name in the catalog.",
+    itemArchived: "That item is archived: it can't be handed out.",
+    signatureInvalid: "The recipient's signature is missing, or it isn't a valid image.",
+    alreadyVoided: "That handout is already voided.",
+    sizeRequired: (item: string) => `The size of “${item}” is missing.`,
+    repeatedItem: "The same item appears twice in the handout.",
+  },
+  expiryWhat: (item: string, person: string) => `${person}'s ${item}`,
+  pdf: {
+    title: (ppe: string) => `${ppe} handout receipt`,
+    person: "Received by",
+    position: "Position",
+    deliveredBy: "Handed out by",
+    date: "Date",
+    columns: { item: "Item", quantity: "Quantity", size: "Size", replaceOn: "Replace on" },
+    note: "Notes",
+    signature: "Recipient's signature",
+    statement:
+      "I received the protective equipment listed, in good condition, and the information on how to use, keep and replace it. I agree to use it and to report if it's damaged or lost.",
+    voided: (when: string, who: string, reason: string) => `Voided on ${when} by ${who}: ${reason}`,
+    fileName: (person: string, day: string) => `Handout ${person} ${day}.pdf`,
+    pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
+  },
 };
 
 export const expiryNoticeTexts: Catalog<typeof Es.expiryNoticeTexts> = {

@@ -19,8 +19,9 @@ export function positionRoutes(): TenantRoute[] {
     {
       method: "get",
       path: "/admin/positions",
-      // Also for whoever manages people (to assign one) and the department leaders (to filter).
-      anyCapability: ["departments.manage", "members.view", "members.manage"],
+      // Also for whoever manages people (to assign one), the department leaders (to filter) and the
+      // occupational health and safety managers (positions that need each PPE).
+      anyCapability: ["departments.manage", "members.view", "members.manage", "safety.manage"],
       leaderAccess: true,
       handler: async (req, res) => {
         res.json(

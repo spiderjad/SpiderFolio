@@ -156,7 +156,13 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
    `expiry_due` en la campana y por email; espacio y tipo EVR al activar; ejemplos de puestos del sector
    alimentario. El campo de texto «Puesto» de cada persona pasa a llamarse «Cargo». Captura `puestos` en la
    guía de Departamentos; `seguridad` y `miembros` regeneradas.
-2. **EPIs**: catálogo, entrega con firma, constancia, historial, reposición y «Le falta».
+2. **EPIs** (hecha): catálogo, entrega con firma, constancia, historial, reposición y «Le falta».
+   La firma se guarda en la entrega (PNG, `SafetyDelivery.signature`) y el panel de firma es el mismo de
+   Formularios (`components/signature-pad.tsx`). Pantallas `/app/:slug/seguridad/epis` (entregas, con
+   filtros en la URL), `…/epis/catalogo`, `…/epis/nueva?persona=`, `…/epis/:id` y
+   `…/personas/:membershipId` (ficha, por ahora solo EPIs). El tipo de vencimiento `safety.ppe` queda en
+   pausa con el módulo apagado (`ExpiryKind.paused`: ni avisa ni se resuelve). Guía «Seguridad y salud
+   laboral» y capturas `epis*`.
 3. **Accidentes e incidentes**: formulario base, campo Persona, comunicar, medidas con vencimiento,
    listado y CSV.
 4. **Formación y evaluaciones**: lecturas por puesto, cursos, constancias con vencimiento, presencial y

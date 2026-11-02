@@ -3,6 +3,7 @@
 import {
   BookOpen,
   Briefcase,
+  HardHat,
   ClipboardCheck,
   FileCheck2,
   FolderOpen,
@@ -54,7 +55,9 @@ export const adminSections = {
   audit: ["audit.view"],
 } as const;
 
-type Person = Pick<Membership, "role" | "capabilities" | "leadsDepartments" | "seatType">;
+type Person = Pick<Membership, "role" | "capabilities" | "leadsDepartments" | "seatType"> & {
+  workspace: Pick<Membership["workspace"], "safety">;
+};
 
 /**
  * Qué secciones ve la persona (docs/spec/personas.md): propietario y administradores, por
@@ -99,6 +102,14 @@ export function navItems(
       to: `/app/${slug}/aprobaciones`,
       label: texts.documents.nav,
       icon: ClipboardCheck,
+    });
+  }
+  // Occupational health and safety, while it's on: everyone but external guests.
+  if (person.workspace.safety.enabled && person.role.base !== "GUEST") {
+    items.push({
+      to: `/app/${slug}/seguridad`,
+      label: texts.safety.terms[person.workspace.safety.terms].module,
+      icon: HardHat,
     });
   }
   if (canSee(person, "members")) {
@@ -252,6 +263,7 @@ export function sectionTitle(pathname: string, plugins: readonly FrontendPlugin[
   if (pathname.endsWith("/profile")) return texts.profile.title;
   if (pathname.includes("/admin/departments")) return texts.admin.nav.departments;
   if (pathname.includes("/admin/positions")) return texts.admin.nav.positions;
+  if (pathname.includes("/seguridad")) return texts.safety.title;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;
   if (pathname.includes("/admin/security")) return texts.admin.nav.security;

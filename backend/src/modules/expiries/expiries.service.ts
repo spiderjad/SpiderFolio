@@ -24,6 +24,8 @@ export interface ExpiryKind {
   ) => Promise<{ what: string; path: string } | null>;
   /** Who is told (memberships); by default whoever is responsible and the person it is about. */
   recipients?: (db: TenantDb, expiry: ExpiryRow) => Promise<string[]>;
+  /** While true for a company (its module is off), no notices go out and nothing is resolved. */
+  paused?: (db: TenantDb) => Promise<boolean>;
 }
 
 const kinds = new Map<string, ExpiryKind>();

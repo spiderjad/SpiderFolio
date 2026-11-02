@@ -1,0 +1,106 @@
+---
+title: "Seguridad y salud laboral"
+description: "Activar el módulo de PRL o SST, el catálogo de EPIs, la entrega firmada con su constancia, la reposición y lo que le falta a cada persona según su puesto."
+group: uso-diario
+order: 9.6
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+El módulo de **Seguridad y salud laboral** (PRL en España, SST en Latinoamérica) reúne lo que pide la
+prevención en planta: la entrega de equipos de protección individual con la firma de quien los recibe, su
+reposición, y lo que le falta a cada persona según su puesto. Se apoya en los
+[puestos](/es/docs/departamentos#puestos), los documentos controlados y los formularios.
+
+Por ahora trae la entrega de **EPIs**. Los accidentes, la formación y la aptitud se suman en las próximas
+versiones.
+
+## Activarlo
+
+El propietario lo activa en **Administración** › **Seguridad** › **General**, en **Seguridad y salud
+laboral** ([Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)). Ahí elige también los
+**Términos**: **España: PRL y EPI** o **Latinoamérica: SST y EPP**. La app usa esos nombres en el menú, las
+pantallas, los avisos y la constancia.
+
+Con el módulo activo aparece **Prevención** (o **Seguridad y salud**) en el menú lateral. Desactivarlo lo
+oculta, junto con sus avisos, sin borrar nada.
+
+## Quién ve qué
+
+| Quién | Qué ve |
+|---|---|
+| Con **Gestionar seguridad y salud laboral** | Todas las entregas, el catálogo; registra y anula entregas. |
+| Jefes y subjefes | Las entregas y los EPIs de las personas de su área (y subáreas). |
+| Todos los demás | Sus propias entregas y sus EPIs. |
+
+La capacidad se da en [Roles y permisos](/es/docs/roles-y-permisos); el rol Administrador ya la tiene.
+
+## El catálogo
+
+En **Entregas** › **Catálogo** están los equipos de tu empresa. Pulsa **Nuevo equipo** y completa:
+
+- **Nombre** («Guantes anticorte») y, si quieres, una **Categoría** («Manos»).
+- **Se entrega por talla**: al entregarlo se pide la talla.
+- **Vida útil en meses**: se repone a los N meses de cada entrega, y se avisa (ver más abajo). Sin vida útil,
+  no hay reposición.
+- **Puestos que lo necesitan**: a quien tenga uno de esos puestos y no lo haya recibido, se le ve en
+  **Le falta**.
+
+Un equipo que ya no se usa se **Archiva**: deja de ofrecerse en las entregas y las anteriores se conservan.
+**Ver archivados** los muestra y desde cada uno puedes pulsar **Recuperar**.
+
+<Shot name="epis-catalogo" alt="El catálogo de EPIs, con la vida útil y los puestos de cada equipo" />
+
+## Registrar una entrega
+
+1. En **Entregas**, pulsa **Nueva entrega**.
+2. En **Quién recibe**, elige a la persona. Si a su puesto le falta algo, lo verás arriba («Le falta: …»).
+3. Agrega los **Equipos** con su **Cantidad** y, si van por talla, la **Talla**.
+4. La persona lee el texto de conformidad y **firma en el recuadro** con el dedo (en una tablet o un celular)
+   o con el mouse.
+5. Pulsa **Registrar entrega**.
+
+La entrega queda con quién la recibió, quién la entregó, la fecha y la hora de la empresa, y la firma. No se
+cambia ni se borra.
+
+<Shot name="epis-nueva" alt="Nueva entrega: la persona, lo que le falta, los equipos y la firma" />
+
+## Ver una entrega y la constancia
+
+Al abrir una entrega ves los equipos, la talla, el día de **Reponer el** y la firma. **Constancia en PDF**
+descarga la constancia firmada para archivar o imprimir; necesita [Gotenberg](/es/docs/gotenberg). Descargarla
+queda en la auditoría.
+
+Si se cargó mal (otra persona, otro equipo), quien gestiona el módulo puede **Anular** con un **Motivo**. Se
+sigue viendo, marcada como anulada, y deja de contar para la reposición.
+
+<Shot name="epis" alt="La lista de entregas de EPIs con sus filtros" />
+
+## La ficha de cada persona
+
+Desde una entrega (o desde **Recibe** en la lista) se abre la ficha de la persona:
+
+- **Le falta**: lo que pide su puesto y no tiene, o tiene vencido.
+- **EPIs que tiene**: el último de cada equipo, con su día de reposición y su estado (**Vigente**, **Por
+  vencer** o **Vencido**).
+- **Entregas**: todas las que recibió.
+
+Cada persona ve la suya entrando a **Prevención** en el menú.
+
+<Shot name="epis-ficha" alt="La ficha de una persona: lo que le falta, sus EPIs con la reposición y sus entregas" />
+
+## Avisos de reposición
+
+Cuando un equipo con vida útil se acerca a su día de reposición, la persona y quien se lo entregó reciben un
+aviso en la campana y por email: a los 30 días, a los 7 y el mismo día, a las 8:00 de la zona horaria de la
+empresa. Una entrega nueva del mismo equipo a la misma persona reemplaza a la anterior, y anular una entrega
+quita su aviso.
+
+## Relacionado
+
+- [Departamentos y puestos](/es/docs/departamentos)
+- [Roles y permisos](/es/docs/roles-y-permisos)
+- [Formularios y registros](/es/docs/formularios)

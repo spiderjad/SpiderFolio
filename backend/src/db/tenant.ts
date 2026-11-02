@@ -95,6 +95,16 @@ export interface TenantDb {
   formSettings: TenantDelegate<PrismaClient["formSettings"], Op>;
   position: TenantDelegate<PrismaClient["position"], Op>;
   expiry: TenantDelegate<PrismaClient["expiry"], Op>;
+  safetyItem: TenantDelegate<PrismaClient["safetyItem"], Op>;
+  // Handouts are never deleted here: added, read and voided (an update).
+  safetyDelivery: TenantDelegate<
+    PrismaClient["safetyDelivery"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "updateMany"
+  >;
+  safetyDeliveryLine: TenantDelegate<
+    PrismaClient["safetyDeliveryLine"],
+    "findFirst" | "findMany" | "count" | "createMany" | "createManyAndReturn"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -186,6 +196,15 @@ const delegates = {
   formSettings: { model: "FormSettings", ops: [...readOps, ...writeOps] },
   position: { model: "Position", ops: [...readOps, ...writeOps] },
   expiry: { model: "Expiry", ops: [...readOps, ...writeOps] },
+  safetyItem: { model: "SafetyItem", ops: [...readOps, ...writeOps] },
+  safetyDelivery: {
+    model: "SafetyDelivery",
+    ops: ["findFirst", "findMany", "count", "create", "update", "updateMany"],
+  },
+  safetyDeliveryLine: {
+    model: "SafetyDeliveryLine",
+    ops: ["findFirst", "findMany", "count", "createMany", "createManyAndReturn"],
+  },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

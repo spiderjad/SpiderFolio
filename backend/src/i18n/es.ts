@@ -774,6 +774,32 @@ export const safetyTexts = {
     "Técnico de mantenimiento",
     "Encargado de turno",
   ],
+  ppe: { es: "EPI", latam: "EPP" },
+  messages: {
+    itemNameTaken: "Ya hay un equipo con ese nombre en el catálogo.",
+    itemArchived: "Ese equipo está archivado: no se puede entregar.",
+    signatureInvalid: "Falta la firma de quien recibe, o no es una imagen válida.",
+    alreadyVoided: "Esa entrega ya está anulada.",
+    sizeRequired: (item: string) => `Falta la talla de «${item}».`,
+    repeatedItem: "Un mismo equipo aparece dos veces en la entrega.",
+  },
+  expiryWhat: (item: string, person: string) => `${item} de ${person}`,
+  pdf: {
+    title: (ppe: string) => `Constancia de entrega de ${ppe}`,
+    person: "Recibe",
+    position: "Puesto",
+    deliveredBy: "Entrega",
+    date: "Fecha",
+    columns: { item: "Equipo", quantity: "Cantidad", size: "Talla", replaceOn: "Reponer el" },
+    note: "Observaciones",
+    signature: "Firma de quien recibe",
+    statement:
+      "Recibí los equipos de protección indicados, en buen estado, y la información sobre su uso, conservación y reposición. Me comprometo a usarlos y a avisar si se dañan o se pierden.",
+    voided: (when: string, who: string, reason: string) =>
+      `Anulada el ${when} por ${who}: ${reason}`,
+    fileName: (person: string, day: string) => `Entrega ${person} ${day}.pdf`,
+    pageFooter: (page: string, total: string) => `Página ${page} de ${total}`,
+  },
 } as const;
 
 /** Vencimientos (docs/spec/seguridad-salud.md, «Motor de vencimientos»): algo vence o venció. */

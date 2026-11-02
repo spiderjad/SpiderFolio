@@ -9,6 +9,7 @@ import { buildEmail, type EmailContext } from "../emails/templates.ts";
 import { emailChangeTexts, emailTexts, expiryNoticeTexts, formNoticeTexts } from "../i18n/index.ts";
 import { dayOf, expiryKindOf } from "../modules/expiries/expiries.service.ts";
 import { daysUntil } from "../modules/expiries/expiry-rules.ts";
+import "../modules/expiries/kinds.ts";
 import { withLocale } from "../i18n/locales.ts";
 import { emailLocale } from "./email-locale.ts";
 import { alertFailedEmail } from "../modules/email-settings/system-email.ts";
