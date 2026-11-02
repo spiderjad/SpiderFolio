@@ -13,6 +13,9 @@ export const formsTexts: typeof es = {
     created: "Form created",
   },
   editor: {
+    locked: "Fixed field",
+    lockedHint:
+      "A fixed field of the accident form: you can change its text, but not remove it or change its options.",
     loadError: "We couldn't load the form",
     intro:
       "Build the fields people fill in from their phones. Every time you save changes a new version is created: what's already filled stays tied to the version it was filled with.",
@@ -45,6 +48,7 @@ export const formsTexts: typeof es = {
     checklist: "Checklist",
     photo: "Photo",
     signature: "Signature",
+    person: "Person",
   },
   typeHelp: {
     text: "A written answer, short or long.",
@@ -55,6 +59,7 @@ export const formsTexts: typeof es = {
     checklist: "A list of checks. One left unchecked is non-conforming.",
     photo: "One or more photos taken with the phone.",
     signature: "The signature of whoever fills it in, with a finger or the mouse.",
+    person: "Someone in the company, chosen from the people list.",
   },
   field: {
     label: "Question or field name",
@@ -103,6 +108,7 @@ export const formsTexts: typeof es = {
   },
   qr: "The code opens the form to fill it in; it asks to sign in (a PIN works too). Print it and stick it where the form is filled in: the cold room, the machine, the door.",
   fill: {
+    choosePerson: "Choose the person",
     open: "Fill in",
     title: (name: string) => `Fill in “${name}”`,
     intro:

@@ -44,7 +44,8 @@ export interface NotificationView {
     | "form_nonconforming"
     | "form_due"
     | "form_overdue"
-    | "expiry_due";
+    | "expiry_due"
+    | "safety_incident";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -127,6 +128,9 @@ function pathOf(
   if (item.kind === "invitation_by_leader") return `/app/${slug}/admin/members`;
   if (item.kind === "directory_sync_stopped") return `/app/${slug}/admin/license`;
   if (item.kind === "expiry_due") return item.expiry?.path ?? null;
+  if (item.kind === "safety_incident") {
+    return `/app/${slug}/seguridad/incidentes/${item.detail ?? ""}`;
+  }
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
   }
@@ -159,6 +163,7 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
     return t.emailFailing(reasons[item.detail ?? ""] ?? t.smtpReasons.UNKNOWN);
   }
   if (item.kind === "directory_sync_stopped") return t.directorySyncStopped;
+  if (item.kind === "safety_incident") return t.safetyIncident(item.actor?.name ?? "");
   if (item.kind === "expiry_due") {
     return item.expiry === null || item.expiresAt === null
       ? t.expiryGone

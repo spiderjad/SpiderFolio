@@ -23,7 +23,8 @@ export type FormField =
   | (FieldBase & { type: "date" })
   | (FieldBase & { type: "checklist"; items: Option[] })
   | (FieldBase & { type: "photo"; max: number })
-  | (FieldBase & { type: "signature" });
+  | (FieldBase & { type: "signature" })
+  | (FieldBase & { type: "person" });
 
 export type FieldType = FormField["type"];
 export const FIELD_TYPES: readonly FieldType[] = [
@@ -35,6 +36,7 @@ export const FIELD_TYPES: readonly FieldType[] = [
   "checklist",
   "photo",
   "signature",
+  "person",
 ];
 
 export interface FormVersionView {
@@ -72,6 +74,8 @@ export interface FormDetail extends NodeDetail {
   canEdit: boolean;
   /** Editors and whoever is in charge see every record; the rest only theirs. */
   seesAllRecords: boolean;
+  /** Fixed fields (the incident form's): renamed, never removed nor their type or options changed. */
+  lockedFieldIds: string[];
   settings: FormSettingsView;
 }
 
@@ -140,6 +144,8 @@ export interface RecordView {
   submittedAt: string;
   submittedBy: { id: string; name: string } | null;
   voided: { at: string; reason: string; by: { id: string; name: string } | null } | null;
+  /** Names of the people the «person» answers point to. */
+  people: Record<string, string>;
 }
 
 export interface RecordDetail {

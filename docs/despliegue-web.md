@@ -10,7 +10,7 @@ Esto es solo la web del proyecto. La app de cada empresa se instala aparte (ver 
 
 | Archivo                            | Para qué                                                                                                                                                                    |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/deploy-web.yml` | Compila la web y la sube por FTP con TLS (lftp) al publicar una Release del núcleo (`vX.Y.Z`) o a mano desde Actions.                                                      |
+| `.github/workflows/deploy-web.yml` | Compila la web y la sube por FTP con TLS (lftp) al publicar una Release del núcleo (`vX.Y.Z`) o a mano desde Actions.                                                       |
 | `.nvmrc` (raíz)                    | Versión de Node del build en Actions.                                                                                                                                       |
 | `web/public/.htaccess`             | Cabeceras de seguridad (CSP, nosniff, Referrer-Policy, X-Frame-Options, HSTS), caché, HTTPS, URLs sin `.html`, portada por idioma y redirecciones 301 de las URLs antiguas. |
 | `web/public/lang-redirect.js`      | La portada `/` elige el idioma cuando el servidor no pudo (ver más abajo).                                                                                                  |

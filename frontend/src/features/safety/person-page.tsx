@@ -9,7 +9,7 @@ import { Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatDay } from "@/lib/utils";
 import { safetyApi, safetyKeys } from "./safety-api";
-import { PpeStateBadge, useSafety } from "./safety-common";
+import { PpeStateBadge, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.person;
@@ -50,16 +50,22 @@ export function PersonPage() {
             {data.person.position === null ? t.noPosition : t.position(data.person.position.name)}
           </p>
         </div>
-        {data.canDeliver && (
-          <Button
-            onClick={() => {
-              void navigate(`${base}/epis/nueva?persona=${data.person.id}`);
-            }}
-          >
-            <Plus strokeWidth={1.75} aria-hidden="true" />
-            {t.deliver}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" asChild>
+            <Link to={`${base}/medidas`}>{texts.safety.myActions.title}</Link>
           </Button>
-        )}
+          <ReportIncidentButton />
+          {data.canDeliver && (
+            <Button
+              onClick={() => {
+                void navigate(`${base}/epis/nueva?persona=${data.person.id}`);
+              }}
+            >
+              <Plus strokeWidth={1.75} aria-hidden="true" />
+              {t.deliver}
+            </Button>
+          )}
+        </div>
       </div>
 
       {data.person.position !== null && (

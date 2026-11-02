@@ -65,6 +65,8 @@ export const modelMetadata = {
       safetyItems: "SafetyItem",
       safetyDeliveries: "SafetyDelivery",
       safetyDeliveryLines: "SafetyDeliveryLine",
+      safetyIncidents: "SafetyIncident",
+      safetyActions: "SafetyAction",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -206,6 +208,14 @@ export const modelMetadata = {
   SafetyDeliveryLine: {
     scope: "tenant",
     relations: { workspace: "Workspace", delivery: "SafetyDelivery", item: "SafetyItem" },
+  },
+  SafetyIncident: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", actions: "SafetyAction" },
+  },
+  SafetyAction: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", incident: "SafetyIncident" },
   },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {

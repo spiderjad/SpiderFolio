@@ -163,8 +163,12 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
    `…/personas/:membershipId` (ficha, por ahora solo EPIs). El tipo de vencimiento `safety.ppe` queda en
    pausa con el módulo apagado (`ExpiryKind.paused`: ni avisa ni se resuelve). Guía «Seguridad y salud
    laboral» y capturas `epis*`.
-3. **Accidentes e incidentes**: formulario base, campo Persona, comunicar, medidas con vencimiento,
-   listado y CSV.
+3. **Accidentes e incidentes** (hecha): formulario base, campo Persona, comunicar, medidas con
+   vencimiento, listado y CSV. Simplificaciones: el caso tiene solo los estados `OPEN` y `CLOSED` (sin
+   «en investigación»); el aviso de caso nuevo (`safety_incident`) va solo a la campana; las medidas avisan
+   7 días antes, el anterior y el mismo día (`safety.action`) y el responsable las ve en «Mis medidas» sin
+   los datos del caso. El formulario base se crea al activar el módulo (`settings.safety.incidentFormId`)
+   y sus campos fijos se validan al guardar la plantilla (`incident-form.ts`). Sin capturas todavía.
 4. **Formación y evaluaciones**: lecturas por puesto, cursos, constancias con vencimiento, presencial y
    aviso de revisión de las EVR.
 5. **Aptitud, ficha por persona**, ejemplos completos, guías, capturas y versión.

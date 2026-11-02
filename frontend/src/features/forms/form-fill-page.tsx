@@ -5,12 +5,14 @@
 // checks everything again and works out what's non-conforming.
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, ImagePlus, Loader2, ServerCrash, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
 import { Checkbox, Input, Textarea } from "@/components/ui/form";
+import { COMBO_PAGE_SIZE, Combobox, type ComboboxSource } from "@/components/ui/combobox";
+import { adminApi } from "@/features/admin/api";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { ApiError } from "@/lib/api";
 import { loadBitmap, renderCover } from "@/lib/image-crop";
@@ -407,7 +409,55 @@ function FieldInput({
       return <Photos field={field} photos={photos} onPhotos={onPhotos} />;
     case "signature":
       return <SignaturePad label={field.label} register={registerSignature} />;
+    case "person":
+      return <PersonPicker label={field.label} value={value} onChange={onChange} />;
   }
+}
+
+/** Someone of the company, searched in the people directory (the answer is their membership id). */
+function PersonPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: Answer | undefined;
+  onChange: (value: Answer | undefined) => void;
+}) {
+  const { workspaceSlug = "" } = useParams();
+  const [name, setName] = useState<string | undefined>(undefined);
+  const source = useMemo<ComboboxSource>(
+    () => ({
+      key: ["w", workspaceSlug, "forms", "person-options"],
+      search: async (q, cursor, signal) => {
+        const page = await adminApi.directory(
+          workspaceSlug,
+          { q, cursor, pageSize: COMBO_PAGE_SIZE },
+          signal,
+        );
+        return {
+          items: page.items.map((person) => ({ id: person.id, label: person.name })),
+          nextCursor: page.nextCursor,
+        };
+      },
+      byIds: () => Promise.resolve([]),
+    }),
+    [workspaceSlug],
+  );
+  return (
+    <Combobox
+      label={label}
+      placeholder={t.choosePerson}
+      source={source}
+      value={typeof value === "string" ? value : null}
+      valueLabel={name}
+      clearable
+      onChange={(option) => {
+        setName(option?.label);
+        onChange(option?.id);
+      }}
+    />
+  );
 }
 
 function NumberInput({

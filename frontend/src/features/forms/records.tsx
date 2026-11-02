@@ -454,6 +454,7 @@ export function RecordPage() {
             answer={record.answers[field.id]}
             failing={record.nonConforming.includes(field.id)}
             fileIds={files.filter((file) => file.fieldId === field.id).map((file) => file.id)}
+            people={record.people}
           />
         ))}
       </Card>
@@ -493,7 +494,11 @@ export function RecordPage() {
 /** Numbers as the app's language writes them («6,5» in Spanish). */
 const numberFormat = () => new Intl.NumberFormat(locale, { maximumFractionDigits: 6 });
 
-function answerText(field: FormField, answer: Answer | undefined): string | null {
+function answerText(
+  field: FormField,
+  answer: Answer | undefined,
+  people: Record<string, string>,
+): string | null {
   if (answer === undefined) return null;
   switch (field.type) {
     case "number":
@@ -505,6 +510,8 @@ function answerText(field: FormField, answer: Answer | undefined): string | null
     case "text":
     case "date":
       return String(answer);
+    case "person":
+      return typeof answer === "string" ? (people[answer] ?? null) : null;
     default:
       return null;
   }
@@ -515,13 +522,15 @@ function AnswerRow({
   answer,
   failing,
   fileIds,
+  people,
 }: {
   field: FormField;
   answer: Answer | undefined;
   failing: boolean;
   fileIds: string[];
+  people: Record<string, string>;
 }) {
-  const text = answerText(field, answer);
+  const text = answerText(field, answer, people);
   return (
     <div className={cn("grid gap-1.5 px-4 py-3", failing && "bg-warning-soft/40")}>
       <p className="flex flex-wrap items-center gap-2 text-sm font-medium">

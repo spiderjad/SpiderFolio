@@ -5,8 +5,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  Camera,
   CalendarDays,
+  Camera,
   ChevronDown,
   ChevronUp,
   ClipboardList,
@@ -14,6 +14,7 @@ import {
   History,
   ListChecks,
   ListTodo,
+  Lock,
   PenLine,
   Plus,
   QrCode,
@@ -21,6 +22,7 @@ import {
   ToggleLeft,
   Trash2,
   Type,
+  UserRound,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -67,6 +69,7 @@ const ICONS: Record<FieldType, LucideIcon> = {
   checklist: ListChecks,
   photo: Camera,
   signature: PenLine,
+  person: UserRound,
 };
 
 /** A new field of a type, with what it needs to be valid once it has a label. */
@@ -96,6 +99,7 @@ function blankField(type: FieldType): FormField {
     case "photo":
       return { ...base, type, max: 1 };
     case "signature":
+    case "person":
       return { ...base, type };
   }
 }
@@ -309,6 +313,7 @@ function Editor({ form }: { form: FormDetail }) {
                 <FieldCard
                   key={field.id}
                   field={field}
+                  locked={form.lockedFieldIds.includes(field.id)}
                   problems={problems[index] ?? {}}
                   editable={editable}
                   first={index === 0}
@@ -425,10 +430,13 @@ function FieldCard({
   onChange,
   onMove,
   onRemove,
+  locked = false,
 }: {
   field: FormField;
   problems: { label?: string; options?: string; range?: string };
   editable: boolean;
+  /** A fixed field (the incident form's): its text changes, it isn't removed nor its options. */
+  locked?: boolean;
   first: boolean;
   last: boolean;
   onChange: (field: FormField) => void;
@@ -446,6 +454,12 @@ function FieldCard({
         <span className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
           {t.types[field.type]}
         </span>
+        {locked && (
+          <Badge tone="neutral" title={t.editor.lockedHint}>
+            <Lock className="mr-1 inline size-3" aria-hidden="true" />
+            {t.editor.locked}
+          </Badge>
+        )}
         <div className="ml-auto flex items-center gap-1">
           <Button
             size="icon"
@@ -471,15 +485,17 @@ function FieldCard({
           >
             <ChevronDown className="size-4" aria-hidden="true" />
           </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8 text-danger"
-            aria-label={t.editor.remove(name)}
-            onClick={onRemove}
-          >
-            <Trash2 className="size-4" aria-hidden="true" />
-          </Button>
+          {!locked && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-8 text-danger"
+              aria-label={t.editor.remove(name)}
+              onClick={onRemove}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+            </Button>
+          )}
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -518,7 +534,7 @@ function FieldCard({
         />
         <p className="pl-6 text-xs text-muted-foreground">{f.requiredHint}</p>
       </div>
-      <TypeSettings field={field} problems={problems} onChange={onChange} />
+      <TypeSettings field={field} problems={problems} fixed={locked} onChange={onChange} />
     </Card>
   );
 }
@@ -526,10 +542,13 @@ function FieldCard({
 function TypeSettings({
   field,
   problems,
+  fixed,
   onChange,
 }: {
   field: FormField;
   problems: { options?: string; range?: string };
+  /** Options can be renamed but not added nor removed. */
+  fixed: boolean;
   onChange: (field: FormField) => void;
 }) {
   const f = t.field;
@@ -626,6 +645,7 @@ function TypeSettings({
           add={f.addOption}
           options={field.options}
           problem={problems.options}
+          fixed={fixed}
           nonConforming={field.nonConforming}
           onChange={(options, nonConforming) => {
             onChange({ ...field, options, nonConforming: nonConforming ?? field.nonConforming });
@@ -671,6 +691,7 @@ function TypeSettings({
       );
     case "date":
     case "signature":
+    case "person":
       return <p className="text-xs text-muted-foreground">{t.typeHelp[field.type]}</p>;
   }
 }
@@ -684,6 +705,7 @@ function OptionsEditor({
   problem,
   nonConforming,
   onChange,
+  fixed = false,
 }: {
   title: string;
   hint: string;
@@ -694,6 +716,7 @@ function OptionsEditor({
   /** Only for choices: which options are non-conforming. */
   nonConforming?: string[];
   onChange: (options: Option[], nonConforming?: string[]) => void;
+  fixed?: boolean;
 }) {
   const f = t.field;
   return (
@@ -731,37 +754,41 @@ function OptionsEditor({
                 }}
               />
             )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-8"
-              aria-label={f.removeOption(
-                option.label === "" ? placeholder(index + 1) : option.label,
-              )}
-              onClick={() => {
-                onChange(
-                  options.filter((o) => o.id !== option.id),
-                  nonConforming?.filter((id) => id !== option.id),
-                );
-              }}
-            >
-              <X className="size-4" aria-hidden="true" />
-            </Button>
+            {!fixed && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                aria-label={f.removeOption(
+                  option.label === "" ? placeholder(index + 1) : option.label,
+                )}
+                onClick={() => {
+                  onChange(
+                    options.filter((o) => o.id !== option.id),
+                    nonConforming?.filter((id) => id !== option.id),
+                  );
+                }}
+              >
+                <X className="size-4" aria-hidden="true" />
+              </Button>
+            )}
           </li>
         ))}
       </ul>
       {problem !== undefined && <p className="text-xs text-danger">{problem}</p>}
-      <Button
-        size="sm"
-        variant="outline"
-        className="w-fit"
-        onClick={() => {
-          onChange([...options, { id: newId("o"), label: "" }]);
-        }}
-      >
-        <Plus className="size-4" aria-hidden="true" />
-        {add}
-      </Button>
+      {!fixed && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-fit"
+          onClick={() => {
+            onChange([...options, { id: newId("o"), label: "" }]);
+          }}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          {add}
+        </Button>
+      )}
     </fieldset>
   );
 }

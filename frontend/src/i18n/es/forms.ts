@@ -11,6 +11,9 @@ export const formsTexts = {
     created: "Formulario creado",
   },
   editor: {
+    locked: "Campo fijo",
+    lockedHint:
+      "Campo fijo del formulario de accidentes: puedes cambiar su texto, pero no quitarlo ni cambiar sus opciones.",
     loadError: "No pudimos cargar el formulario",
     intro:
       "Arma los campos que se llenan desde el celular. Cada vez que guardas cambios se crea una versión nueva: lo ya llenado queda ligado a la versión con que se llenó.",
@@ -43,6 +46,7 @@ export const formsTexts = {
     checklist: "Checklist",
     photo: "Foto",
     signature: "Firma",
+    person: "Persona",
   },
   typeHelp: {
     text: "Una respuesta escrita, corta o larga.",
@@ -53,6 +57,7 @@ export const formsTexts = {
     checklist: "Una lista de comprobaciones. Una sin marcar es no conforme.",
     photo: "Una o varias fotos tomadas con el celular.",
     signature: "La firma de quien llena, con el dedo o el mouse.",
+    person: "Alguien de la empresa, elegido de la lista de personas.",
   },
   field: {
     label: "Pregunta o nombre del campo",
@@ -101,6 +106,7 @@ export const formsTexts = {
   },
   qr: "El código abre el formulario para llenarlo; pide iniciar sesión (también con PIN). Imprímelo y pégalo donde se llena: la cámara, la máquina, la puerta.",
   fill: {
+    choosePerson: "Elige a la persona",
     open: "Llenar",
     title: (name: string) => `Llenar «${name}»`,
     intro:

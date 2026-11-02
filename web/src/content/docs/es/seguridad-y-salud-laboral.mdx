@@ -15,8 +15,8 @@ prevención en planta: la entrega de equipos de protección individual con la fi
 reposición, y lo que le falta a cada persona según su puesto. Se apoya en los
 [puestos](/es/docs/departamentos#puestos), los documentos controlados y los formularios.
 
-Por ahora trae la entrega de **EPIs**. Los accidentes, la formación y la aptitud se suman en las próximas
-versiones.
+Por ahora trae la entrega de **EPIs** y los **accidentes e incidentes**. La formación y la aptitud se suman en
+las próximas versiones.
 
 ## Activarlo
 
@@ -98,6 +98,28 @@ Cuando un equipo con vida útil se acerca a su día de reposición, la persona y
 aviso en la campana y por email: a los 30 días, a los 7 y el mismo día, a las 8:00 de la zona horaria de la
 empresa. Una entrega nueva del mismo equipo a la misma persona reemplaza a la anterior, y anular una entrega
 quita su aviso.
+
+## Accidentes e incidentes
+
+Cualquier persona puede **comunicar** un accidente, un incidente o un casi accidente con **Comunicar un
+incidente** (en Prevención) o escaneando el QR del formulario. Se llena el formulario **Accidente o
+incidente**, que el módulo crea en su espacio: fecha y hora, lugar, persona afectada, tipo, gravedad, qué
+pasó, causas, fotos y testigos. No escribas datos médicos ni diagnósticos.
+
+Los campos fijos de ese formulario no se pueden quitar ni cambiar de tipo u opciones (en el editor llevan
+**Campo fijo**); sí se les puede cambiar el texto y agregar campos propios.
+
+Es **dato de salud**: los casos los ve solo quien tiene **Datos de salud: accidentes y aptitud** (por defecto,
+solo el propietario; ver [Roles y permisos](/es/docs/roles-y-permisos)). Quien comunicó un caso ve lo que
+comunicó. Cada caso nuevo avisa en la campana a quienes tienen esa capacidad.
+
+En **Accidentes** se filtran por fechas, tipo y estado, y se exportan a CSV. Al abrir un caso:
+
+- **Ver lo que se comunicó** abre el registro del formulario.
+- **Agregar medida**: una medida correctiva con **Responsable** y fecha (**Para el**). El responsable recibe un
+  aviso 7 días antes, el día anterior y el mismo día, y la ve en **Mis medidas**, donde la marca como hecha (sin
+  ver los datos del caso).
+- **Cerrar el caso** cuando todas las medidas están hechas; se puede **Reabrir**.
 
 ## Relacionado
 

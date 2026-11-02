@@ -250,6 +250,8 @@ model Workspace {
   safetyItems         SafetyItem[]
   safetyDeliveries    SafetyDelivery[]
   safetyDeliveryLines SafetyDeliveryLine[]
+  safetyIncidents     SafetyIncident[]
+  safetyActions       SafetyAction[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -492,6 +494,61 @@ model SafetyDeliveryLine {
 
   @@index([workspaceId, deliveryId])
   @@index([workspaceId, itemId])
+}
+
+/// An accident or incident (docs/spec/seguridad-salud.md, «Accidentes e incidentes»): what's structured
+/// of a record of the module's base form, to filter and follow it. Health data: only `safety.health`.
+model SafetyIncident {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  /// The FormRecord it comes from (no FK: records are never deleted).
+  recordId      String
+  /// leave (accident with sick leave), no_leave, incident, near_miss.
+  type          String
+  /// minor, serious, very_serious, fatal; null when it doesn't apply.
+  severity      String?
+  /// The company day it happened.
+  occurredOn    DateTime  @db.Date
+  place         String?
+  /// Whoever was affected (membership; no FK), and their first department then.
+  membershipId  String?
+  departmentId  String?
+  reportedById  String
+  /// OPEN or CLOSED.
+  status        String    @default("OPEN")
+  closedAt      DateTime?
+  closedById    String?
+  createdAt     DateTime  @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actions   SafetyAction[]
+
+  @@unique([workspaceId, recordId])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, occurredOn])
+  @@index([workspaceId, status])
+}
+
+/// A corrective measure of an incident: who does it and by when (an Expiry «safety.action»).
+model SafetyAction {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  incidentId    String
+  description   String
+  /// Membership; no FK.
+  responsibleId String
+  dueOn         DateTime  @db.Date
+  doneAt        DateTime?
+  doneById      String?
+  note          String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  incident  SafetyIncident @relation(fields: [incidentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, incidentId])
+  @@index([workspaceId, responsibleId, doneAt])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único

@@ -50,6 +50,8 @@ export const NOTIFICATION_KINDS = [
   /** Something expires (docs/spec/seguridad-salud.md, «Motor de vencimientos»): `expiryId`, `expiresAt`
    * = the day it expires and `detail` = the days that were left. */
   "expiry_due",
+  /** An accident or incident was reported (to whoever has safety.health; `detail` = incident id). */
+  "safety_incident",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

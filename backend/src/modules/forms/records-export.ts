@@ -31,7 +31,12 @@ export interface AnswerWords {
 }
 
 /** An answer as text, with the labels of the version it was filled with. */
-export function answerText(field: FormField, answer: unknown, words: AnswerWords): string {
+export function answerText(
+  field: FormField,
+  answer: unknown,
+  words: AnswerWords,
+  people: Readonly<Record<string, string>> = {},
+): string {
   switch (field.type) {
     case "text":
     case "date":
@@ -55,6 +60,8 @@ export function answerText(field: FormField, answer: unknown, words: AnswerWords
       return Array.isArray(answer) && answer.length > 0 ? words.photos(answer.length) : "";
     case "signature":
       return typeof answer === "string" && answer !== "" ? words.signed : "";
+    case "person":
+      return typeof answer === "string" ? (people[answer] ?? "") : "";
   }
 }
 
@@ -135,7 +142,9 @@ export async function exportRecords(
     const columns = exportColumns(versions);
     const cell = (record: RecordView, id: string) => {
       const field = fieldsOf.get(record.version)?.find((candidate) => candidate.id === id);
-      return field === undefined ? "" : answerText(field, record.answers[id], t.words);
+      return field === undefined
+        ? ""
+        : answerText(field, record.answers[id], t.words, record.people);
     };
     return {
       fileName: t.fileName(form.name, "csv"),
@@ -174,7 +183,7 @@ export async function exportRecords(
       .map(
         (field) =>
           `<tr${off.has(field.id) ? ' class="bad"' : ""}><th>${escapeHtml(field.label)}</th><td>${escapeHtml(
-            answerText(field, record.answers[field.id], t.words),
+            answerText(field, record.answers[field.id], t.words, record.people),
           )}</td></tr>`,
       )
       .join("");

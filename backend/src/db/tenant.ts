@@ -105,6 +105,12 @@ export interface TenantDb {
     PrismaClient["safetyDeliveryLine"],
     "findFirst" | "findMany" | "count" | "createMany" | "createManyAndReturn"
   >;
+  // Incidents are never deleted here (their record is evidence); their measures are.
+  safetyIncident: TenantDelegate<
+    PrismaClient["safetyIncident"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "updateMany"
+  >;
+  safetyAction: TenantDelegate<PrismaClient["safetyAction"], Op>;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -205,6 +211,11 @@ const delegates = {
     model: "SafetyDeliveryLine",
     ops: ["findFirst", "findMany", "count", "createMany", "createManyAndReturn"],
   },
+  safetyIncident: {
+    model: "SafetyIncident",
+    ops: ["findFirst", "findMany", "count", "create", "update", "updateMany"],
+  },
+  safetyAction: { model: "SafetyAction", ops: [...readOps, ...writeOps] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

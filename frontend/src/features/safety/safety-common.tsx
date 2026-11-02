@@ -1,8 +1,11 @@
 // What every screen of the occupational health and safety module shares (docs/spec/seguridad-salud.md):
 // the company's terms (EPI or EPP), who manages it, the guard that hides it while it's off and the
 // header with its tabs.
+import { useQuery } from "@tanstack/react-query";
+import { Siren } from "lucide-react";
 import { useMemo } from "react";
-import { Navigate, NavLink, Outlet, useParams } from "react-router";
+import { Navigate, NavLink, Outlet, useNavigate, useParams } from "react-router";
+import { Button } from "@/components/ui/button";
 import type { ComboboxSource } from "@/components/ui/combobox";
 import { COMBO_PAGE_SIZE } from "@/components/ui/combobox";
 import { Badge } from "@/components/ui/display";
@@ -10,7 +13,7 @@ import { adminApi } from "@/features/admin/api";
 import { NotFoundPage } from "@/features/home/not-found-page";
 import { useMembership } from "@/features/home/workspace-layout";
 import { cn } from "@/lib/utils";
-import { safetyApi, safetyKeys, type PpeState } from "./safety-api";
+import { incidentsApi, incidentsKeys, safetyApi, safetyKeys, type PpeState } from "./safety-api";
 import { texts } from "@/i18n";
 
 export function useSafety() {
@@ -20,6 +23,8 @@ export function useSafety() {
     enabled,
     terms: texts.safety.terms[terms],
     canManage: membership.capabilities.includes("safety.manage"),
+    /** Health data (accidents, fitness): safety.health. */
+    health: membership.capabilities.includes("safety.health"),
     /** Heads and deputies see their area's PPE. */
     leads: membership.leadsDepartments,
     membershipId: membership.id,
@@ -48,6 +53,36 @@ export function SafetyHome() {
   );
 }
 
+/** Accidents and incidents: health data. */
+export function RequireSafetyHealth() {
+  const { health } = useSafety();
+  return health ? <Outlet /> : <NotFoundPage />;
+}
+
+/** Opens the base form to report an accident, an incident or a near miss (everyone). */
+export function ReportIncidentButton() {
+  const { slug } = useSafety();
+  const navigate = useNavigate();
+  const form = useQuery({
+    queryKey: incidentsKeys.form(slug),
+    queryFn: () => incidentsApi.form(slug),
+    select: (data) => data.form,
+  });
+  if (form.data == null) return null;
+  const { spaceId, formId } = form.data;
+  return (
+    <Button
+      variant="outline"
+      onClick={() => {
+        void navigate(`/app/${slug}/files/${spaceId}/form/${formId}/fill`);
+      }}
+    >
+      <Siren className="size-4" aria-hidden="true" />
+      {texts.safety.incidents.report}
+    </Button>
+  );
+}
+
 /** The module's screens for whoever manages it. */
 export function RequireSafetyManager() {
   const { canManage } = useSafety();
@@ -55,8 +90,8 @@ export function RequireSafetyManager() {
 }
 
 export function PpeTabs() {
-  const { slug, canManage } = useSafety();
-  if (!canManage) return null;
+  const { slug, canManage, health } = useSafety();
+  if (!canManage && !health) return null;
   const t = texts.safety.tabs;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -70,9 +105,16 @@ export function PpeTabs() {
       <NavLink end to={`/app/${slug}/seguridad/epis`} className={tab}>
         {t.deliveries}
       </NavLink>
-      <NavLink to={`/app/${slug}/seguridad/epis/catalogo`} className={tab}>
-        {t.catalog}
-      </NavLink>
+      {canManage && (
+        <NavLink to={`/app/${slug}/seguridad/epis/catalogo`} className={tab}>
+          {t.catalog}
+        </NavLink>
+      )}
+      {health && (
+        <NavLink to={`/app/${slug}/seguridad/incidentes`} className={tab}>
+          {texts.safety.incidents.tab}
+        </NavLink>
+      )}
     </nav>
   );
 }

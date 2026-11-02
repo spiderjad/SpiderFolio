@@ -19,6 +19,7 @@ import {
   type NodeDetail,
 } from "../nodes/nodes.service.ts";
 import { assertSpaceWritable } from "../spaces/spaces.service.ts";
+import { assertLockedFields, lockedFieldIds } from "../safety/incident-form.ts";
 import { seesAll } from "./records.service.ts";
 import { settingsView, type FormSettingsView } from "./settings.service.ts";
 import {
@@ -44,6 +45,8 @@ export interface FormDetail extends NodeDetail {
   seesAllRecords: boolean;
   /** Who's in charge and, if it's periodic, how often and who fills it in. */
   settings: FormSettingsView;
+  /** Fields that can't be removed nor change their type or options (the incident form's). */
+  lockedFieldIds: string[];
 }
 
 /** A stored version's fields: they were checked when saved, read back as the same shape. */
@@ -156,6 +159,7 @@ export async function getForm(ctx: AdminContext, id: string): Promise<FormDetail
     canEdit: atLeast(detail.node.level, "EDIT"),
     seesAllRecords: await seesAll(ctx, id),
     settings: await settingsView(ctx.db, id),
+    lockedFieldIds: await lockedFieldIds(ctx.db, id),
   };
 }
 
@@ -174,6 +178,7 @@ export async function saveTemplate(
   if (input.baseVersion !== form.currentVersion) {
     throw new AppError("CONFLICT", { message: formMessages.templateChanged });
   }
+  await assertLockedFields(ctx.db, id, input.fields);
   const current = await ctx.db.formVersion.findFirst({
     where: { nodeId: id, version: form.currentVersion },
     select: { fields: true },

@@ -9,6 +9,24 @@ import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import {
+  ActionSchema,
+  CompleteActionSchema,
+  IncidentFiltersSchema,
+  ListIncidentsQuerySchema,
+  UpdateActionSchema,
+} from "./incidents.schemas.ts";
+import {
+  completeAction,
+  createAction,
+  exportIncidentsCsv,
+  getIncident,
+  incidentFormOf,
+  listIncidents,
+  myActions,
+  setIncidentStatus,
+  updateAction,
+} from "./incidents.service.ts";
+import {
   CreateDeliverySchema,
   CreateItemSchema,
   IdParamsSchema,
@@ -164,6 +182,103 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
         res.json(await personPpe(adminContextOf(req), id));
+      },
+    },
+    // Accidents and incidents (docs/spec/seguridad-salud.md): health data, the service checks
+    // safety.health; the measures' responsible sees and closes theirs.
+    {
+      method: "get",
+      path: "/safety/incident-form",
+      handler: async (req, res) => {
+        res.json({ form: await incidentFormOf(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/incidents",
+      handler: async (req, res) => {
+        res.json(
+          await listIncidents(adminContextOf(req), ListIncidentsQuerySchema.parse(req.query)),
+        );
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/incidents/export",
+      guards: [
+        sensitiveRateLimit(deps, { name: "safety-csv", windowMs: HOUR, limit: 30, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const file = await exportIncidentsCsv(
+          adminContextOf(req),
+          IncidentFiltersSchema.parse(req.query),
+        );
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${file.fileName}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(file.body);
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/incidents/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json(await getIncident(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/incidents/:id/close",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ incident: await setIncidentStatus(adminContextOf(req), id, "CLOSED") });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/incidents/:id/reopen",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ incident: await setIncidentStatus(adminContextOf(req), id, "OPEN") });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/incidents/:id/actions",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const action = await createAction(adminContextOf(req), id, ActionSchema.parse(req.body));
+        res.status(201).json({ action });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/actions",
+      handler: async (req, res) => {
+        res.json({ items: await myActions(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/safety/actions/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({
+          action: await updateAction(adminContextOf(req), id, UpdateActionSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/actions/:id/done",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { note } = CompleteActionSchema.parse(req.body);
+        res.json({ action: await completeAction(adminContextOf(req), id, note ?? null) });
       },
     },
   ];

@@ -14,7 +14,13 @@ import { useInfiniteList } from "@/components/ui/infinite";
 import { readChoice, useListParams } from "@/features/admin/list-params";
 import { cn, formatDateTime } from "@/lib/utils";
 import { safetyApi, safetyKeys, type Delivery, type DeliveryFilters } from "./safety-api";
-import { PpeTabs, useItemSource, usePeopleSource, useSafety } from "./safety-common";
+import {
+  PpeTabs,
+  ReportIncidentButton,
+  useItemSource,
+  usePeopleSource,
+  useSafety,
+} from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.deliveries;
@@ -132,16 +138,19 @@ export function DeliveriesPage() {
             {seesOthers ? t.subtitle : t.subtitleOwn}
           </p>
         </div>
-        {safety.canManage && (
-          <Button
-            onClick={() => {
-              void navigate(`${base}/epis/nueva`);
-            }}
-          >
-            <Plus strokeWidth={1.75} aria-hidden="true" />
-            {t.new}
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <ReportIncidentButton />
+          {safety.canManage && (
+            <Button
+              onClick={() => {
+                void navigate(`${base}/epis/nueva`);
+              }}
+            >
+              <Plus strokeWidth={1.75} aria-hidden="true" />
+              {t.new}
+            </Button>
+          )}
+        </div>
       </div>
       <PpeTabs />
       <Card className="grid gap-3 p-0">

@@ -69,6 +69,8 @@ export const SafetySettingsSchema = z.object({
   enabled: z.boolean().default(false),
   terms: z.enum(["es", "latam"]).default("es"),
   spaceId: z.string().min(1).max(64).optional(),
+  /** The base form «Accidente o incidente», once it's created. */
+  incidentFormId: z.string().min(1).max(64).optional(),
 });
 
 export type SafetySettings = z.infer<typeof SafetySettingsSchema>;

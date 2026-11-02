@@ -7,7 +7,9 @@ import { safetyTexts } from "../../i18n/index.ts";
 import { nameKeyOf } from "../../lib/names.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { ensureTypes } from "../documents/documents.service.ts";
+import { createForm, saveTemplate } from "../forms/forms.service.ts";
 import { createSpace, freeSpaceName } from "../spaces/spaces.service.ts";
+import { incidentTemplate } from "./incident-form.ts";
 import { readSafetySettings, type SafetySettings } from "../workspaces/settings.ts";
 
 /** The risk assessment document type (reviewed every 12 months). */
@@ -57,11 +59,13 @@ async function setUp(
   settings: SafetySettings,
   companySettings: unknown,
   examples: boolean,
-): Promise<string> {
+): Promise<{ spaceId: string; incidentFormId: string }> {
   const texts = withLocale(readWorkspaceLocale(companySettings), () => ({
     space: { ...safetyTexts.space[settings.terms] },
     riskAssessmentType: safetyTexts.riskAssessmentType,
     examplePositions: [...safetyTexts.examplePositions],
+    incidentForm: safetyTexts.incidentForm.name,
+    incidentFields: incidentTemplate(),
   }));
   let spaceId = (await spaceOf(ctx, settings.spaceId))?.id;
   if (spaceId === undefined) {
@@ -95,7 +99,22 @@ async function setUp(
       data: texts.examplePositions.map((name) => ({ name, nameKey: nameKeyOf(name) })),
     });
   }
-  return spaceId;
+  // The base form to report accidents and incidents, in the module's space.
+  let incidentFormId =
+    settings.incidentFormId === undefined
+      ? undefined
+      : (
+          await ctx.db.node.findFirst({
+            where: { id: settings.incidentFormId, type: "FORM", trashedAt: null },
+            select: { id: true },
+          })
+        )?.id;
+  if (incidentFormId === undefined) {
+    const form = await createForm(ctx, spaceId, { name: texts.incidentForm, parentId: null });
+    await saveTemplate(ctx, form.node.id, { baseVersion: 1, fields: texts.incidentFields });
+    incidentFormId = form.node.id;
+  }
+  return { spaceId, incidentFormId };
 }
 
 export async function updateSafetySettings(
@@ -108,9 +127,12 @@ export async function updateSafetySettings(
     enabled: input.enabled ?? before.enabled,
     terms: input.terms ?? before.terms,
     ...(before.spaceId === undefined ? {} : { spaceId: before.spaceId }),
+    ...(before.incidentFormId === undefined ? {} : { incidentFormId: before.incidentFormId }),
   };
   if (after.enabled) {
-    after.spaceId = await setUp(ctx, after, workspace.settings, input.examples === true);
+    const created = await setUp(ctx, after, workspace.settings, input.examples === true);
+    after.spaceId = created.spaceId;
+    after.incidentFormId = created.incidentFormId;
   }
   const current =
     typeof workspace.settings === "object" && workspace.settings !== null

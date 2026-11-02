@@ -155,6 +155,29 @@ export const routes = [
                     lazy: page(() => import("@/features/safety/delivery-page"), "DeliveryPage"),
                   },
                   {
+                    path: "medidas",
+                    lazy: page(() => import("@/features/safety/my-actions-page"), "MyActionsPage"),
+                  },
+                  {
+                    lazy: page(
+                      () => import("@/features/safety/safety-common"),
+                      "RequireSafetyHealth",
+                    ),
+                    children: [
+                      {
+                        path: "incidentes",
+                        lazy: page(
+                          () => import("@/features/safety/incidents-page"),
+                          "IncidentsPage",
+                        ),
+                      },
+                      {
+                        path: "incidentes/:incidentId",
+                        lazy: page(() => import("@/features/safety/incident-page"), "IncidentPage"),
+                      },
+                    ],
+                  },
+                  {
                     path: "personas/:membershipId",
                     lazy: page(() => import("@/features/safety/person-page"), "PersonPage"),
                   },

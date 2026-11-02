@@ -54,6 +54,8 @@ function answerOf(field: FormField, value: unknown): Answer | undefined {
       const ids = [...new Set(value)];
       return ids.length >= 1 && ids.length <= field.max ? ids : undefined;
     }
+    // A person: their membership id (the service checks it's someone of the company).
+    case "person":
     case "signature":
       return typeof value === "string" && value.length > 0 && value.length <= 64
         ? value

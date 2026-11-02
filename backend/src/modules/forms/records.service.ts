@@ -20,6 +20,8 @@ import type { Jobs } from "../../jobs/boss.ts";
 import { companyZone, dayIn, endOfDayIn, startOfDayIn } from "../../lib/time-zone.ts";
 import { checkAnswers, type Answers } from "./answers.ts";
 import { notifyNonConforming } from "./form-notices.ts";
+import { isIncidentForm } from "../safety/incident-form.ts";
+import { recordIncident } from "../safety/incidents.service.ts";
 import { periodOf } from "./periods.ts";
 import { responsiblesOf, scheduleOf, settingsRow } from "./settings.service.ts";
 import {
@@ -58,8 +60,14 @@ async function fieldsOf(ctx: AdminContext, nodeId: string, version: number): Pro
   return FieldsSchema.parse(row.fields);
 }
 
-/** Whoever can edit the form, and whoever is in charge of it, sees every record. */
+/**
+ * Whoever can edit the form, and whoever is in charge of it, sees every record. The incident form's
+ * records are health data: only `safety.health` sees them all (docs/spec/seguridad-salud.md).
+ */
 export async function seesAll(ctx: AdminContext, nodeId: string): Promise<boolean> {
+  if (await isIncidentForm(ctx.db, nodeId)) {
+    return ctx.tenant.capabilities.includes("safety.health");
+  }
   if (atLeast(await levelOfNode(ctx, nodeId), "EDIT")) return true;
   return (await responsiblesOf(ctx.db, nodeId)).includes(ctx.tenant.membershipId);
 }
@@ -178,6 +186,8 @@ export interface RecordView {
   submittedAt: Date;
   submittedBy: { id: string; name: string } | null;
   voided: { at: Date; reason: string; by: { id: string; name: string } | null } | null;
+  /** The names of the people the «person» answers point to (membership id → name). */
+  people: Record<string, string>;
 }
 
 async function people(ctx: AdminContext, ids: string[]) {
@@ -191,6 +201,12 @@ async function people(ctx: AdminContext, ids: string[]) {
 type RecordRow = Prisma.FormRecordGetPayload<object>;
 
 export async function viewsOf(ctx: AdminContext, rows: RecordRow[]): Promise<RecordView[]> {
+  // A «person» answer is a membership id; any text answer that is one gets its name.
+  const answered = rows.flatMap((row) =>
+    Object.values(row.answers as Answers).filter(
+      (value): value is string => typeof value === "string" && value.length <= 64,
+    ),
+  );
   const who = await people(
     ctx,
     rows.flatMap((row) => [
@@ -198,6 +214,8 @@ export async function viewsOf(ctx: AdminContext, rows: RecordRow[]): Promise<Rec
       ...(row.voidedById === null ? [] : [row.voidedById]),
     ]),
   );
+  const named =
+    answered.length === 0 ? new Map<string, { name: string }>() : await people(ctx, answered);
   return rows.map((row) => ({
     id: row.id,
     formId: row.nodeId,
@@ -215,6 +233,12 @@ export async function viewsOf(ctx: AdminContext, rows: RecordRow[]): Promise<Rec
             reason: row.voidReason ?? "",
             by: row.voidedById === null ? null : (who.get(row.voidedById) ?? null),
           },
+    people: Object.fromEntries(
+      Object.values(row.answers as Answers).flatMap((value) => {
+        const person = typeof value === "string" ? named.get(value) : undefined;
+        return person === undefined || typeof value !== "string" ? [] : [[value, person.name]];
+      }),
+    ),
   }));
 }
 
@@ -242,6 +266,16 @@ export async function submitRecord(
       message: formMessages.answersInvalid,
       details: { fields: checked.problems },
     });
+  }
+  const chosen = fields.flatMap((field) => {
+    const answer = checked.answers[field.id];
+    return field.type === "person" && typeof answer === "string" ? [answer] : [];
+  });
+  if (chosen.length > 0) {
+    const found = await ctx.db.membership.count({ where: { id: { in: [...new Set(chosen)] } } });
+    if (found !== new Set(chosen).size) {
+      throw new AppError("BAD_REQUEST", { message: formMessages.answersInvalid });
+    }
   }
   const fileIds = checked.files.flatMap((entry) => entry.ids);
   // A periodic form's record counts for the period it's sent in (the company's day).
@@ -302,6 +336,9 @@ export async function submitRecord(
     );
     return record.id;
   });
+  if (await isIncidentForm(ctx.db, formId)) {
+    await recordIncident(ctx, { id, answers: checked.answers });
+  }
   if (checked.nonConforming.length > 0) {
     await notifyNonConforming(ctx.db, deps.jobs, {
       id,

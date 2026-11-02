@@ -55,6 +55,8 @@ export const FieldSchema = z.discriminatedUnion("type", [
     max: z.number().int().min(1).max(10).default(1),
   }),
   z.strictObject({ ...base, type: z.literal("signature") }),
+  /** A member of the company (the answer is their membership id). */
+  z.strictObject({ ...base, type: z.literal("person") }),
 ]);
 
 export type FormField = z.infer<typeof FieldSchema>;
