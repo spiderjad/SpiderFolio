@@ -996,7 +996,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       sensitive: {
         "safety.health":
           "Sensitive: this is health data, which the law specially protects (GDPR, art. 9). By default only the owner has it; give it only to whoever does the prevention work, like the health and safety officer. Whoever has it sees other people's injuries and fitness for work.",
-      } as Record<string, string>,
+      },
       guestNoCapabilities: "A guest role has no capabilities.",
     },
     matrix: { capability: "Capability" },
