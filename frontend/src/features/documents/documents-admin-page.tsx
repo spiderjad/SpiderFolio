@@ -43,9 +43,16 @@ function linkOf(slug: string, node: { id: string; type: string; spaceId: string 
 export function DocumentsAdminPage() {
   const t = texts.documents.admin;
   const { params, patch } = useListParams();
-  const { capabilities } = useMembership();
+  const { capabilities, leadsDepartments } = useMembership();
   const canNumber = capabilities.includes("workspace.settings");
-  const allowed = canNumber ? TABS : TABS.filter((tab) => tab !== "numbering");
+  // Approvals: documents.approve or require_reading (or a head); health and safety managers don't.
+  const canApprovals =
+    leadsDepartments ||
+    capabilities.includes("documents.approve") ||
+    capabilities.includes("documents.require_reading");
+  const allowed = TABS.filter(
+    (tab) => (tab !== "numbering" || canNumber) && (tab !== "approvals" || canApprovals),
+  );
   const tab = readChoice(params, "tab", allowed, "documents");
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-4">

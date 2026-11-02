@@ -248,8 +248,13 @@ export const trainingApi = {
     api<{ course: Course; people: CoursePerson[]; canRecord: boolean }>(
       w(slug, `/safety/courses/${id}`),
     ),
-  attendance: (slug: string, id: string, body: { membershipIds: string[]; completedOn: string }) =>
-    api<undefined>(w(slug, `/safety/courses/${id}/attendance`), { method: "POST", body }),
+  attendance: (
+    slug: string,
+    id: string,
+    body: { attendees: { membershipId: string; signature: string }[]; completedOn: string },
+  ) => api<undefined>(w(slug, `/safety/courses/${id}/attendance`), { method: "POST", body }),
+  attendancePdf: (slug: string, id: string, day: string) =>
+    apiBlob(w(slug, `/safety/courses/${id}/attendance/pdf?${listQuery({ day })}`)),
   confirm: (slug: string, id: string) =>
     api<undefined>(w(slug, `/safety/courses/${id}/confirm`), { method: "POST" }),
   person: (slug: string, id: string) =>

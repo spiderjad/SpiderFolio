@@ -2,21 +2,36 @@
 // and how each one stands, in-person attendance for whoever manages the module and, for the person,
 // confirming again once it expired.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ServerCrash } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Download, ServerCrash } from "lucide-react";
+import { useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { FormField, Input } from "@/components/ui/form";
-import { adminErrorText } from "@/features/admin/admin-utils";
+import { SignaturePad } from "@/components/signature-pad";
+import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
+import { ApiError } from "@/lib/api";
 import { formatDay } from "@/lib/utils";
 import { trainingApi, trainingKeys, type TrainingState } from "./safety-api";
 import { usePeopleSource, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.training;
+
+function dataUrlOf(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(typeof reader.result === "string" ? reader.result : "");
+    };
+    reader.onerror = () => {
+      reject(new Error("signature"));
+    };
+    reader.readAsDataURL(blob);
+  });
+}
 const tone: Record<TrainingState, "success" | "warning" | "danger"> = {
   valid: "success",
   due_soon: "warning",
@@ -36,17 +51,36 @@ export function CoursePage() {
     queryClient.invalidateQueries({ queryKey: trainingKeys.all(workspaceSlug) });
   const peopleSource = usePeopleSource();
   const [attendees, setAttendees] = useState<string[]>([]);
+  const [names, setNames] = useState<Map<string, string>>(new Map());
   const [date, setDate] = useState("");
+  // Each attendee signs on the same screen, one after another.
+  const signatures = useRef(new Map<string, () => Promise<Blob | null>>());
   const record = useMutation({
-    mutationFn: () =>
-      trainingApi.attendance(workspaceSlug, courseId, {
-        membershipIds: attendees,
+    mutationFn: async () => {
+      const signed = [];
+      for (const membershipId of attendees) {
+        const blob = await signatures.current.get(membershipId)?.();
+        if (blob == null) throw new Error(t.needSignature(names.get(membershipId) ?? ""));
+        signed.push({ membershipId, signature: await dataUrlOf(blob) });
+      }
+      await trainingApi.attendance(workspaceSlug, courseId, {
+        attendees: signed,
         completedOn: date,
-      }),
+      });
+    },
     onSuccess: async () => {
       toast.success(t.toasts.recorded);
       setAttendees([]);
       await refresh();
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? adminErrorText(error) : error.message);
+    },
+  });
+  const pdf = useMutation({
+    mutationFn: async () => {
+      const blob = await trainingApi.attendancePdf(workspaceSlug, courseId, date);
+      downloadBlobFile(`${t.attendancePdf} ${date}.pdf`, blob);
     },
     onError: (error) => {
       toast.error(adminErrorText(error));
@@ -159,10 +193,26 @@ export function CoursePage() {
                 placeholder={t.attendeesPlaceholder}
                 source={peopleSource}
                 values={attendees}
-                onChange={setAttendees}
+                valueLabels={names}
+                onChange={(ids, labels) => {
+                  setAttendees(ids);
+                  setNames(new Map([...names, ...labels]));
+                }}
               />
             )}
           </FormField>
+          {attendees.map((membershipId) => (
+            <div key={membershipId} className="grid gap-1">
+              <p className="text-sm font-medium">{t.signatureOf(names.get(membershipId) ?? "")}</p>
+              <SignaturePad
+                label={t.signatureOf(names.get(membershipId) ?? "")}
+                signer={names.get(membershipId)}
+                register={(read) => {
+                  signatures.current.set(membershipId, read);
+                }}
+              />
+            </div>
+          ))}
           <div className="flex flex-wrap items-end gap-3">
             <FormField label={t.date}>
               {(control) => (
@@ -183,6 +233,16 @@ export function CoursePage() {
               }}
             >
               {t.save}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={date === "" || pdf.isPending}
+              onClick={() => {
+                pdf.mutate();
+              }}
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {t.attendancePdf}
             </Button>
           </div>
         </Card>

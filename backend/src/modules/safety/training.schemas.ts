@@ -11,7 +11,19 @@ export const CourseSchema = z.strictObject({ nodeId: Id, validityMonths: Validit
 
 export const UpdateCourseSchema = z.strictObject({ validityMonths: Validity });
 
+const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u);
+/** A PNG as a data URL: each attendee's signature (up to ~300 KB). */
+const Signature = z
+  .string()
+  .max(400_000)
+  .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/u);
+
 export const AttendanceSchema = z.strictObject({
-  membershipIds: z.array(Id).min(1).max(200),
-  completedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+  attendees: z
+    .array(z.strictObject({ membershipId: Id, signature: Signature }))
+    .min(1)
+    .max(100),
+  completedOn: Day,
 });
+
+export const AttendancePdfQuerySchema = z.object({ day: Day });

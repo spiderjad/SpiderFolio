@@ -844,6 +844,14 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
   training: {
     alreadyCourse: "That document is already a course.",
     stillValid: "Your training for this course is still valid.",
+    repeated: "The same person appears twice in the attendance.",
+  },
+  attendancePdf: {
+    title: "Training attendance record",
+    person: "Attendee",
+    signature: "Signature",
+    recordedBy: (who: string) => `Recorded by ${who}.`,
+    fileName: (course: string, day: string) => `Attendance ${course} ${day}.pdf`,
   },
   ppe: { es: "PPE", latam: "PPE" },
   messages: {

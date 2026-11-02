@@ -9,12 +9,14 @@ import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import {
+  AttendancePdfQuerySchema,
   AttendanceSchema,
   CourseSchema,
   CoursesQuerySchema,
   UpdateCourseSchema,
 } from "./training.schemas.ts";
 import {
+  attendancePdf,
   confirmTraining,
   createCourse,
   getCourse,
@@ -336,6 +338,30 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         const { id } = IdParamsSchema.parse(req.params);
         await recordAttendance(adminContextOf(req), id, AttendanceSchema.parse(req.body));
         res.status(204).end();
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/courses/:id/attendance/pdf",
+      guards: [
+        sensitiveRateLimit(deps, { name: "safety-pdf", windowMs: HOUR, limit: 60, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { day } = AttendancePdfQuerySchema.parse(req.query);
+        const file = await attendancePdf(
+          adminContextOf(req),
+          { gotenbergUrl: deps.env.GOTENBERG_URL },
+          id,
+          day,
+        );
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="asistencia.pdf"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(Buffer.from(file.body));
       },
     },
     {

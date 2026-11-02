@@ -5,8 +5,12 @@
 // version is confirmed only once). Whoever manages the module also records in-person training.
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
 import { offsetArgs, pageOf, type Page, type PageQuery } from "../../lib/pagination.ts";
-import { dayIn, dayMonthsLater, zoneOf } from "../../lib/time-zone.ts";
-import { safetyTexts } from "../../i18n/index.ts";
+import { dayIn, dayMonthsLater, formatUtcDay, zoneOf } from "../../lib/time-zone.ts";
+import { escapeHtml } from "@spiderfolio/content";
+import { formMessages, safetyTexts } from "../../i18n/index.ts";
+import { currentLocale } from "../../i18n/locales.ts";
+import { renderWithGotenberg } from "../documents/pdf.ts";
+import { signatureBytes } from "./ppe.service.ts";
 import { atLeast } from "../access/access.ts";
 import { levelOfNode } from "../access/access-context.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
@@ -40,6 +44,7 @@ async function addTraining(
   membershipId: string,
   completedAt: Date,
   source: "READING" | "IN_PERSON",
+  signature?: Buffer,
 ): Promise<void> {
   const tz = await zone(ctx);
   const validUntil =
@@ -59,6 +64,7 @@ async function addTraining(
         completedAt,
         source,
         validUntil: validUntil === null ? null : new Date(`${validUntil}T00:00:00Z`),
+        ...(signature === undefined ? {} : { signature: new Uint8Array(signature) }),
         createdById: ctx.tenant.membershipId,
       },
       select: { id: true },
@@ -303,28 +309,119 @@ export async function getCourse(
   return { course: view, people: states, canRecord: canManageSafety(ctx) };
 }
 
-/** In-person training: whoever manages the module records who attended and when. */
+/**
+ * In-person training: whoever manages the module records who attended and when, and each attendee signs
+ * with a finger (on the same tablet, one after another).
+ */
 export async function recordAttendance(
   ctx: AdminContext,
   id: string,
-  input: { membershipIds: string[]; completedOn: string },
+  input: { attendees: { membershipId: string; signature: string }[]; completedOn: string },
 ): Promise<void> {
   await requireManager(ctx);
   const course = await loadCourse(ctx, id);
-  const found = await ctx.db.membership.count({
-    where: { id: { in: input.membershipIds }, status: "ACTIVE" },
-  });
-  if (found !== new Set(input.membershipIds).size) throw notFound();
+  const ids = input.attendees.map((attendee) => attendee.membershipId);
+  if (new Set(ids).size !== ids.length) {
+    throw new AppError("BAD_REQUEST", { message: safetyTexts.training.repeated });
+  }
+  const found = await ctx.db.membership.count({ where: { id: { in: ids }, status: "ACTIVE" } });
+  if (found !== ids.length) throw notFound();
+  const signatures = input.attendees.map((attendee) => signatureBytes(attendee.signature));
   const completedAt = new Date(`${input.completedOn}T12:00:00Z`);
-  for (const membershipId of new Set(input.membershipIds)) {
-    await addTraining(ctx, course, membershipId, completedAt, "IN_PERSON");
+  for (const [index, attendee] of input.attendees.entries()) {
+    await addTraining(
+      ctx,
+      course,
+      attendee.membershipId,
+      completedAt,
+      "IN_PERSON",
+      signatures[index],
+    );
   }
   await auditAdmin(ctx, {
     action: "safety.training.attendance",
     entityType: "SafetyCourse",
     entityId: id,
-    metadata: { people: input.membershipIds.length, completedOn: input.completedOn },
+    metadata: { people: ids.length, completedOn: input.completedOn },
   });
+}
+
+/** The signed attendance sheet of one day as a PDF (Gotenberg), for whoever manages the module. */
+export async function attendancePdf(
+  ctx: AdminContext,
+  deps: { gotenbergUrl: string | undefined },
+  id: string,
+  day: string,
+): Promise<{ fileName: string; body: Uint8Array }> {
+  await requireManager(ctx);
+  if (deps.gotenbergUrl === undefined) {
+    throw new AppError("UNAVAILABLE", { message: formMessages.pdfUnavailable });
+  }
+  const course = await loadCourse(ctx, id);
+  const document = await ctx.db.controlledDocument.findFirst({
+    where: { nodeId: course.nodeId },
+    select: { code: true, publishedVersion: true, node: { select: { name: true } } },
+  });
+  const rows = await ctx.db.safetyTraining.findMany({
+    where: {
+      courseId: id,
+      source: "IN_PERSON",
+      completedAt: { gte: new Date(`${day}T00:00:00Z`), lte: new Date(`${day}T23:59:59Z`) },
+    },
+    orderBy: { createdAt: "asc" },
+    select: { membershipId: true, signature: true, createdById: true },
+  });
+  if (rows.length === 0) throw notFound();
+  const people = new Map(
+    (
+      await ctx.db.membership.findMany({
+        where: { id: { in: rows.flatMap((row) => [row.membershipId, row.createdById]) } },
+        select: { id: true, positionId: true, user: { select: { name: true } } },
+      })
+    ).map((row) => [row.id, row]),
+  );
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { name: true } });
+  const t = safetyTexts.attendancePdf;
+  const locale = currentLocale();
+  const title = `${document?.code ?? ""} ${document?.node.name ?? ""}`.trim();
+  const when = formatUtcDay(new Date(`${day}T12:00:00Z`), locale);
+  const lines = rows
+    .map((row, index) => {
+      const image =
+        row.signature === null
+          ? ""
+          : `<img alt="" src="data:image/png;base64,${Buffer.from(row.signature).toString("base64")}">`;
+      return `<tr><td>${String(index + 1)}</td><td>${escapeHtml(
+        people.get(row.membershipId)?.user.name ?? "",
+      )}</td><td class="sign">${image}</td></tr>`;
+    })
+    .join("");
+  const style = `
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; color: #1a1a1a; }
+    h1 { font-size: 16pt; margin: 0 0 .2em; } .meta { color: #555; margin: 0 0 1em; }
+    table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #bbb; padding: 4px 7px; text-align: left; }
+    th { background: #f3f3f3; font-weight: normal; } td.sign img { height: 48px; } td:first-child { width: 2em; }
+  `;
+  const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><style>${style}</style></head><body>
+<h1>${escapeHtml(t.title)}</h1><p class="meta">${escapeHtml(workspace?.name ?? "")} · ${escapeHtml(title)}${
+    document?.publishedVersion == null ? "" : ` · v${String(document.publishedVersion)}`
+  } · ${escapeHtml(when)}</p>
+<table><thead><tr><th>#</th><th>${escapeHtml(t.person)}</th><th>${escapeHtml(t.signature)}</th></tr></thead><tbody>${lines}</tbody></table>
+<p class="meta">${escapeHtml(t.recordedBy(people.get(rows[0]?.createdById ?? "")?.user.name ?? ""))}</p></body></html>`;
+  const small =
+    "font-family: Helvetica, Arial, sans-serif; font-size: 8px; color: #555; width: 100%; padding: 0 40px;";
+  const body = await renderWithGotenberg(deps.gotenbergUrl, {
+    html,
+    header: `<html><head><style>body{margin:0}</style></head><body><div style="${small} text-align:right;">${escapeHtml(t.title)}</div></body></html>`,
+    footer: `<html><head><style>body{margin:0}</style></head><body><div style="${small} text-align:center;">${safetyTexts.pdf.pageFooter('<span class="pageNumber"></span>', '<span class="totalPages"></span>')}</div></body></html>`,
+  });
+  await auditAdmin(ctx, {
+    action: "safety.training.export",
+    entityType: "SafetyCourse",
+    entityId: id,
+    metadata: { day, people: rows.length },
+  });
+  return { fileName: t.fileName(title, day), body };
 }
 
 /** Done again after it expired: the person confirms they read the current version once more. */

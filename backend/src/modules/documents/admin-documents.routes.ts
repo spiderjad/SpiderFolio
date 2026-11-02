@@ -20,7 +20,12 @@ import {
 } from "./documents.schemas.ts";
 
 const access = {
-  // Also for the health and safety managers: courses are controlled documents.
+  anyCapability: ["documents.approve", "documents.require_reading"],
+  leaderAccess: true,
+} as const;
+
+/** The list and the readings' compliance: also for the health and safety managers (courses). */
+const withSafety = {
   anyCapability: ["documents.approve", "documents.require_reading", "safety.manage"],
   leaderAccess: true,
 } as const;
@@ -30,7 +35,7 @@ export function adminDocumentRoutes(): TenantRoute[] {
     {
       method: "get",
       path: "/admin/documents",
-      ...access,
+      ...withSafety,
       handler: async (req, res) => {
         res.json(
           await listDocuments(adminContextOf(req), AdminDocumentsQuerySchema.parse(req.query)),
@@ -50,7 +55,7 @@ export function adminDocumentRoutes(): TenantRoute[] {
     {
       method: "get",
       path: "/admin/documents/compliance/departments",
-      ...access,
+      ...withSafety,
       handler: async (req, res) => {
         res.json(
           await complianceByDepartment(adminContextOf(req), AdminPagedQuerySchema.parse(req.query)),
@@ -60,7 +65,7 @@ export function adminDocumentRoutes(): TenantRoute[] {
     {
       method: "get",
       path: "/admin/documents/compliance",
-      ...access,
+      ...withSafety,
       handler: async (req, res) => {
         res.json(
           await complianceByDocument(adminContextOf(req), AdminPagedQuerySchema.parse(req.query)),

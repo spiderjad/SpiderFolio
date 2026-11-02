@@ -55,6 +55,22 @@ interface CourseBody {
   people: { membershipId: string; state: string; source: string | null }[];
 }
 
+describe("documentos controlados para quien gestiona el módulo", () => {
+  it("ve la lista y el cumplimiento de lecturas, pero no las aprobaciones", async () => {
+    const { w } = await world("Formación acceso");
+    const role = await w.call("post", w.ws.token, "/admin/roles", {
+      name: "Técnico de prevención",
+      base: "MEMBER",
+      capabilities: ["safety.manage"],
+    });
+    const roleId = (role.body as { role: { id: string } }).role.id;
+    const tech = await addMember(ctx, w.ws, { roleId });
+    expect((await w.call("get", tech.token, "/admin/documents")).status).toBe(200);
+    expect((await w.call("get", tech.token, "/admin/documents/compliance")).status).toBe(200);
+    expect((await w.call("get", tech.token, "/admin/documents/approvals")).status).toBe(403);
+  });
+});
+
 describe("formación", () => {
   it("lectura por puesto; el «Leí y comprendo» de un curso es la constancia, con vencimiento", async () => {
     const { w, positionId } = await world("Formación lectura");
@@ -123,7 +139,25 @@ describe("formación", () => {
     const { id } = await published(w);
     const created = await w.call("post", w.ws.token, "/safety/courses", { nodeId: id });
     const courseId = (created.body as { course: { id: string } }).course.id;
-    const body = { membershipIds: [w.editor.membership.id], completedOn: "2026-10-30" };
+    const signature = `data:image/png;base64,${Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      Buffer.alloc(200, 1),
+    ]).toString("base64")}`;
+    const body = {
+      attendees: [{ membershipId: w.editor.membership.id, signature }],
+      completedOn: "2026-10-30",
+    };
+    // Without each attendee's signature, nothing is recorded.
+    expect(
+      (
+        await w.call("post", w.ws.token, `/safety/courses/${courseId}/attendance`, {
+          attendees: [
+            { membershipId: w.editor.membership.id, signature: "data:image/png;base64,AA==" },
+          ],
+          completedOn: "2026-10-30",
+        })
+      ).status,
+    ).toBe(400);
     expect(
       (await w.call("post", w.viewer.token, `/safety/courses/${courseId}/attendance`, body)).status,
     ).toBe(403);
@@ -139,6 +173,10 @@ describe("formación", () => {
         source: "IN_PERSON",
       }),
     ]);
+    const stored = await ctx.prisma.safetyTraining.findFirstOrThrow({
+      where: { courseId, membershipId: w.editor.membership.id },
+    });
+    expect(stored.signature?.length).toBeGreaterThan(100);
     const sheet = await w.call(
       "get",
       w.ws.token,

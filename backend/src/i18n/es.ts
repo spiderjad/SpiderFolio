@@ -823,6 +823,14 @@ export const safetyTexts = {
   training: {
     alreadyCourse: "Ese documento ya es un curso.",
     stillValid: "Tu formación de este curso sigue vigente.",
+    repeated: "Una misma persona aparece dos veces en la asistencia.",
+  },
+  attendancePdf: {
+    title: "Constancia de asistencia a formación",
+    person: "Asistente",
+    signature: "Firma",
+    recordedBy: (who: string) => `Registró ${who}.`,
+    fileName: (course: string, day: string) => `Asistencia ${course} ${day}.pdf`,
   },
   ppe: { es: "EPI", latam: "EPP" },
   messages: {

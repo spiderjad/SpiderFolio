@@ -169,7 +169,16 @@ const cases: IsolationCase[] = [
     method: "post",
     path: "/safety/courses/:id/attendance",
     url: () => "/safety/courses/x/attendance",
-    body: { membershipIds: ["x"], completedOn: "2026-10-30" },
+    body: {
+      attendees: [{ membershipId: "x", signature: "data:image/png;base64,AA==" }],
+      completedOn: "2026-10-30",
+    },
+  },
+  {
+    method: "get",
+    path: "/safety/courses/:id/attendance/pdf",
+    url: () => "/safety/courses/x/attendance/pdf?day=2026-10-30",
+    ownStatus: 404,
   },
   { method: "post", path: "/safety/courses/:id/confirm", url: () => "/safety/courses/x/confirm" },
   {

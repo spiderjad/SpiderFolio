@@ -174,9 +174,10 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
    quiénes salen de sus lecturas obligatorias), constancias (`SafetyTraining`: el «Leí y comprendo» de un
    curso, o presencial; vencimiento `safety.training` y «Confirmar que lo hice de nuevo» al vencer) y aviso
    de revisión de las EVR publicadas (`safety.review`, a los jefes del departamento responsable).
-   Simplificación: la formación presencial la registra quien gestiona el módulo (asistentes y fecha), sin
-   formulario de asistencia con firma de cada uno. Quien gestiona el módulo puede usar la lista de
-   documentos controlados de Administración (para elegir el curso).
+   La formación presencial la registra quien gestiona el módulo: asistentes, fecha y la firma de cada uno
+   en la misma pantalla (`SafetyTraining.signature`), con la hoja de asistencia firmada en PDF. Pendiente:
+   que cada asistente firme desde su propio celular. `safety.manage` ve la lista de documentos controlados
+   y el cumplimiento de lecturas de Administración, no las aprobaciones (decidido con el mantenedor).
 5. **Aptitud, ficha por persona**, ejemplos completos, guías, capturas y versión.
 
 Cada fase: commit propio, tests de lo tocado (permisos y aislamiento entre empresas incluidos) y guías

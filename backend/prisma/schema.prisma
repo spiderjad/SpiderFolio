@@ -582,6 +582,8 @@ model SafetyTraining {
   source       String
   /// The company day it stops being valid (completion + the course's validity); null: never.
   validUntil   DateTime? @db.Date
+  /// In person: the attendee's signature, a PNG.
+  signature    Bytes?
   createdById  String
   createdAt    DateTime  @default(now())
 

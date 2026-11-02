@@ -190,7 +190,7 @@ export async function updateItem(
 // ─── Handouts ────────────────────────────────────────────────────────────────────────────
 
 /** The signature's bytes, if it really is a PNG. */
-function signatureBytes(dataUrl: string): Buffer {
+export function signatureBytes(dataUrl: string): Buffer {
   const bytes = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
   const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
   if (bytes.length < 100 || png.some((byte, index) => bytes[index] !== byte)) {

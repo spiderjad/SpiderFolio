@@ -21,10 +21,17 @@ interface Scope {
   departments: ReadonlySet<string>;
 }
 
-/** Toda la empresa con las capacidades de documentos; un jefe, su área; el resto, nada. */
+/**
+ * Toda la empresa con las capacidades de documentos (o, para la lista y el cumplimiento de lecturas, con
+ * safety.manage: las rutas no le abren las aprobaciones); un jefe, su área; el resto, nada.
+ */
 function scopeOf(ctx: AdminContext): Scope {
   const caps = ctx.actor.capabilities;
-  if (caps.includes("documents.approve") || caps.includes("documents.require_reading")) {
+  if (
+    caps.includes("documents.approve") ||
+    caps.includes("documents.require_reading") ||
+    caps.includes("safety.manage")
+  ) {
     return { all: true, departments: new Set() };
   }
   if (ctx.tenant.ledScope.size > 0) {

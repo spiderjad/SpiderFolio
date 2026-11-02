@@ -44,7 +44,8 @@ export const adminSections = {
   positions: ["departments.manage", "members.view", "members.manage"],
   roles: ["roles.manage"],
   access: ["permissions.audit"],
-  documents: ["documents.approve", "documents.require_reading"],
+  /** safety.manage: the list and the readings' compliance (courses), not the approvals. */
+  documents: ["documents.approve", "documents.require_reading", "safety.manage"],
   security: ["security.manage"],
   /** Bian: seguridad o facturación. */
   bian: ["security.manage", "workspace.settings"],

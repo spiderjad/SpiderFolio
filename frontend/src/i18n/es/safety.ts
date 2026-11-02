@@ -95,6 +95,9 @@ export const safetyTexts = {
     attendeesPlaceholder: "Elige a las personas",
     date: "Fecha",
     save: "Registrar",
+    signatureOf: (name: string) => `Firma de ${name}`,
+    needSignature: (name: string) => `Falta la firma de ${name}.`,
+    attendancePdf: "Constancia de asistencia en PDF",
     confirm: "Confirmar que lo hice de nuevo",
     toasts: {
       created: "Curso creado.",

@@ -97,6 +97,9 @@ export const safetyTexts: typeof es = {
     attendeesPlaceholder: "Choose the people",
     date: "Date",
     save: "Record",
+    signatureOf: (name: string) => `Signature of ${name}`,
+    needSignature: (name: string) => `${name}'s signature is missing.`,
+    attendancePdf: "Attendance record PDF",
     confirm: "Confirm I did it again",
     toasts: {
       created: "Course created.",
