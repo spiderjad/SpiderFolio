@@ -1,7 +1,7 @@
 // /app/:slug/admin/roles — Roles y permisos (CLAUDE.md, secciones 9.1 a 9.3): roles de sistema
 // (solo lectura) y personalizados, editor con capacidades agrupadas por área y vista de matriz.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Lock, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -561,6 +561,16 @@ function RoleForm({
                       <span className="block text-xs text-muted-foreground">
                         {grantable ? text.description : t.form.notGrantable}
                       </span>
+                      {t.form.sensitive[capability] !== undefined && (
+                        <span className="mt-1 flex items-start gap-1.5 text-xs text-warning-soft-foreground">
+                          <ShieldAlert
+                            className="mt-px size-3.5 shrink-0"
+                            strokeWidth={1.75}
+                            aria-hidden="true"
+                          />
+                          {t.form.sensitive[capability]}
+                        </span>
+                      )}
                     </label>
                     <Switch
                       id={id}

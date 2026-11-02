@@ -25,6 +25,22 @@ jobs:
       - name: .env.example con los secretos vacíos
         run: npx vitest run tests/env-example.test.ts
 
+  typecheck:
+    name: Tipos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # The Prisma client isn't versioned: generating it needs the schema only, not a database.
+      - name: Cliente de Prisma
+        run: npm run db:generate -w @spiderfolio/backend
+      - name: TypeScript en todo el monorepo
+        run: npm run typecheck
+
   readme-links:
     name: Enlaces de los README
     runs-on: ubuntu-latest

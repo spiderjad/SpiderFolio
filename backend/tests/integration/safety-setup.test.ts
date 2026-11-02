@@ -137,6 +137,26 @@ interface SafetyBody {
 }
 const safetyOf = (res: { body: unknown }) => (res.body as { safety: SafetyBody }).safety;
 
+describe("capacidad de datos de salud", () => {
+  it("solo la tiene el propietario; un administrador no puede darla y el propietario sí", async () => {
+    const ws = await createWorkspace(ctx, "Datos de salud");
+    const roles = await ctx.prisma.role.findMany({
+      where: { workspaceId: ws.workspaceId, isSystem: true },
+      select: { base: true, capabilities: true },
+    });
+    const of = (base: string) => roles.find((role) => role.base === base)?.capabilities ?? [];
+    expect(of("OWNER")).toContain("safety.health");
+    expect(of("ADMIN")).toContain("safety.manage");
+    expect(of("ADMIN")).not.toContain("safety.health");
+    const admin = await addMember(ctx, ws, { base: "ADMIN" });
+    const role = { name: "Técnico de prevención", base: "MEMBER", capabilities: ["safety.health"] };
+    const byAdmin = await api(ws.slug, admin.token).post("/admin/roles", role);
+    expect(byAdmin.status).toBe(403);
+    const byOwner = await api(ws.slug, ws.token).post("/admin/roles", role);
+    expect(byOwner.status, JSON.stringify(byOwner.body)).toBe(201);
+  });
+});
+
 describe("activar el módulo", () => {
   it("solo el propietario; crea el espacio, el tipo EVR y los ejemplos una sola vez", async () => {
     const ws = await createWorkspace(ctx, "Módulo SST");

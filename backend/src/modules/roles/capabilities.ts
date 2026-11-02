@@ -26,6 +26,8 @@ export const capabilities = [
   "security.manage",
   "workspace.settings",
   "safety.manage",
+  /** Health data (accidents, fitness for work): only the owner by default, given explicitly. */
+  "safety.health",
 ] as const;
 
 /** Las del núcleo. */
@@ -66,8 +68,14 @@ export interface SystemRoleDefinition {
 }
 
 /**
- * OWNER: todo. ADMIN: todo lo administrativo (la licencia de plugins, borrar el workspace y
- * transferir la propiedad se controlan por rol base OWNER, no por capacidad).
+ * Capabilities the admin system role doesn't get: health data (docs/spec/seguridad-salud.md) is
+ * given explicitly, by the owner, to whoever does the prevention work.
+ */
+export const ownerOnlyByDefault: readonly CoreCapability[] = ["safety.health"];
+
+/**
+ * OWNER: todo. ADMIN: todo lo administrativo salvo `ownerOnlyByDefault` (la licencia de plugins,
+ * borrar el workspace y transferir la propiedad se controlan por rol base OWNER, no por capacidad).
  * MEMBER y GUEST: sin capacidades administrativas.
  */
 export const systemRoles: readonly SystemRoleDefinition[] = [
@@ -77,7 +85,7 @@ export const systemRoles: readonly SystemRoleDefinition[] = [
   },
   {
     base: "ADMIN",
-    capabilities,
+    capabilities: capabilities.filter((capability) => !ownerOnlyByDefault.includes(capability)),
   },
   {
     base: "MEMBER",

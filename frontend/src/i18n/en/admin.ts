@@ -107,7 +107,12 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
   "safety.manage": {
     label: "Manage occupational health and safety",
     description:
-      "Manages PPE, accidents, training and fitness for work in the occupational health and safety module.",
+      "Manages PPE, training and risk assessments in the occupational health and safety module.",
+  },
+  "safety.health": {
+    label: "Health data: accidents and fitness for work",
+    description:
+      "Views and manages accidents and incidents and people's fitness for work (“fit / not fit”).",
   },
 };
 
@@ -988,6 +993,10 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       base: "Base role",
       capabilities: "Capabilities",
       notGrantable: "You can't grant this capability because you don't have it.",
+      sensitive: {
+        "safety.health":
+          "Sensitive: this is health data, which the law specially protects (GDPR, art. 9). By default only the owner has it; give it only to whoever does the prevention work, like the health and safety officer. Whoever has it sees other people's injuries and fitness for work.",
+      } as Record<string, string>,
       guestNoCapabilities: "A guest role has no capabilities.",
     },
     matrix: { capability: "Capability" },

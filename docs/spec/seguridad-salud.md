@@ -25,13 +25,18 @@ registros (docs/spec/formularios.md), documentos controlados, lectura obligatori
 
 ## Permisos
 
-- Capacidad nueva **`safety.manage`** (técnico o responsable): ve y gestiona todo el módulo. El propietario
-  la tiene siempre; los demás, por su rol.
-- Cada persona ve **su propia ficha** (EPIs, formación y aptitud; los accidentes solo los ve `safety.manage`).
+- **`safety.manage`**: EPIs, formación y evaluaciones de riesgos. La tienen el propietario y el rol
+  Administrador; los demás, por su rol.
+- **`safety.health`**: los **datos de salud**, accidentes e incidentes y aptitud. Por defecto **solo el
+  propietario** (el rol Administrador no la tiene, y quien no la tiene no puede darla); se asigna
+  explícitamente al técnico de prevención con un rol propio. La pantalla de roles explica por qué es
+  delicada. Decidido con el mantenedor el 02/11/2026.
+- Cada persona ve **su propia ficha** (EPIs, formación y aptitud; los accidentes solo los ve
+  `safety.health`).
 - Jefes y subjefes ven los EPIs y la formación de las personas de su área (y subáreas); **no** los
   accidentes ni la aptitud.
 - Cualquier persona puede **comunicar** un incidente o casi accidente (también desde un QR); solo
-  `safety.manage` lo completa, lo investiga y lo cierra.
+  `safety.health` lo completa, lo investiga y lo cierra.
 - Todo se valida en el backend; un recurso de otra empresa responde 404. Auditoría de cada alta, cambio,
   entrega, cierre y exportación. Tests de permisos y de aislamiento entre empresas en cada fase.
 
@@ -41,7 +46,7 @@ registros (docs/spec/formularios.md), documentos controlados, lectura obligatori
   vencimiento. Sin diagnóstico ni campos médicos; las restricciones, si las hay, se describen como tareas
   que no puede hacer, nunca como causas.
 - **Accidentes**: describen una lesión, que es dato de salud (RGPD, art. 9). Acceso restringido a
-  `safety.manage`, sin campo de diagnóstico, aviso en la descripción («No escribas datos médicos»), fuera
+  `safety.health`, sin campo de diagnóstico, aviso en la descripción («No escribas datos médicos»), fuera
   de Bian, del conector MCP y de la búsqueda general.
 
 ## Puestos (núcleo, fuera del módulo)
@@ -114,7 +119,8 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
   módulo.
 - `SafetyIncident` `{ recordId, type, severity, occurredAt, membershipId?, departmentId?, status (OPEN,
   INVESTIGATING, CLOSED), closedAt? }`: lo estructurado del registro para filtrar y seguir.
-- **Comunicar**: cualquiera con acceso lo llena (también por QR); queda abierto y avisa a `safety.manage`.
+- **Comunicar**: cualquiera con acceso lo llena (también por QR); queda abierto y avisa a quienes tienen
+  `safety.health`.
 - **Medidas**: `SafetyAction` `{ incidentId, description, responsibleId, dueOn, doneAt?, note? }`; cada una
   crea un vencimiento `safety.action` (aviso al responsable) que se resuelve al marcarla hecha. Con todas
   hechas, se puede cerrar el caso.
@@ -137,7 +143,8 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
 - `SafetyFitness` `{ membershipId, status, validUntil?, restrictions?, createdById }`: la última vale;
   las anteriores quedan como historial. Vencimiento `safety.fitness`.
 - **Ficha** (`/app/:slug/seguridad/personas/:membershipId`): puesto, EPIs vigentes, vencidos y faltantes,
-  formación (hecha, por vencer, pendiente), aptitud y, solo para `safety.manage`, accidentes. Exportable a
+  formación (hecha, por vencer, pendiente) y, solo para `safety.health`, aptitud de otras personas y
+  accidentes. Exportable a
   PDF.
 - Ejemplos del sector alimentario completos, guías es/en, capturas y versión.
 

@@ -103,7 +103,12 @@ export const capabilityTexts = {
   "safety.manage": {
     label: "Gestionar seguridad y salud laboral",
     description:
-      "Gestiona EPIs, accidentes, formación y aptitud del módulo de seguridad y salud laboral (PRL o SST).",
+      "Gestiona los EPIs, la formación y las evaluaciones de riesgos del módulo de seguridad y salud laboral (PRL o SST).",
+  },
+  "safety.health": {
+    label: "Datos de salud: accidentes y aptitud",
+    description:
+      "Ve y gestiona los accidentes e incidentes y la aptitud («apto / no apto») de las personas.",
   },
 } as const;
 
@@ -990,6 +995,10 @@ export const adminTexts = {
       base: "Rol base",
       capabilities: "Capacidades",
       notGrantable: "No puedes dar esta capacidad porque tú no la tienes.",
+      sensitive: {
+        "safety.health":
+          "Delicada: son datos de salud, que la ley protege especialmente (RGPD, art. 9). Por defecto solo la tiene el propietario; dala solo a quien hace la prevención, como el técnico de prevención. Quien la tiene ve lesiones y aptitudes de otras personas.",
+      } as Record<string, string>,
       guestNoCapabilities: "Un rol de invitado no lleva capacidades.",
     },
     matrix: { capability: "Capacidad" },
