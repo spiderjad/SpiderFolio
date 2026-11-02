@@ -2,6 +2,7 @@
 // existe y lo que puede usar; un ítem sin permiso no aparece, ni deshabilitado.
 import {
   BookOpen,
+  Briefcase,
   ClipboardCheck,
   FileCheck2,
   FolderOpen,
@@ -38,6 +39,8 @@ export interface NavItem {
 export const adminSections = {
   members: ["members.view", "members.manage"],
   departments: ["departments.manage"],
+  /** Positions: whoever manages departments or people (to assign them), and leaders. */
+  positions: ["departments.manage", "members.view", "members.manage"],
   roles: ["roles.manage"],
   access: ["permissions.audit"],
   documents: ["documents.approve", "documents.require_reading"],
@@ -72,6 +75,7 @@ export function canSee(person: Person, section: keyof typeof adminSections): boo
   if (section === "roles" || section === "access") return byCapability;
   // Documentos: quien tiene las capacidades, o un jefe (ve solo su área).
   if (section === "documents") return byCapability || person.leadsDepartments;
+  if (section === "positions") return byCapability || person.leadsDepartments;
   if (role.base === "OWNER" || role.base === "ADMIN") return byCapability;
   if (section === "departments") return role.base === "MEMBER" && person.seatType === "FULL";
   return person.leadsDepartments;
@@ -109,6 +113,14 @@ export function navItems(
       label: t.departments,
       icon: Network,
       ...(manages ? { group: t.group } : {}),
+    });
+  }
+  if (canSee(person, "positions")) {
+    items.push({
+      to: `/app/${slug}/admin/positions`,
+      label: t.positions,
+      icon: Briefcase,
+      group: t.group,
     });
   }
   if (canSee(person, "roles")) {
@@ -239,6 +251,7 @@ export function sectionTitle(pathname: string, plugins: readonly FrontendPlugin[
   if (pathname.includes("/files")) return texts.files.nav;
   if (pathname.endsWith("/profile")) return texts.profile.title;
   if (pathname.includes("/admin/departments")) return texts.admin.nav.departments;
+  if (pathname.includes("/admin/positions")) return texts.admin.nav.positions;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;
   if (pathname.includes("/admin/security")) return texts.admin.nav.security;

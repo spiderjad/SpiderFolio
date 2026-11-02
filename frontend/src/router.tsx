@@ -228,6 +228,18 @@ export const routes = [
                     ],
                   },
                   {
+                    lazy: page(() => import("@/features/admin/guards"), "RequirePositions"),
+                    children: [
+                      {
+                        path: "positions",
+                        lazy: page(
+                          () => import("@/features/admin/positions/positions-page"),
+                          "PositionsPage",
+                        ),
+                      },
+                    ],
+                  },
+                  {
                     lazy: page(() => import("@/features/admin/guards"), "RequireSecurity"),
                     children: [
                       {

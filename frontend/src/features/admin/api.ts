@@ -165,6 +165,8 @@ export interface MemberView {
   email: string | null;
   emailVerified: boolean;
   jobTitle: string | null;
+  /** The company's job position (Administration › Positions), if any. */
+  positionId: string | null;
   roleId: string;
   roleName: string;
   roleBase: SystemRole;
@@ -350,6 +352,8 @@ export interface MemberQuery {
   role: string;
   /** Un departamento, o "none" para quien no pertenece a ninguno. */
   department: string;
+  /** A position, or "none" for whoever has none. */
+  position?: string | undefined;
   group: "" | MemberGroup | "direction";
   status: "" | MemberStatus;
   page?: number | undefined;
@@ -408,6 +412,8 @@ export const adminKeys = {
   systemEmail: (slug: string) => ["w", slug, "admin", "email", "system"] as const,
   roleOptions: (slug: string) => ["w", slug, "admin", "roles", "options"] as const,
   departmentOptions: (slug: string) => ["w", slug, "admin", "departments", "options"] as const,
+  positions: (slug: string) => ["w", slug, "admin", "positions"] as const,
+  safety: (slug: string) => ["w", slug, "admin", "safety"] as const,
 };
 
 function queryString(query: MemberQuery): string {
@@ -416,6 +422,7 @@ function queryString(query: MemberQuery): string {
   if (query.ids !== undefined && query.ids.length > 0) params.set("ids", query.ids.join(","));
   if (query.role !== "") params.set("role", query.role);
   if (query.department !== "") params.set("department", query.department);
+  if (query.position !== undefined && query.position !== "") params.set("position", query.position);
   if (query.group !== "") params.set("group", query.group);
   if (query.status !== "") params.set("status", query.status);
   if (query.cursor !== undefined) params.set("cursor", query.cursor);
@@ -452,6 +459,34 @@ function optionsQueryString(query: OptionsQuery): string {
     pageSize: query.pageSize,
     ids: query.ids?.join(","),
   });
+}
+
+/** A job position of the company (docs/spec/seguridad-salud.md, «Puestos»). */
+export interface PositionView {
+  id: string;
+  name: string;
+  description: string | null;
+  /** Active people with this position. */
+  people: number;
+}
+
+export interface PositionQuery {
+  q?: string | undefined;
+  sort?: "name" | "people" | undefined;
+  dir?: "asc" | "desc" | undefined;
+  cursor?: string | undefined;
+  pageSize?: number | undefined;
+  ids?: readonly string[] | undefined;
+}
+
+/** es: Spain (PRL, EPI); latam: Latin America (SST, EPP). */
+export type SafetyTerms = "es" | "latam";
+
+/** The occupational health and safety module (Administration › Security › General). */
+export interface SafetyView {
+  enabled: boolean;
+  terms: SafetyTerms;
+  space: { id: string; name: string } | null;
 }
 
 export interface RoleQuery {
@@ -569,6 +604,7 @@ export const adminApi = {
       seatType?: SeatType;
       departmentIds?: string[];
       jobTitle?: string | null;
+      positionId?: string | null;
       name?: string;
       email?: string;
     },
@@ -737,6 +773,35 @@ export const adminApi = {
     }),
   deleteDepartment: (slug: string, id: string) =>
     api<undefined>(admin(slug, `/departments/${id}`), { method: "DELETE" }),
+  positions: (slug: string, query: PositionQuery, signal?: AbortSignal) =>
+    api<Page<PositionView>>(
+      admin(
+        slug,
+        `/positions?${listQuery({
+          q: query.q,
+          sort: query.sort,
+          dir: query.dir,
+          cursor: query.cursor,
+          pageSize: query.pageSize,
+          ids: query.ids?.join(","),
+        })}`,
+      ),
+      signal ? { signal } : {},
+    ),
+  createPosition: (slug: string, body: { name: string; description?: string | null }) =>
+    api<{ position: PositionView }>(admin(slug, "/positions"), { method: "POST", body }),
+  updatePosition: (
+    slug: string,
+    id: string,
+    body: { name?: string; description?: string | null },
+  ) => api<{ position: PositionView }>(admin(slug, `/positions/${id}`), { method: "PATCH", body }),
+  deletePosition: (slug: string, id: string) =>
+    api<undefined>(admin(slug, `/positions/${id}`), { method: "DELETE" }),
+  safety: (slug: string) => api<{ safety: SafetyView }>(admin(slug, "/safety")),
+  updateSafety: (
+    slug: string,
+    body: { enabled?: boolean; terms?: SafetyTerms; examples?: boolean },
+  ) => api<{ safety: SafetyView }>(admin(slug, "/safety"), { method: "PUT", body }),
   addDepartmentMembers: (slug: string, id: string, membershipIds: string[]) =>
     api<{ added: number }>(admin(slug, `/departments/${id}/members`), {
       method: "POST",

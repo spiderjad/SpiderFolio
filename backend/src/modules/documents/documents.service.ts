@@ -25,7 +25,7 @@ export interface DocumentTypeView {
   nextNumber: number;
 }
 
-async function ensureTypes(ctx: AdminContext): Promise<void> {
+export async function ensureTypes(ctx: AdminContext): Promise<void> {
   if ((await ctx.db.documentType.count()) > 0) return;
   // Named in the company's language, not in the language of whoever opens the screen first.
   const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });

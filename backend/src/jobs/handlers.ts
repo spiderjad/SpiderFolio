@@ -1,12 +1,14 @@
 // Handlers del worker. Reciben sus dependencias por parámetro para poder probarlos.
-import { formatDayIn, zoneOf } from "../lib/time-zone.ts";
+import { dayIn, formatDayIn, zoneOf } from "../lib/time-zone.ts";
 import * as Sentry from "@sentry/node";
 import type { Logger } from "pino";
 import { renderEmail } from "../emails/layout.ts";
 import { loadTenantContext } from "../middleware/tenant.ts";
 import { accessActorOf, loadAccess } from "../modules/access/access.ts";
 import { buildEmail, type EmailContext } from "../emails/templates.ts";
-import { emailChangeTexts, emailTexts, formNoticeTexts } from "../i18n/index.ts";
+import { emailChangeTexts, emailTexts, expiryNoticeTexts, formNoticeTexts } from "../i18n/index.ts";
+import { dayOf, expiryKindOf } from "../modules/expiries/expiries.service.ts";
+import { daysUntil } from "../modules/expiries/expiry-rules.ts";
 import { withLocale } from "../i18n/locales.ts";
 import { emailLocale } from "./email-locale.ts";
 import { alertFailedEmail } from "../modules/email-settings/system-email.ts";
@@ -498,6 +500,63 @@ async function sendFormNoticeEmail(
   await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
 }
 
+/** Something expires: only to whoever is still active, while the item exists and isn't resolved. */
+async function sendExpiryNoticeEmail(
+  deps: WorkerDeps,
+  job: Extract<EmailJob, { kind: "expiry-notice" }>,
+): Promise<void> {
+  const notice = await deps.prisma.notification.findUnique({ where: { id: job.notificationId } });
+  if (notice === null || notice.expiryId === null) return;
+  const [expiry, recipient, workspace] = await Promise.all([
+    deps.prisma.expiry.findFirst({
+      where: { id: notice.expiryId, workspaceId: notice.workspaceId, resolvedAt: null },
+    }),
+    deps.prisma.membership.findFirst({
+      where: { id: notice.membershipId, status: "ACTIVE" },
+      select: { user: { select: { email: true, name: true } } },
+    }),
+    deps.prisma.workspace.findUnique({
+      where: { id: notice.workspaceId },
+      select: { slug: true, settings: true },
+    }),
+  ]);
+  if (expiry === null || recipient === null || recipient.user.email === null || workspace === null)
+    return;
+  const described = await expiryKindOf(expiry.kind)?.describe(
+    forTenant(deps.prisma, notice.workspaceId),
+    expiry,
+    { slug: workspace.slug },
+  );
+  if (described === undefined || described === null) return;
+  const zone = zoneOf(workspace.settings);
+  const due = dayOf(expiry.dueOn);
+  const left = daysUntil(dayIn(new Date(), zone), due);
+  const date = new Intl.DateTimeFormat(currentLocale(), {
+    dateStyle: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${due}T12:00:00Z`));
+  const w = expiryNoticeTexts.when;
+  const when =
+    left < 0
+      ? w.past(date)
+      : left === 0
+        ? w.today
+        : left === 1
+          ? w.tomorrow(date)
+          : w.inDays(date, left);
+  const email = buildEmail(job, {
+    recipientName: recipient.user.name,
+    appUrl: deps.appUrl,
+    expiryNotice: {
+      expired: left < 0,
+      what: described.what,
+      when,
+      url: new URL(described.path, deps.appUrl).toString(),
+    },
+  });
+  await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
+}
+
 export async function sendEmailJob(deps: WorkerDeps, payload: unknown): Promise<void> {
   const job: EmailJob = EmailJobSchema.parse(payload);
   // Todo el email (textos, fechas, tamaños) en el idioma del destinatario.
@@ -516,6 +575,10 @@ async function sendEmail(deps: WorkerDeps, job: EmailJob): Promise<void> {
   }
   if (job.kind === "form-notice") {
     await sendFormNoticeEmail(deps, job);
+    return;
+  }
+  if (job.kind === "expiry-notice") {
+    await sendExpiryNoticeEmail(deps, job);
     return;
   }
   if (job.kind === "shared") {

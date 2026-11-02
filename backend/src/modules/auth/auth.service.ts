@@ -29,7 +29,7 @@ import type {
   UpdateProfileSchema,
 } from "./auth.schemas.ts";
 import { MAX_PIN_FAILURES, pinLockMs } from "../pin/pin-rules.ts";
-import { readPinLoginSettings } from "../workspaces/settings.ts";
+import { readPinLoginSettings, readSafetySettings } from "../workspaces/settings.ts";
 import { randomToken, sha256 } from "../../lib/crypto.ts";
 import { userMediaUrl } from "../profile-media/profile-media.service.ts";
 import {
@@ -107,6 +107,8 @@ export interface Account {
       logoKey: string | null;
       /** Idioma por defecto de la empresa. */
       locale: Locale;
+      /** The occupational health and safety module: on or off, and the country's terms. */
+      safety: { enabled: boolean; terms: "es" | "latam" };
     };
     role: { id: string; name: string; base: string };
     capabilities: string[];
@@ -249,6 +251,9 @@ export function createAuthService(deps: AppDeps) {
             logoKey: m.workspace.logoKey,
             locale: readWorkspaceLocale(m.workspace.settings),
             timeZone: zoneOf(m.workspace.settings),
+            safety: (({ enabled, terms }) => ({ enabled, terms }))(
+              readSafetySettings(m.workspace.settings),
+            ),
           },
           role: { id: m.role.id, name: m.role.name, base: m.role.base },
           // El propietario tiene también las capacidades de los plugins instalados.

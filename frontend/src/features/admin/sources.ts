@@ -174,3 +174,29 @@ export function useMemberSource(
     [slug, status],
   );
 }
+
+/** The company's job positions. */
+export function usePositionSource(slug: string): ComboboxSource {
+  return useMemo(
+    () => ({
+      key: [...adminKeys.positions(slug), "combobox"],
+      search: async (q, cursor, signal) => {
+        const result = await adminApi.positions(
+          slug,
+          { q, cursor, pageSize: COMBO_PAGE_SIZE },
+          signal,
+        );
+        return {
+          items: result.items.map((position) => ({ id: position.id, label: position.name })),
+          nextCursor: result.nextCursor,
+        };
+      },
+      byIds: async (ids) =>
+        (await adminApi.positions(slug, { ids })).items.map((position) => ({
+          id: position.id,
+          label: position.name,
+        })),
+    }),
+    [slug],
+  );
+}

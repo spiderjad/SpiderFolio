@@ -119,6 +119,10 @@ export const roleMessages = {
 } as const;
 
 /** Departamentos (9.3). */
+export const positionMessages = {
+  nameTaken: "Ya existe un puesto con ese nombre.",
+} as const;
+
 export const departmentMessages = {
   nameTaken: "Ya existe un departamento con ese nombre.",
   parentCycle:
@@ -748,6 +752,47 @@ export const formMessages = {
   alreadyVoided: "Ese registro ya está anulado.",
   pdfUnavailable:
     "Esta instalación no genera PDF (falta Gotenberg). Exporta en CSV o pide a quien la administra que lo active.",
+} as const;
+
+/** Seguridad y salud laboral (docs/spec/seguridad-salud.md): lo que crea al activarse. */
+export const safetyTexts = {
+  space: {
+    es: {
+      name: "Prevención de riesgos laborales",
+      description: "Evaluaciones de riesgos, EPIs, formación y accidentes.",
+    },
+    latam: {
+      name: "Seguridad y salud en el trabajo",
+      description: "Evaluaciones de riesgos, EPP, capacitación y accidentes.",
+    },
+  },
+  riskAssessmentType: "Evaluación de riesgos",
+  examplePositions: [
+    "Operario de producción",
+    "Operario de cámaras frigoríficas",
+    "Operario de expedición",
+    "Técnico de mantenimiento",
+    "Encargado de turno",
+  ],
+} as const;
+
+/** Vencimientos (docs/spec/seguridad-salud.md, «Motor de vencimientos»): algo vence o venció. */
+export const expiryNoticeTexts = {
+  greeting: (name: string) => `Hola ${name}:`,
+  subject: {
+    soon: (what: string) => `Vence: ${what}`,
+    expired: (what: string) => `Venció: ${what}`,
+  },
+  title: { soon: "Algo está por vencer", expired: "Algo venció" },
+  body: (what: string, when: string) => `«${what}» ${when}.`,
+  when: {
+    inDays: (date: string, days: number) => `vence el ${date} (en ${String(days)} días)`,
+    tomorrow: (date: string) => `vence mañana, ${date}`,
+    today: "vence hoy",
+    past: (date: string) => `venció el ${date}`,
+  },
+  action: "Ver",
+  footnote: "Recibes este aviso porque te toca ocuparte de este vencimiento o porque es tuyo.",
 } as const;
 
 /** Avisos de formularios (docs/spec/formularios.md): no conformidades y períodos. */

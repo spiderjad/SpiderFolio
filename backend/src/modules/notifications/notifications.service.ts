@@ -10,6 +10,7 @@ import { atLeast } from "../access/access.ts";
 import { accessFor } from "../access/access-context.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
 import { parentMapOf, withDescendants } from "../departments/department-tree.ts";
+import { expiryKindOf } from "../expiries/expiries.service.ts";
 import type { NotificationsQuery } from "./notifications.schemas.ts";
 
 /** Hasta cuántas personas reciben un aviso por un acceso dado a un departamento. */
@@ -45,6 +46,9 @@ export const NOTIFICATION_KINDS = [
   "form_nonconforming",
   "form_due",
   "form_overdue",
+  /** Something expires (docs/spec/seguridad-salud.md, «Motor de vencimientos»): `expiryId`, `expiresAt`
+   * = the day it expires and `detail` = the days that were left. */
+  "expiry_due",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -77,6 +81,8 @@ export interface NotificationView {
   invitation: { email: string; departments: string[] } | null;
   /** «email_failing»: the reason code (AUTH, CONNECTION…). */
   detail: string | null;
+  /** «expiry_due»: what expires and where it opens; null if it no longer exists. */
+  expiry: { what: string; path: string } | null;
 }
 
 export async function listNotifications(
@@ -140,6 +146,19 @@ export async function listNotifications(
           select: { id: true, email: true, departmentIds: true },
         }),
   ]);
+  const expiryIds = rows.flatMap((row) =>
+    row.kind === "expiry_due" && row.expiryId !== null ? [row.expiryId] : [],
+  );
+  const expiryById = new Map<string, NonNullable<NotificationView["expiry"]>>();
+  if (expiryIds.length > 0) {
+    const expiries = await ctx.db.expiry.findMany({ where: { id: { in: expiryIds } } });
+    for (const expiry of expiries) {
+      const described = await expiryKindOf(expiry.kind)?.describe(ctx.db, expiry, {
+        slug: ctx.tenant.workspaceSlug,
+      });
+      if (described !== undefined && described !== null) expiryById.set(expiry.id, described);
+    }
+  }
   const departmentIds = [...new Set(invitations.flatMap((row) => row.departmentIds))];
   const departments =
     departmentIds.length === 0
@@ -216,6 +235,7 @@ export async function listNotifications(
       expiresAt: row.expiresAt,
       invitation: row.invitationId === null ? null : (invitationById.get(row.invitationId) ?? null),
       detail: row.detail,
+      expiry: row.expiryId === null ? null : (expiryById.get(row.expiryId) ?? null),
     };
   });
   return { ...pageOf(items, total, query), unread };

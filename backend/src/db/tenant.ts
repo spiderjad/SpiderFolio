@@ -83,13 +83,18 @@ export interface TenantDb {
   downloadToken: TenantDelegate<PrismaClient["downloadToken"], Op>;
   zipExport: TenantDelegate<PrismaClient["zipExport"], Op>;
   pageContent: TenantDelegate<PrismaClient["pageContent"], Op>;
-  formVersion: TenantDelegate<PrismaClient["formVersion"], "findFirst" | "findMany" | "count" | "create">;
+  formVersion: TenantDelegate<
+    PrismaClient["formVersion"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   formRecord: TenantDelegate<
     PrismaClient["formRecord"],
     "findFirst" | "findMany" | "count" | "create" | "updateMany"
   >;
   formFile: TenantDelegate<PrismaClient["formFile"], Op>;
   formSettings: TenantDelegate<PrismaClient["formSettings"], Op>;
+  position: TenantDelegate<PrismaClient["position"], Op>;
+  expiry: TenantDelegate<PrismaClient["expiry"], Op>;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -173,9 +178,14 @@ const delegates = {
   // Versions are never edited or deleted: only read and added.
   formVersion: { model: "FormVersion", ops: ["findFirst", "findMany", "count", "create"] },
   // Records are never deleted, and their answers never change: updateMany is only for voiding one.
-  formRecord: { model: "FormRecord", ops: ["findFirst", "findMany", "count", "create", "updateMany"] },
+  formRecord: {
+    model: "FormRecord",
+    ops: ["findFirst", "findMany", "count", "create", "updateMany"],
+  },
   formFile: { model: "FormFile", ops: [...readOps, ...writeOps] },
   formSettings: { model: "FormSettings", ops: [...readOps, ...writeOps] },
+  position: { model: "Position", ops: [...readOps, ...writeOps] },
+  expiry: { model: "Expiry", ops: [...readOps, ...writeOps] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

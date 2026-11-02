@@ -9,6 +9,7 @@ import {
   invitationEmailTexts,
   documentNoticeTexts,
   formNoticeTexts,
+  expiryNoticeTexts,
   mentionEmailTexts,
   sharedEmailTexts,
 } from "../i18n/index.ts";
@@ -40,6 +41,8 @@ export interface EmailContext {
     detail: string;
     url: string;
   };
+  /** Something expires (expiry-notice): what, when in words, and where it opens. */
+  expiryNotice?: { expired: boolean; what: string; when: string; url: string };
   /** Datos de un aviso de documento controlado (document-notice). */
   documentNotice?: {
     kind:
@@ -264,6 +267,19 @@ export function buildEmail(job: EmailJob, context: EmailContext): EmailContent {
             : t[notice.kind].body(notice.what, notice.detail),
         ],
         action: { label: text.action, url: notice.url },
+        footnotes: [t.footnote],
+      });
+    }
+    case "expiry-notice": {
+      const t = expiryNoticeTexts;
+      const notice = context.expiryNotice;
+      if (notice === undefined) throw new Error("Faltan los datos del vencimiento");
+      const state = notice.expired ? "expired" : "soon";
+      return renderEmail({
+        subject: t.subject[state](notice.what),
+        title: t.title[state],
+        paragraphs: [t.greeting(name), t.body(notice.what, notice.when)],
+        action: { label: t.action, url: notice.url },
         footnotes: [t.footnote],
       });
     }

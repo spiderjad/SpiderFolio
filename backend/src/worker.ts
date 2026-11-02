@@ -28,6 +28,7 @@ import { extractFileText, reindexSearch } from "./modules/search/search-jobs.ts"
 import { sweepPageImages } from "./modules/nodes/page-image-sweep.ts";
 import { sweepFormFiles } from "./modules/forms/form-file-sweep.ts";
 import { sendFormReminders } from "./modules/forms/form-notices.ts";
+import { sendExpiryNotices } from "./modules/expiries/expiry-notices.ts";
 import { runZipExport } from "./modules/downloads/zip-export.ts";
 import { runZipImport } from "./modules/imports/zip-import.ts";
 import { sweepFileVersions } from "./modules/files/version-retention.ts";
@@ -140,6 +141,9 @@ export async function startWorker(boss: PgBoss, deps: WorkerDeps): Promise<void>
   }
   await boss.work("form-reminders", async () => {
     await sendFormReminders({ prisma: deps.prisma, logger: deps.logger, jobs });
+  });
+  await boss.work("expiry-due-notices", async () => {
+    await sendExpiryNotices({ prisma: deps.prisma, logger: deps.logger, jobs });
   });
   await boss.work("reading-reminders", async () => {
     await sendReadingReminders({ prisma: deps.prisma, logger: deps.logger, jobs });

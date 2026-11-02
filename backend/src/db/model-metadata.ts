@@ -60,6 +60,8 @@ export const modelMetadata = {
       formRecords: "FormRecord",
       formFiles: "FormFile",
       formSettings: "FormSettings",
+      positions: "Position",
+      expiries: "Expiry",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -188,6 +190,8 @@ export const modelMetadata = {
     relations: { workspace: "Workspace", node: "Node", record: "FormRecord" },
   },
   FormSettings: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
+  Position: { scope: "tenant", relations: { workspace: "Workspace" } },
+  Expiry: { scope: "tenant", relations: { workspace: "Workspace" } },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {
     scope: "tenant",

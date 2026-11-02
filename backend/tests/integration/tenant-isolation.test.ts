@@ -53,6 +53,31 @@ const cases: IsolationCase[] = [
   { method: "delete", path: "/admin/roles/:id", url: () => "/admin/roles/x" },
   { method: "get", path: "/admin/capabilities", url: () => "/admin/capabilities" },
   { method: "get", path: "/admin/departments", url: () => "/admin/departments" },
+  { method: "get", path: "/admin/positions", url: () => "/admin/positions" },
+  {
+    method: "post",
+    path: "/admin/positions",
+    url: () => "/admin/positions",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "patch",
+    path: "/admin/positions/:id",
+    url: () => "/admin/positions/x",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "delete",
+    path: "/admin/positions/:id",
+    url: () => "/admin/positions/x",
+  },
+  { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
+  {
+    method: "put",
+    path: "/admin/safety",
+    url: () => "/admin/safety",
+    body: { terms: "latam" },
+  },
   { method: "get", path: "/admin/departments/options", url: () => "/admin/departments/options" },
   {
     method: "post",

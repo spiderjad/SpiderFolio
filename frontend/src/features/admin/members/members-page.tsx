@@ -51,7 +51,7 @@ import { memberStatusChoices } from "../choices";
 import { useCan, useOwnScope } from "../guards";
 import { LimitReachedDialog } from "../limit-dialog";
 import { baseRank, canAssignRole } from "../lookups";
-import { useDepartmentSource, useRoleSource } from "../sources";
+import { useDepartmentSource, usePositionSource, useRoleSource } from "../sources";
 import { SeatMeters } from "../seat-meters";
 import { BulkBar } from "./bulk-bar";
 import { EditMemberDialog } from "./edit-member-dialog";
@@ -88,6 +88,7 @@ function readQuery(params: URLSearchParams): MemberQuery {
     q: params.get("q") ?? "",
     role: params.get("role") ?? "",
     department: params.get("department") ?? "",
+    position: params.get("position") ?? "",
     group: group ?? "",
     status: status === "ACTIVE" || status === "SUSPENDED" ? status : "",
     pageSize: PAGE_SIZE,
@@ -127,6 +128,7 @@ export function MembersPage() {
   );
   const roleSource = useRoleSource(workspaceSlug, { pinned: pinnedGroups });
   const departmentSource = useDepartmentSource(workspaceSlug);
+  const positionSource = usePositionSource(workspaceSlug);
   // El selector de rol de cada fila solo ofrece los roles que quien mira puede asignar.
   const actor = useMemo(
     () => ({ base: membership.role.base, capabilities: membership.capabilities }),
@@ -477,6 +479,7 @@ export function MembersPage() {
     query.q !== "" ||
     query.role !== "" ||
     query.department !== "" ||
+    (query.position ?? "") !== "" ||
     query.group !== "" ||
     query.status !== "";
   const confirmText = confirm === null ? null : t.confirm[confirm.kind];
@@ -622,6 +625,20 @@ export function MembersPage() {
                 value={query.department === "" ? null : query.department}
                 onChange={(option) => {
                   update({ department: option?.id ?? "" });
+                }}
+              />
+              <Combobox
+                compact
+                className={FILTER_SELECT_CLASS}
+                clearable
+                label={t.filters.position}
+                placeholder={`${t.filters.position}: ${texts.admin.common.all}`}
+                source={positionSource}
+                value={
+                  query.position === undefined || query.position === "" ? null : query.position
+                }
+                onChange={(option) => {
+                  update({ position: option?.id ?? "" });
                 }}
               />
               <Combobox

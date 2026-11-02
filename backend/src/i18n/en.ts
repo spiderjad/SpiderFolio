@@ -132,6 +132,10 @@ export const roleMessages: Catalog<typeof Es.roleMessages> = {
 };
 
 /** Departments (9.3). */
+export const positionMessages: Catalog<typeof Es.positionMessages> = {
+  nameTaken: "There's already a position with that name.",
+};
+
 export const departmentMessages: Catalog<typeof Es.departmentMessages> = {
   nameTaken: "A department with that name already exists.",
   parentCycle: "A department can't be inside itself or one of its subdepartments.",
@@ -771,6 +775,46 @@ export const formMessages: Catalog<typeof Es.formMessages> = {
     "This install doesn't make PDFs (Gotenberg is missing). Export a CSV or ask whoever runs it to turn it on.",
 };
 
+export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
+  space: {
+    es: {
+      name: "Occupational health and safety",
+      description: "Risk assessments, PPE, training and accidents.",
+    },
+    latam: {
+      name: "Occupational health and safety",
+      description: "Risk assessments, PPE, training and accidents.",
+    },
+  },
+  riskAssessmentType: "Risk assessment",
+  examplePositions: [
+    "Production operator",
+    "Cold room operator",
+    "Dispatch operator",
+    "Maintenance technician",
+    "Shift supervisor",
+  ],
+};
+
+export const expiryNoticeTexts: Catalog<typeof Es.expiryNoticeTexts> = {
+  greeting: (name: string) => `Hi ${name},`,
+  subject: {
+    soon: (what: string) => `Expiring: ${what}`,
+    expired: (what: string) => `Expired: ${what}`,
+  },
+  title: { soon: "Something is about to expire", expired: "Something expired" },
+  body: (what: string, when: string) => `“${what}” ${when}.`,
+  when: {
+    inDays: (date: string, days: number) => `expires on ${date} (in ${String(days)} days)`,
+    tomorrow: (date: string) => `expires tomorrow, ${date}`,
+    today: "expires today",
+    past: (date: string) => `expired on ${date}`,
+  },
+  action: "View",
+  footnote:
+    "You get this notice because this expiry is yours or you're the one to take care of it.",
+};
+
 export const formNoticeTexts: Catalog<typeof Es.formNoticeTexts> = {
   greeting: (name: string) => `Hello ${name},`,
   form_nonconforming: {
@@ -826,6 +870,7 @@ export const formExportTexts: Catalog<typeof Es.formExportTexts> = {
   summary: (space: string, at: string, count: number) =>
     `${space} · Exported on ${at} · ${count === 1 ? "1 record" : `${String(count)} records`}`,
   empty: "No records with those filters.",
-  tooMany: (max: string) => `There are more than ${max} records. Narrow the dates down and export again.`,
+  tooMany: (max: string) =>
+    `There are more than ${max} records. Narrow the dates down and export again.`,
   pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
 };

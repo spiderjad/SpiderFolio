@@ -66,7 +66,8 @@ export async function emailLocale(prisma: PrismaClient, job: EmailJob): Promise<
       return ofMembership(prisma, permission?.membershipId ?? null);
     }
     case "document-notice":
-    case "form-notice": {
+    case "form-notice":
+    case "expiry-notice": {
       const notice = await prisma.notification.findUnique({
         where: { id: job.notificationId },
         select: { membershipId: true },

@@ -17,6 +17,8 @@ import { accessAuditRoutes } from "./modules/access/access-audit.routes.ts";
 import { memberRoutes } from "./modules/members/members.routes.ts";
 import { invitationRoutes } from "./modules/invitations/invitations.routes.ts";
 import { departmentRoutes } from "./modules/departments/departments.routes.ts";
+import { positionRoutes } from "./modules/positions/positions.routes.ts";
+import { safetyRoutes } from "./modules/safety/safety.routes.ts";
 import { connectionsRoutes } from "./modules/oauth/connections.routes.ts";
 import { directoryRoutes } from "./modules/directory/directory.routes.ts";
 import { fileRoutes } from "./modules/files/files.routes.ts";
@@ -97,6 +99,8 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...roleRoutes(deps),
     ...auditLogRoutes(deps),
     ...departmentRoutes(),
+    ...positionRoutes(),
+    ...safetyRoutes(),
     ...invitationRoutes(deps),
     ...memberRoutes(deps),
     ...directoryRoutes(),

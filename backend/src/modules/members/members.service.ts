@@ -28,6 +28,7 @@ import type {
 } from "./members.schemas.ts";
 import { resolveMemberScope, scopeWhere } from "../departments/departments.scope.ts";
 import { assertGlobalManager } from "../people/people-scope.ts";
+import { assertPosition } from "../positions/positions.service.ts";
 
 export interface MemberDeps {
   prisma: PrismaClient;
@@ -45,6 +46,8 @@ export interface MemberView {
   email: string | null;
   emailVerified: boolean;
   jobTitle: string | null;
+  /** The company's job position (Position), if any. */
+  positionId: string | null;
   roleId: string;
   roleName: string;
   roleBase: SystemRole;
@@ -73,6 +76,7 @@ export interface MemberView {
 export const memberSelect = {
   id: true,
   jobTitle: true,
+  positionId: true,
   status: true,
   seatType: true,
   createdAt: true,
@@ -108,6 +112,7 @@ export function toView(row: MemberRow, selfUserId: string): MemberView {
     email: row.user.email,
     emailVerified: row.user.emailVerifiedAt !== null,
     jobTitle: row.jobTitle,
+    positionId: row.positionId,
     roleId: row.role.id,
     roleName: row.role.name,
     roleBase: row.role.base,
@@ -175,7 +180,10 @@ export function groupWhere(group: MemberGroup): Prisma.MembershipWhereInput {
 }
 
 export function whereOf(
-  query: Pick<ListMembersQuery, "q" | "ids" | "status" | "role" | "department" | "group">,
+  query: Pick<
+    ListMembersQuery,
+    "q" | "ids" | "status" | "role" | "department" | "position" | "group"
+  >,
 ): Prisma.MembershipWhereInput {
   const q = query.q;
   return {
@@ -187,6 +195,9 @@ export function whereOf(
       : query.department === "none"
         ? { departments: { none: {} } }
         : { departments: { some: { departmentId: query.department } } }),
+    ...(query.position === undefined
+      ? {}
+      : { positionId: query.position === "none" ? null : query.position }),
     ...(query.group === undefined ? {} : { AND: [groupWhere(query.group)] }),
     ...(q === undefined || q === ""
       ? {}
@@ -516,6 +527,10 @@ export async function updateMember(
   const departmentIds = isGuest ? [] : input.departmentIds;
   const clearDepartments = isGuest && target.departmentIds.length > 0;
 
+  if (input.positionId !== undefined && input.positionId !== null) {
+    await assertPosition(ctx, input.positionId);
+  }
+
   const identity = await changeIdentity(ctx, deps, target, input);
 
   await ctx.db.$transaction(async (tx) => {
@@ -525,6 +540,7 @@ export async function updateMember(
         ...(role.id === target.roleId ? {} : { roleId: role.id }),
         ...(seat === target.seatType ? {} : { seatType: seat }),
         ...(input.jobTitle === undefined ? {} : { jobTitle: input.jobTitle }),
+        ...(input.positionId === undefined ? {} : { positionId: input.positionId }),
       },
     });
     if (departmentIds !== undefined || clearDepartments) {
@@ -551,6 +567,7 @@ export async function updateMember(
           after: { roleId: role.id, seatType: seat },
           ...(input.departmentIds === undefined ? {} : { departmentIds: input.departmentIds }),
           ...(input.jobTitle === undefined ? {} : { jobTitleChanged: true }),
+          ...(input.positionId === undefined ? {} : { positionId: input.positionId }),
           ...(identity.nameChanged ? { nameChanged: true } : {}),
           ...(identity.emailChanged ? { emailChanged: true } : {}),
         },

@@ -156,6 +156,54 @@ const FORM: Record<
 };
 const demoForms = new Map<Locale, { id: string; record: string }>();
 
+/** The demo company's job positions (not in the seed), with how many people each one gets. */
+const POSITIONS: Record<Locale, [string, number][]> = {
+  es: [
+    ["Operario de producción", 3],
+    ["Operario de cámaras frigoríficas", 2],
+    ["Técnico de mantenimiento", 1],
+    ["Encargado de turno", 1],
+    ["Operario de expedición", 0],
+  ],
+  en: [
+    ["Production operator", 3],
+    ["Cold room operator", 2],
+    ["Maintenance technician", 1],
+    ["Shift supervisor", 1],
+    ["Dispatch operator", 0],
+  ],
+};
+
+/** Creates the positions through the API the first time and gives them to some members. */
+async function demoPositions(locale: Locale, slug: string): Promise<void> {
+  const { rows } = await db.query<{ count: string }>(
+    `SELECT count(*) FROM "Position" p JOIN "Workspace" w ON w.id = p."workspaceId" WHERE w.slug = $1`,
+    [slug],
+  );
+  if (Number(rows[0]?.count ?? 0) > 0) return;
+  const owner = await ownerToken(locale);
+  const members = await db.query<{ id: string }>(
+    `SELECT m.id FROM "Membership" m JOIN "Workspace" w ON w.id = m."workspaceId"
+       JOIN "Role" r ON r.id = m."roleId"
+      WHERE w.slug = $1 AND r.base = 'MEMBER' AND m.status = 'ACTIVE' ORDER BY m."createdAt", m.id`,
+    [slug],
+  );
+  let next = 0;
+  for (const [name, people] of POSITIONS[locale]) {
+    const { position } = (await formCall(owner, slug, "POST", "/admin/positions", { name })) as {
+      position: { id: string };
+    };
+    for (let i = 0; i < people; i += 1) {
+      const member = members.rows[next];
+      next += 1;
+      if (member === undefined) break;
+      await formCall(owner, slug, "PATCH", `/admin/members/${member.id}`, {
+        positionId: position.id,
+      });
+    }
+  }
+}
+
 async function formCall(token: string, slug: string, method: string, path: string, body: unknown) {
   const res = await fetch(`${BASE}/api/v1/w/${slug}${path}`, {
     method,
@@ -294,6 +342,12 @@ const CAPTURES: Capture[] = [
   { name: "accesos", who: "owner", path: (i) => `/app/${i.slug}/admin/access` },
   { name: "miembros", who: "owner", path: (i) => `/app/${i.slug}/admin/members` },
   { name: "departamentos", who: "owner", path: (i) => `/app/${i.slug}/admin/departments` },
+  {
+    name: "puestos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/admin/positions`,
+    before: ({ slug, locale }) => demoPositions(locale, slug),
+  },
   { name: "roles", who: "owner", path: (i) => `/app/${i.slug}/admin/roles` },
   { name: "seguridad", who: "owner", path: (i) => `/app/${i.slug}/admin/security` },
   {

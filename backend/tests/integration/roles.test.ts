@@ -231,7 +231,7 @@ describe("roles del panel", () => {
     expect(res.status).toBe(200);
     const body = res.body as { groups: { id: string }[]; all: string[]; grantable: string[] };
     expect(body.groups.map((g) => g.id)).toContain("members");
-    expect(body.all).toHaveLength(22);
+    expect(body.all).toHaveLength(23);
     expect(body.grantable).toEqual(body.all);
   });
 });

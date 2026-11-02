@@ -277,6 +277,8 @@ export const es = {
     formNonConforming: (who: string, what: string) =>
       `${who} envió un registro no conforme de «${what}».`,
     formDue: (what: string) => `Toca llenar «${what}».`,
+    expiryDue: (what: string, when: string) => `«${what}» ${when}.`,
+    expiryGone: "Un vencimiento que ya no existe.",
     formOverdue: (what: string) => `«${what}» quedó sin llenar en el período anterior.`,
     directorySyncStopped:
       "El directorio de tu empresa dejó de sincronizarse porque su plugin ya no está activo: quien se va de la empresa ya no se suspende solo. Revisa Licencia y plugins.",
@@ -306,6 +308,8 @@ export const es = {
     approvalChanges: (who: string, what: string) =>
       who === "" ? `Piden cambios en «${what}»` : `${who} pidió cambios en «${what}»`,
     expiresToday: "vence hoy",
+    expiredDaysAgo: (days: number) =>
+      days === 1 ? "venció ayer" : `venció hace ${String(days)} días`,
     expiresTomorrow: "vence mañana",
     expiresInDays: (days: number) => `vence en ${String(days)} días`,
     sharedToast: (count: number) =>

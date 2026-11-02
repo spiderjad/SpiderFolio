@@ -41,6 +41,8 @@ export const ListMembersQuerySchema = z.object({
   role: Id.optional(),
   /** Un departamento, o "none" para quien no pertenece a ninguno. */
   department: Id.optional(),
+  /** A position (docs/spec/seguridad-salud.md), or "none" for whoever has none. */
+  position: Id.optional(),
   group: z.enum(memberGroups).optional(),
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
   ...pageShape(sortFields, "hierarchy"),
@@ -64,6 +66,8 @@ export const UpdateMemberSchema = z
     seatType: z.enum(["FULL", "READER"]),
     departmentIds: IdList,
     jobTitle: z.string().trim().max(80).nullable(),
+    /** The company's job position (null: none). */
+    positionId: Id.nullable(),
     name: z.string().trim().min(2).max(80).transform(normalizePersonName),
     email: EmailSchema,
   })

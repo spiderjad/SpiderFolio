@@ -37,6 +37,9 @@ export const EmailJobSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("document-notice"), notificationId: z.string().min(1) }),
   // A form's notice (non-conformity, period due or overdue): the worker reads the Notification.
   z.strictObject({ kind: z.literal("form-notice"), notificationId: z.string().min(1) }),
+  // Something expires (docs/spec/seguridad-salud.md, «Motor de vencimientos»): the worker reads the
+  // Notification and asks the expiry's kind how to name it.
+  z.strictObject({ kind: z.literal("expiry-notice"), notificationId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-ready"), exportId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-failed"), exportId: z.string().min(1) }),
 ]);
@@ -182,6 +185,11 @@ export const queues = {
     schema: MaintenanceJobSchema,
     options: { retryLimit: 2, expireInSeconds: 900, deleteAfterSeconds: 7 * 24 * 3600 },
   },
+  // Expiries of any kind of item: thresholds reached, at 8:00 in each company's zone.
+  "expiry-due-notices": {
+    schema: MaintenanceJobSchema,
+    options: { retryLimit: 2, expireInSeconds: 900, deleteAfterSeconds: 7 * 24 * 3600 },
+  },
   // Semanal: recorta el registro de auditoría según la retención que fija cada workspace (si fija una).
   "audit-retention": {
     schema: MaintenanceJobSchema,
@@ -213,6 +221,7 @@ export const schedules = [
   { queue: "access-expiry-notices", cron: "10 * * * *", tz: "UTC" },
   { queue: "reading-reminders", cron: "5 * * * *", tz: "UTC" },
   { queue: "form-reminders", cron: "7 * * * *", tz: "UTC" },
+  { queue: "expiry-due-notices", cron: "12 * * * *", tz: "UTC" },
   { queue: "search-reindex", cron: "40 2 * * *", tz: "UTC" },
   { queue: "bian-index", cron: "* * * * *", tz: "UTC" },
 ] as const;

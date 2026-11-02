@@ -25,6 +25,7 @@ export const capabilities = [
   "audit.export",
   "security.manage",
   "workspace.settings",
+  "safety.manage",
 ] as const;
 
 /** Las del núcleo. */

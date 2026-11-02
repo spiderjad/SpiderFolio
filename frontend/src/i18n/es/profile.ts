@@ -58,7 +58,7 @@ export const profileTexts = {
     description: "Así te ven las demás personas.",
     name: "Nombre y apellido",
     nameHint: "Es el nombre de tu cuenta: se ve igual en todas tus empresas.",
-    jobTitle: "Puesto",
+    jobTitle: "Cargo",
     jobTitleHint: "Solo en esta empresa.",
     jobTitlePlaceholder: "Ej. Responsable de calidad",
     saved: "Datos guardados.",

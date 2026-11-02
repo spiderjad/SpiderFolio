@@ -27,6 +27,10 @@ export function RequireDepartments() {
   return <RequireCapability section="departments" />;
 }
 
+export function RequirePositions() {
+  return <RequireCapability section="positions" />;
+}
+
 export function RequireBian() {
   return <RequireCapability section="bian" />;
 }

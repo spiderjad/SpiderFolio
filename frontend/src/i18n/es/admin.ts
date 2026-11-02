@@ -100,6 +100,11 @@ export const capabilityTexts = {
     label: "Ajustes de la empresa",
     description: "Cambia el nombre, el logo y el color del workspace, y fija sus límites.",
   },
+  "safety.manage": {
+    label: "Gestionar seguridad y salud laboral",
+    description:
+      "Gestiona EPIs, accidentes, formación y aptitud del módulo de seguridad y salud laboral (PRL o SST).",
+  },
 } as const;
 
 export const capabilityGroupTexts = {
@@ -108,6 +113,7 @@ export const capabilityGroupTexts = {
   content: "Contenido",
   documents: "Documentos controlados",
   audit: "Auditoría",
+  safety: "Seguridad y salud laboral",
   administration: "Administración",
   plugins: "Plugins",
 } as const;
@@ -117,6 +123,7 @@ export const adminTexts = {
     group: "Gestión",
     members: "Miembros",
     departments: "Departamentos",
+    positions: "Puestos",
     roles: "Roles y permisos",
     access: "Accesos",
     security: "Seguridad",
@@ -133,6 +140,21 @@ export const adminTexts = {
     dismiss: "Ocultar hasta la próxima versión",
   },
   security: {
+    safety: {
+      title: "Seguridad y salud laboral",
+      text: "Entrega de EPIs, accidentes e incidentes, formación y aptitud, con los puestos, los documentos controlados y los formularios. Desactivarlo oculta el módulo sin borrar nada.",
+      enable: "Activar el módulo",
+      enableHint:
+        "La primera vez se crea su espacio y el tipo de documento «Evaluación de riesgos» (EVR, revisión cada 12 meses).",
+      enabledHint: "Activado. Desactivarlo oculta el menú y los avisos; los datos se conservan.",
+      examples: "Cargar ejemplos del sector alimentario",
+      examplesHint:
+        "Puestos de ejemplo (operario de producción, de cámaras, de expedición…). Nunca pisa lo que ya tengas con el mismo nombre.",
+      terms: "Términos",
+      termsHint: "Cómo se llaman las cosas en la app y en los avisos.",
+      termsOptions: { es: "España: PRL y EPI", latam: "Latinoamérica: SST y EPP" },
+      space: "Espacio del módulo:",
+    },
     language: {
       title: "Idioma y zona horaria",
       text: "El idioma lo ven quienes no eligieron uno en Mi perfil, y se usa en las invitaciones y en los PDF. La zona horaria rige todas las fechas y horas de la app, los emails y los PDF.",
@@ -404,10 +426,11 @@ export const adminTexts = {
     importCsv: "Importar CSV",
     exportCsv: "Exportar CSV",
     exportDone: (rows: number) => `Exportadas ${String(rows)} personas.`,
-    searchPlaceholder: "Buscar por nombre, email o puesto",
+    searchPlaceholder: "Buscar por nombre, email o cargo",
     filters: {
       role: "Rol",
       department: "Departamento",
+      position: "Puesto",
       status: "Estado",
       managers: "Jefes de departamento",
     },
@@ -653,8 +676,12 @@ export const adminTexts = {
       departments: "Departamentos",
       noDepartments: "Todavía no hay departamentos.",
       guestDepartments: "Un invitado externo no entra a departamentos.",
-      jobTitle: "Puesto",
+      jobTitle: "Cargo",
       jobTitlePlaceholder: "Ej. Responsable de calidad",
+      position: "Puesto",
+      positionHint:
+        "De la lista de Puestos: lo que la empresa pide por puesto (lecturas, EPIs, formación). El cargo es el texto que se ve junto al nombre.",
+      noPosition: "Sin puesto",
       name: "Nombre y apellido",
       email: "Email",
       emailHint:
@@ -781,6 +808,43 @@ export const adminTexts = {
       already_member: "Ya es miembro",
       already_invited: "Ya tiene una invitación pendiente",
     } as Record<string, string>,
+  },
+  positions: {
+    title: "Puestos",
+    subtitle:
+      "Los puestos de trabajo de tu empresa. Cada persona tiene uno y sirve para lo que se pide por puesto: lecturas, EPIs, formación.",
+    create: "Nuevo puesto",
+    searchPlaceholder: "Buscar un puesto",
+    columns: { name: "Puesto", people: "Personas", actions: "Acciones" },
+    nobody: "Nadie",
+    people: (n: number) => (n === 1 ? "1 persona" : `${String(n)} personas`),
+    edit: (name: string) => `Editar ${name}`,
+    delete: (name: string) => `Borrar ${name}`,
+    deleteTitle: (name: string) => `¿Borrar el puesto «${name}»?`,
+    deleteText: (people: number) =>
+      people === 0
+        ? "Nadie tiene este puesto."
+        : people === 1
+          ? "1 persona tiene este puesto y quedará sin puesto."
+          : `${String(people)} personas tienen este puesto y quedarán sin puesto.`,
+    deleting: "Borrando…",
+    noResults: "Ningún puesto coincide con la búsqueda.",
+    empty: {
+      title: "Todavía no hay puestos",
+      text: "Crea los puestos de tu empresa (por ejemplo, «Operario de cámaras») y asígnalos a cada persona desde Miembros.",
+    },
+    form: {
+      createTitle: "Nuevo puesto",
+      editTitle: "Editar puesto",
+      name: "Nombre",
+      nameHint: "Ejemplo: «Operario de producción».",
+      description: "Descripción (opcional)",
+    },
+    toasts: {
+      created: "Puesto creado.",
+      updated: "Puesto actualizado.",
+      deleted: "Puesto borrado.",
+    },
   },
   departments: {
     title: "Departamentos",

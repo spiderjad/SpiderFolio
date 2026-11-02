@@ -61,6 +61,25 @@ export function readBianGuests(settings: unknown): boolean {
   return raw === true;
 }
 
+/**
+ * The occupational health and safety module (docs/spec/seguridad-salud.md): on or off, the country's
+ * terms (es: PRL and EPI in Spain; latam: SST and EPP) and the module's space once it's created.
+ */
+export const SafetySettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  terms: z.enum(["es", "latam"]).default("es"),
+  spaceId: z.string().min(1).max(64).optional(),
+});
+
+export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
+
+/** The module's settings; off with data missing or not valid. */
+export function readSafetySettings(settings: unknown): SafetySettings {
+  const raw = (settings as { safety?: unknown } | null | undefined)?.safety;
+  const parsed = SafetySettingsSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : { enabled: false, terms: "es" };
+}
+
 export const WorkspaceSettingsSchema = z.object({
   timezone: z.string().refine(isTimeZone, { error: () => validationMessages.invalidTimeZone }),
   locale: z.enum(LOCALES),
@@ -70,6 +89,7 @@ export const WorkspaceSettingsSchema = z.object({
   allowSelfApproval: z.boolean().optional(),
   bianEnabled: z.boolean().optional(),
   bianGuests: z.boolean().optional(),
+  safety: SafetySettingsSchema.optional(),
 });
 
 export type WorkspaceSettings = z.infer<typeof WorkspaceSettingsSchema>;

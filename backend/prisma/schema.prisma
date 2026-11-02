@@ -245,6 +245,8 @@ model Workspace {
   formRecords         FormRecord[]
   formFiles           FormFile[]
   formSettings        FormSettings[]
+  positions           Position[]
+  expiries            Expiry[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -300,6 +302,8 @@ model Membership {
   status      MemberStatus @default(ACTIVE)
   seatType    SeatType     @default(FULL) // ver 9A.4
   jobTitle    String?
+  /// The company's job position (Position; no FK, like Mention): one per person.
+  positionId  String?
   createdAt   DateTime     @default(now())
   lastSeenAt  DateTime?
 
@@ -324,6 +328,7 @@ model Membership {
   @@index([workspaceId, seatType])
   @@index([workspaceId, createdAt])
   @@index([workspaceId, lastSeenAt])
+  @@index([workspaceId, positionId])
 }
 
 /// Credencial de usuario + PIN de una membresía (7.6). Una fila por persona sin email; el
@@ -368,6 +373,53 @@ model Department {
   @@unique([workspaceId, name])
   @@unique([id, workspaceId])
   @@index([workspaceId, parentId])
+}
+
+/// A job position of the company (docs/spec/seguridad-salud.md, «Puestos»): assigned to people
+/// (Membership.positionId) and used for obligations by position (readings, PPE, training).
+model Position {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  /// Lowercase name: unique per company regardless of case.
+  nameKey     String
+  description String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, nameKey])
+  @@unique([id, workspaceId])
+}
+
+/// A date that expires on any kind of item, with notices (docs/spec/seguridad-salud.md, «Motor de
+/// vencimientos»). `kind` names the item type (safety.ppe, safety.training…) and `subjectId` the item
+/// in its own table (no FK). Notices go out at 8:00 in the company's zone when a threshold is reached.
+model Expiry {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  kind          String
+  subjectId     String
+  /// The person it is about, if any (membership; no FK).
+  membershipId  String?
+  /// Who has to take care of it (membership; no FK).
+  responsibleId String?
+  /// The company day it expires on.
+  dueOn         DateTime  @db.Date
+  /// Days before dueOn to give notice (0 = the same day).
+  noticeDays    Int[]     @default([30, 7, 0])
+  /// The thresholds already notified (moving dueOn clears them).
+  noticesSent   Int[]     @default([])
+  /// Renewed, replaced or no longer applies: no more notices.
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, kind, subjectId])
+  @@index([workspaceId, dueOn])
+  @@index([workspaceId, membershipId])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único
@@ -968,6 +1020,8 @@ model Notification {
   version      Int?
   /// El vencimiento del que se avisa («expiring»).
   expiresAt    DateTime?
+  /// The Expiry an «expiry_due» notice is about (no FK: if it goes, the notice stays without detail).
+  expiryId     String?
   /// Evita avisar dos veces lo mismo (el job diario puede repetir).
   dedupeKey    String?
   /// Detail without free text: the reason code of an «email_failing» notice (AUTH, CONNECTION…).

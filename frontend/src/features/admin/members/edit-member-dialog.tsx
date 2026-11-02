@@ -13,7 +13,7 @@ import { useCapabilities } from "../guards";
 import { SEAT_AUTO, seatChoices } from "../choices";
 import { LimitReachedDialog } from "../limit-dialog";
 import { canAssignRole } from "../lookups";
-import { useDepartmentSource, useRoleSource } from "../sources";
+import { useDepartmentSource, usePositionSource, useRoleSource } from "../sources";
 import { useMembership } from "@/features/home/workspace-layout";
 import { leadershipReason } from "./role-badge";
 import { texts } from "@/i18n";
@@ -53,11 +53,13 @@ function EditForm({ member, onClose }: { member: MemberView; onClose: () => void
   const roleSource = useRoleSource(workspaceSlug, { accept });
   const seatSource = useStaticSource("seat", seatChoices);
   const departmentSource = useDepartmentSource(workspaceSlug);
+  const positionSource = usePositionSource(workspaceSlug);
 
   const [roleId, setRoleId] = useState(member.roleId);
   const [roleBase, setRoleBase] = useState<string>(member.roleBase);
   const [seat, setSeat] = useState<"" | SeatType>("");
   const [jobTitle, setJobTitle] = useState(member.jobTitle ?? "");
+  const [positionId, setPositionId] = useState<string | null>(member.positionId);
   const [name, setName] = useState(member.name);
   const [email, setEmail] = useState(member.email ?? "");
   // El email solo se corrige mientras no esté confirmado (y quien entra con PIN no tiene).
@@ -79,6 +81,7 @@ function EditForm({ member, onClose }: { member: MemberView; onClose: () => void
         ...(seat === "" ? {} : { seatType: seat }),
         ...(sameDepartments ? {} : { departmentIds: isGuest ? [] : departmentIds }),
         ...(title === member.jobTitle ? {} : { jobTitle: title }),
+        ...(positionId === member.positionId ? {} : { positionId }),
         ...(name.trim() === member.name ? {} : { name: name.trim() }),
         ...(emailLocked || email.trim() === (member.email ?? "") ? {} : { email: email.trim() }),
       });
@@ -191,6 +194,23 @@ function EditForm({ member, onClose }: { member: MemberView; onClose: () => void
                 onChange={(option) => {
                   if (option !== null)
                     setSeat(option.id === SEAT_AUTO ? "" : (option.id as SeatType));
+                }}
+              />
+            )}
+          </FormField>
+
+          <FormField label={t.position} hint={t.positionHint}>
+            {(control) => (
+              <Combobox
+                id={control.id}
+                aria-describedby={control["aria-describedby"]}
+                clearable
+                label={t.position}
+                placeholder={t.noPosition}
+                source={positionSource}
+                value={positionId}
+                onChange={(option) => {
+                  setPositionId(option?.id ?? null);
                 }}
               />
             )}

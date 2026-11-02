@@ -275,6 +275,8 @@ export const en: Messages = {
     formNonConforming: (who: string, what: string) =>
       `${who} sent a non-conforming record of “${what}”.`,
     formDue: (what: string) => `“${what}” is due to be filled in.`,
+    expiryDue: (what: string, when: string) => `“${what}” ${when}.`,
+    expiryGone: "An expiry that no longer exists.",
     formOverdue: (what: string) => `“${what}” wasn't filled in last period.`,
     directorySyncStopped:
       "Your company's directory stopped syncing because its plugin is no longer active: people who leave the company aren't suspended on their own anymore. Check License and plugins.",
@@ -304,6 +306,8 @@ export const en: Messages = {
     approvalChanges: (who: string, what: string) =>
       who === "" ? `Changes requested on “${what}”` : `${who} requested changes on “${what}”`,
     expiresToday: "expires today",
+    expiredDaysAgo: (days: number) =>
+      days === 1 ? "expired yesterday" : `expired ${String(days)} days ago`,
     expiresTomorrow: "expires tomorrow",
     expiresInDays: (days: number) => `expires in ${String(days)} days`,
     sharedToast: (count: number) =>

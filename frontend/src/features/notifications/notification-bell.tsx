@@ -43,7 +43,8 @@ export interface NotificationView {
     | "plugin"
     | "form_nonconforming"
     | "form_due"
-    | "form_overdue";
+    | "form_overdue"
+    | "expiry_due";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -64,6 +65,8 @@ export interface NotificationView {
   invitation: { email: string; departments: string[] } | null;
   /** «email_failing»: the reason code (AUTH, CONNECTION…). */
   detail: string | null;
+  /** «expiry_due»: what expires and where it opens; null if it no longer exists. */
+  expiry: { what: string; path: string } | null;
 }
 
 const w = (slug: string, path: string) => `/w/${slug}${path}`;
@@ -84,6 +87,17 @@ export function expiryText(expiresAt: string, now: Date = new Date()): string {
   const t = texts.notifications;
   const days = Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / 86_400_000);
   if (days <= 0) return t.expiresToday;
+  if (days === 1) return t.expiresTomorrow;
+  return t.expiresInDays(days);
+}
+
+/** An expiry's day («YYYY-MM-DD» at 0:00 UTC): «vence hoy», «vence en 3 días» or «venció hace 2 días». */
+export function dueText(dueOn: string, now: Date = new Date()): string {
+  const t = texts.notifications;
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((Date.parse(dueOn.slice(0, 10)) - today) / 86_400_000);
+  if (days < 0) return t.expiredDaysAgo(-days);
+  if (days === 0) return t.expiresToday;
   if (days === 1) return t.expiresTomorrow;
   return t.expiresInDays(days);
 }
@@ -112,6 +126,7 @@ function pathOf(
   }
   if (item.kind === "invitation_by_leader") return `/app/${slug}/admin/members`;
   if (item.kind === "directory_sync_stopped") return `/app/${slug}/admin/license`;
+  if (item.kind === "expiry_due") return item.expiry?.path ?? null;
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
   }
@@ -144,6 +159,11 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
     return t.emailFailing(reasons[item.detail ?? ""] ?? t.smtpReasons.UNKNOWN);
   }
   if (item.kind === "directory_sync_stopped") return t.directorySyncStopped;
+  if (item.kind === "expiry_due") {
+    return item.expiry === null || item.expiresAt === null
+      ? t.expiryGone
+      : t.expiryDue(item.expiry.what, dueText(item.expiresAt));
+  }
   if (item.kind === "bian_usage") return t.bianUsage(item.version ?? 80);
   if (item.kind === "bian_request") return t.bianRequest(item.actor?.name ?? "");
   if (item.kind === "invitation_by_leader") {

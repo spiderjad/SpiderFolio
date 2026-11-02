@@ -104,6 +104,11 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
     label: "Company settings",
     description: "Changes the workspace name, logo and color, and sets its limits.",
   },
+  "safety.manage": {
+    label: "Manage occupational health and safety",
+    description:
+      "Manages PPE, accidents, training and fitness for work in the occupational health and safety module.",
+  },
 };
 
 export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
@@ -112,6 +117,7 @@ export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
   content: "Content",
   documents: "Controlled documents",
   audit: "Audit log",
+  safety: "Occupational health and safety",
   administration: "Administration",
   plugins: "Plugins",
 };
@@ -121,6 +127,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
     group: "Management",
     members: "Members",
     departments: "Departments",
+    positions: "Positions",
     roles: "Roles and permissions",
     access: "Access",
     security: "Security",
@@ -137,6 +144,21 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
     dismiss: "Hide until the next version",
   },
   security: {
+    safety: {
+      title: "Occupational health and safety",
+      text: "PPE handouts, accidents and incidents, training and fitness for work, using positions, controlled documents and forms. Turning it off hides the module without deleting anything.",
+      enable: "Turn the module on",
+      enableHint:
+        "The first time, its space and the “Risk assessment” document type (EVR, reviewed every 12 months) are created.",
+      enabledHint: "On. Turning it off hides the menu and the notices; the data is kept.",
+      examples: "Load food industry examples",
+      examplesHint:
+        "Example positions (production operator, cold room operator, dispatch operator…). Never over what you already have with the same name.",
+      terms: "Terms",
+      termsHint: "What things are called in the app and in the notices.",
+      termsOptions: { es: "Spain: PRL and EPI", latam: "Latin America: SST and EPP" },
+      space: "The module's space:",
+    },
     language: {
       title: "Language and time zone",
       text: "The language is used by everyone who hasn't chosen one in My profile, and for invitations and PDFs. The time zone sets every date and time in the app, the emails and the PDFs.",
@@ -413,6 +435,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
     filters: {
       role: "Role",
       department: "Department",
+      position: "Position",
       status: "Status",
       managers: "Department heads",
     },
@@ -655,6 +678,10 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       guestDepartments: "An external guest can't join departments.",
       jobTitle: "Job title",
       jobTitlePlaceholder: "E.g. Quality manager",
+      position: "Position",
+      positionHint:
+        "From the Positions list: what the company requires by position (readings, PPE, training). The job title is the text shown next to the name.",
+      noPosition: "No position",
       name: "Full name",
       email: "Email",
       emailHint:
@@ -780,6 +807,43 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       domain_not_allowed: "Domain not allowed",
       already_member: "Already a member",
       already_invited: "Already has a pending invitation",
+    },
+  },
+  positions: {
+    title: "Positions",
+    subtitle:
+      "Your company's job positions. Each person has one, and it's used for what's required by position: readings, PPE, training.",
+    create: "New position",
+    searchPlaceholder: "Search for a position",
+    columns: { name: "Position", people: "People", actions: "Actions" },
+    nobody: "Nobody",
+    people: (n: number) => (n === 1 ? "1 person" : `${String(n)} people`),
+    edit: (name: string) => `Edit ${name}`,
+    delete: (name: string) => `Delete ${name}`,
+    deleteTitle: (name: string) => `Delete the position “${name}”?`,
+    deleteText: (people: number) =>
+      people === 0
+        ? "Nobody has this position."
+        : people === 1
+          ? "1 person has this position and will be left without one."
+          : `${String(people)} people have this position and will be left without one.`,
+    deleting: "Deleting…",
+    noResults: "No position matches your search.",
+    empty: {
+      title: "No positions yet",
+      text: "Create your company's positions (for example, “Cold room operator”) and assign them to each person from Members.",
+    },
+    form: {
+      createTitle: "New position",
+      editTitle: "Edit position",
+      name: "Name",
+      nameHint: "Example: “Production operator”.",
+      description: "Description (optional)",
+    },
+    toasts: {
+      created: "Position created.",
+      updated: "Position updated.",
+      deleted: "Position deleted.",
     },
   },
   departments: {
