@@ -110,6 +110,9 @@ export function PpeTabs() {
           {t.catalog}
         </NavLink>
       )}
+      <NavLink to={`/app/${slug}/seguridad/formacion`} className={tab}>
+        {texts.safety.training.tab}
+      </NavLink>
       {health && (
         <NavLink to={`/app/${slug}/seguridad/incidentes`} className={tab}>
           {texts.safety.incidents.tab}

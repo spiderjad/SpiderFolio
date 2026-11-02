@@ -154,12 +154,7 @@ async function addControlSheet(pdf: PDFDocument, info: ControlInfo): Promise<voi
     y -= 6;
   }
   y -= 20;
-  for (const line of wrap(
-    safe(controlledPdfTexts.sheetNote, font),
-    font,
-    9,
-    480,
-  )) {
+  for (const line of wrap(safe(controlledPdfTexts.sheetNote, font), font, 9, 480)) {
     page.drawText(line, { x: 56, y, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
     y -= 12;
   }

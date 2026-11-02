@@ -20,7 +20,8 @@ import {
 } from "./documents.schemas.ts";
 
 const access = {
-  anyCapability: ["documents.approve", "documents.require_reading"],
+  // Also for the health and safety managers: courses are controlled documents.
+  anyCapability: ["documents.approve", "documents.require_reading", "safety.manage"],
   leaderAccess: true,
 } as const;
 

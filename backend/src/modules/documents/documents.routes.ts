@@ -73,13 +73,7 @@ export function documentRoutes(deps: AppDeps): TenantRoute[] {
         const { id } = DocumentNodeParamsSchema.parse(req.params);
         res
           .status(201)
-          .json(
-            await makeControlled(
-              adminContextOf(req),
-              id,
-              ConvertSchema.parse(req.body),
-            ),
-          );
+          .json(await makeControlled(adminContextOf(req), id, ConvertSchema.parse(req.body)));
       },
     },
     {

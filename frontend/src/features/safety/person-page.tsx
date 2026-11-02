@@ -5,10 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Plus, ServerCrash } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
+import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatDay } from "@/lib/utils";
-import { safetyApi, safetyKeys } from "./safety-api";
+import { safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
 import { PpeStateBadge, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -21,6 +21,11 @@ export function PersonPage() {
   const ppe = useQuery({
     queryKey: safetyKeys.person(workspaceSlug, membershipId),
     queryFn: () => safetyApi.person(workspaceSlug, membershipId),
+  });
+  const training = useQuery({
+    queryKey: trainingKeys.person(workspaceSlug, membershipId),
+    queryFn: () => trainingApi.person(workspaceSlug, membershipId),
+    select: (result) => result.items,
   });
   const history = useQuery({
     queryKey: safetyKeys.deliveries(workspaceSlug, { person: membershipId }),
@@ -128,6 +133,51 @@ export function PersonPage() {
                   </p>
                 </div>
                 {ppeItem.replaceOn !== null && <PpeStateBadge state={ppeItem.state} />}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="p-4 sm:p-5">
+        <CardTitle className="text-base">{texts.safety.training.sheet}</CardTitle>
+        {training.data === undefined ? (
+          <Skeleton className="mt-3 h-16 w-full" />
+        ) : training.data.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">{texts.safety.training.sheetEmpty}</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-border text-sm">
+            {training.data.map((course) => (
+              <li
+                key={course.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-2.5"
+              >
+                <Link
+                  to={`${base}/formacion/${course.id}`}
+                  className="min-w-0 underline-offset-4 hover:underline"
+                >
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {course.document.code}
+                  </span>{" "}
+                  {course.document.name}
+                  {course.validUntil !== null && (
+                    <span className="text-xs text-muted-foreground">
+                      {" · "}
+                      {texts.safety.training.until(formatDay(course.validUntil))}
+                    </span>
+                  )}
+                </Link>
+                <Badge
+                  tone={
+                    course.state === "valid"
+                      ? "success"
+                      : course.state === "due_soon"
+                        ? "warning"
+                        : "danger"
+                  }
+                >
+                  {texts.safety.training.states[course.state]}
+                </Badge>
               </li>
             ))}
           </ul>

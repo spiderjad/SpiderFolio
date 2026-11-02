@@ -15,7 +15,7 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { ComparisonLoader } from "./compare-view";
 import { adminApi } from "@/features/admin/api";
 import { adminErrorText, downloadTextFile } from "@/features/admin/admin-utils";
-import { useDepartmentSource } from "@/features/admin/sources";
+import { useDepartmentSource, usePositionSource } from "@/features/admin/sources";
 import { endOfDay, formatShortDate } from "@/lib/utils";
 import {
   documentsApi,
@@ -114,7 +114,6 @@ const STATUS_TONE: Record<ReadingStatus, "success" | "warning" | "danger" | "neu
   overdue: "danger",
   noAccess: "neutral",
 };
-
 
 export function ReadingsSection({
   nodeId,
@@ -307,7 +306,8 @@ function RequireDialog({
 }) {
   const t = texts.documents.readings.require;
   const { workspaceSlug = "" } = useParams();
-  const [kind, setKind] = useState<"department" | "person">("department");
+  const [kind, setKind] = useState<"department" | "person" | "position">("department");
+  const positions = usePositionSource(workspaceSlug);
   const [picked, setPicked] = useState<{ id: string; label: string } | null>(null);
   const [subareas, setSubareas] = useState(false);
   const [due, setDue] = useState("");
@@ -339,7 +339,9 @@ function RequireDialog({
       documentsApi.addReading(workspaceSlug, nodeId, {
         ...(kind === "department"
           ? { departmentId: picked?.id ?? "", includeSubareas: subareas }
-          : { membershipId: picked?.id ?? "" }),
+          : kind === "position"
+            ? { positionId: picked?.id ?? "" }
+            : { membershipId: picked?.id ?? "" }),
         dueAt: due === "" ? null : endOfDay(due),
       }),
     onSuccess: async () => {
@@ -382,7 +384,7 @@ function RequireDialog({
             aria-label={t.title}
             className="inline-flex w-fit rounded-lg border border-border p-0.5"
           >
-            {(["department", "person"] as const).map((value) => (
+            {(["department", "position", "person"] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -393,22 +395,38 @@ function RequireDialog({
                 }}
                 className="h-8 rounded-md px-3 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 aria-pressed:bg-primary-soft aria-pressed:font-medium aria-pressed:text-primary-soft-foreground"
               >
-                {value === "department" ? t.department : t.person}
+                {value === "department"
+                  ? t.department
+                  : value === "position"
+                    ? t.position
+                    : t.person}
               </button>
             ))}
           </div>
           <Combobox
             key={kind}
-            label={kind === "department" ? t.pickDepartment : t.pickPerson}
-            placeholder={kind === "department" ? t.pickDepartment : t.pickPerson}
-            source={kind === "department" ? departments : people}
+            label={
+              kind === "department"
+                ? t.pickDepartment
+                : kind === "position"
+                  ? t.pickPosition
+                  : t.pickPerson
+            }
+            placeholder={
+              kind === "department"
+                ? t.pickDepartment
+                : kind === "position"
+                  ? t.pickPosition
+                  : t.pickPerson
+            }
+            source={kind === "department" ? departments : kind === "position" ? positions : people}
             value={picked?.id ?? null}
             valueLabel={picked?.label}
             onChange={(option) => {
               setPicked(option === null ? null : { id: option.id, label: option.label });
             }}
           />
-          {picked !== null && (
+          {picked !== null && kind !== "position" && (
             <AccessGapNotice
               nodeId={nodeId}
               subject={

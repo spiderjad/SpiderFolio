@@ -2,6 +2,7 @@
 // contenido), aprobar o rechazar, retirar y publicar. Con varios aprobadores deben aprobar todos; sin
 // autoaprobación salvo que el propietario lo permita en Seguridad (queda en el historial y la
 // auditoría como «aprobado por el propio autor»). Publicar deja una sola versión vigente.
+import { scheduleReview } from "../safety/review-expiry.ts";
 import type { NodeType } from "../../generated/prisma/client.ts";
 import type { Jobs } from "../../jobs/boss.ts";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
@@ -428,13 +429,13 @@ export async function publish(
         changeReason: reason,
       },
     });
+    const reviewDueAt = dayMonthsLater(now, type?.reviewMonths ?? 12, zone);
     await tx.controlledDocument.update({
       where: { id: controlled.id },
-      data: {
-        publishedVersion: latest.version,
-        reviewDueAt: dayMonthsLater(now, type?.reviewMonths ?? 12, zone),
-      },
+      data: { publishedVersion: latest.version, reviewDueAt },
     });
+    // A risk assessment (EVR): its review day is told to its department's heads.
+    await scheduleReview(tx, { nodeId, docType: controlled.docType }, reviewDueAt, zone);
     // Hay que volver a leer la versión nueva: los requisitos de la anterior pasan a ella.
     const move = await carryOverRequirements(
       tx,

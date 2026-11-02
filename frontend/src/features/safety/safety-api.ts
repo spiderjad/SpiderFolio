@@ -212,3 +212,54 @@ export const incidentsApi = {
     }),
   mine: (slug: string) => api<{ items: SafetyAction[] }>(w(slug, "/safety/actions")),
 };
+
+// ─── Training ────────────────────────────────────────────────────────────────────────────
+
+export type TrainingState = "valid" | "due_soon" | "expired" | "pending";
+
+export interface Course {
+  id: string;
+  document: { id: string; spaceId: string; code: string; name: string; type: "PAGE" | "FILE" };
+  validityMonths: number | null;
+  counts: Record<TrainingState, number>;
+}
+
+export interface CoursePerson {
+  membershipId: string;
+  name: string;
+  state: TrainingState;
+  completedAt: string | null;
+  source: "READING" | "IN_PERSON" | null;
+  validUntil: string | null;
+}
+
+export const trainingKeys = {
+  all: (slug: string) => ["w", slug, "safety", "training"] as const,
+  course: (slug: string, id: string) => ["w", slug, "safety", "training", id] as const,
+  person: (slug: string, id: string) => ["w", slug, "safety", "training", "person", id] as const,
+};
+
+export const trainingApi = {
+  list: (slug: string, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<Course>>(w(slug, `/safety/courses?${listQuery({ cursor })}`), { signal }),
+  create: (slug: string, body: { nodeId: string; validityMonths: number | null }) =>
+    api<{ course: Course }>(w(slug, "/safety/courses"), { method: "POST", body }),
+  get: (slug: string, id: string) =>
+    api<{ course: Course; people: CoursePerson[]; canRecord: boolean }>(
+      w(slug, `/safety/courses/${id}`),
+    ),
+  attendance: (slug: string, id: string, body: { membershipIds: string[]; completedOn: string }) =>
+    api<undefined>(w(slug, `/safety/courses/${id}/attendance`), { method: "POST", body }),
+  confirm: (slug: string, id: string) =>
+    api<undefined>(w(slug, `/safety/courses/${id}/confirm`), { method: "POST" }),
+  person: (slug: string, id: string) =>
+    api<{
+      items: {
+        id: string;
+        document: Course["document"];
+        state: TrainingState;
+        validUntil: string | null;
+        completedAt: string | null;
+      }[];
+    }>(w(slug, `/safety/people/${id}/training`)),
+};

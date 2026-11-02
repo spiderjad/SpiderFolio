@@ -195,9 +195,7 @@ function incidentsWhere(filters: IncidentFilters): Prisma.SafetyIncidentWhereInp
     ...(filters.severity === undefined ? {} : { severity: filters.severity }),
     ...(filters.person === undefined ? {} : { membershipId: filters.person }),
     ...(filters.department === undefined ? {} : { departmentId: filters.department }),
-    ...(filters.status === "all"
-      ? {}
-      : { status: filters.status === "open" ? "OPEN" : "CLOSED" }),
+    ...(filters.status === "all" ? {} : { status: filters.status === "open" ? "OPEN" : "CLOSED" }),
     ...(filters.from === undefined && filters.to === undefined
       ? {}
       : {

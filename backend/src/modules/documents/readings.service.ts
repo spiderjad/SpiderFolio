@@ -2,6 +2,7 @@
 // vigente, «Leí y comprendo» por versión, cumplimiento y CSV. Quien confirma es siempre la propia
 // persona (nadie confirma por otra, tampoco el conector MCP). Al publicar una versión nueva, los
 // requisitos pasan a ella: hay que volver a leer.
+import { trainingFromReading } from "../safety/training.service.ts";
 import type { NodeType } from "../../generated/prisma/client.ts";
 import type { TenantDb } from "../../db/tenant.ts";
 import { toCsv } from "../../lib/csv.ts";
@@ -75,10 +76,24 @@ export async function addRequirement(
   if (version === null) {
     throw new AppError("CONFLICT", { message: contentMessages.nothingPublished });
   }
-  if ((input.departmentId === undefined) === (input.membershipId === undefined)) {
+  const subjects = [input.departmentId, input.membershipId, input.positionId].filter(
+    (id) => id !== undefined,
+  );
+  if (subjects.length !== 1) {
     throw new AppError("BAD_REQUEST", { message: contentMessages.subjectRequired });
   }
-  if (input.departmentId !== undefined) {
+  // Who it's for, as stored: a department, a person or a position.
+  const subject =
+    input.departmentId !== undefined
+      ? { departmentId: input.departmentId }
+      : input.positionId !== undefined
+        ? { positionId: input.positionId }
+        : { membershipId: input.membershipId ?? "" };
+  if (input.positionId !== undefined) {
+    if ((await ctx.db.position.count({ where: { id: input.positionId } })) === 0) throw notFound();
+    // A position crosses departments: only whoever asks for readings across the company.
+    if (!scope.unrestricted) throw forbidden();
+  } else if (input.departmentId !== undefined) {
     if ((await ctx.db.department.count({ where: { id: input.departmentId } })) === 0) {
       throw notFound();
     }
@@ -101,13 +116,7 @@ export async function addRequirement(
   const before = await currentReadings(ctx.db, nodeId, version);
   const dueAt = input.dueAt ?? null;
   const existing = await ctx.db.readRequirement.findFirst({
-    where: {
-      nodeId,
-      version,
-      ...(input.departmentId === undefined
-        ? { membershipId: input.membershipId ?? "" }
-        : { departmentId: input.departmentId }),
-    },
+    where: { nodeId, version, ...subject },
     select: { id: true },
   });
   await ctx.db.$transaction(async (tx) => {
@@ -116,9 +125,7 @@ export async function addRequirement(
         data: {
           nodeId,
           version,
-          ...(input.departmentId === undefined
-            ? { membershipId: input.membershipId ?? "" }
-            : { departmentId: input.departmentId }),
+          ...subject,
           includeSubareas: input.departmentId !== undefined && input.includeSubareas === true,
           dueAt,
           createdById: ctx.tenant.membershipId,
@@ -144,9 +151,7 @@ export async function addRequirement(
         metadata: {
           code: controlled.code,
           version,
-          ...(input.departmentId === undefined
-            ? { membershipId: input.membershipId ?? "" }
-            : { departmentId: input.departmentId }),
+          ...subject,
         },
       },
     );
@@ -222,6 +227,8 @@ export async function acknowledge(ctx: AdminContext, nodeId: string): Promise<vo
       },
     );
   });
+  // A course of the health and safety module: the reading is a training record.
+  await trainingFromReading(ctx, nodeId);
 }
 
 // ─── Estado de mis lecturas en un documento ──────────────────────────────────────────────
@@ -292,7 +299,7 @@ export interface ReadingsOverview {
   version: number | null;
   requirements: {
     id: string;
-    subject: { type: "person" | "department"; id: string; name: string };
+    subject: { type: "person" | "department" | "position"; id: string; name: string };
     includeSubareas: boolean;
     dueAt: Date | null;
   }[];
@@ -357,6 +364,16 @@ export async function readingsOverview(
       d.name,
     ]),
   );
+  const positionNames = new Map(
+    (
+      await ctx.db.position.findMany({
+        where: {
+          id: { in: requirements.flatMap((r) => (r.positionId === null ? [] : [r.positionId])) },
+        },
+        select: { id: true, name: true },
+      })
+    ).map((position) => [position.id, position.name]),
+  );
   const personNames = new Map(
     (
       await ctx.db.membership.findMany({
@@ -388,7 +405,13 @@ export async function readingsOverview(
                 id: r.membershipId,
                 name: personNames.get(r.membershipId) ?? "",
               }
-            : null;
+            : r.positionId !== null
+              ? {
+                  type: "position" as const,
+                  id: r.positionId,
+                  name: positionNames.get(r.positionId) ?? "",
+                }
+              : null;
       return subject === null
         ? []
         : [{ id: r.id, subject, includeSubareas: r.includeSubareas, dueAt: r.dueAt }];
@@ -430,6 +453,7 @@ export async function readingAccessGaps(
     {
       id: "",
       version,
+      positionId: null,
       departmentId: query.departmentId ?? null,
       membershipId: query.membershipId ?? null,
       includeSubareas: query.includeSubareas === "true",
@@ -508,6 +532,7 @@ export async function grantReadingAccess(
       {
         id: "",
         version,
+        positionId: null,
         departmentId: subject.departmentId,
         membershipId: subject.membershipId,
         includeSubareas: subject.sub,
@@ -639,10 +664,14 @@ export async function myReadings(
 ): Promise<Page<MyReading>> {
   const actor = accessActorOf(ctx);
   const me = ctx.tenant.membershipId;
+  const myPosition =
+    (await ctx.db.membership.findFirst({ where: { id: me }, select: { positionId: true } }))
+      ?.positionId ?? null;
   const requirements = await ctx.db.readRequirement.findMany({
     where: {
       OR: [
         { membershipId: me },
+        ...(myPosition === null ? [] : [{ positionId: myPosition }]),
         { departmentId: { in: [...actor.ownDepartmentIds] } },
         // «Incluye subáreas»: alcanza a quien está en un subdepartamento.
         { departmentId: { in: [...actor.departmentIds] }, includeSubareas: true },
@@ -745,6 +774,7 @@ export async function carryOverRequirements(
     version: toVersion,
     departmentId: r.departmentId,
     membershipId: r.membershipId,
+    positionId: r.positionId,
     includeSubareas: r.includeSubareas,
     // Sin nueva lectura (cambio menor) el plazo original se conserva.
     dueAt: renew ? (r.dueAt === null ? null : dueAt) : r.dueAt,

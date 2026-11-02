@@ -841,6 +841,10 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
       closed: "Closed",
     },
   },
+  training: {
+    alreadyCourse: "That document is already a course.",
+    stillValid: "Your training for this course is still valid.",
+  },
   ppe: { es: "PPE", latam: "PPE" },
   messages: {
     itemNameTaken: "There's already an item with that name in the catalog.",

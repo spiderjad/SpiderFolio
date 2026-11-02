@@ -82,7 +82,7 @@ export interface ReadingsOverview {
   version: number | null;
   requirements: {
     id: string;
-    subject: { type: "person" | "department"; id: string; name: string };
+    subject: { type: "person" | "department" | "position"; id: string; name: string };
     includeSubareas: boolean;
     dueAt: string | null;
   }[];
@@ -306,6 +306,7 @@ export const documentsApi = {
     body: {
       departmentId?: string;
       membershipId?: string;
+      positionId?: string;
       includeSubareas?: boolean;
       dueAt?: string | null;
     },

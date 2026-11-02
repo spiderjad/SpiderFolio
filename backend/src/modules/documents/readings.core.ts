@@ -16,6 +16,7 @@ export interface RequirementRow {
   version: number;
   departmentId: string | null;
   membershipId: string | null;
+  positionId: string | null;
   includeSubareas: boolean;
   dueAt: Date | null;
 }
@@ -24,8 +25,8 @@ export interface RequiredPerson {
   membershipId: string;
   /** El plazo más cercano de los requisitos que lo alcanzan. */
   dueAt: Date | null;
-  /** Por qué debe leerlo: a ella o a uno de sus departamentos. */
-  via: "person" | "department";
+  /** Por qué debe leerlo: a ella, a uno de sus departamentos o a su puesto. */
+  via: "person" | "department" | "position";
   /** Departamento que la alcanza (si es por departamento). */
   departmentId: string | null;
 }
@@ -61,6 +62,21 @@ export async function expandMany(
       ),
     ),
   ];
+  const positionIds = [
+    ...new Set(
+      all.flatMap((requirement) =>
+        requirement.positionId === null ? [] : [requirement.positionId],
+      ),
+    ),
+  ];
+  const holders =
+    positionIds.length === 0
+      ? []
+      : await db.membership.findMany({
+          where: { positionId: { in: positionIds }, status: "ACTIVE" },
+          take: MAX_PEOPLE * Math.max(1, byDocument.size),
+          select: { id: true, positionId: true },
+        });
   const [members, activePeople] = await Promise.all([
     departmentIds.length === 0
       ? []
@@ -108,6 +124,12 @@ export async function expandMany(
         }
       } else if (requirement.membershipId !== null && active.has(requirement.membershipId)) {
         add(requirement.membershipId, "person", null, requirement.dueAt);
+      } else if (requirement.positionId !== null) {
+        for (const holder of holders) {
+          if (holder.positionId === requirement.positionId) {
+            add(holder.id, "position", null, requirement.dueAt);
+          }
+        }
       }
     }
     result.set(key, people);

@@ -169,8 +169,14 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
    7 días antes, el anterior y el mismo día (`safety.action`) y el responsable las ve en «Mis medidas» sin
    los datos del caso. El formulario base se crea al activar el módulo (`settings.safety.incidentFormId`)
    y sus campos fijos se validan al guardar la plantilla (`incident-form.ts`). Sin capturas todavía.
-4. **Formación y evaluaciones**: lecturas por puesto, cursos, constancias con vencimiento, presencial y
-   aviso de revisión de las EVR.
+4. **Formación y evaluaciones** (hecha): lecturas por puesto (`ReadRequirement.positionId`, en el núcleo;
+   solo quien pide lecturas en toda la empresa), cursos (`SafetyCourse` sobre un documento controlado;
+   quiénes salen de sus lecturas obligatorias), constancias (`SafetyTraining`: el «Leí y comprendo» de un
+   curso, o presencial; vencimiento `safety.training` y «Confirmar que lo hice de nuevo» al vencer) y aviso
+   de revisión de las EVR publicadas (`safety.review`, a los jefes del departamento responsable).
+   Simplificación: la formación presencial la registra quien gestiona el módulo (asistentes y fecha), sin
+   formulario de asistencia con firma de cada uno. Quien gestiona el módulo puede usar la lista de
+   documentos controlados de Administración (para elegir el curso).
 5. **Aptitud, ficha por persona**, ejemplos completos, guías, capturas y versión.
 
 Cada fase: commit propio, tests de lo tocado (permisos y aislamiento entre empresas incluidos) y guías

@@ -15,12 +15,7 @@ import { useInfiniteList } from "@/components/ui/infinite";
 import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { readChoice, useListParams } from "@/features/admin/list-params";
 import { formatDay } from "@/lib/utils";
-import {
-  incidentsApi,
-  incidentsKeys,
-  type Incident,
-  type IncidentFilters,
-} from "./safety-api";
+import { incidentsApi, incidentsKeys, type Incident, type IncidentFilters } from "./safety-api";
 import { PpeTabs, ReportIncidentButton } from "./safety-common";
 import { texts } from "@/i18n";
 

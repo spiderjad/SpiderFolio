@@ -155,6 +155,14 @@ export const routes = [
                     lazy: page(() => import("@/features/safety/delivery-page"), "DeliveryPage"),
                   },
                   {
+                    path: "formacion",
+                    lazy: page(() => import("@/features/safety/training-page"), "TrainingPage"),
+                  },
+                  {
+                    path: "formacion/:courseId",
+                    lazy: page(() => import("@/features/safety/course-page"), "CoursePage"),
+                  },
+                  {
                     path: "medidas",
                     lazy: page(() => import("@/features/safety/my-actions-page"), "MyActionsPage"),
                   },

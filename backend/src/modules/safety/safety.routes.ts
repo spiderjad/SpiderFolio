@@ -9,6 +9,21 @@ import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import {
+  AttendanceSchema,
+  CourseSchema,
+  CoursesQuerySchema,
+  UpdateCourseSchema,
+} from "./training.schemas.ts";
+import {
+  confirmTraining,
+  createCourse,
+  getCourse,
+  listCourses,
+  personTraining,
+  recordAttendance,
+  updateCourse,
+} from "./training.service.ts";
+import {
   ActionSchema,
   CompleteActionSchema,
   IncidentFiltersSchema,
@@ -279,6 +294,65 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         const { id } = IdParamsSchema.parse(req.params);
         const { note } = CompleteActionSchema.parse(req.body);
         res.json({ action: await completeAction(adminContextOf(req), id, note ?? null) });
+      },
+    },
+    // Training (docs/spec/seguridad-salud.md, «Formación y evaluaciones»).
+    {
+      method: "get",
+      path: "/safety/courses",
+      handler: async (req, res) => {
+        res.json(await listCourses(adminContextOf(req), CoursesQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/courses",
+      handler: async (req, res) => {
+        const course = await createCourse(adminContextOf(req), CourseSchema.parse(req.body));
+        res.status(201).json({ course });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/courses/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json(await getCourse(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "patch",
+      path: "/safety/courses/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { validityMonths } = UpdateCourseSchema.parse(req.body);
+        res.json({ course: await updateCourse(adminContextOf(req), id, validityMonths) });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/courses/:id/attendance",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await recordAttendance(adminContextOf(req), id, AttendanceSchema.parse(req.body));
+        res.status(204).end();
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/courses/:id/confirm",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await confirmTraining(adminContextOf(req), id);
+        res.status(204).end();
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/people/:id/training",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ items: await personTraining(adminContextOf(req), id) });
       },
     },
   ];

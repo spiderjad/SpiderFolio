@@ -156,6 +156,28 @@ const cases: IsolationCase[] = [
     url: () => "/safety/actions/x/done",
     body: {},
   },
+  { method: "get", path: "/safety/courses", url: () => "/safety/courses", ownStatus: 404 },
+  { method: "post", path: "/safety/courses", url: () => "/safety/courses", body: { nodeId: "x" } },
+  { method: "get", path: "/safety/courses/:id", url: () => "/safety/courses/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/safety/courses/:id",
+    url: () => "/safety/courses/x",
+    body: { validityMonths: 12 },
+  },
+  {
+    method: "post",
+    path: "/safety/courses/:id/attendance",
+    url: () => "/safety/courses/x/attendance",
+    body: { membershipIds: ["x"], completedOn: "2026-10-30" },
+  },
+  { method: "post", path: "/safety/courses/:id/confirm", url: () => "/safety/courses/x/confirm" },
+  {
+    method: "get",
+    path: "/safety/people/:id/training",
+    url: (ids) => `/safety/people/${ids.memberId}/training`,
+    ownStatus: 404,
+  },
   {
     method: "get",
     path: "/safety/people/:id/ppe",

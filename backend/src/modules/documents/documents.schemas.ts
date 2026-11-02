@@ -43,6 +43,8 @@ export type MyApprovalsQuery = z.infer<typeof MyApprovalsQuerySchema>;
 export const RequirementSchema = z.strictObject({
   departmentId: Id.optional(),
   membershipId: Id.optional(),
+  /** A job position: everyone with it (docs/spec/seguridad-salud.md). */
+  positionId: Id.optional(),
   includeSubareas: z.boolean().optional(),
   dueAt: z.coerce.date().nullable().optional(),
 });

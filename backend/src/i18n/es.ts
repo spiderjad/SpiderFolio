@@ -820,6 +820,10 @@ export const safetyTexts = {
       closed: "Cerrado",
     },
   },
+  training: {
+    alreadyCourse: "Ese documento ya es un curso.",
+    stillValid: "Tu formación de este curso sigue vigente.",
+  },
   ppe: { es: "EPI", latam: "EPP" },
   messages: {
     itemNameTaken: "Ya hay un equipo con ese nombre en el catálogo.",

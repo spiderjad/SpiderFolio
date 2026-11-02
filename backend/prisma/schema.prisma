@@ -252,6 +252,8 @@ model Workspace {
   safetyDeliveryLines SafetyDeliveryLine[]
   safetyIncidents     SafetyIncident[]
   safetyActions       SafetyAction[]
+  safetyCourses       SafetyCourse[]
+  safetyTrainings     SafetyTraining[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -549,6 +551,45 @@ model SafetyAction {
 
   @@index([workspaceId, incidentId])
   @@index([workspaceId, responsibleId, doneAt])
+}
+
+/// A course (docs/spec/seguridad-salud.md, «Formación»): a controlled document whose reading counts as
+/// training, valid for some months. Who has to do it comes from the document's required readings.
+model SafetyCourse {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  /// The controlled document (no FK, like Mention: trashing it hides the course).
+  nodeId         String
+  validityMonths Int?
+  createdById    String
+  createdAt      DateTime @default(now())
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainings SafetyTraining[]
+
+  @@unique([workspaceId, nodeId])
+  @@unique([id, workspaceId])
+}
+
+/// A training record: someone did a course (reading it, or in person). Never changed nor deleted.
+model SafetyTraining {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  courseId     String
+  membershipId String
+  completedAt  DateTime
+  /// READING (confirmed reading) or IN_PERSON (registered by whoever manages the module).
+  source       String
+  /// The company day it stops being valid (completion + the course's validity); null: never.
+  validUntil   DateTime? @db.Date
+  createdById  String
+  createdAt    DateTime  @default(now())
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  course    SafetyCourse @relation(fields: [courseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, courseId, membershipId])
+  @@index([workspaceId, membershipId])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único
@@ -1298,6 +1339,8 @@ model ReadRequirement {
   departmentId    String?
   /// Membresía (sin FK, como Mention).
   membershipId    String?
+  /// A job position: everyone active with it (docs/spec/seguridad-salud.md; no FK).
+  positionId      String?
   includeSubareas Boolean   @default(false)
   dueAt           DateTime?
   createdById     String
