@@ -66,6 +66,11 @@ async function setUp(
     examplePositions: [...safetyTexts.examplePositions],
     incidentForm: safetyTexts.incidentForm.name,
     incidentFields: incidentTemplate(),
+    examplePpe: safetyTexts.examplePpe.map((item) => ({ ...item })),
+    inspection: {
+      ...safetyTexts.inspectionForm,
+      items: [...safetyTexts.inspectionForm.items],
+    },
   }));
   let spaceId = (await spaceOf(ctx, settings.spaceId))?.id;
   if (spaceId === undefined) {
@@ -98,6 +103,47 @@ async function setUp(
       skipDuplicates: true,
       data: texts.examplePositions.map((name) => ({ name, nameKey: nameKeyOf(name) })),
     });
+    await ctx.db.safetyItem.createMany({
+      skipDuplicates: true,
+      data: texts.examplePpe.map(({ name, category, hasSizes, lifeMonths }) => ({
+        name,
+        nameKey: nameKeyOf(name),
+        category,
+        hasSizes,
+        lifeMonths,
+        positionIds: [],
+      })),
+    });
+    // The monthly inspection, once (another one with its name in the space: left alone).
+    const inspection = await ctx.db.node.count({
+      where: { spaceId, type: "FORM", nameKey: nameKeyOf(texts.inspection.name), trashedAt: null },
+    });
+    if (inspection === 0) {
+      const form = await createForm(ctx, spaceId, { name: texts.inspection.name, parentId: null });
+      await saveTemplate(ctx, form.node.id, {
+        baseVersion: 1,
+        fields: [
+          {
+            id: "revision",
+            type: "checklist",
+            label: texts.inspection.checks,
+            required: true,
+            items: texts.inspection.items.map((label, index) => ({
+              id: `c${String(index + 1)}`,
+              label,
+            })),
+          },
+          {
+            id: "observaciones",
+            type: "text",
+            label: texts.inspection.notes,
+            required: false,
+            multiline: true,
+          },
+          { id: "firma", type: "signature", label: texts.inspection.signature, required: true },
+        ],
+      });
+    }
   }
   // The base form to report accidents and incidents, in the module's space.
   let incidentFormId =

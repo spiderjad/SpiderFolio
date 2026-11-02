@@ -169,6 +169,7 @@ export interface IncidentFilters {
   from?: string | undefined;
   to?: string | undefined;
   type?: IncidentType | undefined;
+  person?: string | undefined;
   status?: "all" | "open" | "closed" | undefined;
 }
 
@@ -267,4 +268,32 @@ export const trainingApi = {
         completedAt: string | null;
       }[];
     }>(w(slug, `/safety/people/${id}/training`)),
+};
+
+// ─── Fitness for work ────────────────────────────────────────────────────────────────────
+
+export type FitnessStatus = "APT" | "APT_RESTRICTED" | "NOT_APT";
+
+export interface Fitness {
+  id: string;
+  status: FitnessStatus;
+  validUntil: string | null;
+  restrictions: string | null;
+  createdAt: string;
+  createdBy: { id: string; name: string } | null;
+  state: PpeState | null;
+}
+
+export const fitnessKeys = {
+  person: (slug: string, id: string) => ["w", slug, "safety", "fitness", id] as const,
+};
+
+export const fitnessApi = {
+  get: (slug: string, id: string) =>
+    api<{ items: Fitness[]; canRecord: boolean }>(w(slug, `/safety/people/${id}/fitness`)),
+  record: (
+    slug: string,
+    id: string,
+    body: { status: FitnessStatus; validUntil: string | null; restrictions: string | null },
+  ) => api<undefined>(w(slug, `/safety/people/${id}/fitness`), { method: "POST", body }),
 };

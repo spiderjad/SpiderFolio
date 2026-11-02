@@ -11,7 +11,7 @@ import { Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/d
 import { FormField, Textarea } from "@/components/ui/form";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
-import { formatDateTime, formatDay } from "@/lib/utils";
+import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { safetyApi, safetyKeys } from "./safety-api";
 import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
@@ -156,7 +156,7 @@ export function DeliveryPage() {
                 <td className="px-4 py-3">{line.quantity}</td>
                 <td className="px-4 py-3">{line.size ?? "—"}</td>
                 <td className="px-4 py-3">
-                  {line.replaceOn === null ? "—" : formatDay(line.replaceOn)}
+                  {line.replaceOn === null ? "—" : formatUtcDate(line.replaceOn)}
                 </td>
               </tr>
             ))}

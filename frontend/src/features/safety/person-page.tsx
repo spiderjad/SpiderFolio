@@ -7,8 +7,9 @@ import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { formatDateTime, formatDay } from "@/lib/utils";
+import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
+import { PersonFitness, PersonIncidents } from "./person-health";
 import { PpeStateBadge, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -129,7 +130,7 @@ export function PersonPage() {
                     {" · "}
                     {ppeItem.replaceOn === null
                       ? t.noReplace
-                      : t.replaceOn(formatDay(ppeItem.replaceOn))}
+                      : t.replaceOn(formatUtcDate(ppeItem.replaceOn))}
                   </p>
                 </div>
                 {ppeItem.replaceOn !== null && <PpeStateBadge state={ppeItem.state} />}
@@ -163,7 +164,7 @@ export function PersonPage() {
                   {course.validUntil !== null && (
                     <span className="text-xs text-muted-foreground">
                       {" · "}
-                      {texts.safety.training.until(formatDay(course.validUntil))}
+                      {texts.safety.training.until(formatUtcDate(course.validUntil))}
                     </span>
                   )}
                 </Link>
@@ -183,6 +184,9 @@ export function PersonPage() {
           </ul>
         )}
       </Card>
+
+      <PersonFitness membershipId={data.person.id} />
+      <PersonIncidents membershipId={data.person.id} />
 
       <Card className="p-4 sm:p-5">
         <CardTitle className="text-base">{t.history}</CardTitle>

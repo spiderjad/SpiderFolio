@@ -14,7 +14,7 @@ import { FormField as LabeledField, Input } from "@/components/ui/form";
 import { useInfiniteList } from "@/components/ui/infinite";
 import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { readChoice, useListParams } from "@/features/admin/list-params";
-import { formatDay } from "@/lib/utils";
+import { formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys, type Incident, type IncidentFilters } from "./safety-api";
 import { PpeTabs, ReportIncidentButton } from "./safety-common";
 import { texts } from "@/i18n";
@@ -69,7 +69,7 @@ export function IncidentsPage() {
             to={`${base}/${row.original.id}`}
             className="font-medium underline-offset-4 hover:underline"
           >
-            {formatDay(row.original.occurredOn)}
+            {formatUtcDate(row.original.occurredOn)}
           </Link>
         ),
       },

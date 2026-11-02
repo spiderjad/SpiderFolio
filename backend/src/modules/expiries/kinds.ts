@@ -4,3 +4,4 @@ import "../safety/ppe-expiry.ts";
 import "../safety/action-expiry.ts";
 import "../safety/training-expiry.ts";
 import "../safety/review-expiry.ts";
+import "../safety/fitness-expiry.ts";

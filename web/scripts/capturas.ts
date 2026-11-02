@@ -192,7 +192,26 @@ const PPE: Record<Locale, [string, string, boolean, number | null, number[]][]> 
   ],
 };
 /** Who gets the sheet capture and who the new handout capture (membership ids). */
-const demoSafetyPeople = new Map<Locale, { sheet: string; next: string }>();
+const demoSafetyPeople = new Map<Locale, { sheet: string; next: string; course: string }>();
+
+/** The demo incident, course and fitness texts. */
+const SAFETY_DEMO: Record<
+  Locale,
+  { place: string; what: string; causes: string; restriction: string }
+> = {
+  es: {
+    place: "Sala de despiece",
+    what: "Corte superficial en la mano izquierda al limpiar la sierra de cinta con la máquina parada.",
+    causes: "Se limpió sin el guante de malla.",
+    restriction: "Sin cargas de más de 15 kg",
+  },
+  en: {
+    place: "Cutting room",
+    what: "Shallow cut on the left hand while cleaning the band saw with the machine stopped.",
+    causes: "Cleaned without the chain mail glove.",
+    restriction: "No loads over 15 kg",
+  },
+};
 
 /** A drawn signature, as the app sends it. */
 async function signaturePng(): Promise<string> {
@@ -215,15 +234,21 @@ async function demoSafety(locale: Locale, slug: string): Promise<void> {
   const names = POSITIONS[locale].map(([name]) => name);
   const holder = (position: number, nth = 0) =>
     holders.rows.filter((row) => row.position === names[position])[nth]?.id ?? "";
-  const people = { sheet: holder(0), next: holder(2) };
+  const people = { sheet: holder(0), next: holder(2), course: "" };
   const { rows } = await db.query<{ count: string }>(
     `SELECT count(*) FROM "SafetyItem" i JOIN "Workspace" w ON w.id = i."workspaceId" WHERE w.slug = $1`,
     [slug],
   );
-  if (Number(rows[0]?.count ?? 0) > 0) {
-    demoSafetyPeople.set(locale, people);
+  const existing = await db.query<{ id: string }>(
+    `SELECT c.id FROM "SafetyCourse" c JOIN "Workspace" w ON w.id = c."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [slug],
+  );
+  if (existing.rows[0] !== undefined) {
+    demoSafetyPeople.set(locale, { ...people, course: existing.rows[0].id });
     return;
   }
+  // The PPE part may already be there (an earlier run): then only what came after it.
+  const hasPpe = Number(rows[0]?.count ?? 0) > 0;
   const positionIds = new Map(
     (
       await db.query<{ id: string; name: string }>(
@@ -233,43 +258,102 @@ async function demoSafety(locale: Locale, slug: string): Promise<void> {
     ).rows.map((row) => [row.name, row.id]),
   );
   const items: string[] = [];
-  for (const [name, category, hasSizes, lifeMonths, positions] of PPE[locale]) {
-    const { item } = (await formCall(owner, slug, "POST", "/safety/items", {
-      name,
-      category,
-      hasSizes,
-      lifeMonths,
-      positionIds: positions.flatMap((index) => positionIds.get(names[index] ?? "") ?? []),
-    })) as { item: { id: string } };
-    items.push(item.id);
-  }
   const signature = await signaturePng();
-  const hand = (membershipId: string, lines: [number, number, string | null][]) =>
-    formCall(owner, slug, "POST", "/safety/deliveries", {
-      membershipId,
-      lines: lines.map(([index, quantity, size]) => ({ itemId: items[index], quantity, size })),
-      signature,
-    });
-  await hand(holder(0), [
-    [0, 2, "8"],
-    [3, 10, null],
-  ]);
-  await hand(holder(0, 1), [
-    [0, 2, "9"],
-    [1, 1, "43"],
-    [3, 10, null],
-  ]);
-  await hand(holder(1), [
-    [2, 1, "L"],
-    [1, 1, "39"],
-  ]);
-  // The sheet's hearing protection is about to be replaced.
-  await db.query(
-    `UPDATE "SafetyDeliveryLine" l SET "replaceOn" = current_date + 5
+  if (!hasPpe) {
+    for (const [name, category, hasSizes, lifeMonths, positions] of PPE[locale]) {
+      const { item } = (await formCall(owner, slug, "POST", "/safety/items", {
+        name,
+        category,
+        hasSizes,
+        lifeMonths,
+        positionIds: positions.flatMap((index) => positionIds.get(names[index] ?? "") ?? []),
+      })) as { item: { id: string } };
+      items.push(item.id);
+    }
+    const hand = (membershipId: string, lines: [number, number, string | null][]) =>
+      formCall(owner, slug, "POST", "/safety/deliveries", {
+        membershipId,
+        lines: lines.map(([index, quantity, size]) => ({ itemId: items[index], quantity, size })),
+        signature,
+      });
+    await hand(holder(0), [
+      [0, 2, "8"],
+      [3, 10, null],
+    ]);
+    await hand(holder(0, 1), [
+      [0, 2, "9"],
+      [1, 1, "43"],
+      [3, 10, null],
+    ]);
+    await hand(holder(1), [
+      [2, 1, "L"],
+      [1, 1, "39"],
+    ]);
+    // The sheet's hearing protection is about to be replaced.
+    await db.query(
+      `UPDATE "SafetyDeliveryLine" l SET "replaceOn" = current_date + 5
        FROM "SafetyDelivery" d WHERE d.id = l."deliveryId" AND d."membershipId" = $1 AND l."itemId" = $2`,
-    [holder(0), items[3]],
+      [holder(0), items[3]],
+    );
+  }
+  // An incident through the base form, with a measure.
+  const text = SAFETY_DEMO[locale];
+  const { form } = (await formCall(owner, slug, "GET", "/safety/incident-form", undefined)) as {
+    form: { formId: string };
+  };
+  const formRow = await db.query<{ currentVersion: number }>(
+    `SELECT "currentVersion" FROM "Node" WHERE id = $1`,
+    [form.formId],
   );
-  demoSafetyPeople.set(locale, people);
+  await formCall(owner, slug, "POST", `/forms/${form.formId}/records`, {
+    version: formRow.rows[0]?.currentVersion ?? 2,
+    answers: {
+      sst_fecha: new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 10),
+      sst_hora: "10:30",
+      sst_lugar: text.place,
+      sst_persona: holder(0),
+      sst_tipo: "sin_baja",
+      sst_gravedad: "leve",
+      sst_que: text.what,
+      sst_causas: text.causes,
+    },
+  });
+  await formCall(owner, slug, "POST", `/forms/${form.formId}/records`, {
+    version: formRow.rows[0]?.currentVersion ?? 2,
+    answers: {
+      sst_fecha: new Date(Date.now() - 12 * 86_400_000).toISOString().slice(0, 10),
+      sst_lugar: text.place,
+      sst_tipo: "casi",
+      sst_que: text.causes,
+    },
+  });
+  // A course over a published document of the seed, required by position, two in person.
+  const document = await db.query<{ nodeId: string }>(
+    `SELECT d."nodeId" FROM "ControlledDocument" d JOIN "Workspace" w ON w.id = d."workspaceId"
+      WHERE w.slug = $1 AND d."publishedVersion" IS NOT NULL ORDER BY d.code LIMIT 1`,
+    [slug],
+  );
+  const nodeId = document.rows[0]?.nodeId ?? "";
+  await formCall(owner, slug, "PUT", `/nodes/${nodeId}/controlled/readings`, {
+    positionId: positionIds.get(names[0] ?? ""),
+  });
+  const { course } = (await formCall(owner, slug, "POST", "/safety/courses", {
+    nodeId,
+    validityMonths: 12,
+  })) as { course: { id: string } };
+  await formCall(owner, slug, "POST", `/safety/courses/${course.id}/attendance`, {
+    attendees: [
+      { membershipId: holder(0), signature },
+      { membershipId: holder(0, 1), signature },
+    ],
+    completedOn: new Date(Date.now() - 20 * 86_400_000).toISOString().slice(0, 10),
+  });
+  await formCall(owner, slug, "POST", `/safety/people/${holder(0)}/fitness`, {
+    status: "APT_RESTRICTED",
+    validUntil: new Date(Date.now() + 200 * 86_400_000).toISOString().slice(0, 10),
+    restrictions: text.restriction,
+  });
+  demoSafetyPeople.set(locale, { ...people, course: course.id });
 }
 
 const safetyPeopleOf = (locale: Locale) => {
@@ -312,10 +396,10 @@ async function formCall(token: string, slug: string, method: string, path: strin
   const res = await fetch(`${BASE}/api/v1/w/${slug}${path}`, {
     method,
     headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!res.ok) throw new Error(`${path}: ${String(res.status)} ${await res.text()}`);
-  return (await res.json()) as unknown;
+  return res.status === 204 ? undefined : ((await res.json()) as unknown);
 }
 
 /** Creates the demo form through the API the first time (only in this database); then finds it. */
@@ -463,6 +547,18 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i, locale) =>
       `/app/${i.slug}/seguridad/epis/nueva?persona=${safetyPeopleOf(locale).next}`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
+  {
+    name: "accidentes",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/incidentes`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
+  {
+    name: "formacion",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/formacion/${safetyPeopleOf(locale).course}`,
     before: ({ slug, locale }) => demoSafety(locale, slug),
   },
   {

@@ -178,7 +178,12 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
    en la misma pantalla (`SafetyTraining.signature`), con la hoja de asistencia firmada en PDF. Pendiente:
    que cada asistente firme desde su propio celular. `safety.manage` ve la lista de documentos controlados
    y el cumplimiento de lecturas de Administración, no las aprobaciones (decidido con el mantenedor).
-5. **Aptitud, ficha por persona**, ejemplos completos, guías, capturas y versión.
+5. **Aptitud, ficha por persona** (hecha): `SafetyFitness` (solo `safety.health` registra y ve la de
+   otros; cada uno ve la suya; vencimiento `safety.fitness`; la auditoría no guarda el resultado), ficha con
+   EPIs, formación, aptitud y accidentes (estos dos solo con `safety.health`), ejemplos del sector
+   alimentario (puestos, catálogo de EPIs e «Inspección de seguridad mensual»), guías y capturas
+   (`accidentes`, `formacion`, `epis-ficha`). Pendiente: la ficha exportable a PDF y la firma de la
+   asistencia desde el celular de cada uno. La versión la publica quien mantiene el proyecto tras probar.
 
 Cada fase: commit propio, tests de lo tocado (permisos y aislamiento entre empresas incluidos) y guías
 es/en de las pantallas que cambian.

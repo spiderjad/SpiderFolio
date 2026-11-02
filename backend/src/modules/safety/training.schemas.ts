@@ -26,4 +26,10 @@ export const AttendanceSchema = z.strictObject({
   completedOn: Day,
 });
 
+export const FitnessSchema = z.strictObject({
+  status: z.enum(["APT", "APT_RESTRICTED", "NOT_APT"]),
+  validUntil: Day.nullable().default(null),
+  restrictions: z.string().trim().max(500).nullable().default(null),
+});
+
 export const AttendancePdfQuerySchema = z.object({ day: Day });

@@ -254,6 +254,7 @@ model Workspace {
   safetyActions       SafetyAction[]
   safetyCourses       SafetyCourse[]
   safetyTrainings     SafetyTraining[]
+  safetyFitness       SafetyFitness[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -592,6 +593,26 @@ model SafetyTraining {
 
   @@index([workspaceId, courseId, membershipId])
   @@index([workspaceId, membershipId])
+}
+
+/// Fitness for work (docs/spec/seguridad-salud.md, «Aptitud»): only fit, fit with restrictions or not
+/// fit, and until when; never medical data. The latest one counts; earlier ones are history. Health
+/// data: `safety.health` (each person sees theirs).
+model SafetyFitness {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  membershipId String
+  /// APT, APT_RESTRICTED or NOT_APT.
+  status       String
+  validUntil   DateTime? @db.Date
+  /// Tasks they can't do (never causes nor diagnoses).
+  restrictions String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, membershipId, createdAt])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único

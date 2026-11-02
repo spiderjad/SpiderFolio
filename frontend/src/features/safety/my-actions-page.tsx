@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { formatDateTime, formatDay } from "@/lib/utils";
+import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys } from "./safety-api";
 import { texts } from "@/i18n";
 
@@ -62,7 +62,7 @@ export function MyActionsPage() {
                     {action.description}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t.incidents.due(formatDay(action.dueOn))}
+                    {t.incidents.due(formatUtcDate(action.dueOn))}
                     {action.done !== null &&
                       ` · ${t.incidents.doneBy(action.done.by?.name ?? "", formatDateTime(action.done.at))}`}
                   </p>

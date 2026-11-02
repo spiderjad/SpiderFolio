@@ -11,7 +11,7 @@ import { Combobox, type ComboOption } from "@/components/ui/combobox";
 import { Badge, Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { FormField, Input } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { formatDateTime, formatDay } from "@/lib/utils";
+import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys } from "./safety-api";
 import { usePeopleSource } from "./safety-common";
 import { texts } from "@/i18n";
@@ -112,7 +112,7 @@ export function IncidentPage() {
             )}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {formatDay(incident.occurredOn)}
+            {formatUtcDate(incident.occurredOn)}
             {incident.place === null ? "" : ` · ${incident.place}`}
             {incident.severity === null ? "" : ` · ${t.severities[incident.severity]}`}
           </p>
@@ -169,7 +169,7 @@ export function IncidentPage() {
                     {action.description}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {action.responsible.name} · {t.due(formatDay(action.dueOn))}
+                    {action.responsible.name} · {t.due(formatUtcDate(action.dueOn))}
                     {action.done !== null &&
                       ` · ${t.doneBy(action.done.by?.name ?? "", formatDateTime(action.done.at))}`}
                   </p>

@@ -404,6 +404,7 @@ describe("forTenant: transacciones", () => {
           "safetyCourse",
           "safetyDelivery",
           "safetyDeliveryLine",
+          "safetyFitness",
           "safetyIncident",
           "safetyItem",
           "safetyTraining",

@@ -189,6 +189,18 @@ const cases: IsolationCase[] = [
   },
   {
     method: "get",
+    path: "/safety/people/:id/fitness",
+    url: (ids) => `/safety/people/${ids.memberId}/fitness`,
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/safety/people/:id/fitness",
+    url: (ids) => `/safety/people/${ids.memberId}/fitness`,
+    body: { status: "APT" },
+  },
+  {
+    method: "get",
     path: "/safety/people/:id/ppe",
     url: (ids) => `/safety/people/${ids.memberId}/ppe`,
     ownStatus: 404,

@@ -154,7 +154,7 @@ export const adminTexts = {
       enabledHint: "Activado. Desactivarlo oculta el menú y los avisos; los datos se conservan.",
       examples: "Cargar ejemplos del sector alimentario",
       examplesHint:
-        "Puestos de ejemplo (operario de producción, de cámaras, de expedición…). Nunca pisa lo que ya tengas con el mismo nombre.",
+        "Puestos de ejemplo (operario de producción, de cámaras, de expedición…), un catálogo de EPIs y una inspección de seguridad mensual. Nunca pisa lo que ya tengas con el mismo nombre.",
       terms: "Términos",
       termsHint: "Cómo se llaman las cosas en la app y en los avisos.",
       termsOptions: { es: "España: PRL y EPI", latam: "Latinoamérica: SST y EPP" },

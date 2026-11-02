@@ -158,7 +158,7 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       enabledHint: "On. Turning it off hides the menu and the notices; the data is kept.",
       examples: "Load food industry examples",
       examplesHint:
-        "Example positions (production operator, cold room operator, dispatch operator…). Never over what you already have with the same name.",
+        "Example positions (production operator, cold room operator, dispatch operator…), a PPE catalog and a monthly safety inspection. Never over what you already have with the same name.",
       terms: "Terms",
       termsHint: "What things are called in the app and in the notices.",
       termsOptions: { es: "Spain: PRL and EPI", latam: "Latin America: SST and EPP" },

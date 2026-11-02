@@ -13,7 +13,7 @@ import { FormField, Input } from "@/components/ui/form";
 import { SignaturePad } from "@/components/signature-pad";
 import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { ApiError } from "@/lib/api";
-import { formatDay } from "@/lib/utils";
+import { formatUtcDate } from "@/lib/utils";
 import { trainingApi, trainingKeys, type TrainingState } from "./safety-api";
 import { usePeopleSource, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
@@ -167,11 +167,11 @@ export function CoursePage() {
                   <p className="font-medium">{person.name}</p>
                   {person.completedAt !== null && (
                     <p className="text-xs text-muted-foreground">
-                      {formatDay(person.completedAt.slice(0, 10))}
+                      {formatUtcDate(person.completedAt.slice(0, 10))}
                       {person.source === null ? "" : ` · ${t.via[person.source]}`}
                       {person.validUntil === null
                         ? ""
-                        : ` · ${t.until(formatDay(person.validUntil))}`}
+                        : ` · ${t.until(formatUtcDate(person.validUntil))}`}
                     </p>
                   )}
                 </div>
