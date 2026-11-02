@@ -99,6 +99,7 @@ export const formsTexts = {
     viewing: (n: number) => `Versión ${String(n)} (solo lectura)`,
     back: "Volver a la actual",
   },
+  qr: "El código abre el formulario para llenarlo; pide iniciar sesión (también con PIN). Imprímelo y pégalo donde se llena: la cámara, la máquina, la puerta.",
   fill: {
     open: "Llenar",
     title: (name: string) => `Llenar «${name}»`,

@@ -47,6 +47,7 @@ export const DOC_KEYS = [
   "requiredReading",
   "myDocuments",
   "qr",
+  "forms",
   "search",
   "bian",
   "security2fa",

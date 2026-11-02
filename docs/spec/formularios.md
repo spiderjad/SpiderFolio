@@ -87,6 +87,11 @@ electrónica avanzada.
      (Gotenberg; sin él responde 503 con un mensaje): un bloque por registro, hasta 300; fotos y firma
      figuran como «2 fotos» / «Firmado» (las imágenes en el PDF quedan para después). Auditado
      `form.records.export`; límite de 30 por hora y usuario.
-5. QR del formulario (abre el llenado), guías es/en, capturas y versión.
+5. QR del formulario: el mismo módulo de QR (docs/spec/adopcion.md), siempre **privado** (llenar pide
+   sesión; uno público es 400 y `canPublic` es falso). Lo genera quien edita el formulario, desde su
+   pantalla o su menú del explorador; al escanearlo, quien lo ve va a `…/form/:id/fill?qr=1` y el registro
+   queda con `source: "qr"`. Guías es/en («Formularios y registros») y capturas `formulario*` (el script
+   de capturas crea el formulario de demo por la API, solo en la base `_capturas`). La versión (etiqueta y
+   Release) la publica quien mantiene el proyecto después de probar.
 
 Fuera de la primera versión: lógica condicional, cálculos, uso sin conexión y galería de plantillas.

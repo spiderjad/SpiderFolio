@@ -40,6 +40,7 @@ export const routes: LocaleRoutes = {
     requiredReading: "required-reading",
     myDocuments: "my-documents",
     qr: "qr-codes",
+    forms: "forms",
     search: "search",
     bian: "bian",
     security2fa: "security-and-2fa",

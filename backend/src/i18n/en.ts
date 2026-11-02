@@ -628,7 +628,8 @@ export const controlledPdfTexts: Catalog<typeof Es.controlledPdfTexts> = {
 
 /** Document QR codes. */
 export const qrTexts: Catalog<typeof Es.qrTexts> = {
-  onlyDocuments: "QR codes are for pages and files.",
+  onlyDocuments: "QR codes are for pages, files and forms.",
+  formPrivateOnly: "A form's QR code is always private: filling it in needs signing in.",
   imageLabel: "QR code",
   imageFileName: (name: string) => `QR ${name}`,
   labelsFileName: (name: string) => `QR labels ${name}`,

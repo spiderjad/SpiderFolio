@@ -119,6 +119,133 @@ async function pluginCall(locale: Locale, slug: string, path: string, body: unkn
 /** The consent screen's address for a real request (an app registered for the capture). */
 let consentUrl = "";
 
+/** The demo form (not in the seed): a daily cold-room check with three records, one non-conforming. */
+const FORM: Record<
+  Locale,
+  {
+    name: string;
+    room: string;
+    rooms: [string, string];
+    temp: string;
+    doors: string;
+    photo: string;
+    notes: string;
+    note: string;
+  }
+> = {
+  es: {
+    name: "Control de temperatura de cámaras",
+    room: "Cámara",
+    rooms: ["Cámara 1 · lácteos", "Cámara 2 · fiambres"],
+    temp: "Temperatura",
+    doors: "¿Las puertas cierran bien?",
+    photo: "Foto del termómetro",
+    notes: "Observaciones",
+    note: "Burlete de la puerta gastado; aviso a mantenimiento.",
+  },
+  en: {
+    name: "Cold room temperature check",
+    room: "Cold room",
+    rooms: ["Cold room 1 · dairy", "Cold room 2 · deli"],
+    temp: "Temperature",
+    doors: "Do the doors close properly?",
+    photo: "Photo of the thermometer",
+    notes: "Notes",
+    note: "Door seal worn; maintenance told.",
+  },
+};
+const demoForms = new Map<Locale, { id: string; record: string }>();
+
+async function formCall(token: string, slug: string, method: string, path: string, body: unknown) {
+  const res = await fetch(`${BASE}/api/v1/w/${slug}${path}`, {
+    method,
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${path}: ${String(res.status)} ${await res.text()}`);
+  return (await res.json()) as unknown;
+}
+
+/** Creates the demo form through the API the first time (only in this database); then finds it. */
+async function demoForm(locale: Locale, slug: string): Promise<void> {
+  if (demoForms.has(locale)) return;
+  const f = FORM[locale];
+  const { rows } = await db.query<{ id: string; record: string }>(
+    `SELECT n.id, r.id AS record FROM "Node" n JOIN "FormRecord" r ON r."nodeId" = n.id
+       JOIN "Workspace" w ON w.id = n."workspaceId"
+      WHERE w.slug = $1 AND n.name = $2 AND n."trashedAt" IS NULL AND cardinality(r."nonConforming") > 0
+      LIMIT 1`,
+    [slug, f.name],
+  );
+  const found = rows[0];
+  if (found !== undefined) {
+    demoForms.set(locale, found);
+    return;
+  }
+  const owner = await ownerToken(locale);
+  const ids = await idsOf(db, locale);
+  const created = (await formCall(owner, slug, "POST", `/spaces/${ids.procedures}/forms`, {
+    name: f.name,
+  })) as { form: { node: { id: string } } };
+  const id = created.form.node.id;
+  await formCall(owner, slug, "PUT", `/forms/${id}/template`, {
+    baseVersion: 1,
+    fields: [
+      {
+        id: "room",
+        type: "choice",
+        label: f.room,
+        required: true,
+        options: [
+          { id: "c1", label: f.rooms[0] },
+          { id: "c2", label: f.rooms[1] },
+        ],
+      },
+      { id: "temp", type: "number", label: f.temp, unit: "°C", min: 0, max: 4, required: true },
+      { id: "doors", type: "yesno", label: f.doors, nonConforming: "no", required: true },
+      { id: "photo", type: "photo", label: f.photo },
+      { id: "notes", type: "text", label: f.notes, multiline: true },
+    ],
+  });
+  const department = await db.query<{ id: string }>(
+    `SELECT d.id FROM "Department" d JOIN "Workspace" w ON w.id = d."workspaceId"
+      WHERE w.slug = $1 ORDER BY d.name LIMIT 1`,
+    [slug],
+  );
+  await formCall(owner, slug, "PUT", `/forms/${id}/settings`, {
+    responsible: { type: "default" },
+    frequency: "daily",
+    weekdays: [1, 2, 3, 4, 5],
+    assignees: { people: [], departments: department.rows.map((row) => row.id) },
+  });
+  const submit = async (answers: object) =>
+    (
+      (await formCall(owner, slug, "POST", `/forms/${id}/records`, {
+        version: 2,
+        answers,
+        source: "qr",
+      })) as { record: { id: string } }
+    ).record.id;
+  await submit({ room: "c1", temp: 3, doors: "yes" });
+  await submit({ room: "c2", temp: 2.5, doors: "yes" });
+  const record = await submit({ room: "c2", temp: 7, doors: "no", notes: f.note });
+  demoForms.set(locale, { id, record });
+}
+
+/** The demo form with a QR code already made, so the dialog shows its preview and downloads. */
+async function demoFormQr(locale: Locale, slug: string): Promise<void> {
+  await demoForm(locale, slug);
+  const { id } = formOf(locale);
+  const { rows } = await db.query(
+    `SELECT id FROM "QrCode" WHERE "nodeId" = $1 AND "revokedAt" IS NULL LIMIT 1`,
+    [id],
+  );
+  if (rows.length === 0)
+    await formCall(await ownerToken(locale), slug, "POST", `/nodes/${id}/qr`, {});
+}
+
+const formOf = (locale: Locale) => demoForms.get(locale) ?? { id: "", record: "" };
+
 /** The labels of the assistant's first step (corporate-directory's frontend/texts.ts). */
 const WIZARD: Record<Locale, { domain: string; find: string; server: string; next: string }> = {
   es: {
@@ -216,6 +343,34 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i) => `/app/${i.slug}/files/${i.procedures}/p/${i.slicer}`,
     then: (page, locale) => fromMenu(page, locale, LABELS[locale].qr),
+  },
+  // Forms and records: the demo form, created the first time (demoForm).
+  {
+    name: "formulario",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}`,
+    before: ({ slug, locale }) => demoForm(locale, slug),
+  },
+  {
+    name: "formulario-llenar",
+    who: "reader",
+    path: (i, locale) => `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}/fill`,
+    before: ({ slug, locale }) => demoForm(locale, slug),
+  },
+  {
+    name: "formulario-registro",
+    who: "owner",
+    path: (i, locale) =>
+      `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}/r/${formOf(locale).record}`,
+    before: ({ slug, locale }) => demoForm(locale, slug),
+  },
+  {
+    name: "formulario-qr",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}`,
+    before: ({ slug, locale }) => demoFormQr(locale, slug),
+    then: (page, locale) =>
+      page.getByRole("button", { name: LABELS[locale].qr, exact: true }).click(),
   },
   // Plugins: the free one alone first (the paid one replaces it), then with the paid license.
   {

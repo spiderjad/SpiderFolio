@@ -1,0 +1,114 @@
+---
+title: "Forms and records"
+description: "Build a versioned form, fill it in from a phone or a QR code, non-conformities, periodic forms, and filtering, voiding and exporting records."
+group: uso-diario
+order: 9.5
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What they're for
+
+A **form** replaces the paper sheet on the shop floor: the cold room temperature check, cleaning the slicer, receiving goods. Every time someone fills it in, a **record** is kept with their name, the date and time, their answers, photos and signature. Records can't be changed or deleted.
+
+If an answer is outside what's acceptable (a high temperature, a door that doesn't close), the record is **non-conforming** and the form's **person in charge** is told.
+
+## Create a form
+
+1. In the explorer, click **New** › **Form**.
+2. Give it a **Name** ("Cold room temperature check") and click **Create form**.
+3. With **Add field**, add the fields in the order they're filled in.
+4. Click **Save version**.
+
+You need to be able to **edit** the space or folder. The form has the same access as the rest of the space.
+
+<Shot name="formulario" alt="A form's editor with its fields and the Person in charge and frequency card" />
+
+## Field types
+
+| Field | What it holds | When it's non-conforming |
+|---|---|---|
+| **Text** | A written answer, short or long. | Never. |
+| **Number** | A value with its **Unit** (°C, kg, %). | Outside the **Minimum acceptable** or the **Maximum acceptable**. |
+| **Yes / No** | A yes or no question. | If they give the **Non-conforming answer** you chose. |
+| **Choice** | One option from a list. | If they pick an option marked **Non-conforming**. |
+| **Date** | A day. | Never. |
+| **Checklist** | A list of checks. | If any is left unchecked. |
+| **Photo** | One or more photos taken with the phone (up to 10). | Never. |
+| **Signature** | The signature of whoever fills it in, with a finger or the mouse. | Never. |
+
+Each field can be **Required** and have a **Help (optional)** text under it ("Read it on the display by the door").
+
+## Versions
+
+Every time you save changes a new **version** is created. What's already filled in stays tied to the version it was filled with: if you remove a field, old records still show it. In the **Versions** card you can **View** any earlier version, read only.
+
+## Fill in a form
+
+Being able to **view** a form is enough to fill it in: that includes people with a reader seat and those who sign in with a username and PIN on a tablet.
+
+1. Open the form and click **Fill in** (or scan its QR code).
+2. Answer the fields. If a value is outside what's acceptable, you'll see it before sending ("Outside what's acceptable (0 to 4 °C). The person in charge will be told.").
+3. For a photo, tap **Take or choose a photo**: on a phone the camera opens. To sign, sign in the box with your finger.
+4. Click **Send**.
+
+The record keeps your name, the company's date and time, and whether it was filled in from the QR code. Then you can **Fill in another** or **See the record**.
+
+<Shot name="formulario-llenar" alt="Filling in a form: options, temperature with its range, yes or no, photo and notes" />
+
+## QR code
+
+With **Generate QR code** on the form (or in its menu in the explorer) you create a code that opens the form ready to fill in. Print it and stick it where the form is filled in: the cold room, the machine, the door.
+
+A form's QR code is always **private**: whoever scans it has to sign in (a PIN works too) and be able to view the form. It's downloaded as PNG, SVG or a label sheet, and revoked just like a document's ([QR codes](/en/docs/qr-codes)).
+
+<Shot name="formulario-qr" alt="A form's QR code dialog with the preview and downloads" />
+
+## Person in charge and non-conformities
+
+In the **Person in charge and frequency** card, whoever edits the form chooses the **Person in charge**:
+
+- **Default**: the heads of the space's department; if the space has no department, whoever created the form.
+- **A person**.
+- **The heads of a department**.
+
+The person in charge gets a notice ("Emma Clarke sent a non-conforming record of “…”.") every time a non-conforming record arrives, in the bell and by email, and sees every record.
+
+## Periodic forms
+
+In **How often it's filled in** choose **Daily** (and **Which days**), **Weekly (Monday to Sunday)** or **Monthly**; with **Whenever needed** it has no frequency. Then choose **Who fills it in**: people and departments, who need to be able to view the form.
+
+- The people who fill it in see the form in the **Forms to fill in** card on [Home](/en/docs/home) (and on the PIN tablet) while the period has no record.
+- At 8:00 in the company's time zone they get a notice ("“…” is due to be filled in.").
+- A record from **any** of them completes the period.
+- If a period ends with no record, the person in charge is told ("“…” wasn't filled in last period.").
+
+## See the records
+
+Under the form is the list of **Records**, newest first. Whoever fills it in sees **My records**, their own; whoever can edit the form and the person in charge see everyone's.
+
+You can filter by **From** and **To** (company days), **Person**, **Version**, **Only non-conforming** and **Status** (**All**, **Not voided**, **Voided**). The filters stay in the address: you can bookmark or share it. **Clear filters** goes back to the full list.
+
+Opening a record shows each answer with the version it was filled with, the non-conforming answers marked and, if it was filled in from the QR code, **From the QR code**.
+
+<Shot name="formulario-registro" alt="A record with two non-conforming answers and the Void button" />
+
+## Void a record
+
+A record is never changed or deleted. If it was entered wrongly (say, the reading from the wrong cold room), whoever **manages** the form can **Void** it with a required **Reason**. It's marked as voided, with their name, the date and the reason, and still shows struck through in the list. If the form is periodic, its period is pending again. Voiding is recorded in the audit log.
+
+## Export
+
+**Export** downloads the records you see, with the filters applied:
+
+- **CSV (Excel)**: one row per record and one column per field, including those from earlier versions. Up to 10,000 records.
+- **PDF**: one block per record, up to 300. Photos and the signature appear as text ("2 photos", "Signed"). It needs [Gotenberg](/en/docs/gotenberg).
+
+Every export is recorded in the audit log.
+
+## Related
+
+- [QR codes](/en/docs/qr-codes)
+- [Home](/en/docs/home)
+- [Roles and permissions](/en/docs/roles-and-permissions)

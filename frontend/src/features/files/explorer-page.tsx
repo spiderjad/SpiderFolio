@@ -840,7 +840,15 @@ export function ExplorerPage() {
         }}
       />
       <QrDialog
-        target={qrNode === null ? null : { id: qrNode.id, name: qrNode.name }}
+        target={
+          qrNode === null
+            ? null
+            : {
+                id: qrNode.id,
+                name: qrNode.name,
+                ...(qrNode.type === "FORM" ? { text: texts.forms.qr } : {}),
+              }
+        }
         onClose={() => {
           setQrNode(null);
         }}

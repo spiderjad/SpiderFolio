@@ -1,0 +1,114 @@
+---
+title: "Formularios y registros"
+description: "Armar un formulario con versiones, llenarlo desde el celular o por QR, no conformidades, formularios periódicos, filtrar, anular y exportar registros."
+group: uso-diario
+order: 9.5
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+Un **formulario** reemplaza la planilla en papel de planta: el control de temperatura de las cámaras, la limpieza de la cortadora, la recepción de mercadería. Cada vez que alguien lo llena queda un **registro** con su nombre, la fecha y la hora, sus respuestas, fotos y firma. Los registros no se pueden cambiar ni borrar.
+
+Si una respuesta está fuera de lo aceptable (una temperatura alta, una puerta que no cierra), el registro queda **no conforme** y se avisa al **responsable** del formulario.
+
+## Crear un formulario
+
+1. En el explorador, pulsa **Nuevo** › **Formulario**.
+2. Ponle un **Nombre** («Control de temperatura de cámaras») y pulsa **Crear formulario**.
+3. Con **Agregar campo**, suma los campos en el orden en que se llenan.
+4. Pulsa **Guardar versión**.
+
+Necesitas poder **editar** el espacio o la carpeta. El formulario tiene los mismos accesos que el resto del espacio.
+
+<Shot name="formulario" alt="El editor de un formulario con sus campos y la tarjeta Responsable y periodicidad" />
+
+## Tipos de campo
+
+| Campo | Qué guarda | Cuándo es no conforme |
+|---|---|---|
+| **Texto** | Una respuesta escrita, corta o larga. | Nunca. |
+| **Número** | Un valor con su **Unidad** (°C, kg, %). | Fuera del **Mínimo aceptable** o del **Máximo aceptable**. |
+| **Sí / No** | Una pregunta de sí o no. | Si responden la **Respuesta no conforme** que elegiste. |
+| **Opción** | Una opción de una lista. | Si eligen una opción marcada **No conforme**. |
+| **Fecha** | Un día. | Nunca. |
+| **Checklist** | Una lista de comprobaciones. | Si queda alguna sin marcar. |
+| **Foto** | Una o varias fotos tomadas con el celular (hasta 10). | Nunca. |
+| **Firma** | La firma de quien llena, con el dedo o el mouse. | Nunca. |
+
+Cada campo puede ser **Obligatorio** y llevar una **Ayuda (opcional)** debajo («Mírala en el display de la puerta»).
+
+## Versiones
+
+Cada vez que guardas cambios se crea una **versión** nueva. Lo que ya se llenó queda ligado a la versión con que se llenó: si quitas un campo, los registros viejos lo siguen mostrando. En la tarjeta **Versiones** puedes **Ver** cualquier versión anterior, en solo lectura.
+
+## Llenar un formulario
+
+Para llenar un formulario alcanza con poder **verlo**: también las personas con plaza de lector y quienes entran con usuario y PIN en una tablet.
+
+1. Abre el formulario y pulsa **Llenar** (o escanea su QR).
+2. Responde los campos. Si un valor está fuera de lo aceptable, lo verás antes de enviar («Fuera de lo aceptable (0 a 4 °C). Se avisará al responsable.»).
+3. Para una foto, pulsa **Tomar o elegir foto**: en el celular se abre la cámara. Para firmar, firma en el recuadro con el dedo.
+4. Pulsa **Enviar**.
+
+El registro queda con tu nombre, la fecha y la hora de la empresa, y si se llenó desde el QR. Luego puedes **Llenar otro** o **Ver el registro**.
+
+<Shot name="formulario-llenar" alt="Llenar un formulario: opciones, temperatura con su rango, sí o no, foto y observaciones" />
+
+## Código QR
+
+Con **Generar QR** en el formulario (o en su menú del explorador) creas un código que abre el formulario listo para llenar. Imprímelo y pégalo donde se llena: la cámara, la máquina, la puerta.
+
+El QR de un formulario es siempre **privado**: quien lo escanea tiene que iniciar sesión (también con PIN) y poder ver el formulario. Se descarga en PNG, SVG u hoja de etiquetas, y se revoca igual que el de un documento ([Códigos QR](/es/docs/codigos-qr)).
+
+<Shot name="formulario-qr" alt="El diálogo de QR de un formulario con la vista previa y las descargas" />
+
+## Responsable y no conformidades
+
+En la tarjeta **Responsable y periodicidad**, quien edita el formulario elige el **Responsable**:
+
+- **Por defecto**: los jefes del departamento del espacio; si el espacio no tiene departamento, quien creó el formulario.
+- **Una persona**.
+- **Los jefes de un departamento**.
+
+El responsable recibe un aviso («Ana Sanz envió un registro no conforme de «…».») cada vez que llega un registro no conforme, en la campana y por email, y ve todos los registros.
+
+## Formularios periódicos
+
+En **Cada cuánto se llena** elige **Diario** (y **Qué días**), **Semanal (de lunes a domingo)** o **Mensual**; con **Cuando haga falta** no tiene periodicidad. Luego elige **Quiénes lo llenan**: personas y departamentos, que tienen que poder ver el formulario.
+
+- Quienes lo llenan ven el formulario en la tarjeta **Formularios para llenar** del [Inicio](/es/docs/inicio) (y en la tablet con PIN) mientras el período no tenga registro.
+- A las 8:00 de la zona horaria de la empresa les llega un aviso («Toca llenar «…».»).
+- Un registro de **cualquiera** de ellos completa el período.
+- Si un período termina sin registro, se avisa al responsable (««…» quedó sin llenar en el período anterior.»).
+
+## Ver los registros
+
+Debajo del formulario está la lista de **Registros**, del más nuevo al más viejo. Quien llena ve **Mis registros**, los suyos; quien puede editar el formulario y el responsable ven los de todos.
+
+Puedes filtrar por **Desde** y **Hasta** (días de la empresa), **Persona**, **Versión**, **Solo no conformes** y **Estado** (**Todos**, **Sin anular**, **Anulados**). Los filtros quedan en la dirección: puedes guardarla o compartirla. **Quitar filtros** vuelve a la lista completa.
+
+Al abrir un registro ves cada respuesta con la versión con que se llenó, las respuestas no conformes marcadas y, si se llenó desde el QR, **Desde el código QR**.
+
+<Shot name="formulario-registro" alt="Un registro con dos respuestas no conformes y el botón Anular" />
+
+## Anular un registro
+
+Un registro no se cambia ni se borra. Si se cargó mal (por ejemplo, la lectura de la cámara equivocada), quien **gestiona** el formulario puede **Anular** con un **Motivo** obligatorio. Queda marcado como anulado, con su nombre, la fecha y el motivo, y se sigue viendo tachado en la lista. Si el formulario es periódico, su período vuelve a quedar pendiente. Anular queda en la auditoría.
+
+## Exportar
+
+**Exportar** descarga los registros que ves, con los filtros puestos:
+
+- **CSV (Excel)**: una fila por registro y una columna por campo, también los de versiones anteriores. Hasta 10.000 registros.
+- **PDF**: un bloque por registro, hasta 300. Las fotos y la firma figuran como texto («2 fotos», «Firmado»). Necesita [Gotenberg](/es/docs/gotenberg).
+
+Cada exportación queda en la auditoría.
+
+## Relacionado
+
+- [Códigos QR](/es/docs/codigos-qr)
+- [Inicio](/es/docs/inicio)
+- [Roles y permisos](/es/docs/roles-y-permisos)

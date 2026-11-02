@@ -24,7 +24,7 @@ export type ScanResult =
       workspaceSlug: string;
       spaceId: string;
       nodeId: string;
-      nodeType: "PAGE" | "FILE";
+      nodeType: "PAGE" | "FILE" | "FORM";
     }
   | { kind: "public-page"; title: string; html: string }
   | { kind: "public-file"; title: string; fileName: string; contentType: string; url: string };

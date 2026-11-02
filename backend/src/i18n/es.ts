@@ -599,7 +599,8 @@ export const controlledPdfTexts = {
 
 /** Códigos QR de documentos. */
 export const qrTexts = {
-  onlyDocuments: "El QR es para páginas y archivos.",
+  onlyDocuments: "El QR es para páginas, archivos y formularios.",
+  formPrivateOnly: "El QR de un formulario es siempre privado: llenarlo pide iniciar sesión.",
   imageLabel: "Código QR",
   imageFileName: (name: string) => `QR ${name}`,
   labelsFileName: (name: string) => `Etiquetas QR ${name}`,

@@ -79,22 +79,21 @@ const qrSelect = {
   nodeId: true,
 } as const;
 
-/** El documento: página o archivo, no en la papelera. */
+/** The document: a page, a file or a form (its QR opens it to fill in), not in the trash. */
 async function documentNode(ctx: AdminContext, nodeId: string) {
   const node = await ctx.db.node.findFirst({
     where: { id: nodeId, trashedAt: null },
     select: { id: true, name: true, type: true, spaceId: true },
   });
   if (node === null) throw notFound();
-  // A form's QR (it opens the form to fill it) comes with filling forms.
-  if (node.type === "FOLDER" || node.type === "FORM") {
+  if (node.type === "FOLDER") {
     throw new AppError("BAD_REQUEST", { message: qrTexts.onlyDocuments });
   }
   return node;
 }
 
 export async function listQr(ctx: AdminContext, deps: QrDeps, nodeId: string): Promise<QrList> {
-  await documentNode(ctx, nodeId);
+  const node = await documentNode(ctx, nodeId);
   const level = requireLevel(await levelOfNode(ctx, nodeId), "EDIT");
   const rows = await ctx.db.qrCode.findMany({
     where: { nodeId },
@@ -104,7 +103,9 @@ export async function listQr(ctx: AdminContext, deps: QrDeps, nodeId: string): P
   });
   return {
     items: rows.map((row) => viewOf(deps, row)),
+    // Filling a form needs a session: its QR is always private.
     canPublic:
+      node.type !== "FORM" &&
       atLeast(level, "MANAGE") &&
       ctx.actor.capabilities.includes("content.public_qr"),
   };
@@ -116,8 +117,11 @@ export async function createQr(
   nodeId: string,
   input: { public: boolean },
 ): Promise<QrView> {
-  await documentNode(ctx, nodeId);
+  const node = await documentNode(ctx, nodeId);
   const level = requireLevel(await levelOfNode(ctx, nodeId), "EDIT");
+  if (input.public && node.type === "FORM") {
+    throw new AppError("BAD_REQUEST", { message: qrTexts.formPrivateOnly });
+  }
   if (input.public) {
     // Abre el documento a cualquiera que tenga el código: solo quien lo gestiona y con permiso.
     if (!atLeast(level, "MANAGE") || !ctx.actor.capabilities.includes("content.public_qr")) {
@@ -224,7 +228,10 @@ export async function qrLabels(
     area: department?.name ?? space?.name ?? null,
     size,
   });
-  return { bytes, fileName: qrTexts.labelsFileName(controlled?.code ?? node.name).slice(0, 80) + ".pdf" };
+  return {
+    bytes,
+    fileName: qrTexts.labelsFileName(controlled?.code ?? node.name).slice(0, 80) + ".pdf",
+  };
 }
 
 // ─── Al escanear ─────────────────────────────────────────────────────────────────────────
@@ -235,7 +242,7 @@ export type ScanResult =
       workspaceSlug: string;
       spaceId: string;
       nodeId: string;
-      nodeType: "PAGE" | "FILE";
+      nodeType: "PAGE" | "FILE" | "FORM";
     }
   | { kind: "public-page"; title: string; html: string }
   | {
@@ -289,7 +296,9 @@ export async function scanQr(
     where: { id: row.nodeId, trashedAt: null },
     select: { id: true, name: true, type: true, spaceId: true },
   });
-  if (node === null || node.type === "FOLDER" || node.type === "FORM") throw notFound();
+  if (node === null || node.type === "FOLDER") throw notFound();
+  // A form is never public (nor can its QR be created public); just in case, it isn't opened.
+  if (row.isPublic && node.type === "FORM") throw notFound();
   const count = () =>
     db.qrCode.updateMany({
       where: { id: row.id, revokedAt: null },

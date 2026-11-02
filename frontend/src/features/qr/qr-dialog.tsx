@@ -17,6 +17,8 @@ import { texts } from "@/i18n";
 export interface QrTarget {
   id: string;
   name: string;
+  /** What the code opens, when it isn't a document (a form opens to fill it in). */
+  text?: string;
 }
 
 export function QrDialog({ target, onClose }: { target: QrTarget | null; onClose: () => void }) {
@@ -121,7 +123,7 @@ function QrBody({ target }: { target: QrTarget }) {
   return (
     <DialogContent
       title={t.title(target.name)}
-      description={t.text}
+      description={target.text ?? t.text}
       size="lg"
       footer={
         <>

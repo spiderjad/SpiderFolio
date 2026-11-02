@@ -257,3 +257,26 @@ describe("aislamiento entre empresas", () => {
     ).toBeNull();
   });
 });
+
+describe("QR de un formulario", () => {
+  it("solo privado; al escanearlo, quien ve el formulario va a llenarlo", async () => {
+    const w = await pagesWorld(ctx, "QR formulario");
+    const created = await w.call("post", w.ws.token, `/spaces/${w.spaceId}/forms`, {
+      name: "Temperaturas",
+    });
+    const formId = (created.body as { form: { node: { id: string } } }).form.node.id;
+    expect((await w.call("post", w.ws.token, `/nodes/${formId}/qr`, { public: true })).status).toBe(
+      400,
+    );
+    const list = await w.call("get", w.ws.token, `/nodes/${formId}/qr`);
+    expect((list.body as { canPublic: boolean }).canPublic).toBe(false);
+    const res = await w.call("post", w.editor.token, `/nodes/${formId}/qr`, {});
+    expect(res.status).toBe(201);
+    const token = tokenOf(res.body as Qr);
+    expect((await scan(token)).status).toBe(401);
+    expect((await scan(token, w.stranger.token)).status).toBe(404);
+    const opened = await scan(token, w.viewer.token);
+    expect(opened.status).toBe(200);
+    expect(opened.body).toMatchObject({ kind: "private", nodeId: formId, nodeType: "FORM" });
+  });
+});

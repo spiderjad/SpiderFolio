@@ -41,6 +41,11 @@ export function ScanPage() {
   useEffect(() => {
     if (data?.kind !== "private") return;
     const base = `/app/${data.workspaceSlug}/files/${data.spaceId}`;
+    if (data.nodeType === "FORM") {
+      // A form's code opens it to fill it in; the record says it came from the QR.
+      void navigate(`${base}/form/${data.nodeId}/fill?qr=1`, { replace: true });
+      return;
+    }
     if (data.nodeType === "PAGE") {
       void navigate(`${base}/p/${data.nodeId}`, { replace: true });
       return;

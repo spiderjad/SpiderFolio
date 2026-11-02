@@ -101,6 +101,7 @@ export const formsTexts: typeof es = {
     viewing: (n: number) => `Version ${String(n)} (read only)`,
     back: "Back to the current one",
   },
+  qr: "The code opens the form to fill it in; it asks to sign in (a PIN works too). Print it and stick it where the form is filled in: the cold room, the machine, the door.",
   fill: {
     open: "Fill in",
     title: (name: string) => `Fill in “${name}”`,

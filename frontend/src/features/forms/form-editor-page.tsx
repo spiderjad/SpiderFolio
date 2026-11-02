@@ -16,6 +16,7 @@ import {
   ListTodo,
   PenLine,
   Plus,
+  QrCode,
   ServerCrash,
   ToggleLeft,
   Trash2,
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { filesKeys } from "@/features/files/api";
+import { QrDialog } from "@/features/qr/qr-dialog";
 import { ApiError } from "@/lib/api";
 import { cn, formatDateTime } from "@/lib/utils";
 import {
@@ -217,6 +219,7 @@ function Editor({ form }: { form: FormDetail }) {
     });
   };
   const editable = form.canEdit && viewing === null;
+  const [qr, setQr] = useState(false);
 
   return (
     <div className="mx-auto grid w-full min-w-0 max-w-6xl grid-cols-1 gap-4">
@@ -233,15 +236,34 @@ function Editor({ form }: { form: FormDetail }) {
           <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight">{node.name}</h1>
           <Badge tone="primary">{t.editor.version(form.template.version)}</Badge>
           {editable && dirty && <Badge tone="warning">{t.editor.unsaved}</Badge>}
-          {form.template.fields.length > 0 && (
-            <Button asChild className="ml-auto">
-              <Link to={`/app/${workspaceSlug}/files/${space.id}/form/${node.id}/fill`}>
-                <ClipboardList className="size-4" aria-hidden="true" />
-                {t.fill.open}
-              </Link>
-            </Button>
-          )}
+          <div className="ml-auto flex flex-wrap gap-2">
+            {form.canEdit && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setQr(true);
+                }}
+              >
+                <QrCode className="size-4" aria-hidden="true" />
+                {texts.qr.menu}
+              </Button>
+            )}
+            {form.template.fields.length > 0 && (
+              <Button asChild>
+                <Link to={`/app/${workspaceSlug}/files/${space.id}/form/${node.id}/fill`}>
+                  <ClipboardList className="size-4" aria-hidden="true" />
+                  {t.fill.open}
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
+        <QrDialog
+          target={qr ? { id: node.id, name: node.name, text: t.qr } : null}
+          onClose={() => {
+            setQr(false);
+          }}
+        />
         <p className="max-w-3xl text-xs text-muted-foreground">
           {form.canEdit ? t.editor.intro : t.editor.readOnly}
         </p>
