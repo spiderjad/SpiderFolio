@@ -298,6 +298,27 @@ describe("EPIs", () => {
     expect(after.current.find((c) => c.item.id === gloves)?.state).toBe("expired");
   });
 
+  it("lista de personas con avisos: quien gestiona ve todas, el jefe su área, el resto nadie más", async () => {
+    const w = await world("EPIs personas");
+    const a = api(w.ws.slug, w.ws.token);
+    await a.post("/safety/items", { name: "Chaqueta", positionIds: [w.positionId] });
+    const list = async (token: string, query = "") =>
+      (await api(w.ws.slug, token).get(`/safety/people${query}`)).body as {
+        items: { id: string; alerts: { missingPpe: number } }[];
+      };
+    const all = await list(w.ws.token);
+    expect(all.items.find((row) => row.id === w.worker.membership.id)?.alerts.missingPpe).toBe(1);
+    expect(
+      (await list(w.ws.token, `?position=${w.positionId}`)).items.map((row) => row.id),
+    ).toEqual([w.worker.membership.id]);
+    expect((await list(w.leader.token)).items.map((row) => row.id).sort()).toEqual(
+      [w.leader.membership.id, w.worker.membership.id].sort(),
+    );
+    expect((await list(w.colleague.token)).items.map((row) => row.id)).toEqual([
+      w.colleague.membership.id,
+    ]);
+  });
+
   it("con el módulo apagado la reposición espera, sin avisar ni resolverse", async () => {
     const w = await world("EPIs pausa");
     const a = api(w.ws.slug, w.ws.token);

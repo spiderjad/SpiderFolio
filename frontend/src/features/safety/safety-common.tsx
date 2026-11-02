@@ -90,8 +90,7 @@ export function RequireSafetyManager() {
 }
 
 export function PpeTabs() {
-  const { slug, canManage, health } = useSafety();
-  if (!canManage && !health) return null;
+  const { slug, canManage, health, leads, membershipId } = useSafety();
   const t = texts.safety.tabs;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -101,7 +100,15 @@ export function PpeTabs() {
         : "border-transparent text-muted-foreground hover:text-foreground",
     );
   return (
-    <nav className="flex gap-1 border-b border-border">
+    <nav className="flex flex-wrap gap-1 border-b border-border">
+      <NavLink end to={`/app/${slug}/seguridad/personas/${membershipId}`} className={tab}>
+        {texts.safety.people.mine}
+      </NavLink>
+      {(canManage || leads) && (
+        <NavLink end to={`/app/${slug}/seguridad/personas`} className={tab}>
+          {texts.safety.people.tab}
+        </NavLink>
+      )}
       <NavLink end to={`/app/${slug}/seguridad/epis`} className={tab}>
         {t.deliveries}
       </NavLink>

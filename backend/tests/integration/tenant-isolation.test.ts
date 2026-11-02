@@ -187,6 +187,7 @@ const cases: IsolationCase[] = [
     url: (ids) => `/safety/people/${ids.memberId}/training`,
     ownStatus: 404,
   },
+  { method: "get", path: "/safety/people", url: () => "/safety/people", ownStatus: 404 },
   {
     method: "get",
     path: "/safety/people/:id/fitness",

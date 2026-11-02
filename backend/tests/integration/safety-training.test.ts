@@ -68,6 +68,10 @@ describe("documentos controlados para quien gestiona el módulo", () => {
     expect((await w.call("get", tech.token, "/admin/documents")).status).toBe(200);
     expect((await w.call("get", tech.token, "/admin/documents/compliance")).status).toBe(200);
     expect((await w.call("get", tech.token, "/admin/documents/approvals")).status).toBe(403);
+    // The people list's filters: positions and departments.
+    expect((await w.call("get", tech.token, "/admin/positions")).status).toBe(200);
+    expect((await w.call("get", tech.token, "/admin/departments/options")).status).toBe(200);
+    expect((await w.call("get", tech.token, "/safety/people")).status).toBe(200);
   });
 });
 

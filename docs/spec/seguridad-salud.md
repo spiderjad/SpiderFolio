@@ -142,6 +142,10 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
 
 - `SafetyFitness` `{ membershipId, status, validUntil?, restrictions?, createdById }`: la última vale;
   las anteriores quedan como historial. Vencimiento `safety.fitness`.
+- **Personas** (`/app/:slug/seguridad/personas`, `GET /safety/people`): la lista con buscador, puesto,
+  departamento y avisos (EPIs que faltan, cursos vencidos o pendientes, aptitud por vencer con
+  `safety.health`); se llega también desde el menú de cada persona en Miembros y, a la propia, desde «Mi
+  ficha» y Mi perfil.
 - **Ficha** (`/app/:slug/seguridad/personas/:membershipId`): puesto, EPIs vigentes, vencidos y faltantes,
   formación (hecha, por vencer, pendiente) y, solo para `safety.health`, aptitud de otras personas y
   accidentes. Exportable a

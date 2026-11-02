@@ -10,7 +10,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
 import { PersonFitness, PersonIncidents } from "./person-health";
-import { PpeStateBadge, ReportIncidentButton, useSafety } from "./safety-common";
+import { PpeStateBadge, PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.person;
@@ -49,6 +49,7 @@ export function PersonPage() {
 
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4">
+      <PpeTabs />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{data.person.name}</h1>

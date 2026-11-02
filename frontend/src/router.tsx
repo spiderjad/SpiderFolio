@@ -186,6 +186,10 @@ export const routes = [
                     ],
                   },
                   {
+                    path: "personas",
+                    lazy: page(() => import("@/features/safety/people-page"), "PeoplePage"),
+                  },
+                  {
                     path: "personas/:membershipId",
                     lazy: page(() => import("@/features/safety/person-page"), "PersonPage"),
                   },

@@ -128,6 +128,28 @@ export const safetyTexts: typeof es = {
     title: "Accidents and incidents",
     none: "No cases.",
   },
+  people: {
+    tab: "People",
+    mine: "My sheet",
+    title: "People",
+    subtitle:
+      "Each person's health and safety sheet: their PPE, training, fitness for work and accidents.",
+    search: "Search for a person",
+    position: "Position",
+    anyPosition: "Any position",
+    department: "Department",
+    anyDepartment: "Any department",
+    columns: { name: "Person", position: "Position", departments: "Departments", alerts: "Alerts" },
+    missingPpe: (n: number) => (n === 1 ? "1 PPE item missing" : `${String(n)} PPE items missing`),
+    training: (n: number) =>
+      n === 1 ? "1 course expired or pending" : `${String(n)} courses expired or pending`,
+    fitness: { due_soon: "Fitness due soon", expired: "Fitness expired" },
+    ok: "Up to date",
+    empty: "Nobody matches those filters.",
+    sheet: "Health and safety sheet",
+    mySheet: "My health and safety sheet",
+    mySheetText: "Your PPE, training and fitness for work, in Health & safety.",
+  },
   myActions: {
     title: "My measures",
     subtitle: "Prevention measures assigned to you, with their date.",

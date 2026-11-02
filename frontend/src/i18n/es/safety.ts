@@ -126,6 +126,33 @@ export const safetyTexts = {
     title: "Accidentes e incidentes",
     none: "Sin casos.",
   },
+  people: {
+    tab: "Personas",
+    mine: "Mi ficha",
+    title: "Personas",
+    subtitle:
+      "La ficha de prevención de cada persona: sus EPIs, su formación, su aptitud y sus accidentes.",
+    search: "Buscar a una persona",
+    position: "Puesto",
+    anyPosition: "Cualquier puesto",
+    department: "Departamento",
+    anyDepartment: "Cualquier departamento",
+    columns: {
+      name: "Persona",
+      position: "Puesto",
+      departments: "Departamentos",
+      alerts: "Avisos",
+    },
+    missingPpe: (n: number) => (n === 1 ? "Le falta 1 EPI" : `Le faltan ${String(n)} EPIs`),
+    training: (n: number) =>
+      n === 1 ? "1 curso vencido o pendiente" : `${String(n)} cursos vencidos o pendientes`,
+    fitness: { due_soon: "Aptitud por vencer", expired: "Aptitud vencida" },
+    ok: "Al día",
+    empty: "Nadie con esos filtros.",
+    sheet: "Ficha de prevención",
+    mySheet: "Mi ficha de prevención",
+    mySheetText: "Tus EPIs, tu formación y tu aptitud, en Prevención.",
+  },
   myActions: {
     title: "Mis medidas",
     subtitle: "Medidas de prevención que te tocan, con su fecha.",

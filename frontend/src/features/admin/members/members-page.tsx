@@ -15,9 +15,10 @@ import {
   UserX,
   Upload,
   Users,
+  HardHat,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DataTable, type SortState } from "@/components/ui/data-table";
@@ -116,6 +117,10 @@ export function MembersPage() {
   const canInvite = useCan("members.invite") || ownScope;
   const canImport = useCan("members.invite") && !ownScope;
   const canManage = useCan("members.manage");
+  // The health and safety sheet: with the module on, for whoever manages it (heads see their area).
+  const seesSafety =
+    membership.workspace.safety.enabled &&
+    (membership.capabilities.includes("safety.manage") || membership.leadsDepartments);
   const canSuspend = useCan("members.suspend");
   const canPin = useCan("members.pin");
   const { account } = useAuth();
@@ -373,6 +378,7 @@ export function MembersPage() {
           const canResetTwoFactor =
             canManage && member.twoFactor && !member.isSelf && manageable(member);
           if (
+            !seesSafety &&
             !canEdit &&
             !canToggle &&
             !canRemove &&
@@ -390,6 +396,14 @@ export function MembersPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {seesSafety && (
+                  <DropdownMenuItem asChild>
+                    <Link to={`/app/${workspaceSlug}/seguridad/personas/${member.id}`}>
+                      <HardHat aria-hidden="true" />
+                      {texts.safety.people.sheet}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {canEdit && (
                   <DropdownMenuItem
                     onSelect={() => {

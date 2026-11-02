@@ -9,12 +9,14 @@ import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import { fitnessOf, recordFitness } from "./fitness.service.ts";
+import { listSafetyPeople } from "./people.service.ts";
 import {
   AttendancePdfQuerySchema,
   AttendanceSchema,
   CourseSchema,
   CoursesQuerySchema,
   FitnessSchema,
+  PeopleQuerySchema,
   UpdateCourseSchema,
 } from "./training.schemas.ts";
 import {
@@ -381,6 +383,14 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
         res.json({ items: await personTraining(adminContextOf(req), id) });
+      },
+    },
+    // The people list with their alerts (whoever manages the module: everyone; heads: their area).
+    {
+      method: "get",
+      path: "/safety/people",
+      handler: async (req, res) => {
+        res.json(await listSafetyPeople(adminContextOf(req), PeopleQuerySchema.parse(req.query)));
       },
     },
     // Fitness for work: health data (safety.health; each person sees theirs).

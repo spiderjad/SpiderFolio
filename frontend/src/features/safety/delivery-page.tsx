@@ -29,16 +29,17 @@ export function DeliveryPage() {
   });
   const [signature, setSignature] = useState<string | null>(null);
   useEffect(() => {
-    let url: string | null = null;
     let cancelled = false;
+    // As a data: URL: the content security policy allows images from the app and data:, not blob:.
     void safetyApi.signature(workspaceSlug, deliveryId).then((blob) => {
-      if (cancelled) return;
-      url = URL.createObjectURL(blob);
-      setSignature(url);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (!cancelled && typeof reader.result === "string") setSignature(reader.result);
+      };
+      reader.readAsDataURL(blob);
     });
     return () => {
       cancelled = true;
-      if (url !== null) URL.revokeObjectURL(url);
     };
   }, [workspaceSlug, deliveryId]);
   const pdf = useMutation({

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
 import { useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { ConnectedApps } from "@/features/connector/connections";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/auth-context";
@@ -81,6 +81,19 @@ export function ProfilePage() {
               pending={account.user.pendingEmail}
               verified={account.user.emailVerified}
             />
+          )}
+          {membership.workspace.safety.enabled && membership.role.base !== "GUEST" && (
+            <Section
+              title={texts.safety.people.mySheet}
+              description={texts.safety.people.mySheetText}
+            >
+              <Link
+                to={`/app/${workspaceSlug}/seguridad/personas/${membership.id}`}
+                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {texts.safety.people.mySheet}
+              </Link>
+            </Section>
           )}
           {!isPin && <PasswordSection />}
           {!isPin && <TwoFactorSection />}

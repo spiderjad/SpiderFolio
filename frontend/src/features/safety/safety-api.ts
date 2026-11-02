@@ -297,3 +297,29 @@ export const fitnessApi = {
     body: { status: FitnessStatus; validUntil: string | null; restrictions: string | null },
   ) => api<undefined>(w(slug, `/safety/people/${id}/fitness`), { method: "POST", body }),
 };
+
+// ─── People ──────────────────────────────────────────────────────────────────────────────
+
+export interface SafetyPersonRow {
+  id: string;
+  name: string;
+  position: { id: string; name: string } | null;
+  departments: { id: string; name: string }[];
+  alerts: { missingPpe: number; training: number; fitness: "due_soon" | "expired" | null };
+}
+
+export interface PeopleFilters {
+  q?: string | undefined;
+  position?: string | undefined;
+  department?: string | undefined;
+}
+
+export const peopleApi = {
+  list: (slug: string, filters: PeopleFilters, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<SafetyPersonRow>>(
+      w(slug, `/safety/people?${listQuery({ ...filters, cursor })}`),
+      {
+        signal,
+      },
+    ),
+};

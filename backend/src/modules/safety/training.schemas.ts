@@ -26,6 +26,13 @@ export const AttendanceSchema = z.strictObject({
   completedOn: Day,
 });
 
+export const PeopleQuerySchema = z.object({
+  ...pageShape(["name"], "name"),
+  q: z.string().trim().max(100).optional(),
+  position: Id.optional(),
+  department: Id.optional(),
+});
+
 export const FitnessSchema = z.strictObject({
   status: z.enum(["APT", "APT_RESTRICTED", "NOT_APT"]),
   validUntil: Day.nullable().default(null),

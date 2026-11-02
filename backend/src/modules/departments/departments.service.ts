@@ -259,8 +259,10 @@ export async function listDepartmentOptions(
   query: DepartmentOptionsQuery,
 ): Promise<Page<DepartmentOptionView>> {
   const { manage } = await peopleScopeOf(ctx);
-  if (manage.kind === "none") throw forbidden();
-  const ledIds = manage.kind === "own" ? manage.departmentIds : null;
+  // The health and safety managers filter the module's people by any department.
+  const safety = ctx.actor.capabilities.includes("safety.manage");
+  if (manage.kind === "none" && !safety) throw forbidden();
+  const ledIds = manage.kind === "own" && !safety ? manage.departmentIds : null;
   const all = await ctx.db.department.findMany({
     select: { id: true, name: true, parentId: true },
   });

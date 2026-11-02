@@ -58,7 +58,14 @@ export function departmentRoutes(): TenantRoute[] {
       // Antes de /:id para que "options" no se lea como un id.
       method: "get",
       path: "/admin/departments/options",
-      anyCapability: ["departments.manage", "members.view", "members.invite", "members.manage"],
+      // Also the health and safety managers: the module's people filter by department.
+      anyCapability: [
+        "departments.manage",
+        "members.view",
+        "members.invite",
+        "members.manage",
+        "safety.manage",
+      ],
       leaderAccess: true,
       handler: async (req, res) => {
         res.json(
