@@ -191,6 +191,7 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/safety/summary", url: () => "/safety/summary", ownStatus: 404 },
   // Off in B: no alerts (null), not 404, so Home doesn't fail.
   { method: "get", path: "/safety/me/alerts", url: () => "/safety/me/alerts" },
+  { method: "get", path: "/safety/me/count", url: () => "/safety/me/count" },
   {
     method: "get",
     path: "/safety/people/:id/fitness",
@@ -597,6 +598,12 @@ const cases: IsolationCase[] = [
     path: "/forms/:id/settings",
     url: (ids) => `/forms/${ids.formId}/settings`,
     body: { responsible: { type: "default" }, frequency: "none", assignees: {} },
+  },
+  {
+    method: "put",
+    path: "/forms/:id/list-fields",
+    url: (ids) => `/forms/${ids.formId}/list-fields`,
+    body: { fieldIds: [] },
   },
   {
     method: "put",

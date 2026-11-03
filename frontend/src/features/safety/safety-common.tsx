@@ -4,7 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Siren } from "lucide-react";
 import { useMemo } from "react";
-import { Navigate, NavLink, Outlet, useNavigate, useParams } from "react-router";
+import { Navigate, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import type { ComboboxSource } from "@/components/ui/combobox";
 import { COMBO_PAGE_SIZE } from "@/components/ui/combobox";
@@ -66,18 +66,20 @@ export function RequireSafetyHealth() {
 export function ReportIncidentButton() {
   const { slug } = useSafety();
   const navigate = useNavigate();
+  const location = useLocation();
   const form = useQuery({
     queryKey: incidentsKeys.form(slug),
     queryFn: () => incidentsApi.form(slug),
     select: (data) => data.form,
   });
   if (form.data == null) return null;
-  const { spaceId, formId } = form.data;
   return (
     <Button
       variant="outline"
       onClick={() => {
-        void navigate(`/app/${slug}/files/${spaceId}/form/${formId}/fill`);
+        void navigate(`/app/${slug}/seguridad/comunicar`, {
+          state: { from: `${location.pathname}${location.search}` },
+        });
       }}
     >
       <Siren className="size-4" aria-hidden="true" />

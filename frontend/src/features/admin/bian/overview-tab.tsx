@@ -214,9 +214,7 @@ function MonthCard({ data, slug }: { data: BianOverview; slug: string }) {
           className="mt-3"
         />
       )}
-      <p className="mt-3 text-xs text-muted-foreground">
-        {t.renews(formatUtcLongDate(renewsAt))}
-      </p>
+      <p className="mt-3 text-xs text-muted-foreground">{t.renews(formatUtcLongDate(renewsAt))}</p>
       <form
         className="mt-4 flex flex-wrap items-end gap-2"
         onSubmit={(event) => {
@@ -431,7 +429,11 @@ export function OverviewTab() {
   return (
     <div className="grid min-w-0 grid-cols-1 gap-4">
       <SettingsCard data={overview.data} slug={workspaceSlug} />
-      <MonthCard key={String(overview.data.usage.total)} data={overview.data} slug={workspaceSlug} />
+      <MonthCard
+        key={String(overview.data.usage.total)}
+        data={overview.data}
+        slug={workspaceSlug}
+      />
       <LimitsCard data={overview.data} slug={workspaceSlug} />
       <HowCard />
     </div>

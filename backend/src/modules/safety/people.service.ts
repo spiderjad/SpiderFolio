@@ -226,3 +226,31 @@ export async function myAlerts(
   const alerts = await alertsOf(ctx, ctx.tenant.membershipId, await today(ctx));
   return { missingPpe: alerts.missingPpe, training: alerts.training };
 }
+
+/**
+ * The number on «Prevención» in the side menu: whoever manages the module, the summary's total; everyone
+ * else, the PPE they lack, their pending training and their open measures. null with the module off.
+ */
+export async function myCount(ctx: AdminContext): Promise<number | null> {
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
+  const enabled = (workspace?.settings as { safety?: { enabled?: unknown } } | null)?.safety
+    ?.enabled;
+  if (enabled !== true) return null;
+  if (canManageSafety(ctx) || health(ctx)) {
+    const summary = await safetySummary(ctx);
+    return (
+      summary.missingPpe +
+      summary.replace +
+      summary.training +
+      summary.trainingSoon +
+      (summary.fitness ?? 0) +
+      (summary.actions?.open ?? 0) +
+      (summary.incidents?.open ?? 0)
+    );
+  }
+  const alerts = await alertsOf(ctx, ctx.tenant.membershipId, await today(ctx));
+  const actions = await ctx.db.safetyAction.count({
+    where: { responsibleId: ctx.tenant.membershipId, doneAt: null },
+  });
+  return alerts.missingPpe + alerts.training + actions;
+}

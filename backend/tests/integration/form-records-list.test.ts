@@ -123,7 +123,24 @@ describe("anular un registro", () => {
   });
 });
 
-const csvLines = (body: unknown) => String(body).replace(/^\uFEFF/u, "").trim().split("\r\n");
+const csvLines = (body: unknown) =>
+  String(body)
+    .replace(/^\uFEFF/u, "")
+    .trim()
+    .split("\r\n");
+
+describe("columnas de la lista", () => {
+  it("quien edita elige qué campos se ven; quien solo llena, no", async () => {
+    const path = `/forms/${formId}/list-fields`;
+    expect((await w.call("put", w.viewer.token, path, { fieldIds: ["temp"] })).status).toBe(403);
+    const saved = await w.call("put", w.ws.token, path, { fieldIds: ["temp", "turno"] });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect((saved.body as { settings: { listFieldIds: string[] } }).settings.listFieldIds).toEqual([
+      "temp",
+      "turno",
+    ]);
+  });
+});
 
 describe("exportar", () => {
   it("CSV con una columna por campo de cualquier versión y las respuestas en texto", async () => {

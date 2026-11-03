@@ -33,8 +33,23 @@ import { texts } from "@/i18n";
 
 const t = texts.forms.fill;
 
-export function FormFillPage() {
-  const { workspaceSlug = "", formId = "" } = useParams();
+/**
+ * Filling in a form. Embedded elsewhere (reporting an incident in Prevención) it gets the form, the
+ * answers it starts with, the text fields that are a time of day, and where to go once it's sent.
+ */
+export function FormFillPage({
+  formId: embeddedForm,
+  initial,
+  timeFields = [],
+  onDone,
+}: {
+  formId?: string;
+  initial?: Record<string, Answer>;
+  timeFields?: readonly string[];
+  onDone?: (record: RecordView) => void;
+} = {}) {
+  const { workspaceSlug = "", formId: routeForm = "" } = useParams();
+  const formId = embeddedForm ?? routeForm;
   const form = useQuery({
     queryKey: formsKeys.form(workspaceSlug, formId),
     queryFn: () => formsApi.get(workspaceSlug, formId),
@@ -52,7 +67,7 @@ export function FormFillPage() {
     );
   }
   if (form.data === undefined) return <Skeleton className="mx-auto h-96 w-full max-w-xl" />;
-  if (sent !== null) {
+  if (sent !== null && onDone === undefined) {
     return (
       <Sent
         form={form.data}
@@ -69,7 +84,9 @@ export function FormFillPage() {
     <Fill
       key={`${String(form.data.template.version)}-${String(round)}`}
       form={form.data}
-      onSent={setSent}
+      initial={initial ?? {}}
+      timeFields={timeFields}
+      onSent={onDone ?? setSent}
     />
   );
 }
@@ -102,11 +119,21 @@ interface PhotoState {
   failed: boolean;
 }
 
-function Fill({ form, onSent }: { form: FormDetail; onSent: (record: RecordView) => void }) {
+function Fill({
+  form,
+  initial,
+  timeFields,
+  onSent,
+}: {
+  form: FormDetail;
+  initial: Record<string, Answer>;
+  timeFields: readonly string[];
+  onSent: (record: RecordView) => void;
+}) {
   const { workspaceSlug = "" } = useParams();
   const [params] = useSearchParams();
   const fields = form.template.fields;
-  const [answers, setAnswers] = useState<Record<string, Answer>>({});
+  const [answers, setAnswers] = useState<Record<string, Answer>>(initial);
   const [photos, setPhotos] = useState<Record<string, PhotoState[]>>({});
   const signatures = useRef<Record<string, () => Promise<Blob | null>>>({});
   const [problems, setProblems] = useState<Record<string, AnswerProblem["reason"]>>({});
@@ -222,6 +249,7 @@ function Fill({ form, onSent }: { form: FormDetail; onSent: (record: RecordView)
           </div>
           <FieldInput
             field={field}
+            time={timeFields.includes(field.id)}
             value={answers[field.id]}
             photos={photos[field.id] ?? []}
             onChange={(value) => {
@@ -271,6 +299,7 @@ function Fill({ form, onSent }: { form: FormDetail; onSent: (record: RecordView)
 
 function FieldInput({
   field,
+  time,
   value,
   photos,
   onChange,
@@ -278,6 +307,8 @@ function FieldInput({
   registerSignature,
 }: {
   field: FormField;
+  /** A text field that is a time of day (a time picker). */
+  time: boolean;
   value: Answer | undefined;
   photos: PhotoState[];
   onChange: (value: Answer | undefined) => void;
@@ -300,6 +331,7 @@ function FieldInput({
         <Input
           aria-label={field.label}
           maxLength={500}
+          {...(time ? { type: "time" } : {})}
           value={typeof value === "string" ? value : ""}
           onChange={(event) => {
             onChange(event.target.value === "" ? undefined : event.target.value);

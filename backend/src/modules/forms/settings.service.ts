@@ -24,6 +24,8 @@ export interface FormSettingsView {
     people: { id: string; name: string }[];
     departments: { id: string; name: string }[];
   };
+  /** The fields shown as columns in the records list; empty: the app picks the first ones. */
+  listFieldIds: string[];
 }
 
 interface SettingsRow {
@@ -33,6 +35,7 @@ interface SettingsRow {
   weekdays: number[];
   assigneeMembershipIds: string[];
   assigneeDepartmentIds: string[];
+  listFieldIds: string[];
 }
 
 const NONE: SettingsRow = {
@@ -42,6 +45,7 @@ const NONE: SettingsRow = {
   weekdays: [],
   assigneeMembershipIds: [],
   assigneeDepartmentIds: [],
+  listFieldIds: [],
 };
 
 const frequencyOf = (value: string): Frequency =>
@@ -169,6 +173,7 @@ export async function settingsView(db: TenantDb, nodeId: string): Promise<FormSe
             people: inCharge.map((id) => ({ id, name: defaultNames.get(id) ?? "" })),
           };
   return {
+    listFieldIds: row.listFieldIds,
     responsible,
     frequency: frequencyOf(row.frequency),
     weekdays: [...row.weekdays].sort((a, b) => a - b),
@@ -311,4 +316,35 @@ export async function pendingForMe(
     });
   }
   return pending.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The records list's columns (EDIT on the form): up to 6 fields of the current version. */
+export async function saveListFields(
+  ctx: AdminContext,
+  nodeId: string,
+  fieldIds: string[],
+): Promise<FormSettingsView> {
+  const form = await ctx.db.node.findFirst({
+    where: { id: nodeId, type: "FORM", trashedAt: null },
+    select: { id: true, spaceId: true },
+  });
+  if (form === null) throw notFound();
+  requireLevel(await levelOfNode(ctx, nodeId), "EDIT");
+  const ids = [...new Set(fieldIds)];
+  const current = await ctx.db.formSettings.findFirst({
+    where: { nodeId },
+    select: { nodeId: true },
+  });
+  if (current === null) {
+    await ctx.db.formSettings.create({ data: { nodeId, ...NONE, listFieldIds: ids } });
+  } else {
+    await ctx.db.formSettings.update({ where: { nodeId }, data: { listFieldIds: ids } });
+  }
+  await auditAdmin(ctx, {
+    action: "form.list.update",
+    entityType: "Node",
+    entityId: nodeId,
+    metadata: { fieldIds: ids },
+  });
+  return await settingsView(ctx.db, nodeId);
 }

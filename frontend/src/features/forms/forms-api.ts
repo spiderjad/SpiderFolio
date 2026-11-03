@@ -60,6 +60,8 @@ export interface FormSettingsView {
     people: { id: string; name: string }[];
     departments: { id: string; name: string }[];
   };
+  /** The fields shown as columns in the records list; empty: the first number, choice or yes/no. */
+  listFieldIds: string[];
 }
 
 export interface FormSettingsInput {
@@ -111,6 +113,11 @@ export const formsApi = {
   saveSettings: (slug: string, id: string, body: FormSettingsInput) =>
     api<{ settings: FormSettingsView }>(w(slug, `/forms/${id}/settings`), { method: "PUT", body }),
   pending: (slug: string) => api<{ items: PendingForm[] }>(w(slug, "/forms/pending")),
+  saveListFields: (slug: string, id: string, fieldIds: string[]) =>
+    api<{ settings: FormSettingsView }>(w(slug, `/forms/${id}/list-fields`), {
+      method: "PUT",
+      body: { fieldIds },
+    }),
   saveTemplate: (slug: string, id: string, body: { baseVersion: number; fields: FormField[] }) =>
     api<{ form: FormDetail }>(w(slug, `/forms/${id}/template`), { method: "PUT", body }),
   versions: (slug: string, id: string, cursor: string | undefined, signal?: AbortSignal) =>
@@ -258,4 +265,14 @@ export async function uploadFormFile(
     method: "POST",
   });
   return fileId;
+}
+
+/** The records list's columns: the chosen ones, or the first number, choice or yes/no fields. */
+export function listFieldsOf(fields: readonly FormField[], chosen: readonly string[]): FormField[] {
+  if (chosen.length > 0) {
+    return chosen.flatMap((id) => fields.filter((field) => field.id === id));
+  }
+  return fields
+    .filter((field) => field.type === "number" || field.type === "choice" || field.type === "yesno")
+    .slice(0, 3);
 }

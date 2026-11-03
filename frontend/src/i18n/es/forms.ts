@@ -140,7 +140,18 @@ export const formsTexts = {
     seeRecord: "Ver el registro",
     backToForm: "Volver al formulario",
   },
+  tabs: {
+    label: "Secciones del formulario",
+    registros: "Registros",
+    diseno: "Diseño",
+    ajustes: "Ajustes",
+    fillNow: "Llenar ahora",
+    columns: "Columnas de la lista",
+    columnsHint:
+      "Los campos que se ven en la lista de registros (hasta 6). Sin elegir, los primeros de número, opción o sí/no.",
+  },
   records: {
+    columns: { date: "Fecha", person: "Persona", status: "Estado" },
     title: "Registros",
     mineTitle: "Mis registros",
     hintAll: "Todos los registros de este formulario, del más nuevo al más viejo.",

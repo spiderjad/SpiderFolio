@@ -2,6 +2,7 @@
 // Los términos cambian con el país que elige la empresa: PRL y EPI en España, SST y EPP en Latinoamérica.
 export const safetyTexts = {
   title: "Seguridad y salud laboral",
+  back: "Volver",
   terms: {
     es: { module: "Prevención", ppe: "EPI", ppes: "EPIs" },
     latam: { module: "Seguridad y salud", ppe: "EPP", ppes: "EPP" },
@@ -12,6 +13,7 @@ export const safetyTexts = {
     title: "Accidentes e incidentes",
     subtitle: "Datos de salud: los ves porque tienes «Datos de salud: accidentes y aptitud».",
     report: "Comunicar un incidente",
+    reported: "Incidente comunicado. Se avisó a quien gestiona la prevención.",
     csv: "Exportar CSV",
     types: {
       leave: "Accidente con baja",
@@ -161,6 +163,8 @@ export const safetyTexts = {
     homeTitle: "Prevención",
     homeText: "Tienes cosas pendientes en tu ficha de prevención.",
     homeOpen: "Ver mi ficha",
+    pendingCount: (n: number) =>
+      n === 1 ? "1 pendiente de prevención" : `${String(n)} pendientes de prevención`,
     empty: "Nadie con esos filtros.",
     sheet: "Ficha de prevención",
     mySheet: "Mi ficha de prevención",

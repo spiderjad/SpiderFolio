@@ -4,6 +4,7 @@ import type { safetyTexts as es } from "../es/safety";
 
 export const safetyTexts: typeof es = {
   title: "Health & safety",
+  back: "Back",
   terms: {
     es: { module: "Health & safety", ppe: "PPE", ppes: "PPE" },
     latam: { module: "Health & safety", ppe: "PPE", ppes: "PPE" },
@@ -15,6 +16,7 @@ export const safetyTexts: typeof es = {
     subtitle:
       "Health data: you see it because you have “Health data: accidents and fitness for work”.",
     report: "Report an incident",
+    reported: "Incident reported. Whoever manages health and safety was told.",
     csv: "Export CSV",
     types: {
       leave: "Accident with sick leave",
@@ -159,6 +161,8 @@ export const safetyTexts: typeof es = {
     homeTitle: "Health & safety",
     homeText: "You have pending items on your health and safety sheet.",
     homeOpen: "See my sheet",
+    pendingCount: (n: number) =>
+      n === 1 ? "1 pending in health & safety" : `${String(n)} pending in health & safety`,
     empty: "Nobody matches those filters.",
     sheet: "Health and safety sheet",
     mySheet: "My health and safety sheet",

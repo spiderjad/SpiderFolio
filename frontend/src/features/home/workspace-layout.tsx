@@ -94,7 +94,7 @@ export function WorkspaceLayout() {
     <AppShell
       account={account}
       membership={membership}
-      title={sectionTitle(pathname, plugins)}
+      title={sectionTitle(pathname, plugins, membership.workspace.safety.terms)}
       {...(account.kiosk === null ? {} : { actions: <SwitchUserButton /> })}
       onLogout={() => {
         setConfirmingLogout(true);

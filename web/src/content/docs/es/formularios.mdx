@@ -23,7 +23,11 @@ Si una respuesta está fuera de lo aceptable (una temperatura alta, una puerta q
 
 Necesitas poder **editar** el espacio o la carpeta. El formulario tiene los mismos accesos que el resto del espacio.
 
-<Shot name="formulario" alt="El editor de un formulario con sus campos y la tarjeta Responsable y periodicidad" />
+La pantalla de un formulario tiene tres pestañas: **Registros** (la que se abre), **Diseño** (los campos,
+para quien puede editar) y **Ajustes** (responsable, periodicidad y código QR). **Llenar ahora** está siempre
+arriba.
+
+<Shot name="formulario" alt="La pestaña Diseño de un formulario, con sus campos y sus versiones" />
 
 ## Tipos de campo
 
@@ -60,7 +64,7 @@ El registro queda con tu nombre, la fecha y la hora de la empresa, y si se llen�
 
 ## Código QR
 
-Con **Generar QR** en el formulario (o en su menú del explorador) creas un código que abre el formulario listo para llenar. Imprímelo y pégalo donde se llena: la cámara, la máquina, la puerta.
+Con **Generar QR** en la pestaña **Ajustes** del formulario (o en su menú del explorador) creas un código que abre el formulario listo para llenar. Imprímelo y pégalo donde se llena: la cámara, la máquina, la puerta.
 
 El QR de un formulario es siempre **privado**: quien lo escanea tiene que iniciar sesión (también con PIN) y poder ver el formulario. Se descarga en PNG, SVG u hoja de etiquetas, y se revoca igual que el de un documento ([Códigos QR](/es/docs/codigos-qr)).
 
@@ -87,13 +91,18 @@ En **Cada cuánto se llena** elige **Diario** (y **Qué días**), **Semanal (de 
 
 ## Ver los registros
 
-Debajo del formulario está la lista de **Registros**, del más nuevo al más viejo. Quien llena ve **Mis registros**, los suyos; quien puede editar el formulario y el responsable ven los de todos.
+En la pestaña **Registros** está la lista, del más nuevo al más viejo, con la fecha, la persona, los valores
+principales y el estado. Quien diseña el formulario elige en **Diseño** › **Columnas de la lista** qué campos se
+ven (hasta 6); sin elegir, se muestran los primeros de número, opción o sí/no. Las respuestas no conformes
+salen en rojo. Quien llena ve **Mis registros**, los suyos; quien puede editar el formulario y el responsable ven los de todos.
 
-Puedes filtrar por **Desde** y **Hasta** (días de la empresa), **Persona**, **Versión**, **Solo no conformes** y **Estado** (**Todos**, **Sin anular**, **Anulados**). Los filtros quedan en la dirección: puedes guardarla o compartirla. **Quitar filtros** vuelve a la lista completa.
+Puedes filtrar por **Desde** y **Hasta** (días de la empresa), **Persona**, **Versión**, **Solo no conformes** y **Estado** (**Sin anular**, la que se ve al entrar; **Todos** o **Anulados**). Los filtros quedan en la dirección: puedes guardarla o compartirla. **Quitar filtros** vuelve a la lista completa.
 
 Al abrir un registro ves cada respuesta con la versión con que se llenó, las respuestas no conformes marcadas y, si se llenó desde el QR, **Desde el código QR**.
 
 <Shot name="formulario-registro" alt="Un registro con dos respuestas no conformes y el botón Anular" />
+
+<Shot name="formulario-registros" alt="La lista de registros con la temperatura y la cámara de cada uno" />
 
 ## Anular un registro
 

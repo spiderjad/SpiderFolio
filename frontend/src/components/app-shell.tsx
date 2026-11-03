@@ -1,6 +1,7 @@
 // Marco de la app (10.4): sidebar de 260 px que se contrae a 72 px (solo íconos), barra superior
 // fina y contenido sobre bg-surface. En móvil, el sidebar es un panel lateral (Sheet).
 // Los ítems de módulos que todavía no existen no se muestran.
+import { peopleApi } from "@/features/safety/safety-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -718,6 +719,14 @@ function SidebarContent({
     slug,
     items.some((item) => item.to === `/app/${slug}/aprobaciones`),
   );
+  const safetyOn = membership.workspace.safety.enabled && role !== "GUEST";
+  const safetyCount = useQuery({
+    queryKey: ["w", slug, "safety", "my-count"],
+    queryFn: () => peopleApi.myCount(slug),
+    select: (data) => data.count ?? 0,
+    staleTime: 60_000,
+    enabled: safetyOn,
+  });
   const unseenShared = sharedSummary.data?.unseen ?? 0;
   const indicatorOf = (to: string): Indicator | undefined => {
     if (to === `/app/${slug}/mis-documentos` && readingCount > 0) {
@@ -734,6 +743,15 @@ function SidebarContent({
         count: approvalCount,
         tone: "warning",
         label: texts.shell.pendingApprovals(approvalCount),
+      };
+    }
+    if (to === `/app/${slug}/seguridad` && (safetyCount.data ?? 0) > 0) {
+      const count = safetyCount.data ?? 0;
+      return {
+        kind: "count",
+        count,
+        tone: "warning",
+        label: texts.safety.people.pendingCount(count),
       };
     }
     if (to === `/app/${slug}/files/shared` && unseenShared > 0) {

@@ -190,7 +190,9 @@ export function NewPageDialog({
               </span>
               <span className="min-w-0">
                 <span className="block text-sm font-medium">{texts.bian.draft.open}</span>
-                <span className="block text-xs text-muted-foreground">{texts.bian.draft.openHint}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {texts.bian.draft.openHint}
+                </span>
               </span>
             </button>
             <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">

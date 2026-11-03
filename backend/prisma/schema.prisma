@@ -1044,6 +1044,8 @@ model FormSettings {
   /// Who fills it in each period (one record per period, from any of them).
   assigneeMembershipIds   String[]
   assigneeDepartmentIds   String[]
+  /// The fields shown as columns in the records list (empty: the first number, choice or yes/no ones).
+  listFieldIds            String[] @default([])
   updatedAt               DateTime @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)

@@ -673,11 +673,19 @@ function Message({
         <div className="flex items-center gap-2">
           <Gauge className="size-4" strokeWidth={1.75} aria-hidden="true" />
           <p className="text-sm font-semibold">
-            {blocked ? texts.bian.blockedTitle : personal ? texts.bian.limitPersonTitle : texts.bian.limitTitle}
+            {blocked
+              ? texts.bian.blockedTitle
+              : personal
+                ? texts.bian.limitPersonTitle
+                : texts.bian.limitTitle}
           </p>
         </div>
         <p className="text-sm">
-          {blocked ? texts.bian.blockedText : personal ? texts.bian.limitPersonText : texts.bian.limitText}
+          {blocked
+            ? texts.bian.blockedText
+            : personal
+              ? texts.bian.limitPersonText
+              : texts.bian.limitText}
         </p>
         {/* El total de la empresa o el propio: se les avisa a quienes administran Bian. */}
         <RequestMore slug={slug} />

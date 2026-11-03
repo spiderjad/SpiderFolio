@@ -186,3 +186,6 @@ export type RecordListQuery = z.infer<typeof RecordListQuerySchema>;
 export const VoidRecordSchema = z.strictObject({ reason: z.string().trim().min(3).max(500) });
 
 export const ExportParamsSchema = z.object({ id: Id, format: z.enum(["csv", "pdf"]) });
+
+/** The records list's columns: up to 6 field ids. */
+export const ListFieldsSchema = z.strictObject({ fieldIds: z.array(FieldId).max(6) });

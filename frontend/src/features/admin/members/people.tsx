@@ -227,7 +227,11 @@ export function PersonActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={texts.admin.members.rowActions(member.name)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={texts.admin.members.rowActions(member.name)}
+          >
             <MoreHorizontal strokeWidth={1.75} />
           </Button>
         </DropdownMenuTrigger>

@@ -96,7 +96,6 @@ function LevelSelect({
   );
 }
 
-
 function ShareBody({ subject }: { subject: ShareSubject }) {
   const t = texts.sharing;
   const { workspaceSlug = "" } = useParams();

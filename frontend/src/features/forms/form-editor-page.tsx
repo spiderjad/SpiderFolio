@@ -31,7 +31,7 @@ import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { LoadMore, useInfiniteList } from "@/components/ui/infinite";
-import { Badge, Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
+import { Badge, Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { Checkbox, FormField as LabeledField, Input } from "@/components/ui/form";
 import {
   DropdownMenu,
@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
+import { readChoice, useListParams } from "@/features/admin/list-params";
 import { filesKeys } from "@/features/files/api";
 import { QrDialog } from "@/features/qr/qr-dialog";
 import { ApiError } from "@/lib/api";
@@ -53,12 +54,14 @@ import {
   type FormDetail,
   type FormField,
   type Option,
+  listFieldsOf,
 } from "./forms-api";
 import { FormSettingsCard } from "./form-settings";
 import { RecordsList } from "./records";
 import { texts } from "@/i18n";
 
 const t = texts.forms;
+const TABS = ["registros", "diseno", "ajustes"] as const;
 
 const ICONS: Record<FieldType, LucideIcon> = {
   text: Type,
@@ -223,6 +226,9 @@ function Editor({ form }: { form: FormDetail }) {
     });
   };
   const editable = form.canEdit && viewing === null;
+  const { params, patch } = useListParams();
+  // «Registros» opens by default; «Diseño» and «Ajustes» only for whoever can edit.
+  const tab = form.canEdit ? readChoice(params, "pestana", TABS, "registros") : "registros";
   const [qr, setQr] = useState(false);
 
   return (
@@ -241,22 +247,11 @@ function Editor({ form }: { form: FormDetail }) {
           <Badge tone="primary">{t.editor.version(form.template.version)}</Badge>
           {editable && dirty && <Badge tone="warning">{t.editor.unsaved}</Badge>}
           <div className="ml-auto flex flex-wrap gap-2">
-            {form.canEdit && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setQr(true);
-                }}
-              >
-                <QrCode className="size-4" aria-hidden="true" />
-                {texts.qr.menu}
-              </Button>
-            )}
             {form.template.fields.length > 0 && (
-              <Button asChild>
+              <Button asChild size="lg">
                 <Link to={`/app/${workspaceSlug}/files/${space.id}/form/${node.id}/fill`}>
                   <ClipboardList className="size-4" aria-hidden="true" />
-                  {t.fill.open}
+                  {t.tabs.fillNow}
                 </Link>
               </Button>
             )}
@@ -268,10 +263,36 @@ function Editor({ form }: { form: FormDetail }) {
             setQr(false);
           }}
         />
-        <p className="max-w-3xl text-xs text-muted-foreground">
-          {form.canEdit ? t.editor.intro : t.editor.readOnly}
-        </p>
       </div>
+      {form.canEdit && (
+        <nav
+          role="tablist"
+          aria-label={t.tabs.label}
+          className="flex flex-wrap gap-1 border-b border-border"
+        >
+          {TABS.map((value) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={tab === value}
+              onClick={() => {
+                patch({ pestana: value === "registros" ? undefined : value });
+              }}
+              className={
+                tab === value
+                  ? "-mb-px border-b-2 border-primary px-3 py-2 text-sm font-medium text-foreground"
+                  : "-mb-px border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              }
+            >
+              {t.tabs[value]}
+            </button>
+          ))}
+        </nav>
+      )}
+      {tab === "diseno" && (
+        <p className="max-w-3xl text-xs text-muted-foreground">{t.editor.intro}</p>
+      )}
 
       {conflict && (
         <Banner
@@ -294,90 +315,118 @@ function Editor({ form }: { form: FormDetail }) {
         </Banner>
       )}
 
-      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="grid min-w-0 content-start gap-3">
-          {viewing !== null ? (
-            <OldVersion
-              formId={node.id}
-              version={viewing}
-              onBack={() => {
-                setViewing(null);
-              }}
-            />
-          ) : (
-            <>
-              {draft.length === 0 && (
-                <Card className="p-6 text-sm text-muted-foreground">{t.editor.empty}</Card>
-              )}
-              {draft.map((field, index) => (
-                <FieldCard
-                  key={field.id}
-                  field={field}
-                  locked={form.lockedFieldIds.includes(field.id)}
-                  problems={problems[index] ?? {}}
-                  editable={editable}
-                  first={index === 0}
-                  last={index === draft.length - 1}
-                  onChange={(next) => {
-                    change(index, next);
-                  }}
-                  onMove={(by) => {
-                    move(index, by);
-                  }}
-                  onRemove={() => {
-                    setDraft((current) => current.filter((_, i) => i !== index));
-                  }}
-                />
-              ))}
-              {editable && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <AddField
-                    onAdd={(type) => {
-                      setDraft((current) => [...current, blankField(type)]);
+      {tab === "diseno" && (
+        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid min-w-0 content-start gap-3">
+            {viewing !== null ? (
+              <OldVersion
+                formId={node.id}
+                version={viewing}
+                onBack={() => {
+                  setViewing(null);
+                }}
+              />
+            ) : (
+              <>
+                {draft.length === 0 && (
+                  <Card className="p-6 text-sm text-muted-foreground">{t.editor.empty}</Card>
+                )}
+                {draft.map((field, index) => (
+                  <FieldCard
+                    key={field.id}
+                    field={field}
+                    locked={form.lockedFieldIds.includes(field.id)}
+                    problems={problems[index] ?? {}}
+                    editable={editable}
+                    first={index === 0}
+                    last={index === draft.length - 1}
+                    onChange={(next) => {
+                      change(index, next);
+                    }}
+                    onMove={(by) => {
+                      move(index, by);
+                    }}
+                    onRemove={() => {
+                      setDraft((current) => current.filter((_, i) => i !== index));
                     }}
                   />
-                  <div className="ml-auto flex flex-wrap items-center gap-2">
-                    {dirty && (
+                ))}
+                {editable && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <AddField
+                      onAdd={(type) => {
+                        setDraft((current) => [...current, blankField(type)]);
+                      }}
+                    />
+                    <div className="ml-auto flex flex-wrap items-center gap-2">
+                      {dirty && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setDraft(saved);
+                          }}
+                        >
+                          {t.editor.discard}
+                        </Button>
+                      )}
                       <Button
-                        variant="ghost"
+                        disabled={!dirty || invalid || save.isPending}
+                        title={invalid ? t.editor.invalid : undefined}
                         onClick={() => {
-                          setDraft(saved);
+                          save.mutate();
                         }}
                       >
-                        {t.editor.discard}
+                        {save.isPending ? t.editor.saving : t.editor.save}
                       </Button>
-                    )}
-                    <Button
-                      disabled={!dirty || invalid || save.isPending}
-                      title={invalid ? t.editor.invalid : undefined}
-                      onClick={() => {
-                        save.mutate();
-                      }}
-                    >
-                      {save.isPending ? t.editor.saving : t.editor.save}
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
+          </div>
+          <div className="grid min-w-0 content-start gap-4">
+            <ListColumnsCard form={form} />
+            <Versions
+              formId={node.id}
+              current={form.template.version}
+              viewing={viewing}
+              onView={setViewing}
+            />
+          </div>
         </div>
-        <div className="grid min-w-0 content-start gap-4">
+      )}
+      {tab === "ajustes" && (
+        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
           <FormSettingsCard form={form} />
-          <Versions
-            formId={node.id}
-            current={form.template.version}
-            viewing={viewing}
-            onView={setViewing}
-          />
+          <Card className="grid gap-3 p-4 sm:p-5">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <QrCode className="size-4 text-muted-foreground" aria-hidden="true" />
+              {texts.qr.menu}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">{t.qr}</p>
+            <div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setQr(true);
+                }}
+              >
+                <QrCode className="size-4" aria-hidden="true" />
+                {texts.qr.menu}
+              </Button>
+            </div>
+          </Card>
         </div>
-      </div>
-      <RecordsList
-        formId={node.id}
-        formName={node.name}
-        spaceId={space.id}
-        seesAll={form.seesAllRecords}
-      />
+      )}
+      {tab === "registros" && (
+        <RecordsList
+          formId={node.id}
+          formName={node.name}
+          spaceId={space.id}
+          seesAll={form.seesAllRecords}
+          columns={listFieldsOf(form.template.fields, form.settings.listFieldIds)}
+        />
+      )}
     </div>
   );
 }
@@ -934,6 +983,53 @@ function Versions({
         isFetching={list.query.isFetchingNextPage}
         onLoadMore={list.loadMore}
       />
+    </Card>
+  );
+}
+
+/** Which fields show as columns in the records list (whoever designs the form chooses, up to 6). */
+function ListColumnsCard({ form }: { form: FormDetail }) {
+  const { workspaceSlug = "" } = useParams();
+  const queryClient = useQueryClient();
+  const fields = form.template.fields.filter(
+    (field) => field.type !== "photo" && field.type !== "signature",
+  );
+  const current = listFieldsOf(form.template.fields, form.settings.listFieldIds).map((f) => f.id);
+  const save = useMutation({
+    mutationFn: (fieldIds: string[]) =>
+      formsApi.saveListFields(workspaceSlug, form.node.id, fieldIds),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: formsKeys.form(workspaceSlug, form.node.id),
+      });
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  if (fields.length === 0) return null;
+  return (
+    <Card className="grid gap-2 p-4">
+      <CardTitle className="text-sm">{t.tabs.columns}</CardTitle>
+      <p className="text-xs text-muted-foreground">{t.tabs.columnsHint}</p>
+      {fields.map((field) => {
+        const checked = current.includes(field.id);
+        return (
+          <Checkbox
+            key={field.id}
+            label={field.label}
+            checked={checked}
+            disabled={save.isPending || (!checked && current.length >= 6)}
+            onChange={(event) => {
+              save.mutate(
+                event.target.checked
+                  ? [...current, field.id]
+                  : current.filter((id) => id !== field.id),
+              );
+            }}
+          />
+        );
+      })}
     </Card>
   );
 }

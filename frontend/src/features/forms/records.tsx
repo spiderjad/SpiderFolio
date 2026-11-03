@@ -68,7 +68,8 @@ function filtersOf(params: URLSearchParams): RecordFilters {
     person: params.get("persona") ?? undefined,
     version: Number.isInteger(version) && version >= 1 ? version : undefined,
     nonConforming: params.get("noConformes") === "1" ? true : undefined,
-    status: readChoice(params, "estado", ["all", "valid", "voided"] as const, "all"),
+    // Voided records are hidden until asked for.
+    status: readChoice(params, "estado", ["all", "valid", "voided"] as const, "valid"),
   };
 }
 
@@ -77,11 +78,14 @@ export function RecordsList({
   formName,
   spaceId,
   seesAll,
+  columns = [],
 }: {
   formId: string;
   formName: string;
   spaceId: string;
   seesAll: boolean;
+  /** The fields shown as columns (their values in each record). */
+  columns?: readonly FormField[];
 }) {
   const { workspaceSlug = "" } = useParams();
   const { params, patch } = useListParams();
@@ -92,7 +96,7 @@ export function RecordsList({
     filters.person !== undefined ||
     filters.version !== undefined ||
     filters.nonConforming === true ||
-    filters.status !== "all";
+    filters.status !== "valid";
   const [personLabel, setPersonLabel] = useState<string | undefined>(undefined);
   const statuses = useStaticSource("form-record-status", STATUSES);
   const personSource = useMemo<ComboboxSource>(
@@ -261,9 +265,9 @@ export function RecordsList({
               placeholder={f.statuses.all}
               source={statuses}
               searchable={false}
-              value={filters.status ?? "all"}
+              value={filters.status ?? "valid"}
               onChange={(option) => {
-                patch({ estado: option === null || option.id === "all" ? undefined : option.id });
+                patch({ estado: option === null || option.id === "valid" ? undefined : option.id });
               }}
             />
           )}
@@ -309,42 +313,75 @@ export function RecordsList({
           {filtered ? t.records.emptyFiltered : t.records.empty}
         </p>
       ) : (
-        <ul className="divide-y divide-border">
-          {list.items.map((record) => (
-            <li key={record.id}>
-              <Link
-                to={`${base}/${record.id}`}
-                className={cn(
-                  "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40",
-                  record.voided !== null && "text-muted-foreground",
-                )}
-              >
-                <span
-                  className={cn("text-sm font-medium", record.voided !== null && "line-through")}
-                >
-                  {formatDateTime(record.submittedAt)}
-                </span>
-                <span className="min-w-0 truncate text-sm text-muted-foreground">
-                  {record.submittedBy?.name ?? ""}
-                </span>
-                <span className="ml-auto flex items-center gap-2">
-                  {record.voided !== null ? (
-                    <Badge tone="neutral">{t.records.voided}</Badge>
-                  ) : record.nonConforming.length > 0 ? (
-                    <Badge tone="warning">
-                      {t.records.nonConforming(record.nonConforming.length)}
-                    </Badge>
-                  ) : (
-                    <Badge tone="success">{t.records.conforming}</Badge>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+            <thead className="border-b border-border text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              <tr>
+                <th className="px-4 py-2 font-medium">{t.records.columns.date}</th>
+                <th className="px-4 py-2 font-medium">{t.records.columns.person}</th>
+                {columns.map((field) => (
+                  <th key={field.id} className="px-4 py-2 font-medium">
+                    {field.label}
+                  </th>
+                ))}
+                <th className="px-4 py-2 font-medium">{t.records.columns.status}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.items.map((record) => (
+                <tr
+                  key={record.id}
+                  className={cn(
+                    "border-b border-border last:border-0 hover:bg-muted",
+                    record.voided !== null && "text-muted-foreground",
                   )}
-                  <span className="text-xs text-muted-foreground">
-                    {t.records.version(record.version)}
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                >
+                  <td className="px-4 py-2.5">
+                    <Link
+                      to={`${base}/${record.id}`}
+                      className={cn(
+                        "font-medium underline-offset-4 hover:underline",
+                        record.voided !== null && "line-through",
+                      )}
+                    >
+                      {formatDateTime(record.submittedAt)}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {record.submittedBy?.name ?? ""}
+                  </td>
+                  {columns.map((field) => (
+                    <td
+                      key={field.id}
+                      className={cn(
+                        "px-4 py-2.5",
+                        record.nonConforming.includes(field.id) && "font-medium text-danger",
+                      )}
+                    >
+                      {answerText(field, record.answers[field.id], record.people) ?? "—"}
+                    </td>
+                  ))}
+                  <td className="px-4 py-2.5">
+                    <span className="flex items-center gap-2">
+                      {record.voided !== null ? (
+                        <Badge tone="neutral">{t.records.voided}</Badge>
+                      ) : record.nonConforming.length > 0 ? (
+                        <Badge tone="warning">
+                          {t.records.nonConforming(record.nonConforming.length)}
+                        </Badge>
+                      ) : (
+                        <Badge tone="success">{t.records.conforming}</Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {t.records.version(record.version)}
+                      </span>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {list.items.length > 0 && (
         <p className="px-4 pb-3 text-xs text-muted-foreground">

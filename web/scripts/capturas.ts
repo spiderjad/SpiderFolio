@@ -550,6 +550,12 @@ const CAPTURES: Capture[] = [
     before: ({ slug, locale }) => demoSafety(locale, slug),
   },
   {
+    name: "resumen",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/resumen`,
+    before: ({ slug, locale }) => demoSafety(locale, slug),
+  },
+  {
     name: "accidentes",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/incidentes`,
@@ -627,6 +633,13 @@ const CAPTURES: Capture[] = [
   {
     name: "formulario",
     who: "owner",
+    path: (i, locale) =>
+      `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}?pestana=diseno`,
+    before: ({ slug, locale }) => demoForm(locale, slug),
+  },
+  {
+    name: "formulario-registros",
+    who: "owner",
     path: (i, locale) => `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}`,
     before: ({ slug, locale }) => demoForm(locale, slug),
   },
@@ -646,7 +659,8 @@ const CAPTURES: Capture[] = [
   {
     name: "formulario-qr",
     who: "owner",
-    path: (i, locale) => `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}`,
+    path: (i, locale) =>
+      `/app/${i.slug}/files/${i.procedures}/form/${formOf(locale).id}?pestana=ajustes`,
     before: ({ slug, locale }) => demoFormQr(locale, slug),
     then: (page, locale) =>
       page.getByRole("button", { name: LABELS[locale].qr, exact: true }).click(),

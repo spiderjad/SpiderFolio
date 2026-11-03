@@ -144,7 +144,18 @@ export const formsTexts: typeof es = {
     seeRecord: "See the record",
     backToForm: "Back to the form",
   },
+  tabs: {
+    label: "Form sections",
+    registros: "Records",
+    diseno: "Design",
+    ajustes: "Settings",
+    fillNow: "Fill in now",
+    columns: "List columns",
+    columnsHint:
+      "The fields shown in the records list (up to 6). If none is chosen, the first number, choice or yes/no ones.",
+  },
   records: {
+    columns: { date: "Date", person: "Person", status: "Status" },
     title: "Records",
     mineTitle: "My records",
     hintAll: "Every record of this form, newest first.",

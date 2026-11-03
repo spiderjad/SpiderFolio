@@ -336,6 +336,7 @@ export interface PeopleFilters {
 
 export const peopleApi = {
   summary: (slug: string) => api<{ summary: SafetySummary }>(w(slug, "/safety/summary")),
+  myCount: (slug: string) => api<{ count: number | null }>(w(slug, "/safety/me/count")),
   myAlerts: (slug: string) =>
     api<{ alerts: { missingPpe: number; training: number } | null }>(w(slug, "/safety/me/alerts")),
   list: (slug: string, filters: PeopleFilters, cursor: string | undefined, signal: AbortSignal) =>

@@ -1,20 +1,22 @@
 // /app/:slug/seguridad/medidas — the corrective measures assigned to the person
 // (docs/spec/seguridad-salud.md): only the measure and its date, never the incident's details.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, ListChecks } from "lucide-react";
-import { useParams } from "react-router";
+import { ArrowLeft, CheckCircle2, ListChecks } from "lucide-react";
+import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys } from "./safety-api";
+import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety;
 
 export function MyActionsPage() {
   const { workspaceSlug = "" } = useParams();
+  const { canManage, health, membershipId } = useSafety();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: incidentsKeys.mine(workspaceSlug),
@@ -33,6 +35,17 @@ export function MyActionsPage() {
   });
   return (
     <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-4">
+      <Link
+        to={
+          canManage || health
+            ? `/app/${workspaceSlug}/seguridad/resumen`
+            : `/app/${workspaceSlug}/seguridad/personas/${membershipId}`
+        }
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {texts.safety.back}
+      </Link>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t.myActions.title}</h1>
         <p className="mt-1 text-xs text-muted-foreground">{t.myActions.subtitle}</p>

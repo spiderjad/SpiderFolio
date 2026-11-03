@@ -240,7 +240,12 @@ export function adminNavItems(
 }
 
 /** Título de la barra superior según la ruta. */
-export function sectionTitle(pathname: string, plugins: readonly FrontendPlugin[] = []): string {
+export function sectionTitle(
+  pathname: string,
+  plugins: readonly FrontendPlugin[] = [],
+  /** The company's health and safety terms: the header says what the menu says. */
+  safetyTerms: "es" | "latam" = "es",
+): string {
   const pluginMatch = /^\/app\/[^/]+\/(admin\/)?p\/([^/]+)(?:\/([^/]+))?/u.exec(pathname);
   if (pluginMatch !== null) {
     const [, admin, pluginId, segment = ""] = pluginMatch;
@@ -264,7 +269,7 @@ export function sectionTitle(pathname: string, plugins: readonly FrontendPlugin[
   if (pathname.endsWith("/profile")) return texts.profile.title;
   if (pathname.includes("/admin/departments")) return texts.admin.nav.departments;
   if (pathname.includes("/admin/positions")) return texts.admin.nav.positions;
-  if (pathname.includes("/seguridad")) return texts.safety.title;
+  if (pathname.includes("/seguridad")) return texts.safety.terms[safetyTerms].module;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;
   if (pathname.includes("/admin/security")) return texts.admin.nav.security;

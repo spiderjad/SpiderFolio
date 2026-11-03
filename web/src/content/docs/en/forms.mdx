@@ -23,7 +23,10 @@ If an answer is outside what's acceptable (a high temperature, a door that doesn
 
 You need to be able to **edit** the space or folder. The form has the same access as the rest of the space.
 
-<Shot name="formulario" alt="A form's editor with its fields and the Person in charge and frequency card" />
+A form's screen has three tabs: **Records** (the one that opens), **Design** (the fields, for whoever can
+edit) and **Settings** (person in charge, frequency and QR code). **Fill in now** is always at the top.
+
+<Shot name="formulario" alt="A form's Design tab, with its fields and versions" />
 
 ## Field types
 
@@ -60,7 +63,7 @@ The record keeps your name, the company's date and time, and whether it was fill
 
 ## QR code
 
-With **Generate QR code** on the form (or in its menu in the explorer) you create a code that opens the form ready to fill in. Print it and stick it where the form is filled in: the cold room, the machine, the door.
+With **Generate QR code** in the form's **Settings** tab (or in its menu in the explorer) you create a code that opens the form ready to fill in. Print it and stick it where the form is filled in: the cold room, the machine, the door.
 
 A form's QR code is always **private**: whoever scans it has to sign in (a PIN works too) and be able to view the form. It's downloaded as PNG, SVG or a label sheet, and revoked just like a document's ([QR codes](/en/docs/qr-codes)).
 
@@ -87,13 +90,17 @@ In **How often it's filled in** choose **Daily** (and **Which days**), **Weekly 
 
 ## See the records
 
-Under the form is the list of **Records**, newest first. Whoever fills it in sees **My records**, their own; whoever can edit the form and the person in charge see everyone's.
+The **Records** tab has the list, newest first, with the date, the person, the main values and the status.
+Whoever designs the form chooses under **Design** › **List columns** which fields show (up to 6); if none is
+chosen, the first number, choice or yes/no ones show. Non-conforming answers show in red. Whoever fills it in sees **My records**, their own; whoever can edit the form and the person in charge see everyone's.
 
-You can filter by **From** and **To** (company days), **Person**, **Version**, **Only non-conforming** and **Status** (**All**, **Not voided**, **Voided**). The filters stay in the address: you can bookmark or share it. **Clear filters** goes back to the full list.
+You can filter by **From** and **To** (company days), **Person**, **Version**, **Only non-conforming** and **Status** (**Not voided**, the one shown at first; **All** or **Voided**). The filters stay in the address: you can bookmark or share it. **Clear filters** goes back to the full list.
 
 Opening a record shows each answer with the version it was filled with, the non-conforming answers marked and, if it was filled in from the QR code, **From the QR code**.
 
 <Shot name="formulario-registro" alt="A record with two non-conforming answers and the Void button" />
+
+<Shot name="formulario-registros" alt="The records list with each one's temperature and cold room" />
 
 ## Void a record
 

@@ -13,6 +13,7 @@ import {
   FormFileParamsSchema,
   FormParamsSchema,
   FormVersionParamsSchema,
+  ListFieldsSchema,
   RecordFileParamsSchema,
   RecordFiltersSchema,
   RecordListQuerySchema,
@@ -25,7 +26,7 @@ import {
 } from "./forms.schemas.ts";
 import { exportRecords } from "./records-export.ts";
 import { createForm, getForm, getVersion, listVersions, saveTemplate } from "./forms.service.ts";
-import { pendingForMe, saveSettings } from "./settings.service.ts";
+import { pendingForMe, saveListFields, saveSettings } from "./settings.service.ts";
 import {
   confirmFileUpload,
   getRecord,
@@ -92,6 +93,16 @@ export function formRoutes(
         res.json({
           settings: await saveSettings(adminContextOf(req), id, SettingsSchema.parse(req.body)),
         });
+      },
+    },
+    {
+      // The records list's columns.
+      method: "put",
+      path: "/forms/:id/list-fields",
+      handler: async (req, res) => {
+        const { id } = FormParamsSchema.parse(req.params);
+        const { fieldIds } = ListFieldsSchema.parse(req.body);
+        res.json({ settings: await saveListFields(adminContextOf(req), id, fieldIds) });
       },
     },
     {

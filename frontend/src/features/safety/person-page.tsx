@@ -2,7 +2,7 @@
 // what they have with its replacement day, what their position requires and they lack («Le falta») and
 // their handouts. The seed of their sheet: training and fitness come in later phases.
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Plus, ServerCrash } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus, ServerCrash } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,15 @@ export function PersonPage() {
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4">
       <PpeTabs />
+      {!own && (
+        <Link
+          to={`${base}/personas`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {texts.safety.people.tab}
+        </Link>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{data.person.name}</h1>

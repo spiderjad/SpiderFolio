@@ -331,6 +331,10 @@ describe("EPIs", () => {
       alerts: { missingPpe: number };
     };
     expect(mine.alerts.missingPpe).toBe(1);
+    const count = async (token: string) =>
+      ((await api(w.ws.slug, token).get("/safety/me/count")).body as { count: number }).count;
+    expect(await count(w.worker.token)).toBe(1);
+    expect(await count(w.ws.token)).toBeGreaterThanOrEqual(1);
   });
 
   it("con el módulo apagado la reposición espera, sin avisar ni resolverse", async () => {

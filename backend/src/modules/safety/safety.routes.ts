@@ -9,7 +9,7 @@ import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import { fitnessOf, recordFitness } from "./fitness.service.ts";
-import { listSafetyPeople, myAlerts, safetySummary } from "./people.service.ts";
+import { listSafetyPeople, myAlerts, myCount, safetySummary } from "./people.service.ts";
 import {
   AttendancePdfQuerySchema,
   AttendanceSchema,
@@ -391,6 +391,13 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       path: "/safety/summary",
       handler: async (req, res) => {
         res.json({ summary: await safetySummary(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/me/count",
+      handler: async (req, res) => {
+        res.json({ count: await myCount(adminContextOf(req)) });
       },
     },
     {
