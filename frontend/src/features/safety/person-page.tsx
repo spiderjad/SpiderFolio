@@ -3,13 +3,14 @@
 // their handouts. The seed of their sheet: training and fitness come in later phases.
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Plus, ServerCrash } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
-import { PersonFitness, PersonIncidents } from "./person-health";
+import { FitnessDialog, PersonFitness, PersonIncidents } from "./person-health";
 import { PpeStateBadge, PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -19,6 +20,7 @@ export function PersonPage() {
   const { workspaceSlug = "", membershipId = "" } = useParams();
   const navigate = useNavigate();
   const safety = useSafety();
+  const [recordingFitness, setRecordingFitness] = useState(false);
   const ppe = useQuery({
     queryKey: safetyKeys.person(workspaceSlug, membershipId),
     queryFn: () => safetyApi.person(workspaceSlug, membershipId),
@@ -46,6 +48,7 @@ export function PersonPage() {
   }
   const data = ppe.data;
   if (data === undefined) return <Skeleton className="h-64 w-full" />;
+  const own = data.person.id === safety.membershipId;
 
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4">
@@ -58,19 +61,36 @@ export function PersonPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" asChild>
-            <Link to={`${base}/medidas`}>{texts.safety.myActions.title}</Link>
-          </Button>
-          <ReportIncidentButton />
-          {data.canDeliver && (
-            <Button
-              onClick={() => {
-                void navigate(`${base}/epis/nueva?persona=${data.person.id}`);
-              }}
-            >
-              <Plus strokeWidth={1.75} aria-hidden="true" />
-              {t.deliver}
-            </Button>
+          {own ? (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to={`${base}/medidas`}>{texts.safety.myActions.title}</Link>
+              </Button>
+              <ReportIncidentButton />
+            </>
+          ) : (
+            <>
+              {safety.health && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setRecordingFitness(true);
+                  }}
+                >
+                  {texts.safety.fitness.record}
+                </Button>
+              )}
+              {data.canDeliver && (
+                <Button
+                  onClick={() => {
+                    void navigate(`${base}/epis/nueva?persona=${data.person.id}`);
+                  }}
+                >
+                  <Plus strokeWidth={1.75} aria-hidden="true" />
+                  {texts.safety.people.deliverTo(data.person.name)}
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -187,6 +207,13 @@ export function PersonPage() {
       </Card>
 
       <PersonFitness membershipId={data.person.id} />
+      <FitnessDialog
+        membershipId={data.person.id}
+        open={recordingFitness}
+        onClose={() => {
+          setRecordingFitness(false);
+        }}
+      />
       <PersonIncidents membershipId={data.person.id} />
 
       <Card className="p-4 sm:p-5">

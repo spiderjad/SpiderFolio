@@ -186,6 +186,10 @@ export const routes = [
                     ],
                   },
                   {
+                    path: "resumen",
+                    lazy: page(() => import("@/features/safety/summary-page"), "SummaryPage"),
+                  },
+                  {
                     path: "personas",
                     lazy: page(() => import("@/features/safety/people-page"), "PeoplePage"),
                   },

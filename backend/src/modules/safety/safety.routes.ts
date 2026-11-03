@@ -9,7 +9,7 @@ import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import { fitnessOf, recordFitness } from "./fitness.service.ts";
-import { listSafetyPeople } from "./people.service.ts";
+import { listSafetyPeople, myAlerts, safetySummary } from "./people.service.ts";
 import {
   AttendancePdfQuerySchema,
   AttendanceSchema,
@@ -383,6 +383,21 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
         res.json({ items: await personTraining(adminContextOf(req), id) });
+      },
+    },
+    // What needs attention (whoever manages the module) and one's own alerts (Home).
+    {
+      method: "get",
+      path: "/safety/summary",
+      handler: async (req, res) => {
+        res.json({ summary: await safetySummary(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/me/alerts",
+      handler: async (req, res) => {
+        res.json({ alerts: await myAlerts(adminContextOf(req)) });
       },
     },
     // The people list with their alerts (whoever manages the module: everyone; heads: their area).

@@ -40,14 +40,17 @@ export function RequireSafety() {
 
 /** The module's start: the handouts for whoever sees others', their own PPE for everyone else. */
 export function SafetyHome() {
-  const { slug, canManage, leads, membershipId } = useSafety();
+  const { slug, canManage, health, leads, membershipId } = useSafety();
+  const base = `/app/${slug}/seguridad`;
   return (
     <Navigate
       replace
       to={
-        canManage || leads
-          ? `/app/${slug}/seguridad/epis`
-          : `/app/${slug}/seguridad/personas/${membershipId}`
+        canManage || health
+          ? `${base}/resumen`
+          : leads
+            ? `${base}/personas`
+            : `${base}/personas/${membershipId}`
       }
     />
   );
@@ -90,7 +93,9 @@ export function RequireSafetyManager() {
 }
 
 export function PpeTabs() {
-  const { slug, canManage, health, leads, membershipId } = useSafety();
+  const { slug, canManage, health, leads } = useSafety();
+  // Only for whoever manages the module (or its health data) and the heads: the rest go to their sheet.
+  if (!canManage && !health && !leads) return null;
   const t = texts.safety.tabs;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -99,29 +104,30 @@ export function PpeTabs() {
         ? "border-primary font-medium text-foreground"
         : "border-transparent text-muted-foreground hover:text-foreground",
     );
+  const base = `/app/${slug}/seguridad`;
   return (
     <nav className="flex flex-wrap gap-1 border-b border-border">
-      <NavLink end to={`/app/${slug}/seguridad/personas/${membershipId}`} className={tab}>
-        {texts.safety.people.mine}
-      </NavLink>
-      {(canManage || leads) && (
-        <NavLink end to={`/app/${slug}/seguridad/personas`} className={tab}>
-          {texts.safety.people.tab}
+      {(canManage || health) && (
+        <NavLink end to={`${base}/resumen`} className={tab}>
+          {texts.safety.summary.tab}
         </NavLink>
       )}
-      <NavLink end to={`/app/${slug}/seguridad/epis`} className={tab}>
+      <NavLink end to={`${base}/personas`} className={tab}>
+        {texts.safety.people.tab}
+      </NavLink>
+      <NavLink end to={`${base}/epis`} className={tab}>
         {t.deliveries}
       </NavLink>
       {canManage && (
-        <NavLink to={`/app/${slug}/seguridad/epis/catalogo`} className={tab}>
+        <NavLink to={`${base}/epis/catalogo`} className={tab}>
           {t.catalog}
         </NavLink>
       )}
-      <NavLink to={`/app/${slug}/seguridad/formacion`} className={tab}>
+      <NavLink to={`${base}/formacion`} className={tab}>
         {texts.safety.training.tab}
       </NavLink>
       {health && (
-        <NavLink to={`/app/${slug}/seguridad/incidentes`} className={tab}>
+        <NavLink to={`${base}/incidentes`} className={tab}>
           {texts.safety.incidents.tab}
         </NavLink>
       )}

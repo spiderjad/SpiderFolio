@@ -188,6 +188,9 @@ const cases: IsolationCase[] = [
     ownStatus: 404,
   },
   { method: "get", path: "/safety/people", url: () => "/safety/people", ownStatus: 404 },
+  { method: "get", path: "/safety/summary", url: () => "/safety/summary", ownStatus: 404 },
+  // Off in B: no alerts (null), not 404, so Home doesn't fail.
+  { method: "get", path: "/safety/me/alerts", url: () => "/safety/me/alerts" },
   {
     method: "get",
     path: "/safety/people/:id/fitness",

@@ -41,6 +41,7 @@ import { RecentDocuments, pathOf } from "@/features/documents/my-documents-page"
 import { filesApi, filesKeys } from "@/features/files/api";
 import { SpaceMark } from "@/features/files/space-mark";
 import { PendingFormsCard } from "@/features/forms/pending-forms";
+import { SafetyHomeAlert } from "@/features/safety/home-alert";
 import { KioskHome } from "@/features/kiosk/kiosk-home";
 import { api, ApiError, NetworkError } from "@/lib/api";
 import { formatBytes, formatDay, formatLongDate, formatShortDate, timeAgo } from "@/lib/utils";
@@ -218,6 +219,7 @@ function StandardDashboard() {
 
       {data?.company != null && <CompanySection home={data} slug={workspaceSlug} />}
 
+      <SafetyHomeAlert slug={workspaceSlug} />
       <PendingFormsCard slug={workspaceSlug} />
 
       <section className="grid gap-4 xl:grid-cols-[2fr_1fr]">

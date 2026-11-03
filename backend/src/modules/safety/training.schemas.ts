@@ -31,6 +31,8 @@ export const PeopleQuerySchema = z.object({
   q: z.string().trim().max(100).optional(),
   position: Id.optional(),
   department: Id.optional(),
+  /** Only the people with that alert. */
+  alert: z.enum(["ppe", "replace", "training", "fitness"]).optional(),
 });
 
 export const FitnessSchema = z.strictObject({

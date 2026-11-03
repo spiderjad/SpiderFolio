@@ -16,7 +16,7 @@ import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { readChoice, useListParams } from "@/features/admin/list-params";
 import { formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys, type Incident, type IncidentFilters } from "./safety-api";
-import { PpeTabs, ReportIncidentButton } from "./safety-common";
+import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.incidents;
@@ -132,7 +132,6 @@ export function IncidentsPage() {
             <Download className="size-4" aria-hidden="true" />
             {t.csv}
           </Button>
-          <ReportIncidentButton />
         </div>
       </div>
       <PpeTabs />

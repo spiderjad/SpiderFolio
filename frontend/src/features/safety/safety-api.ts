@@ -305,16 +305,39 @@ export interface SafetyPersonRow {
   name: string;
   position: { id: string; name: string } | null;
   departments: { id: string; name: string }[];
-  alerts: { missingPpe: number; training: number; fitness: "due_soon" | "expired" | null };
+  alerts: {
+    missingPpe: number;
+    replace: number;
+    training: number;
+    trainingSoon: number;
+    fitness: "due_soon" | "expired" | null;
+  };
+}
+
+export type SafetyAlert = "ppe" | "replace" | "training" | "fitness";
+
+export interface SafetySummary {
+  people: number;
+  missingPpe: number;
+  replace: number;
+  training: number;
+  trainingSoon: number;
+  fitness: number | null;
+  actions: { open: number; overdue: number } | null;
+  incidents: { open: number; recent: number } | null;
 }
 
 export interface PeopleFilters {
   q?: string | undefined;
   position?: string | undefined;
   department?: string | undefined;
+  alert?: SafetyAlert | undefined;
 }
 
 export const peopleApi = {
+  summary: (slug: string) => api<{ summary: SafetySummary }>(w(slug, "/safety/summary")),
+  myAlerts: (slug: string) =>
+    api<{ alerts: { missingPpe: number; training: number } | null }>(w(slug, "/safety/me/alerts")),
   list: (slug: string, filters: PeopleFilters, cursor: string | undefined, signal: AbortSignal) =>
     api<CursorPage<SafetyPersonRow>>(
       w(slug, `/safety/people?${listQuery({ ...filters, cursor })}`),

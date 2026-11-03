@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Users } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router";
-import { Combobox } from "@/components/ui/combobox";
+import { Combobox, useStaticSource } from "@/components/ui/combobox";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge, Card, EmptyState } from "@/components/ui/display";
 import { SearchField } from "@/components/ui/filter-bar";
@@ -13,10 +13,11 @@ import { useInfiniteList } from "@/components/ui/infinite";
 import { useListParams, useSearchParam } from "@/features/admin/list-params";
 import { useDepartmentSource, usePositionSource } from "@/features/admin/sources";
 import { peopleApi, safetyKeys, type PeopleFilters, type SafetyPersonRow } from "./safety-api";
-import { PpeTabs } from "./safety-common";
+import { PpeTabs, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.people;
+const ALERTS = ["ppe", "replace", "training", "fitness"] as const;
 
 export function PeoplePage() {
   const { workspaceSlug = "" } = useParams();
@@ -26,12 +27,21 @@ export function PeoplePage() {
       q: params.get("q") ?? undefined,
       position: params.get("puesto") ?? undefined,
       department: params.get("departamento") ?? undefined,
+      alert: ALERTS.find((alert) => alert === params.get("aviso")),
     }),
     [params],
   );
   const [search, setSearch] = useSearchParam("q", filters.q ?? "", patch);
   const positions = usePositionSource(workspaceSlug);
   const departments = useDepartmentSource(workspaceSlug);
+  const { health } = useSafety();
+  const alerts = useStaticSource(
+    "safety-alerts",
+    ALERTS.filter((alert) => alert !== "fitness" || health).map((id) => ({
+      id,
+      label: t.alerts[id],
+    })),
+  );
   const list = useInfiniteList<SafetyPersonRow>({
     queryKey: [...safetyKeys.all(workspaceSlug), "people", filters],
     fetchPage: (cursor, signal) => peopleApi.list(workspaceSlug, filters, cursor, signal),
@@ -67,13 +77,14 @@ export function PeoplePage() {
         id: "alerts",
         header: t.columns.alerts,
         cell: ({ row }) => {
-          const { missingPpe, training, fitness } = row.original.alerts;
-          if (missingPpe === 0 && training === 0 && fitness === null) {
+          const { missingPpe, replace, training, fitness } = row.original.alerts;
+          if (missingPpe === 0 && replace === 0 && training === 0 && fitness === null) {
             return <Badge tone="success">{t.ok}</Badge>;
           }
           return (
             <span className="flex flex-wrap gap-1">
               {missingPpe > 0 && <Badge tone="warning">{t.missingPpe(missingPpe)}</Badge>}
+              {replace > 0 && <Badge tone="warning">{t.replace(replace)}</Badge>}
               {training > 0 && <Badge tone="danger">{t.training(training)}</Badge>}
               {fitness !== null && (
                 <Badge tone={fitness === "expired" ? "danger" : "warning"}>
@@ -94,7 +105,7 @@ export function PeoplePage() {
         <p className="mt-1 max-w-2xl text-xs text-muted-foreground">{t.subtitle}</p>
       </div>
       <PpeTabs />
-      <div className="grid gap-3 sm:grid-cols-[1fr_220px_220px]">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_200px_200px_220px]">
         <SearchField
           placeholder={t.search}
           label={texts.admin.common.search}
@@ -121,6 +132,18 @@ export function PeoplePage() {
           value={filters.department ?? null}
           onChange={(option) => {
             patch({ departamento: option?.id });
+          }}
+        />
+        <Combobox
+          compact
+          clearable
+          searchable={false}
+          label={t.alert}
+          placeholder={`${t.alert}: ${t.anyAlert}`}
+          source={alerts}
+          value={filters.alert ?? null}
+          onChange={(option) => {
+            patch({ aviso: option?.id });
           }}
         />
       </div>

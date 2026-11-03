@@ -317,6 +317,20 @@ describe("EPIs", () => {
     expect((await list(w.colleague.token)).items.map((row) => row.id)).toEqual([
       w.colleague.membership.id,
     ]);
+    // Only the people with an alert, the summary and one's own alerts on Home.
+    expect((await list(w.ws.token, "?alert=ppe")).items.map((row) => row.id)).toEqual([
+      w.worker.membership.id,
+    ]);
+    const summary = (await a.get("/safety/summary")).body as {
+      summary: { missingPpe: number; fitness: number | null };
+    };
+    expect(summary.summary.missingPpe).toBe(1);
+    expect(summary.summary.fitness).toBe(0);
+    expect((await api(w.ws.slug, w.worker.token).get("/safety/summary")).status).toBe(403);
+    const mine = (await api(w.ws.slug, w.worker.token).get("/safety/me/alerts")).body as {
+      alerts: { missingPpe: number };
+    };
+    expect(mine.alerts.missingPpe).toBe(1);
   });
 
   it("con el módulo apagado la reposición espera, sin avisar ni resolverse", async () => {

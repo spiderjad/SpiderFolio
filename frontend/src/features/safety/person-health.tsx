@@ -7,6 +7,7 @@ import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Combobox, useStaticSource } from "@/components/ui/combobox";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { Badge, Card, CardTitle, Skeleton } from "@/components/ui/display";
 import { FormField, Input, Textarea } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
@@ -27,36 +28,10 @@ const tone = { APT: "success", APT_RESTRICTED: "warning", NOT_APT: "danger" } as
 
 export function PersonFitness({ membershipId }: { membershipId: string }) {
   const { workspaceSlug = "" } = useParams();
-  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: fitnessKeys.person(workspaceSlug, membershipId),
     queryFn: () => fitnessApi.get(workspaceSlug, membershipId),
     retry: false,
-  });
-  const statuses = useStaticSource(
-    "fitness-status",
-    STATUSES.map((id) => ({ id, label: t.statuses[id] })),
-  );
-  const [status, setStatus] = useState<FitnessStatus>("APT");
-  const [until, setUntil] = useState("");
-  const [restrictions, setRestrictions] = useState("");
-  const record = useMutation({
-    mutationFn: () =>
-      fitnessApi.record(workspaceSlug, membershipId, {
-        status,
-        validUntil: until === "" ? null : until,
-        restrictions: restrictions.trim() === "" ? null : restrictions.trim(),
-      }),
-    onSuccess: async () => {
-      toast.success(t.recorded);
-      setRestrictions("");
-      await queryClient.invalidateQueries({
-        queryKey: fitnessKeys.person(workspaceSlug, membershipId),
-      });
-    },
-    onError: (error) => {
-      toast.error(adminErrorText(error));
-    },
   });
   // Someone else's fitness without safety.health: the server answers 404 and nothing shows.
   if (query.isError) return null;
@@ -85,61 +60,6 @@ export function PersonFitness({ membershipId }: { membershipId: string }) {
           <p className="text-xs text-muted-foreground">
             {t.by(latest.createdBy?.name ?? "", formatDateTime(latest.createdAt))}
           </p>
-        </div>
-      )}
-      {query.data.canRecord && (
-        <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-[14rem_10rem_1fr_auto] sm:items-end">
-          <FormField label={t.status}>
-            {(control) => (
-              <Combobox
-                id={control.id}
-                label={t.status}
-                placeholder={t.status}
-                searchable={false}
-                source={statuses}
-                value={status}
-                onChange={(option) => {
-                  const next = STATUSES.find((id) => id === option?.id);
-                  if (next !== undefined) setStatus(next);
-                }}
-              />
-            )}
-          </FormField>
-          <FormField label={t.validUntil}>
-            {(control) => (
-              <Input
-                {...control}
-                type="date"
-                value={until}
-                onChange={(event) => {
-                  setUntil(event.target.value);
-                }}
-              />
-            )}
-          </FormField>
-          <FormField label={t.restrictions}>
-            {(control) => (
-              <Textarea
-                {...control}
-                rows={1}
-                maxLength={500}
-                disabled={status !== "APT_RESTRICTED"}
-                placeholder={t.restrictionsPlaceholder}
-                value={restrictions}
-                onChange={(event) => {
-                  setRestrictions(event.target.value);
-                }}
-              />
-            )}
-          </FormField>
-          <Button
-            disabled={record.isPending}
-            onClick={() => {
-              record.mutate();
-            }}
-          >
-            {t.record}
-          </Button>
         </div>
       )}
     </Card>
@@ -185,5 +105,119 @@ export function PersonIncidents({ membershipId }: { membershipId: string }) {
         </ul>
       )}
     </Card>
+  );
+}
+
+/** Records someone's fitness for work (safety.health): a dialog the person's sheet opens. */
+export function FitnessDialog({
+  membershipId,
+  open,
+  onClose,
+}: {
+  membershipId: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { workspaceSlug = "" } = useParams();
+  const queryClient = useQueryClient();
+  const statuses = useStaticSource(
+    "fitness-status",
+    STATUSES.map((id) => ({ id, label: t.statuses[id] })),
+  );
+  const [status, setStatus] = useState<FitnessStatus>("APT");
+  const [until, setUntil] = useState("");
+  const [restrictions, setRestrictions] = useState("");
+  const record = useMutation({
+    mutationFn: () =>
+      fitnessApi.record(workspaceSlug, membershipId, {
+        status,
+        validUntil: until === "" ? null : until,
+        restrictions: restrictions.trim() === "" ? null : restrictions.trim(),
+      }),
+    onSuccess: async () => {
+      toast.success(t.recorded);
+      setRestrictions("");
+      onClose();
+      await queryClient.invalidateQueries({
+        queryKey: fitnessKeys.person(workspaceSlug, membershipId),
+      });
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <DialogContent
+        title={t.record}
+        description={t.hint}
+        footer={
+          <>
+            <DialogClose asChild>
+              <Button variant="outline">{texts.admin.common.cancel}</Button>
+            </DialogClose>
+            <Button
+              disabled={record.isPending}
+              onClick={() => {
+                record.mutate();
+              }}
+            >
+              {t.record}
+            </Button>
+          </>
+        }
+      >
+        <div className="grid gap-3">
+          <FormField label={t.status}>
+            {(control) => (
+              <Combobox
+                id={control.id}
+                label={t.status}
+                placeholder={t.status}
+                searchable={false}
+                source={statuses}
+                value={status}
+                onChange={(option) => {
+                  const next = STATUSES.find((id) => id === option?.id);
+                  if (next !== undefined) setStatus(next);
+                }}
+              />
+            )}
+          </FormField>
+          <FormField label={t.validUntil}>
+            {(control) => (
+              <Input
+                {...control}
+                type="date"
+                value={until}
+                onChange={(event) => {
+                  setUntil(event.target.value);
+                }}
+              />
+            )}
+          </FormField>
+          <FormField label={t.restrictions}>
+            {(control) => (
+              <Textarea
+                {...control}
+                rows={1}
+                maxLength={500}
+                disabled={status !== "APT_RESTRICTED"}
+                placeholder={t.restrictionsPlaceholder}
+                value={restrictions}
+                onChange={(event) => {
+                  setRestrictions(event.target.value);
+                }}
+              />
+            )}
+          </FormField>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
