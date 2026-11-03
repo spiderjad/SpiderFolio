@@ -186,6 +186,7 @@ export async function workspacesOfEmailJob(prisma: PrismaClient, job: EmailJob):
     case "document-notice":
     case "form-notice":
     case "expiry-notice":
+    case "safety-incident-notice":
       return idsOf(
         await prisma.notification.findUnique({
           where: { id: job.notificationId },

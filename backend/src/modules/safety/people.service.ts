@@ -204,7 +204,7 @@ export async function safetySummary(ctx: AdminContext): Promise<SafetySummary> {
     const [open, overdue, openIncidents, recent] = await Promise.all([
       ctx.db.safetyAction.count({ where: { doneAt: null } }),
       ctx.db.safetyAction.count({ where: { doneAt: null, dueOn: { lt: dayDate } } }),
-      ctx.db.safetyIncident.count({ where: { status: "OPEN" } }),
+      ctx.db.safetyIncident.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } }),
       ctx.db.safetyIncident.count({
         where: { createdAt: { gte: new Date(Date.now() - 7 * 86_400_000) } },
       }),

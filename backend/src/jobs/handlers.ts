@@ -558,6 +558,45 @@ async function sendExpiryNoticeEmail(
   await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
 }
 
+/** A new accident or incident: only while the recipient is active and can still see health data. */
+async function sendSafetyIncidentEmail(
+  deps: WorkerDeps,
+  job: Extract<EmailJob, { kind: "safety-incident-notice" }>,
+): Promise<void> {
+  const notice = await deps.prisma.notification.findUnique({ where: { id: job.notificationId } });
+  if (notice === null || notice.kind !== "safety_incident" || notice.detail === null) return;
+  const [recipient, actor, workspace] = await Promise.all([
+    deps.prisma.membership.findFirst({
+      where: {
+        id: notice.membershipId,
+        status: "ACTIVE",
+        role: { capabilities: { has: "safety.health" } },
+      },
+      select: { user: { select: { email: true, name: true } } },
+    }),
+    notice.actorId === null
+      ? null
+      : deps.prisma.membership.findFirst({
+          where: { id: notice.actorId },
+          select: { user: { select: { name: true } } },
+        }),
+    deps.prisma.workspace.findUnique({ where: { id: notice.workspaceId }, select: { slug: true } }),
+  ]);
+  if (recipient === null || recipient.user.email === null || workspace === null) return;
+  const email = buildEmail(job, {
+    recipientName: recipient.user.name,
+    appUrl: deps.appUrl,
+    safetyIncident: {
+      who: actor?.user.name ?? "",
+      url: new URL(
+        `/app/${workspace.slug}/seguridad/incidentes/${notice.detail}`,
+        deps.appUrl,
+      ).toString(),
+    },
+  });
+  await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
+}
+
 export async function sendEmailJob(deps: WorkerDeps, payload: unknown): Promise<void> {
   const job: EmailJob = EmailJobSchema.parse(payload);
   // Todo el email (textos, fechas, tamaños) en el idioma del destinatario.
@@ -580,6 +619,10 @@ async function sendEmail(deps: WorkerDeps, job: EmailJob): Promise<void> {
   }
   if (job.kind === "expiry-notice") {
     await sendExpiryNoticeEmail(deps, job);
+    return;
+  }
+  if (job.kind === "safety-incident-notice") {
+    await sendSafetyIncidentEmail(deps, job);
     return;
   }
   if (job.kind === "shared") {

@@ -10,6 +10,7 @@ import {
   documentNoticeTexts,
   formNoticeTexts,
   expiryNoticeTexts,
+  safetyIncidentEmailTexts,
   mentionEmailTexts,
   sharedEmailTexts,
 } from "../i18n/index.ts";
@@ -43,6 +44,8 @@ export interface EmailContext {
   };
   /** Something expires (expiry-notice): what, when in words, and where it opens. */
   expiryNotice?: { expired: boolean; what: string; when: string; url: string };
+  /** A new accident or incident (safety-incident-notice): who reported it and where it opens. */
+  safetyIncident?: { who: string; url: string };
   /** Datos de un aviso de documento controlado (document-notice). */
   documentNotice?: {
     kind:
@@ -280,6 +283,18 @@ export function buildEmail(job: EmailJob, context: EmailContext): EmailContent {
         title: t.title[state],
         paragraphs: [t.greeting(name), t.body(notice.what, notice.when)],
         action: { label: t.action, url: notice.url },
+        footnotes: [t.footnote],
+      });
+    }
+    case "safety-incident-notice": {
+      const t = safetyIncidentEmailTexts;
+      const incident = context.safetyIncident;
+      if (incident === undefined) throw new Error("Faltan los datos del caso");
+      return renderEmail({
+        subject: t.subject,
+        title: t.title,
+        paragraphs: [t.greeting(name), t.body(incident.who)],
+        action: { label: t.action, url: incident.url },
         footnotes: [t.footnote],
       });
     }

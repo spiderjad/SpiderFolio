@@ -112,6 +112,7 @@ export interface TenantDb {
   >;
   safetyAction: TenantDelegate<PrismaClient["safetyAction"], Op>;
   safetyCourse: TenantDelegate<PrismaClient["safetyCourse"], Op>;
+  safetySignSession: TenantDelegate<PrismaClient["safetySignSession"], Op>;
   // Fitness records are history: added and read only.
   safetyFitness: TenantDelegate<PrismaClient["safetyFitness"], "findFirst" | "findMany" | "count" | "create">;
   // Training records are evidence: added and read, never changed nor deleted.
@@ -225,6 +226,7 @@ const delegates = {
   },
   safetyAction: { model: "SafetyAction", ops: [...readOps, ...writeOps] },
   safetyCourse: { model: "SafetyCourse", ops: [...readOps, ...writeOps] },
+  safetySignSession: { model: "SafetySignSession", ops: [...readOps, ...writeOps] },
   safetyFitness: { model: "SafetyFitness", ops: ["findFirst", "findMany", "count", "create"] },
   safetyTraining: {
     model: "SafetyTraining",

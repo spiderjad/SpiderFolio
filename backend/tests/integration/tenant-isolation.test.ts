@@ -139,6 +139,11 @@ const cases: IsolationCase[] = [
   { method: "post", path: "/safety/incidents/:id/reopen", url: () => "/safety/incidents/x/reopen" },
   {
     method: "post",
+    path: "/safety/incidents/:id/investigate",
+    url: () => "/safety/incidents/x/investigate",
+  },
+  {
+    method: "post",
     path: "/safety/incidents/:id/actions",
     url: () => "/safety/incidents/x/actions",
     body: { description: "Ajena", responsibleId: "x", dueOn: "2026-12-01" },
@@ -182,6 +187,35 @@ const cases: IsolationCase[] = [
   },
   { method: "post", path: "/safety/courses/:id/confirm", url: () => "/safety/courses/x/confirm" },
   {
+    method: "post",
+    path: "/safety/courses/:id/sign-sessions",
+    url: () => "/safety/courses/x/sign-sessions",
+    body: { attendeeIds: ["x"], completedOn: "2026-11-03" },
+  },
+  {
+    method: "get",
+    path: "/safety/courses/:id/sign-sessions",
+    url: () => "/safety/courses/x/sign-sessions",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/safety/sign-sessions/:id",
+    url: () => "/safety/sign-sessions/x",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/safety/sign-sessions/:id/sign",
+    url: () => "/safety/sign-sessions/x/sign",
+    body: { signature: "data:image/png;base64,AA==" },
+  },
+  {
+    method: "post",
+    path: "/safety/sign-sessions/:id/close",
+    url: () => "/safety/sign-sessions/x/close",
+  },
+  {
     method: "get",
     path: "/safety/people/:id/training",
     url: (ids) => `/safety/people/${ids.memberId}/training`,
@@ -208,6 +242,12 @@ const cases: IsolationCase[] = [
     method: "get",
     path: "/safety/people/:id/ppe",
     url: (ids) => `/safety/people/${ids.memberId}/ppe`,
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/safety/people/:id/pdf",
+    url: (ids) => `/safety/people/${ids.memberId}/pdf`,
     ownStatus: 404,
   },
   {

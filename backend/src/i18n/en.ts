@@ -823,6 +823,7 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
     notFoundActions: "First mark every measure as done.",
     alreadyClosed: "The case is already closed.",
     notClosed: "The case isn't closed.",
+    alreadyInvestigating: "The case is already under investigation.",
     actionDone: "That measure is already done.",
     tooMany: (max: string) =>
       `Too many to export (up to ${max}). Narrow them down with the filters.`,
@@ -838,6 +839,7 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
       status: "Status",
       actions: "Measures done",
       open: "Open",
+      investigating: "Under investigation",
       closed: "Closed",
     },
   },
@@ -845,6 +847,60 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
     alreadyCourse: "That document is already a course.",
     stillValid: "Your training for this course is still valid.",
     repeated: "The same person appears twice in the attendance.",
+    notListed: "You're not on this training's list. Ask whoever gave it to add you.",
+    sessionClosed: "This signing is closed: ask whoever gave the training to open another one.",
+    alreadySigned: "You already signed this training.",
+    noAttendees: "Choose at least one person for the signing.",
+  },
+  personPdf: {
+    title: "Health and safety sheet",
+    generated: (when: string, who: string) => `Generated on ${when} by ${who}.`,
+    position: "Position",
+    noPosition: "No position",
+    departments: "Departments",
+    health: "Contains health data: treat it as confidential and don't share it.",
+    ppe: {
+      title: "Personal protective equipment (PPE)",
+      item: "Equipment",
+      quantity: "Quantity",
+      size: "Size",
+      delivered: "Handed out",
+      replaceOn: "Replace on",
+      none: "No PPE handed out.",
+      missing: "Missing for their position:",
+      expired: "expired",
+    },
+    training: {
+      title: "Training",
+      course: "Course",
+      state: "State",
+      completed: "Done",
+      validUntil: "Expires",
+      none: "No courses assigned.",
+    },
+    states: {
+      valid: "Valid",
+      due_soon: "Due soon",
+      expired: "Expired",
+      pending: "Pending",
+    },
+    fitness: {
+      title: "Fitness for work",
+      status: "Result",
+      validUntil: "Until",
+      restrictions: "Restrictions",
+      none: "No fitness assessments.",
+      statuses: { APT: "Fit", APT_RESTRICTED: "Fit with restrictions", NOT_APT: "Not fit" },
+    },
+    incidents: {
+      title: "Accidents and incidents",
+      date: "Date",
+      type: "Type",
+      place: "Place",
+      status: "State",
+      none: "No accidents or incidents.",
+    },
+    fileName: (person: string, day: string) => `Health and safety sheet ${person} ${day}.pdf`,
   },
   attendancePdf: {
     title: "Training attendance record",
@@ -901,6 +957,16 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
     fileName: (person: string, day: string) => `Handout ${person} ${day}.pdf`,
     pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
   },
+};
+
+export const safetyIncidentEmailTexts: Catalog<typeof Es.safetyIncidentEmailTexts> = {
+  greeting: (name: string) => `Hi ${name},`,
+  subject: "A new accident or incident was reported",
+  title: "There's a new case",
+  body: (who: string) =>
+    `${who} reported an accident or incident. As it's health data, the details are only in the app.`,
+  action: "See the case",
+  footnote: "You get this notice because you can see the company's health data.",
 };
 
 export const expiryNoticeTexts: Catalog<typeof Es.expiryNoticeTexts> = {

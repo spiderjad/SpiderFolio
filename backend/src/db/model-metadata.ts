@@ -69,6 +69,7 @@ export const modelMetadata = {
       safetyActions: "SafetyAction",
       safetyCourses: "SafetyCourse",
       safetyTrainings: "SafetyTraining",
+      safetySignSessions: "SafetySignSession",
       safetyFitness: "SafetyFitness",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
@@ -222,7 +223,15 @@ export const modelMetadata = {
   },
   SafetyCourse: {
     scope: "tenant",
-    relations: { workspace: "Workspace", trainings: "SafetyTraining" },
+    relations: {
+      workspace: "Workspace",
+      trainings: "SafetyTraining",
+      signSessions: "SafetySignSession",
+    },
+  },
+  SafetySignSession: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", course: "SafetyCourse" },
   },
   SafetyTraining: {
     scope: "tenant",

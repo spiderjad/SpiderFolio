@@ -337,7 +337,7 @@ export async function submitRecord(
     return record.id;
   });
   if (await isIncidentForm(ctx.db, formId)) {
-    await recordIncident(ctx, { id, answers: checked.answers });
+    await recordIncident(ctx, { id, answers: checked.answers }, deps.jobs);
   }
   if (checked.nonConforming.length > 0) {
     await notifyNonConforming(ctx.db, deps.jobs, {

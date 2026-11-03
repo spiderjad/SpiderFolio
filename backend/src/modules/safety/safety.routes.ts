@@ -17,8 +17,18 @@ import {
   CoursesQuerySchema,
   FitnessSchema,
   PeopleQuerySchema,
+  SignSchema,
+  SignSessionSchema,
   UpdateCourseSchema,
 } from "./training.schemas.ts";
+import { personSheetPdf } from "./person-pdf.ts";
+import {
+  closeSignSession,
+  createSignSession,
+  getSignSession,
+  openSignSessions,
+  signSession,
+} from "./sign-sessions.service.ts";
 import {
   attendancePdf,
   confirmTraining,
@@ -199,6 +209,28 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
     },
     {
       method: "get",
+      path: "/safety/people/:id/pdf",
+      guards: [
+        sensitiveRateLimit(deps, { name: "safety-pdf", windowMs: HOUR, limit: 60, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const file = await personSheetPdf(
+          adminContextOf(req),
+          { gotenbergUrl: deps.env.GOTENBERG_URL },
+          id,
+        );
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="ficha.pdf"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(Buffer.from(file.body));
+      },
+    },
+    {
+      method: "get",
       path: "/safety/people/:id/ppe",
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
@@ -257,6 +289,16 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
         res.json({ incident: await setIncidentStatus(adminContextOf(req), id, "CLOSED") });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/incidents/:id/investigate",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({
+          incident: await setIncidentStatus(adminContextOf(req), id, "INVESTIGATING"),
+        });
       },
     },
     {
@@ -366,6 +408,54 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         );
         res.setHeader("Cache-Control", "no-store");
         res.send(Buffer.from(file.body));
+      },
+    },
+    // Signing on each attendee's own phone: a session per course and day, open for 24 hours.
+    {
+      method: "post",
+      path: "/safety/courses/:id/sign-sessions",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.status(201).json({
+          session: await createSignSession(
+            adminContextOf(req),
+            id,
+            SignSessionSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/courses/:id/sign-sessions",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ items: await openSignSessions(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/sign-sessions/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ session: await getSignSession(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/sign-sessions/:id/sign",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { signature } = SignSchema.parse(req.body);
+        res.json({ session: await signSession(adminContextOf(req), id, signature) });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/sign-sessions/:id/close",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ session: await closeSignSession(adminContextOf(req), id) });
       },
     },
     {

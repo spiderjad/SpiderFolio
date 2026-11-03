@@ -13,7 +13,7 @@ export const IncidentFiltersSchema = z.object({
   severity: z.enum(["minor", "serious", "very_serious", "fatal"]).optional(),
   person: Id.optional(),
   department: Id.optional(),
-  status: z.enum(["all", "open", "closed"]).default("all"),
+  status: z.enum(["all", "open", "investigating", "closed"]).default("all"),
 });
 
 export const ListIncidentsQuerySchema = IncidentFiltersSchema.extend(

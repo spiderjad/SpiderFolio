@@ -27,24 +27,28 @@ import { TRAINING_EXPIRY } from "./training-expiry.ts";
 
 export type TrainingState = ExpiryState | "pending";
 
-async function zone(ctx: Pick<AdminContext, "db">): Promise<string> {
+export async function zone(ctx: Pick<AdminContext, "db">): Promise<string> {
   const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
   return zoneOf(workspace?.settings);
 }
 
-async function requireManager(ctx: AdminContext): Promise<void> {
+export async function requireManager(ctx: AdminContext): Promise<void> {
   await requireSafety(ctx);
   if (!canManageSafety(ctx)) throw forbidden();
 }
 
-/** Records a training and moves its expiry: the person's earlier ones of the course stop telling. */
-async function addTraining(
+/**
+ * Records a training and moves its expiry: the person's earlier ones of the course stop telling. Signed
+ * on one's own phone, `session` says which session and who gave it (recorded as who registered it).
+ */
+export async function addTraining(
   ctx: AdminContext,
   course: { id: string; validityMonths: number | null },
   membershipId: string,
   completedAt: Date,
   source: "READING" | "IN_PERSON",
   signature?: Buffer,
+  session?: { id: string; createdById: string },
 ): Promise<void> {
   const tz = await zone(ctx);
   const validUntil =
@@ -65,7 +69,8 @@ async function addTraining(
         source,
         validUntil: validUntil === null ? null : new Date(`${validUntil}T00:00:00Z`),
         ...(signature === undefined ? {} : { signature: new Uint8Array(signature) }),
-        createdById: ctx.tenant.membershipId,
+        ...(session === undefined ? {} : { sessionId: session.id }),
+        createdById: session?.createdById ?? ctx.tenant.membershipId,
       },
       select: { id: true },
     });
@@ -286,7 +291,7 @@ export async function updateCourse(
   return view;
 }
 
-async function loadCourse(ctx: AdminContext, id: string) {
+export async function loadCourse(ctx: AdminContext, id: string) {
   await requireSafety(ctx);
   const course = await ctx.db.safetyCourse.findFirst({
     where: { id },

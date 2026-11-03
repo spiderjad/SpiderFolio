@@ -40,6 +40,8 @@ export const EmailJobSchema = z.discriminatedUnion("kind", [
   // Something expires (docs/spec/seguridad-salud.md, «Motor de vencimientos»): the worker reads the
   // Notification and asks the expiry's kind how to name it.
   z.strictObject({ kind: z.literal("expiry-notice"), notificationId: z.string().min(1) }),
+  // A new accident or incident, to whoever has safety.health: the worker reads the Notification.
+  z.strictObject({ kind: z.literal("safety-incident-notice"), notificationId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-ready"), exportId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-failed"), exportId: z.string().min(1) }),
 ]);

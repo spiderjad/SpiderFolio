@@ -2,6 +2,7 @@
 // by filling in the module's base form; each record becomes a case here, with what's needed to filter
 // and follow it. Health data: only `safety.health` lists, opens, closes and exports them, and sets their
 // corrective measures; whoever has to do a measure sees it among their measures and marks it done.
+import type { Jobs } from "../../jobs/boss.ts";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
 import { offsetArgs, pageOf, stableOrder, type Page } from "../../lib/pagination.ts";
 import { currentLocale } from "../../i18n/locales.ts";
@@ -48,6 +49,7 @@ async function names(ctx: Pick<AdminContext, "db">, ids: (string | null)[]) {
 export async function recordIncident(
   ctx: AdminContext,
   record: { id: string; answers: Answers },
+  jobs: Pick<Jobs, "enqueue">,
 ): Promise<void> {
   const f = INCIDENT_FIELDS;
   const text = (id: string) => {
@@ -86,7 +88,7 @@ export async function recordIncident(
   });
   for (const holder of holders) {
     if (holder.id === ctx.tenant.membershipId) continue;
-    await ctx.db.notification.create({
+    const notice = await ctx.db.notification.create({
       data: {
         membershipId: holder.id,
         kind: "safety_incident",
@@ -94,7 +96,10 @@ export async function recordIncident(
         detail: incident.id,
         dedupeKey: `safety-incident:${incident.id}`,
       },
+      select: { id: true },
     });
+    // Also by email, without what happened nor who: it's health data.
+    await jobs.enqueue("email-send", { kind: "safety-incident-notice", notificationId: notice.id });
   }
   await auditAdmin(ctx, {
     action: "safety.incident.create",
@@ -115,6 +120,9 @@ export interface ActionView {
   done: { at: Date; by: { id: string; name: string } | null; note: string | null } | null;
 }
 
+/** Open (just reported), under investigation, or closed (every measure done). */
+export type IncidentStatus = "OPEN" | "INVESTIGATING" | "CLOSED";
+
 export interface IncidentView {
   id: string;
   recordId: string;
@@ -126,7 +134,7 @@ export interface IncidentView {
   person: { id: string; name: string } | null;
   department: { id: string; name: string } | null;
   reportedBy: { id: string; name: string };
-  status: "OPEN" | "CLOSED";
+  status: IncidentStatus;
   closed: { at: Date; by: { id: string; name: string } | null } | null;
   actions: { total: number; done: number };
 }
@@ -177,7 +185,7 @@ async function incidentViews(ctx: AdminContext, rows: IncidentRow[]): Promise<In
         ? null
         : { id: row.departmentId, name: departmentById.get(row.departmentId) ?? "" },
     reportedBy: who(row.reportedById),
-    status: row.status === "CLOSED" ? "CLOSED" : "OPEN",
+    status: row.status === "CLOSED" || row.status === "INVESTIGATING" ? row.status : "OPEN",
     closed:
       row.closedAt === null
         ? null
@@ -195,7 +203,12 @@ function incidentsWhere(filters: IncidentFilters): Prisma.SafetyIncidentWhereInp
     ...(filters.severity === undefined ? {} : { severity: filters.severity }),
     ...(filters.person === undefined ? {} : { membershipId: filters.person }),
     ...(filters.department === undefined ? {} : { departmentId: filters.department }),
-    ...(filters.status === "all" ? {} : { status: filters.status === "open" ? "OPEN" : "CLOSED" }),
+    // «Open» is every case not closed yet: just reported or under investigation.
+    ...(filters.status === "all"
+      ? {}
+      : filters.status === "open"
+        ? { status: { in: ["OPEN", "INVESTIGATING"] } }
+        : { status: filters.status === "investigating" ? "INVESTIGATING" : "CLOSED" }),
     ...(filters.from === undefined && filters.to === undefined
       ? {}
       : {
@@ -205,6 +218,13 @@ function incidentsWhere(filters: IncidentFilters): Prisma.SafetyIncidentWhereInp
           },
         }),
   };
+}
+
+/** The type's label (accident with leave, near miss…) in the active language. */
+export function incidentTypeLabel(value: string): string {
+  const form = safetyTexts.incidentForm;
+  const id = Object.entries(INCIDENT_TYPES).find(([, type]) => type === value)?.[0];
+  return id === undefined ? value : form.types[id as keyof typeof INCIDENT_TYPES];
 }
 
 export async function listIncidents(
@@ -275,13 +295,18 @@ export async function getIncident(
 export async function setIncidentStatus(
   ctx: AdminContext,
   id: string,
-  status: "OPEN" | "CLOSED",
+  status: IncidentStatus,
 ): Promise<IncidentView> {
   const row = await loadIncident(ctx, id);
   const m = safetyTexts.incidents;
   if (row.status === status) {
     throw new AppError("CONFLICT", {
-      message: status === "CLOSED" ? m.alreadyClosed : m.notClosed,
+      message:
+        status === "CLOSED"
+          ? m.alreadyClosed
+          : status === "INVESTIGATING"
+            ? m.alreadyInvestigating
+            : m.notClosed,
     });
   }
   if (status === "CLOSED" && row.actions.some((action) => action.doneAt === null)) {
@@ -295,7 +320,12 @@ export async function setIncidentStatus(
         : { status, closedAt: null, closedById: null },
   });
   await auditAdmin(ctx, {
-    action: status === "CLOSED" ? "safety.incident.close" : "safety.incident.reopen",
+    action:
+      status === "CLOSED"
+        ? "safety.incident.close"
+        : status === "INVESTIGATING"
+          ? "safety.incident.investigate"
+          : "safety.incident.reopen",
     entityType: "SafetyIncident",
     entityId: id,
   });
@@ -356,7 +386,11 @@ export async function exportIncidentsCsv(
       view.person?.name ?? "",
       view.department?.name ?? "",
       view.reportedBy.name,
-      view.status === "OPEN" ? c.open : c.closed,
+      view.status === "OPEN"
+        ? c.open
+        : view.status === "INVESTIGATING"
+          ? c.investigating
+          : c.closed,
       `${String(view.actions.done)}/${String(view.actions.total)}`,
     ]),
   ]);

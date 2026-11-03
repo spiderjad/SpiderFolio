@@ -803,6 +803,7 @@ export const safetyTexts = {
     notFoundActions: "Primero marca como hechas todas las medidas.",
     alreadyClosed: "El caso ya está cerrado.",
     notClosed: "El caso no está cerrado.",
+    alreadyInvestigating: "El caso ya está en investigación.",
     actionDone: "Esa medida ya está hecha.",
     tooMany: (max: string) => `Son demasiados para exportar (hasta ${max}). Acota con los filtros.`,
     csv: {
@@ -817,6 +818,7 @@ export const safetyTexts = {
       status: "Estado",
       actions: "Medidas hechas",
       open: "Abierto",
+      investigating: "En investigación",
       closed: "Cerrado",
     },
   },
@@ -824,6 +826,60 @@ export const safetyTexts = {
     alreadyCourse: "Ese documento ya es un curso.",
     stillValid: "Tu formación de este curso sigue vigente.",
     repeated: "Una misma persona aparece dos veces en la asistencia.",
+    notListed: "No estás en la lista de esta formación. Pídele a quien la dio que te agregue.",
+    sessionClosed: "Esta firma ya está cerrada: pídele a quien dio la formación que abra otra.",
+    alreadySigned: "Ya firmaste esta formación.",
+    noAttendees: "Elige al menos una persona para la firma.",
+  },
+  personPdf: {
+    title: "Ficha de prevención",
+    generated: (when: string, who: string) => `Generada el ${when} por ${who}.`,
+    position: "Puesto",
+    noPosition: "Sin puesto",
+    departments: "Departamentos",
+    health: "Incluye datos de salud: trátala como confidencial y no la compartas.",
+    ppe: {
+      title: "Equipos de protección (EPIs)",
+      item: "Equipo",
+      quantity: "Cantidad",
+      size: "Talla",
+      delivered: "Entregado",
+      replaceOn: "Reponer el",
+      none: "No tiene EPIs entregados.",
+      missing: "Le falta por su puesto:",
+      expired: "vencido",
+    },
+    training: {
+      title: "Formación",
+      course: "Curso",
+      state: "Estado",
+      completed: "Hecha",
+      validUntil: "Vence",
+      none: "No tiene cursos asignados.",
+    },
+    states: {
+      valid: "Vigente",
+      due_soon: "Por vencer",
+      expired: "Vencida",
+      pending: "Pendiente",
+    },
+    fitness: {
+      title: "Aptitud",
+      status: "Resultado",
+      validUntil: "Hasta",
+      restrictions: "Restricciones",
+      none: "No hay evaluaciones de aptitud.",
+      statuses: { APT: "Apto", APT_RESTRICTED: "Apto con restricciones", NOT_APT: "No apto" },
+    },
+    incidents: {
+      title: "Accidentes e incidentes",
+      date: "Fecha",
+      type: "Tipo",
+      place: "Lugar",
+      status: "Estado",
+      none: "No tiene accidentes ni incidentes.",
+    },
+    fileName: (person: string, day: string) => `Ficha de prevención ${person} ${day}.pdf`,
   },
   attendancePdf: {
     title: "Constancia de asistencia a formación",
@@ -905,6 +961,20 @@ export const expiryNoticeTexts = {
   },
   action: "Ver",
   footnote: "Recibes este aviso porque te toca ocuparte de este vencimiento o porque es tuyo.",
+} as const;
+
+/**
+ * A new accident or incident (docs/spec/seguridad-salud.md): to whoever has safety.health. Health data:
+ * never what happened nor who was hurt in the email, only that there's a new case and where it opens.
+ */
+export const safetyIncidentEmailTexts = {
+  greeting: (name: string) => `Hola ${name}:`,
+  subject: "Se comunicó un accidente o incidente nuevo",
+  title: "Hay un caso nuevo",
+  body: (who: string) =>
+    `${who} comunicó un accidente o incidente. Por ser datos de salud, el detalle está solo en la app.`,
+  action: "Ver el caso",
+  footnote: "Recibes este aviso porque puedes ver los datos de salud de la empresa.",
 } as const;
 
 /** Avisos de formularios (docs/spec/formularios.md): no conformidades y períodos. */

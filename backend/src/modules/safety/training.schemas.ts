@@ -26,6 +26,14 @@ export const AttendanceSchema = z.strictObject({
   completedOn: Day,
 });
 
+/** Signing on each attendee's phone: who has to sign and the day of the training. */
+export const SignSessionSchema = z.strictObject({
+  attendeeIds: z.array(Id).min(1).max(100),
+  completedOn: Day,
+});
+
+export const SignSchema = z.strictObject({ signature: Signature });
+
 export const PeopleQuerySchema = z.object({
   ...pageShape(["name"], "name"),
   q: z.string().trim().max(100).optional(),

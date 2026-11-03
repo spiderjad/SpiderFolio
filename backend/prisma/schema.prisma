@@ -254,6 +254,7 @@ model Workspace {
   safetyActions       SafetyAction[]
   safetyCourses       SafetyCourse[]
   safetyTrainings     SafetyTraining[]
+  safetySignSessions  SafetySignSession[]
   safetyFitness       SafetyFitness[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
@@ -571,8 +572,9 @@ model SafetyCourse {
   createdById    String
   createdAt      DateTime @default(now())
 
-  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  trainings SafetyTraining[]
+  workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainings    SafetyTraining[]
+  signSessions SafetySignSession[]
 
   @@unique([workspaceId, nodeId])
   @@unique([id, workspaceId])
@@ -591,14 +593,39 @@ model SafetyTraining {
   validUntil   DateTime? @db.Date
   /// In person: the attendee's signature, a PNG.
   signature    Bytes?
+  /// Signed on their own phone, in this session (null: on the trainer's tablet or by reading).
+  sessionId    String?
   createdById  String
   createdAt    DateTime  @default(now())
 
   workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   course    SafetyCourse @relation(fields: [courseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
+  @@unique([sessionId, membershipId])
   @@index([workspaceId, courseId, membershipId])
   @@index([workspaceId, membershipId])
+}
+
+/// In-person training signed by each attendee on their own phone (docs/spec/seguridad-salud.md): a QR
+/// or link for one course and day, for the attendees chosen; open until it's closed or expires.
+model SafetySignSession {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  courseId     String
+  /// The day of the training (as the tablet's attendance).
+  completedOn  DateTime  @db.Date
+  /// Who has to sign (memberships; no FK).
+  attendeeIds  String[]
+  /// Whoever gives the training: recorded as the one who registered each signature.
+  createdById  String
+  expiresAt    DateTime
+  closedAt     DateTime?
+  createdAt    DateTime  @default(now())
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  course    SafetyCourse @relation(fields: [courseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, courseId])
 }
 
 /// Fitness for work (docs/spec/seguridad-salud.md, «Aptitud»): only fit, fit with restrictions or not
