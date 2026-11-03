@@ -108,6 +108,11 @@ export const formsTexts: typeof es = {
   },
   qr: "The code opens the form to fill it in; it asks to sign in (a PIN works too). Print it and stick it where the form is filled in: the cold room, the machine, the door.",
   fill: {
+    back: "Back",
+    cancel: "Cancel",
+    leaveTitle: "Leave without sending?",
+    leaveText: "What you filled in on this form will be lost.",
+    leave: "Leave without sending",
     choosePerson: "Choose the person",
     open: "Fill in",
     title: (name: string) => `Fill in “${name}”`,

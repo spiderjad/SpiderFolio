@@ -4,11 +4,20 @@
 // metadata) and a signature drawn with a finger. What's out of range shows as it's typed; the server
 // checks everything again and works out what's non-conforming.
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ImagePlus, Loader2, ServerCrash, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  ServerCrash,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useBlocker, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
 import { Checkbox, Input, Textarea } from "@/components/ui/form";
 import { COMBO_PAGE_SIZE, Combobox, type ComboboxSource } from "@/components/ui/combobox";
@@ -42,11 +51,14 @@ export function FormFillPage({
   initial,
   timeFields = [],
   onDone,
+  backTo,
 }: {
   formId?: string;
   initial?: Record<string, Answer>;
   timeFields?: readonly string[];
   onDone?: (record: RecordView) => void;
+  /** Where «Volver» and «Cancelar» go (by default, the form's screen). */
+  backTo?: string;
 } = {}) {
   const { workspaceSlug = "", formId: routeForm = "" } = useParams();
   const formId = embeddedForm ?? routeForm;
@@ -86,6 +98,9 @@ export function FormFillPage({
       form={form.data}
       initial={initial ?? {}}
       timeFields={timeFields}
+      backTo={
+        backTo ?? `/app/${workspaceSlug}/files/${form.data.space.id}/form/${form.data.node.id}`
+      }
       onSent={onDone ?? setSent}
     />
   );
@@ -123,13 +138,33 @@ function Fill({
   form,
   initial,
   timeFields,
+  backTo,
   onSent,
 }: {
   form: FormDetail;
   initial: Record<string, Answer>;
   timeFields: readonly string[];
+  backTo: string;
   onSent: (record: RecordView) => void;
 }) {
+  const navigate = useNavigate();
+  // Once something was filled in, leaving asks first (in the app and when closing the tab).
+  const [touched, setTouched] = useState(false);
+  const leaving = useRef(false);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      touched && !leaving.current && currentLocation.pathname !== nextLocation.pathname,
+  );
+  useEffect(() => {
+    if (!touched) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+    };
+  }, [touched]);
   const { workspaceSlug = "" } = useParams();
   const [params] = useSearchParams();
   const fields = form.template.fields;
@@ -176,6 +211,7 @@ function Fill({
       });
     },
     onSuccess: ({ record }) => {
+      leaving.current = true;
       onSent(record);
     },
     onError: (error) => {
@@ -222,6 +258,28 @@ function Fill({
 
   return (
     <div className="mx-auto grid w-full min-w-0 max-w-xl grid-cols-1 gap-4 pb-28">
+      <Link
+        to={backTo}
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {t.back}
+      </Link>
+      <ConfirmDialog
+        open={blocker.state === "blocked"}
+        onOpenChange={(open) => {
+          if (!open && blocker.state === "blocked") blocker.reset();
+        }}
+        icon={AlertTriangle}
+        tone="warning"
+        title={t.leaveTitle}
+        description={t.leaveText}
+        confirmLabel={t.leave}
+        pendingLabel={t.leave}
+        onConfirm={() => {
+          if (blocker.state === "blocked") blocker.proceed();
+        }}
+      />
       <div>
         <h1 className="break-words text-xl font-semibold tracking-tight">
           {t.title(form.node.name)}
@@ -253,9 +311,11 @@ function Fill({
             value={answers[field.id]}
             photos={photos[field.id] ?? []}
             onChange={(value) => {
+              setTouched(true);
               set(field.id, value);
             }}
             onPhotos={(update) => {
+              setTouched(true);
               setPhotos((current) => ({ ...current, [field.id]: update(current[field.id] ?? []) }));
               set(field.id, undefined);
             }}
@@ -272,10 +332,20 @@ function Fill({
       ))}
       {fields.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">
-          <div className="mx-auto max-w-xl">
+          <div className="mx-auto flex max-w-xl gap-2">
             <Button
               size="lg"
-              className="w-full"
+              variant="outline"
+              disabled={submit.isPending}
+              onClick={() => {
+                void navigate(backTo);
+              }}
+            >
+              {t.cancel}
+            </Button>
+            <Button
+              size="lg"
+              className="flex-1"
               disabled={submit.isPending || uploading}
               onClick={() => {
                 void checkRequired().then((missing) => {

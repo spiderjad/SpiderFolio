@@ -106,6 +106,11 @@ export const formsTexts = {
   },
   qr: "El código abre el formulario para llenarlo; pide iniciar sesión (también con PIN). Imprímelo y pégalo donde se llena: la cámara, la máquina, la puerta.",
   fill: {
+    back: "Volver",
+    cancel: "Cancelar",
+    leaveTitle: "¿Salir sin enviar?",
+    leaveText: "Lo que completaste en este formulario se pierde.",
+    leave: "Salir sin enviar",
     choosePerson: "Elige a la persona",
     open: "Llenar",
     title: (name: string) => `Llenar «${name}»`,
