@@ -116,4 +116,5 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 | Conector para Claude (MCP) | docs/spec/conector-mcp.md |
 | Formularios y registros | docs/spec/formularios.md |
 | Seguridad y salud laboral, puestos, vencimientos | docs/spec/seguridad-salud.md |
+| Vencimientos de archivos y páginas | docs/spec/vencimientos.md |
 | Fase 2 | docs/spec/fase-2.md |
