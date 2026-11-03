@@ -167,6 +167,7 @@ export const en: Messages = {
       submit: "Sign in",
       invalid: "Incorrect username or PIN.",
       rateLimited: "Too many attempts. Wait a few minutes or ask your supervisor for help.",
+      fromLink: "Do you sign in with a username and PIN? Sign in with PIN",
     },
     register: {
       title: "Create your account",

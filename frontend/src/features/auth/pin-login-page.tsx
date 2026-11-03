@@ -3,14 +3,14 @@
 // dato de la persona anterior. El navegador solo recuerda el workspace, nunca el usuario.
 import { Delete, LogIn } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Navigate, useNavigate, useParams } from "react-router";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { useAuth } from "@/auth/auth-context";
 import { AuthLayout, FormAlert } from "@/components/auth-layout";
 import { Button } from "@/components/ui/button";
 import { FormField, Input } from "@/components/ui/form";
 import { ApiError } from "@/lib/api";
 import { readKioskWorkspace } from "@/lib/kiosk";
-import { cn } from "@/lib/utils";
+import { cn, safeNext } from "@/lib/utils";
 import { texts } from "@/i18n";
 
 const PIN_LENGTH = 6;
@@ -62,6 +62,11 @@ export function PinLoginPage() {
   const { workspaceSlug = "" } = useParams();
   const { pinLogin } = useAuth();
   const navigate = useNavigate();
+  // From a link (a training's signing, a form's QR): back there once signed in, if it's this company's.
+  const [params] = useSearchParams();
+  const home = `/app/${encodeURIComponent(workspaceSlug)}`;
+  const next = safeNext(params.get("next"), home);
+  const target = next === home || next.startsWith(`${home}/`) ? next : home;
   const [loginName, setLoginName] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +79,7 @@ export function PinLoginPage() {
     setError(null);
     try {
       await pinLogin(workspaceSlug, loginName, value);
-      void navigate(`/app/${encodeURIComponent(workspaceSlug)}`, { replace: true });
+      void navigate(target, { replace: true });
     } catch (failure) {
       setPin("");
       setPending(false);

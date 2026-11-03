@@ -13,7 +13,14 @@ import { adminApi } from "@/features/admin/api";
 import { NotFoundPage } from "@/features/home/not-found-page";
 import { useMembership } from "@/features/home/workspace-layout";
 import { cn } from "@/lib/utils";
-import { incidentsApi, incidentsKeys, safetyApi, safetyKeys, type PpeState } from "./safety-api";
+import {
+  incidentsApi,
+  incidentsKeys,
+  safetyApi,
+  safetyKeys,
+  type IncidentStatus,
+  type PpeState,
+} from "./safety-api";
 import { texts } from "@/i18n";
 
 export function useSafety() {
@@ -194,5 +201,17 @@ export function useItemSource(): ComboboxSource {
         })),
     }),
     [workspaceSlug],
+  );
+}
+
+/** A case's state: amber while open, blue while under investigation, green once closed. */
+export function IncidentStatusBadge({ status }: { status: IncidentStatus }) {
+  const i = texts.safety.incidents;
+  return status === "OPEN" ? (
+    <Badge tone="warning">{i.open}</Badge>
+  ) : status === "INVESTIGATING" ? (
+    <Badge tone="primary">{i.investigating}</Badge>
+  ) : (
+    <Badge tone="success">{i.closed}</Badge>
   );
 }

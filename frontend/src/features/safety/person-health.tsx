@@ -19,7 +19,7 @@ import {
   incidentsKeys,
   type FitnessStatus,
 } from "./safety-api";
-import { useSafety } from "./safety-common";
+import { IncidentStatusBadge, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.fitness;
@@ -97,9 +97,7 @@ export function PersonIncidents({ membershipId }: { membershipId: string }) {
               >
                 {formatUtcDate(incident.occurredOn)} · {i.types[incident.type]}
               </Link>
-              <Badge tone={incident.status === "OPEN" ? "warning" : "success"}>
-                {incident.status === "OPEN" ? i.open : i.closed}
-              </Badge>
+              <IncidentStatusBadge status={incident.status} />
             </li>
           ))}
         </ul>

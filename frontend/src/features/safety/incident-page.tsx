@@ -8,12 +8,12 @@ import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboOption } from "@/components/ui/combobox";
-import { Badge, Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
+import { Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { FormField, Input } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
-import { incidentsApi, incidentsKeys } from "./safety-api";
-import { usePeopleSource } from "./safety-common";
+import { incidentsApi, incidentsKeys, type IncidentStatus } from "./safety-api";
+import { IncidentStatusBadge, usePeopleSource } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.incidents;
@@ -33,9 +33,15 @@ export function IncidentPage() {
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: incidentsKeys.all(workspaceSlug) });
   const status = useMutation({
-    mutationFn: (close: boolean) => incidentsApi.setStatus(workspaceSlug, incidentId, close),
-    onSuccess: async (_result, close) => {
-      toast.success(close ? t.toasts.closed : t.toasts.reopened);
+    mutationFn: (next: IncidentStatus) => incidentsApi.setStatus(workspaceSlug, incidentId, next),
+    onSuccess: async (_result, next) => {
+      toast.success(
+        next === "CLOSED"
+          ? t.toasts.closed
+          : next === "INVESTIGATING"
+            ? t.toasts.investigating
+            : t.toasts.reopened,
+      );
       await refresh();
     },
     onError: (error) => {
@@ -105,11 +111,7 @@ export function IncidentPage() {
         <div className="grid gap-1">
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
             {t.types[incident.type]}
-            {incident.status === "OPEN" ? (
-              <Badge tone="warning">{t.open}</Badge>
-            ) : (
-              <Badge tone="success">{t.closed}</Badge>
-            )}
+            <IncidentStatusBadge status={incident.status} />
           </h1>
           <p className="text-sm text-muted-foreground">
             {formatUtcDate(incident.occurredOn)}
@@ -134,15 +136,51 @@ export function IncidentPage() {
             </Link>
           )}
         </div>
-        <Button
-          variant="outline"
-          disabled={status.isPending || (incident.status === "OPEN" && pending)}
-          onClick={() => {
-            status.mutate(incident.status === "OPEN");
-          }}
-        >
-          {incident.status === "OPEN" ? t.close : t.reopen}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {incident.status === "OPEN" && (
+            <Button
+              variant="outline"
+              disabled={status.isPending}
+              onClick={() => {
+                status.mutate("INVESTIGATING");
+              }}
+            >
+              {t.investigate}
+            </Button>
+          )}
+          {incident.status === "INVESTIGATING" && (
+            <Button
+              variant="ghost"
+              disabled={status.isPending}
+              onClick={() => {
+                status.mutate("OPEN");
+              }}
+            >
+              {t.backToOpen}
+            </Button>
+          )}
+          {incident.status === "CLOSED" ? (
+            <Button
+              variant="outline"
+              disabled={status.isPending}
+              onClick={() => {
+                status.mutate("OPEN");
+              }}
+            >
+              {t.reopen}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              disabled={status.isPending || pending}
+              onClick={() => {
+                status.mutate("CLOSED");
+              }}
+            >
+              {t.close}
+            </Button>
+          )}
+        </div>
       </div>
       {incident.closed !== null && (
         <Banner tone="info">

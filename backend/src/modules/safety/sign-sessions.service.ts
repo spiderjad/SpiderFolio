@@ -3,6 +3,7 @@
 // chosen; it shows a QR or a link. Each attendee on the list signs once, only for themselves; whoever
 // gave it sees live who signed and closes it whenever they want. It expires on its own after 24 hours.
 // Each signature is an in-person training record like the tablet's, so the day's PDF includes them all.
+import QRCode from "qrcode";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
 import { safetyTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
@@ -21,6 +22,8 @@ export interface SignSessionView {
   expiresAt: Date;
   closedAt: Date | null;
   open: boolean;
+  /** Only for whoever manages the module: the link and its QR (a PNG data URL) to show the attendees. */
+  share: { url: string; qr: string } | null;
   /** Only for whoever manages the module: who signed and who's missing. */
   attendees: { id: string; name: string; signedAt: Date | null }[] | null;
   /** For the person looking: whether they're on the list and already signed. */
@@ -39,9 +42,15 @@ async function loadSession(ctx: AdminContext, id: string) {
   return row;
 }
 
+/** Where the session opens: the app's sign screen (sign-in or PIN first, then back here). */
+export function sessionPath(slug: string, id: string): string {
+  return `/app/${slug}/seguridad/firmar/${id}`;
+}
+
 async function viewOf(
   ctx: AdminContext,
   row: Awaited<ReturnType<typeof loadSession>>,
+  appUrl: string,
 ): Promise<SignSessionView> {
   const manages = canManageSafety(ctx);
   const course = await ctx.db.safetyCourse.findFirst({
@@ -70,6 +79,8 @@ async function viewOf(
     ).map((membership) => [membership.id, membership.user.name]),
   );
   const me = ctx.tenant.membershipId;
+  const url = new URL(sessionPath(ctx.tenant.workspaceSlug, row.id), appUrl).toString();
+  const open = isOpen(row);
   return {
     id: row.id,
     course: { id: course.id, name: document?.node.name ?? "", code: document?.code ?? null },
@@ -77,7 +88,14 @@ async function viewOf(
     trainer: { id: row.createdById, name: people.get(row.createdById) ?? "" },
     expiresAt: row.expiresAt,
     closedAt: row.closedAt,
-    open: isOpen(row),
+    open,
+    share:
+      manages && open
+        ? {
+            url,
+            qr: await QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 1, width: 320 }),
+          }
+        : null,
     attendees: manages
       ? row.attendeeIds
           .map((id) => ({ id, name: people.get(id) ?? "", signedAt: signed.get(id) ?? null }))
@@ -89,6 +107,7 @@ async function viewOf(
 
 export async function createSignSession(
   ctx: AdminContext,
+  appUrl: string,
   courseId: string,
   input: { attendeeIds: string[]; completedOn: string },
 ): Promise<SignSessionView> {
@@ -115,12 +134,13 @@ export async function createSignSession(
     entityId: row.id,
     metadata: { courseId: course.id, people: ids.length, completedOn: input.completedOn },
   });
-  return await viewOf(ctx, row);
+  return await viewOf(ctx, row, appUrl);
 }
 
 /** A course's sessions still open, for whoever manages the module (to show the QR again). */
 export async function openSignSessions(
   ctx: AdminContext,
+  appUrl: string,
   courseId: string,
 ): Promise<SignSessionView[]> {
   await requireManager(ctx);
@@ -130,21 +150,26 @@ export async function openSignSessions(
     orderBy: { createdAt: "desc" },
     take: 20,
   });
-  return await Promise.all(rows.map((row) => viewOf(ctx, row)));
+  return await Promise.all(rows.map((row) => viewOf(ctx, row, appUrl)));
 }
 
 /** The session: whoever manages the module sees who signed; an attendee on the list, what to sign. */
-export async function getSignSession(ctx: AdminContext, id: string): Promise<SignSessionView> {
+export async function getSignSession(
+  ctx: AdminContext,
+  appUrl: string,
+  id: string,
+): Promise<SignSessionView> {
   const row = await loadSession(ctx, id);
   if (!canManageSafety(ctx) && !row.attendeeIds.includes(ctx.tenant.membershipId)) {
     throw new AppError("FORBIDDEN", { message: safetyTexts.training.notListed });
   }
-  return await viewOf(ctx, row);
+  return await viewOf(ctx, row, appUrl);
 }
 
 /** An attendee signs for themselves, once, while the session is open. */
 export async function signSession(
   ctx: AdminContext,
+  appUrl: string,
   id: string,
   signature: string,
 ): Promise<SignSessionView> {
@@ -185,10 +210,14 @@ export async function signSession(
     entityId: id,
     metadata: { courseId: course.id },
   });
-  return await viewOf(ctx, row);
+  return await viewOf(ctx, row, appUrl);
 }
 
-export async function closeSignSession(ctx: AdminContext, id: string): Promise<SignSessionView> {
+export async function closeSignSession(
+  ctx: AdminContext,
+  appUrl: string,
+  id: string,
+): Promise<SignSessionView> {
   const row = await loadSession(ctx, id);
   if (!canManageSafety(ctx)) throw forbidden();
   if (!isOpen(row)) {
@@ -203,5 +232,5 @@ export async function closeSignSession(ctx: AdminContext, id: string): Promise<S
     entityType: "SafetySignSession",
     entityId: id,
   });
-  return await viewOf(ctx, closed);
+  return await viewOf(ctx, closed, appUrl);
 }

@@ -174,10 +174,29 @@ export function LoginPage() {
             <Button type="submit" size="lg" disabled={isSubmitting}>
               {t.submit}
             </Button>
+            <PinLink next={params.get("next")} />
           </form>
         )}
       </div>
     </AuthLayout>
+  );
+}
+
+/**
+ * Coming from a company's link (a training's signing, a QR code): whoever signs in with a username and
+ * PIN goes to that company's PIN screen and comes back to the link.
+ */
+function PinLink({ next }: { next: string | null }) {
+  const target = safeNext(next, "");
+  const slug = /^\/app\/([^/?#]+)/u.exec(target)?.[1];
+  if (slug === undefined) return null;
+  return (
+    <Link
+      to={`/entrar/${slug}?next=${encodeURIComponent(target)}`}
+      className="justify-self-center text-sm text-primary hover:underline"
+    >
+      {texts.auth.pin.fromLink}
+    </Link>
   );
 }
 

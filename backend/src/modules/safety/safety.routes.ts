@@ -419,6 +419,7 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         res.status(201).json({
           session: await createSignSession(
             adminContextOf(req),
+            deps.env.APP_URL,
             id,
             SignSessionSchema.parse(req.body),
           ),
@@ -430,7 +431,7 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       path: "/safety/courses/:id/sign-sessions",
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
-        res.json({ items: await openSignSessions(adminContextOf(req), id) });
+        res.json({ items: await openSignSessions(adminContextOf(req), deps.env.APP_URL, id) });
       },
     },
     {
@@ -438,7 +439,7 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       path: "/safety/sign-sessions/:id",
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
-        res.json({ session: await getSignSession(adminContextOf(req), id) });
+        res.json({ session: await getSignSession(adminContextOf(req), deps.env.APP_URL, id) });
       },
     },
     {
@@ -447,7 +448,9 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
         const { signature } = SignSchema.parse(req.body);
-        res.json({ session: await signSession(adminContextOf(req), id, signature) });
+        res.json({
+          session: await signSession(adminContextOf(req), deps.env.APP_URL, id, signature),
+        });
       },
     },
     {
@@ -455,7 +458,7 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
       path: "/safety/sign-sessions/:id/close",
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
-        res.json({ session: await closeSignSession(adminContextOf(req), id) });
+        res.json({ session: await closeSignSession(adminContextOf(req), deps.env.APP_URL, id) });
       },
     },
     {

@@ -167,6 +167,7 @@ export const es = {
       submit: "Entrar",
       invalid: "Usuario o PIN incorrectos.",
       rateLimited: "Demasiados intentos. Espera unos minutos o pide ayuda a tu responsable.",
+      fromLink: "¿Entras con usuario y PIN? Entrar con PIN",
     },
     register: {
       title: "Crea tu cuenta",

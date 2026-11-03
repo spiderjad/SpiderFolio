@@ -137,6 +137,11 @@ export const routes = [
                     lazy: page(() => import("@/features/safety/deliveries-page"), "DeliveriesPage"),
                   },
                   {
+                    // Each attendee signs in-person training on their own phone (QR or link).
+                    path: "firmar/:sessionId",
+                    lazy: page(() => import("@/features/safety/sign-session"), "SignSessionPage"),
+                  },
+                  {
                     lazy: page(
                       () => import("@/features/safety/safety-common"),
                       "RequireSafetyManager",

@@ -118,6 +118,11 @@ The sheet shows:
 
 Each person sees their own by opening **Health & safety** in the menu.
 
+**Download the sheet (PDF)** puts the sheet in a PDF: their PPE, what's missing and their training. For whoever
+has **Health data: accidents and fitness for work** it also has their fitness and their accidents and
+incidents, with a note that it's confidential; each person can download their own (with their fitness). It
+needs [Gotenberg](/en/docs/gotenberg) and it's recorded in the audit log.
+
 
 ## Replacement notices
 
@@ -139,7 +144,8 @@ field**); their text can change and you can add your own fields.
 
 It's **health data**: cases are only seen by whoever has **Health data: accidents and fitness for work** (by
 default, only the owner; see [Roles and permissions](/en/docs/roles-and-permissions)). Whoever reported a case
-sees what they reported. Each new case gives a notice in the bell to whoever has that capability.
+sees what they reported. Each new case gives a notice to whoever has that capability, in the bell and by email;
+the email doesn't say what happened nor to whom, only who reported it and the link to the case.
 
 Under **Accidents** you filter them by dates, type and status, and export them to CSV. Opening a case:
 
@@ -147,6 +153,8 @@ Under **Accidents** you filter them by dates, type and status, and export them t
 - **Add measure**: a corrective measure with a **Responsible** and a date (**By**). The responsible gets a
   notice 7 days before, the day before and on the day, and sees it in **My measures**, where they mark it done
   (without seeing the case's details).
+- **Move to investigation** while the causes are looked into: the case is **Under investigation** (still among
+  the open ones, and it can be filtered on its own); **Back to open** undoes it.
 - **Close the case** once every measure is done; it can be **Reopened**.
 
 <Shot name="accidentes" alt="The list of accidents and incidents with its filters" />
@@ -165,6 +173,13 @@ like, its **Valid for months**.
 - **Record in-person training**: whoever manages the module chooses the **Attendees** and the **Date**, and
   each attendee signs in their box with a finger (for example, passing the tablet around). **Attendance record
   PDF** downloads that day's sheet with every signature; it needs [Gotenberg](/en/docs/gotenberg).
+- **Let them sign on their phones**: with the attendees and the date chosen, instead of passing the tablet
+  around. It shows a **QR code** (and **Copy the link**) for that signing. Each attendee scans it, signs in
+  with their username (or **Sign in with PIN**), sees the course, the date and who gave it, and signs with a
+  finger. Only the people on the list can sign, each for themselves and once. Whoever gave it sees live who
+  signed and who's missing, and can **Close the signing** whenever they want; otherwise it closes on its own
+  after 24 hours. **Show the QR code** shows it again while it's open. The signatures go into the same day's
+  **Attendance record PDF**, wherever they were signed.
 - Each course shows every person with their state (**Up to date**, **Due soon**, **Expired**, **Pending**),
   and each person's sheet shows their training.
 

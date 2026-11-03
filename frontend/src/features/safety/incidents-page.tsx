@@ -9,14 +9,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Combobox, useStaticSource } from "@/components/ui/combobox";
 import { DataTable } from "@/components/ui/data-table";
-import { Badge, Card, EmptyState } from "@/components/ui/display";
+import { Card, EmptyState } from "@/components/ui/display";
 import { FormField as LabeledField, Input } from "@/components/ui/form";
 import { useInfiniteList } from "@/components/ui/infinite";
 import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { readChoice, useListParams } from "@/features/admin/list-params";
 import { formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys, type Incident, type IncidentFilters } from "./safety-api";
-import { PpeTabs } from "./safety-common";
+import { IncidentStatusBadge, PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.incidents;
@@ -35,7 +35,12 @@ export function IncidentsPage() {
       from: day("desde"),
       to: day("hasta"),
       type,
-      status: readChoice(params, "estado", ["all", "open", "closed"] as const, "all"),
+      status: readChoice(
+        params,
+        "estado",
+        ["all", "open", "investigating", "closed"] as const,
+        "all",
+      ),
     };
   }, [params]);
   const types = useStaticSource(
@@ -44,7 +49,10 @@ export function IncidentsPage() {
   );
   const statuses = useStaticSource(
     "incident-status",
-    (["all", "open", "closed"] as const).map((id) => ({ id, label: t.statuses[id] })),
+    (["all", "open", "investigating", "closed"] as const).map((id) => ({
+      id,
+      label: t.statuses[id],
+    })),
   );
   const list = useInfiniteList<Incident>({
     queryKey: incidentsKeys.list(workspaceSlug, filters),
@@ -97,12 +105,7 @@ export function IncidentsPage() {
       {
         id: "status",
         header: t.columns.status,
-        cell: ({ row }) =>
-          row.original.status === "OPEN" ? (
-            <Badge tone="warning">{t.open}</Badge>
-          ) : (
-            <Badge tone="success">{t.closed}</Badge>
-          ),
+        cell: ({ row }) => <IncidentStatusBadge status={row.original.status} />,
       },
       {
         id: "actions",

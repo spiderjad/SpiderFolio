@@ -2,7 +2,7 @@
 // and how each one stands, in-person attendance for whoever manages the module and, for the person,
 // confirming again once it expired.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, ServerCrash } from "lucide-react";
+import { ArrowLeft, Download, ServerCrash, Smartphone } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
@@ -16,22 +16,11 @@ import { ApiError } from "@/lib/api";
 import { formatUtcDate } from "@/lib/utils";
 import { trainingApi, trainingKeys, type TrainingState } from "./safety-api";
 import { usePeopleSource, useSafety } from "./safety-common";
+import { dataUrlOf, OpenSignSessions, SignSessionDialog } from "./sign-session";
 import { texts } from "@/i18n";
 
 const t = texts.safety.training;
 
-function dataUrlOf(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      resolve(typeof reader.result === "string" ? reader.result : "");
-    };
-    reader.onerror = () => {
-      reject(new Error("signature"));
-    };
-    reader.readAsDataURL(blob);
-  });
-}
 const tone: Record<TrainingState, "success" | "warning" | "danger"> = {
   valid: "success",
   due_soon: "warning",
@@ -75,6 +64,24 @@ export function CoursePage() {
     },
     onError: (error) => {
       toast.error(error instanceof ApiError ? adminErrorText(error) : error.message);
+    },
+  });
+  // Or each attendee signs on their own phone: a session with its QR, open for 24 hours.
+  const [showing, setShowing] = useState<string | null>(null);
+  const phone = useMutation({
+    mutationFn: () =>
+      trainingApi.openSession(workspaceSlug, courseId, {
+        attendeeIds: attendees,
+        completedOn: date,
+      }),
+    onSuccess: async ({ session }) => {
+      toast.success(t.phone.opened);
+      setShowing(session.id);
+      setAttendees([]);
+      await refresh();
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
     },
   });
   const pdf = useMutation({
@@ -201,6 +208,7 @@ export function CoursePage() {
               />
             )}
           </FormField>
+          <p className="text-xs text-muted-foreground">{t.phone.hint}</p>
           {attendees.map((membershipId) => (
             <div key={membershipId} className="grid gap-1">
               <p className="text-sm font-medium">{t.signatureOf(names.get(membershipId) ?? "")}</p>
@@ -236,6 +244,17 @@ export function CoursePage() {
             </Button>
             <Button
               variant="outline"
+              disabled={attendees.length === 0 || date === "" || phone.isPending}
+              title={attendees.length === 0 || date === "" ? t.phone.needAttendees : undefined}
+              onClick={() => {
+                phone.mutate();
+              }}
+            >
+              <Smartphone className="size-4" aria-hidden="true" />
+              {t.phone.start}
+            </Button>
+            <Button
+              variant="outline"
               disabled={date === "" || pdf.isPending}
               onClick={() => {
                 pdf.mutate();
@@ -245,6 +264,13 @@ export function CoursePage() {
               {t.attendancePdf}
             </Button>
           </div>
+          <OpenSignSessions courseId={courseId} onShow={setShowing} />
+          <SignSessionDialog
+            id={showing}
+            onClose={() => {
+              setShowing(null);
+            }}
+          />
         </Card>
       )}
     </div>

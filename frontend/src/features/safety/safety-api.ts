@@ -152,10 +152,13 @@ export interface Incident {
   person: { id: string; name: string } | null;
   department: { id: string; name: string } | null;
   reportedBy: { id: string; name: string };
-  status: "OPEN" | "CLOSED";
+  status: IncidentStatus;
   closed: { at: string; by: { id: string; name: string } | null } | null;
   actions: { total: number; done: number };
 }
+
+/** Open (just reported), under investigation, or closed. */
+export type IncidentStatus = "OPEN" | "INVESTIGATING" | "CLOSED";
 
 export interface SafetyAction {
   id: string;
@@ -170,7 +173,7 @@ export interface IncidentFilters {
   to?: string | undefined;
   type?: IncidentType | undefined;
   person?: string | undefined;
-  status?: "all" | "open" | "closed" | undefined;
+  status?: "all" | "open" | "investigating" | "closed" | undefined;
 }
 
 export const incidentsKeys = {
@@ -193,10 +196,14 @@ export const incidentsApi = {
     apiBlob(w(slug, `/safety/incidents/export?${listQuery({ ...filters })}`)),
   get: (slug: string, id: string) =>
     api<{ incident: Incident; actions: SafetyAction[] }>(w(slug, `/safety/incidents/${id}`)),
-  setStatus: (slug: string, id: string, close: boolean) =>
-    api<{ incident: Incident }>(w(slug, `/safety/incidents/${id}/${close ? "close" : "reopen"}`), {
-      method: "POST",
-    }),
+  setStatus: (slug: string, id: string, status: IncidentStatus) =>
+    api<{ incident: Incident }>(
+      w(
+        slug,
+        `/safety/incidents/${id}/${status === "CLOSED" ? "close" : status === "INVESTIGATING" ? "investigate" : "reopen"}`,
+      ),
+      { method: "POST" },
+    ),
   addAction: (
     slug: string,
     id: string,
@@ -234,8 +241,25 @@ export interface CoursePerson {
   validUntil: string | null;
 }
 
+export interface SignSession {
+  id: string;
+  course: { id: string; name: string; code: string | null };
+  completedOn: string;
+  trainer: { id: string; name: string };
+  expiresAt: string;
+  closedAt: string | null;
+  open: boolean;
+  /** Only for whoever manages the module, while open. */
+  share: { url: string; qr: string } | null;
+  attendees: { id: string; name: string; signedAt: string | null }[] | null;
+  me: { listed: boolean; signed: boolean };
+}
+
 export const trainingKeys = {
   all: (slug: string) => ["w", slug, "safety", "training"] as const,
+  session: (slug: string, id: string) => ["w", slug, "safety", "training", "session", id] as const,
+  sessions: (slug: string, id: string) =>
+    ["w", slug, "safety", "training", "sessions", id] as const,
   course: (slug: string, id: string) => ["w", slug, "safety", "training", id] as const,
   person: (slug: string, id: string) => ["w", slug, "safety", "training", "person", id] as const,
 };
@@ -258,6 +282,25 @@ export const trainingApi = {
     apiBlob(w(slug, `/safety/courses/${id}/attendance/pdf?${listQuery({ day })}`)),
   confirm: (slug: string, id: string) =>
     api<undefined>(w(slug, `/safety/courses/${id}/confirm`), { method: "POST" }),
+  // Signing on each attendee's own phone (docs/spec/seguridad-salud.md).
+  openSession: (slug: string, id: string, body: { attendeeIds: string[]; completedOn: string }) =>
+    api<{ session: SignSession }>(w(slug, `/safety/courses/${id}/sign-sessions`), {
+      method: "POST",
+      body,
+    }),
+  openSessions: (slug: string, id: string) =>
+    api<{ items: SignSession[] }>(w(slug, `/safety/courses/${id}/sign-sessions`)),
+  session: (slug: string, id: string) =>
+    api<{ session: SignSession }>(w(slug, `/safety/sign-sessions/${id}`)),
+  sign: (slug: string, id: string, signature: string) =>
+    api<{ session: SignSession }>(w(slug, `/safety/sign-sessions/${id}/sign`), {
+      method: "POST",
+      body: { signature },
+    }),
+  closeSession: (slug: string, id: string) =>
+    api<{ session: SignSession }>(w(slug, `/safety/sign-sessions/${id}/close`), {
+      method: "POST",
+    }),
   person: (slug: string, id: string) =>
     api<{
       items: {
@@ -335,6 +378,8 @@ export interface PeopleFilters {
 }
 
 export const peopleApi = {
+  /** The person's sheet as a PDF (health data only for safety.health). */
+  pdf: (slug: string, id: string) => apiBlob(w(slug, `/safety/people/${id}/pdf`)),
   summary: (slug: string) => api<{ summary: SafetySummary }>(w(slug, "/safety/summary")),
   myCount: (slug: string) => api<{ count: number | null }>(w(slug, "/safety/me/count")),
   myAlerts: (slug: string) =>

@@ -1,15 +1,16 @@
 // /app/:slug/seguridad/personas/:membershipId — a person's PPE (docs/spec/seguridad-salud.md, «EPIs»):
 // what they have with its replacement day, what their position requires and they lack («Le falta») and
 // their handouts. The seed of their sheet: training and fitness come in later phases.
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, Plus, ServerCrash } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowLeft, Download, Plus, ServerCrash } from "lucide-react";
+import { toast } from "sonner";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
-import { adminErrorText } from "@/features/admin/admin-utils";
+import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
-import { safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
+import { peopleApi, safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
 import { FitnessDialog, PersonFitness, PersonIncidents } from "./person-health";
 import { PpeStateBadge, PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
@@ -36,6 +37,14 @@ export function PersonPage() {
       safetyApi.deliveries(workspaceSlug, { person: membershipId }, undefined, signal),
   });
   const base = `/app/${workspaceSlug}/seguridad`;
+  const pdf = useMutation({
+    mutationFn: async (name: string) => {
+      downloadBlobFile(`${name}.pdf`, await peopleApi.pdf(workspaceSlug, membershipId));
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
 
   if (ppe.isError) {
     return (
@@ -70,6 +79,16 @@ export function PersonPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={pdf.isPending}
+            onClick={() => {
+              pdf.mutate(`${texts.safety.people.mine} ${data.person.name}`);
+            }}
+          >
+            <Download className="size-4" aria-hidden="true" />
+            {texts.safety.people.pdf}
+          </Button>
           {own ? (
             <>
               <Button variant="ghost" asChild>

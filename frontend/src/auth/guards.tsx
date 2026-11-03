@@ -25,13 +25,20 @@ export function RequireAuth() {
   if (status === "loading") return <Splash />;
   if (status === "anonymous") {
     // Una tablet de planta (última sesión con PIN) vuelve al teclado de su workspace.
+    // Coming from a link (a training's signing), it comes back to it once signed in.
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
     const kioskSlug = readKioskWorkspace();
     if (kioskSlug !== null && location.pathname.startsWith(`/app/${kioskSlug}`)) {
-      return <Navigate to={`/entrar/${encodeURIComponent(kioskSlug)}`} replace />;
+      const home = location.pathname === `/app/${kioskSlug}`;
+      return (
+        <Navigate
+          to={`/entrar/${encodeURIComponent(kioskSlug)}${home || signedOut ? "" : `?next=${next}`}`}
+          replace
+        />
+      );
     }
     // Después de un logout, el login no recuerda la página anterior.
     if (signedOut) return <Navigate to="/login" replace />;
-    const next = encodeURIComponent(`${location.pathname}${location.search}`);
     return <Navigate to={`/login?next=${next}`} replace />;
   }
   // Cambió la versión de los términos: hay que aceptarla antes de seguir.

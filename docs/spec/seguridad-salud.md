@@ -191,3 +191,21 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
 
 Cada fase: commit propio, tests de lo tocado (permisos y aislamiento entre empresas incluidos) y guías
 es/en de las pantallas que cambian.
+
+## Pendientes hechos (03/11/2026)
+
+- **Firma desde el celular** (`SafetySignSession`): quien gestiona el módulo abre una firma para un curso, un
+  día y una lista de asistentes (`POST /safety/courses/:id/sign-sessions`); devuelve el enlace
+  `/app/:slug/seguridad/firmar/:id` y su QR. Cada asistente de la lista (y nadie más) firma una sola vez, por sí
+  mismo (`POST /safety/sign-sessions/:id/sign`, índice único sesión + persona); queda como `SafetyTraining`
+  `IN_PERSON` con `sessionId` y `createdById` = quien la dio, así que la constancia PDF del día las incluye.
+  Quien la dio ve quién firmó (la pantalla consulta cada 3 s) y la cierra cuando quiere; vence sola a las 24 h.
+  Auditoría `safety.training.session.open|sign|close`. El login y la pantalla de PIN vuelven al enlace (`next`).
+- **En investigación**: estado `INVESTIGATING` de los casos, entre `OPEN` y `CLOSED`
+  (`POST /safety/incidents/:id/investigate`); el filtro «abiertos» lo incluye. Auditoría
+  `safety.incident.investigate`.
+- **Email del caso nuevo** (`safety-incident-notice`) a quienes tienen `safety.health`: quién lo comunicó y el
+  enlace, nunca qué pasó ni a quién.
+- **Ficha por persona en PDF** (`GET /safety/people/:id/pdf`): EPIs y formación para quien ve a la persona;
+  aptitud para ella misma y `safety.health`; accidentes solo con `safety.health`. Auditoría
+  `safety.person.export` (qué partes, sin contenido).
