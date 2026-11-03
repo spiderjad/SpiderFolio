@@ -51,7 +51,8 @@ export async function register(page: Page, email: string): Promise<void> {
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
   await page.getByRole("checkbox", { name: /^Acepto los/ }).check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page.getByText("Documentos vigentes")).toBeVisible();
+  // Registering hashes the password and Home loads its first data: on a busy machine, more than 5 s.
+  await expect(page.getByText("Documentos vigentes")).toBeVisible({ timeout: 20_000 });
 }
 
 export async function login(page: Page, email: string): Promise<void> {
