@@ -416,6 +416,8 @@ model Expiry {
   responsibleDepartmentId String?
   /// A note about what to do (up to 500).
   note          String?
+  /// Who set it last (membership; no FK): told when no responsible can see the item.
+  setById       String?
   /// The company day it expires on.
   dueOn         DateTime  @db.Date
   /// Days before dueOn to give notice (0 = the same day).

@@ -62,6 +62,7 @@ export interface SetExpiryInput {
   responsibleId?: string | null;
   responsibleDepartmentId?: string | null;
   note?: string | null;
+  setById?: string | null;
   noticeDays?: readonly number[];
 }
 
@@ -91,6 +92,7 @@ export async function setExpiry(db: TenantDb, input: SetExpiryInput): Promise<Ex
       ? {}
       : { responsibleDepartmentId: input.responsibleDepartmentId }),
     ...(input.note === undefined ? {} : { note: input.note }),
+    ...(input.setById === undefined ? {} : { setById: input.setById }),
   };
   if (current === null) {
     return await db.expiry.create({

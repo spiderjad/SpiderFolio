@@ -204,63 +204,104 @@ describe("aislamiento entre empresas", () => {
 });
 
 describe("avisos", () => {
-  it("un departamento responsable avisa a sus jefes y subjefes, no al resto", async () => {
-    const w = await world("Vencimientos departamento");
-    const department = await ctx.prisma.department.create({
+  /** A department with a head, a deputy and a plain member; only the given ones see the space. */
+  async function department(w: Awaited<ReturnType<typeof world>>, seeing: ("head" | "deputy")[]) {
+    const created = await ctx.prisma.department.create({
       data: { workspaceId: w.ws.workspaceId, name: "Calidad" },
     });
-    const head = await addMember(ctx, w.ws, { name: "Julia Jefa" });
-    const deputy = await addMember(ctx, w.ws, { name: "Sergio Subjefe" });
-    const plain = await addMember(ctx, w.ws, { name: "Mario Miembro" });
-    for (const [member, position] of [
-      [head, "HEAD"],
-      [deputy, "DEPUTY"],
-      [plain, "MEMBER"],
-    ] as const) {
+    const people = {
+      head: await addMember(ctx, w.ws, { name: "Julia Jefa" }),
+      deputy: await addMember(ctx, w.ws, { name: "Sergio Subjefe" }),
+      plain: await addMember(ctx, w.ws, { name: "Mario Miembro" }),
+    };
+    const positions = { head: "HEAD", deputy: "DEPUTY", plain: "MEMBER" } as const;
+    for (const key of ["head", "deputy", "plain"] as const) {
       await ctx.prisma.departmentMember.create({
         data: {
           workspaceId: w.ws.workspaceId,
-          departmentId: department.id,
-          membershipId: member.membership.id,
-          position,
+          departmentId: created.id,
+          membershipId: people[key].membership.id,
+          position: positions[key],
         },
       });
     }
-    await w.put(w.ws.token, w.pageId, {
-      dueOn: day(2),
-      responsible: { type: "department", id: department.id },
-    });
-    const expiry = await expiryOf(w.pageId);
+    for (const key of [...seeing, "plain" as const]) {
+      await ctx.prisma.permission.create({
+        data: {
+          workspaceId: w.ws.workspaceId,
+          spaceId: w.spaceId,
+          membershipId: people[key].membership.id,
+          level: "VIEW",
+          grantedById: w.ownerMembership.id,
+        },
+      });
+    }
+    return { id: created.id, ...people };
+  }
+
+  const toldAbout = async (nodeId: string) => {
+    const expiry = await expiryOf(nodeId);
     await sendExpiryNotices(notifyDeps(), new Date(), { anyHour: true });
-    const told = await ctx.prisma.notification.findMany({
+    const rows = await ctx.prisma.notification.findMany({
       where: { kind: "expiry_due", expiryId: expiry?.id ?? "" },
       select: { membershipId: true },
     });
-    expect(told.map((row) => row.membershipId).sort()).toEqual(
-      [head.membership.id, deputy.membership.id].sort(),
-    );
+    return rows.map((row) => row.membershipId).sort();
+  };
 
-    // The menu counter counts it for a head who sees the element; one who doesn't see it gets the
-    // notice but no list shows it (lists only show what the person sees).
-    await ctx.prisma.permission.create({
-      data: {
-        workspaceId: w.ws.workspaceId,
-        spaceId: w.spaceId,
-        membershipId: head.membership.id,
-        level: "VIEW",
-        grantedById: w.ownerMembership.id,
-      },
+  it("un departamento avisa a sus jefes y subjefes que ven el elemento, no al resto", async () => {
+    const w = await world("Vencimientos departamento");
+    const team = await department(w, ["head"]);
+    const set = await w.put(w.editor.token, w.pageId, {
+      dueOn: day(2),
+      responsible: { type: "department", id: team.id },
     });
-    expect((await w.call("get", head.token, "/expiries/mine/count")).body).toEqual({
+    expect((set.body as ExpiryReply).expiry?.responsibleCantSee).toBe(false);
+    // The deputy can't see the page: the notice would give its name away.
+    expect(await toldAbout(w.pageId)).toEqual([team.head.membership.id]);
+    expect((await w.call("get", team.head.token, "/expiries/mine/count")).body).toEqual({
       count: 1,
       expired: 0,
     });
-    for (const other of [deputy, plain]) {
+    for (const other of [team.deputy, team.plain]) {
       expect((await w.call("get", other.token, "/expiries/mine/count")).body).toEqual({
         count: 0,
         expired: 0,
       });
     }
+  });
+
+  it("si nadie del departamento ve el elemento, avisa a quien lo puso", async () => {
+    const w = await world("Vencimientos departamento ciego");
+    const team = await department(w, []);
+    const set = await w.put(w.editor.token, w.pageId, {
+      dueOn: day(2),
+      responsible: { type: "department", id: team.id },
+    });
+    expect((set.body as ExpiryReply).expiry?.responsibleCantSee).toBe(true);
+    expect(await toldAbout(w.pageId)).toEqual([w.editor.membership.id]);
+  });
+
+  it("si la persona responsable no ve el elemento, avisa a quien lo puso y no a ella", async () => {
+    const w = await world("Vencimientos persona ciega");
+    await w.put(w.editor.token, w.pageId, {
+      dueOn: day(2),
+      responsible: { type: "person", id: w.stranger.membership.id },
+    });
+    expect(await toldAbout(w.pageId)).toEqual([w.editor.membership.id]);
+  });
+
+  it("si nadie que deba enterarse lo ve, no avisa a nadie", async () => {
+    const w = await world("Vencimientos nadie");
+    await w.put(w.editor.token, w.pageId, {
+      dueOn: day(2),
+      responsible: { type: "person", id: w.stranger.membership.id },
+    });
+    // Whoever set it lost access afterwards.
+    await ctx.prisma.permission.deleteMany({
+      where: { spaceId: w.spaceId, membershipId: w.editor.membership.id },
+    });
+    expect(await toldAbout(w.pageId)).toEqual([]);
   });
 
   it("el contador separa los vencidos", async () => {

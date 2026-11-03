@@ -11,7 +11,7 @@ import { accessFor, levelOfNode } from "../access/access-context.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { whoCanSee } from "../documents/readings.core.ts";
 import { toCsv } from "../../lib/csv.ts";
-import { dayOf, DEFAULT_NOTICE_DAYS, setExpiry } from "./expiries.service.ts";
+import { dayOf, DEFAULT_NOTICE_DAYS, defaultRecipients, setExpiry } from "./expiries.service.ts";
 import { expiryState, type ExpiryState } from "./expiry-rules.ts";
 import { NODE_EXPIRY } from "./node-expiry.ts";
 import type { ExpiryFilters, SetNodeExpiryInput } from "./node-expiries.schemas.ts";
@@ -28,7 +28,10 @@ export interface NodeExpiryView {
   note: string | null;
   /** When it was last set (to propose the same term for a new version). */
   setAt: Date;
-  /** The responsible person can't see the element (the app warns). */
+  /**
+   * The responsible person (or every head and deputy of the responsible department) can't see the
+   * element: they aren't told, whoever set it is (the app warns).
+   */
   responsibleCantSee: boolean;
 }
 
@@ -126,9 +129,9 @@ export async function getNodeExpiry(
     orderBy: { createdAt: "desc" },
     select: { createdAt: true },
   });
+  const responsibles = await defaultRecipients(ctx.db, row);
   const responsibleCantSee =
-    row.responsibleId !== null &&
-    !(await whoCanSee(ctx.db, nodeId, [row.responsibleId])).has(row.responsibleId);
+    responsibles.length > 0 && (await whoCanSee(ctx.db, nodeId, responsibles)).size === 0;
   return {
     expiry: {
       dueOn: dayOf(row.dueOn),
@@ -167,6 +170,7 @@ export async function setNodeExpiry(
     responsibleDepartmentId: responsible.type === "department" ? responsible.id : null,
     note: input.note ?? null,
     noticeDays: input.noticeDays ?? DEFAULT_NOTICE_DAYS,
+    setById: ctx.tenant.membershipId,
   });
   await auditAdmin(ctx, {
     action: "node.expiry.set",

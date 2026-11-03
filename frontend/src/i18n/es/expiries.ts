@@ -28,9 +28,9 @@ export const expiriesTexts = {
     responsibleHint:
       "Si no eliges a nadie, el responsable eres tú: alguien tiene que recibir los avisos.",
     department: "Departamento · avisa a jefes y subjefes",
-    cantSee: "No puede ver este elemento",
+    cantSee: "No puede ver este elemento: no le llegarían los avisos",
     cantSeeWarning: (name: string) =>
-      `${name} no puede ver este elemento: le van a llegar los avisos, pero no va a poder abrirlo. Compártelo con esa persona o elige otro responsable.`,
+      `${name} no puede ver este elemento, así que no le van a llegar los avisos (revelarían su nombre): te llegan a ti. Compártelo o elige otro responsable.`,
     noticeDays: "Avisar",
     notice: (days: number) =>
       days === 0 ? "El mismo día" : days === 1 ? "1 día antes" : `${String(days)} días antes`,

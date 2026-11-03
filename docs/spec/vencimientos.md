@@ -19,7 +19,9 @@ una página (también un formulario). Es distinto de la fecha de revisión de lo
 - **Ver** un vencimiento: poder ver el elemento. Lista, calendario, CSV, tarjeta de Inicio, contador e
   insignias solo muestran lo que la persona ve.
 - **Poner, cambiar o quitar**: poder **editar** el elemento, o tener **`expirations.manage`** y poder verlo.
-- Si el responsable (persona) no puede ver el elemento, la app lo avisa al guardarlo.
+- Los avisos solo van a quienes **pueden ver el elemento** (el aviso revela su nombre): la persona responsable,
+  o los jefes y subjefes del departamento que lo ven. Si nadie de ellos puede, el aviso va a quien lo puso
+  (`Expiry.setById`), si lo ve. La app lo avisa al guardar (`responsibleCantSee`).
 - Auditoría: `node.expiry.set`, `node.expiry.remove`, `expiries.export`. Un elemento de otra empresa: 404.
 
 ## Ciclo de vida

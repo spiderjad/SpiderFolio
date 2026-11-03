@@ -30,9 +30,9 @@ export const expiriesTexts: Catalog<typeof EsExpiries> = {
     responsiblePlaceholder: "You (whoever sets it)",
     responsibleHint: "If you choose no one, you're responsible: someone has to get the notices.",
     department: "Department · tells its heads and deputies",
-    cantSee: "Can’t see this item",
+    cantSee: "Can’t see this item: wouldn’t get the notices",
     cantSeeWarning: (name: string) =>
-      `${name} can’t see this item: they’ll get the notices but won’t be able to open it. Share it with them or choose someone else.`,
+      `${name} can’t see this item, so they won’t get the notices (they’d give its name away): you will. Share it or choose someone else.`,
     noticeDays: "Notify",
     notice: (days: number) =>
       days === 0 ? "On the day" : days === 1 ? "1 day before" : `${String(days)} days before`,
