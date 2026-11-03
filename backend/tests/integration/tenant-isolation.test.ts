@@ -80,7 +80,12 @@ const cases: IsolationCase[] = [
     url: () => "/admin/audit-rooms",
     body: { name: "Ajena", auditorEmail: "auditor@ajeno.test", expiresOn: "2099-01-01" },
   },
-  { method: "get", path: "/admin/audit-rooms/:id", url: () => "/admin/audit-rooms/x" },
+  {
+    method: "get",
+    path: "/admin/audit-rooms/:id",
+    url: () => "/admin/audit-rooms/x",
+    ownStatus: 404,
+  },
   {
     method: "post",
     path: "/admin/audit-rooms/:id/items",
