@@ -58,6 +58,7 @@ import {
 import { MIN_TOC_HEADINGS, PageToc, useHeadings } from "./page-toc";
 import { ControlDialog, StatusBadge } from "@/features/documents/control-dialog";
 import { QrDialog } from "@/features/qr/qr-dialog";
+import { useExpiryControl } from "@/features/expiries/expiry-control";
 import { ShareDialog } from "@/features/sharing/share-dialog";
 import { createMentionExtension, useAccessNotice } from "./mentions";
 import {
@@ -140,6 +141,7 @@ function PageEditor({ page }: { page: PageDetail }) {
   const [sharing, setSharing] = useState(false);
   const [controlling, setControlling] = useState(false);
   const [qr, setQr] = useState(false);
+  const expiry = useExpiryControl({ id: page.node.id, name: page.node.name });
   const accessNotice = useAccessNotice({
     pageId: page.node.id,
     spaceId,
@@ -462,6 +464,7 @@ function PageEditor({ page }: { page: PageDetail }) {
                 <StatusBadge status={page.controlled.status} />
               </span>
             )}
+            {expiry.badge}
             {commentable && <SaveIndicator state={autosave.state} message={autosave.message} />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -499,6 +502,7 @@ function PageEditor({ page }: { page: PageDetail }) {
                     {texts.qr.menu}
                   </DropdownMenuItem>
                 )}
+                {expiry.menuItem}
                 <DropdownMenuItem
                   onSelect={() => {
                     bian.open({ kind: "summarize", nodeId: page.node.id, name: page.node.name });
@@ -716,6 +720,7 @@ function PageEditor({ page }: { page: PageDetail }) {
                   setControlling(false);
                 }}
               />
+              {expiry.dialog}
               <QrDialog
                 target={qr ? { id: page.node.id, name: page.node.name } : null}
                 onClose={() => {

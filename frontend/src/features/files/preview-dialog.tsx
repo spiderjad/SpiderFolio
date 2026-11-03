@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/display";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { filesApi, previewKind, type NodeView } from "./api";
+import { useExpiryControl } from "@/features/expiries/expiry-control";
 import { texts } from "@/i18n";
 
 /** Cuánto texto se muestra como máximo (el resto se descarga). */
@@ -85,6 +86,7 @@ function PreviewBody({
     gcTime: 0,
   });
   const failed = ticket.isError || text.isError;
+  const expiry = useExpiryControl({ id: node.id, name: node.name });
 
   return (
     <DialogContent
@@ -92,6 +94,10 @@ function PreviewBody({
       size="xl"
       footer={
         <>
+          {expiry.badge !== null && (
+            <div className="flex items-center sm:mr-auto">{expiry.badge}</div>
+          )}
+          {expiry.button}
           <Button
             variant="outline"
             onClick={() => {
@@ -107,6 +113,7 @@ function PreviewBody({
         </>
       }
     >
+      {expiry.dialog}
       <div className="min-h-[50dvh]">
         {failed ? (
           <p role="alert" className="py-10 text-center text-xs text-muted-foreground">

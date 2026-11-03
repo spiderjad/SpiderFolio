@@ -26,6 +26,7 @@ import {
   ClipboardCheck,
   Sparkles,
   QrCode,
+  CalendarClock,
 } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type RefObject } from "react";
@@ -77,6 +78,8 @@ import { PreviewDialog } from "./preview-dialog";
 import { useBian } from "../bian/bian-context";
 import { ControlDialog } from "../documents/control-dialog";
 import { QrDialog } from "../qr/qr-dialog";
+import { useSpaceExpiries, type ExpiryState } from "../expiries/expiries-api";
+import { ExpiryBadge, ExpiryDialog } from "../expiries/expiry-dialog";
 import { ShareDialog } from "../sharing/share-dialog";
 import { SharedMark } from "../sharing/shared-mark";
 import { NewPageDialog } from "../pages/new-page-dialog";
@@ -161,6 +164,8 @@ export function ExplorerPage() {
   const [sharingNode, setSharingNode] = useState<NodeView | null>(null);
   const [controlNode, setControlNode] = useState<NodeView | null>(null);
   const [qrNode, setQrNode] = useState<NodeView | null>(null);
+  const [expiryNode, setExpiryNode] = useState<NodeView | null>(null);
+  const expiries = useSpaceExpiries(workspaceSlug, spaceId);
   const [previewing, setPreviewing] = useState<NodeView | null>(null);
   const [zipNode, setZipNode] = useState<{ id: string; name: string } | null>(null);
   const folderInput = useRef<HTMLInputElement>(null);
@@ -440,6 +445,8 @@ export function ExplorerPage() {
     onShare: setSharingNode,
     onControl: setControlNode,
     onQr: setQrNode,
+    onExpiry: setExpiryNode,
+    expiries: expiries.data,
     onImportZip: setZipNode,
     onTrash: (node: NodeView) => {
       trash.mutate(node);
@@ -839,6 +846,12 @@ export function ExplorerPage() {
           if (reviewId !== null) patch({ revisar: undefined });
         }}
       />
+      <ExpiryDialog
+        target={expiryNode === null ? null : { id: expiryNode.id, name: expiryNode.name }}
+        onClose={() => {
+          setExpiryNode(null);
+        }}
+      />
       <QrDialog
         target={
           qrNode === null
@@ -1048,6 +1061,9 @@ interface RowProps {
   onShare: (node: NodeView) => void;
   onControl: (node: NodeView) => void;
   onQr: (node: NodeView) => void;
+  onExpiry: (node: NodeView) => void;
+  /** The space's expiries by node (for the badges). */
+  expiries: ReadonlyMap<string, { dueOn: string; state: ExpiryState }> | undefined;
   onImportZip: (node: NodeView) => void;
   onTrash: (node: NodeView) => void;
   onDropOnFolder: (event: DragEvent, folderId: string | null) => void;
@@ -1092,6 +1108,20 @@ function dragProps(node: NodeView, props: RowProps) {
         }
       : {}),
   };
+}
+
+function NodeExpiryBadge({ node, ...props }: RowProps & { node: NodeView }) {
+  const expiry = props.expiries?.get(node.id);
+  if (expiry === undefined) return null;
+  return (
+    <ExpiryBadge
+      dueOn={expiry.dueOn}
+      state={expiry.state}
+      onClick={() => {
+        props.onExpiry(node);
+      }}
+    />
+  );
 }
 
 function NodeMenu({ node, ...props }: RowProps & { node: NodeView }) {
@@ -1224,6 +1254,16 @@ function NodeMenu({ node, ...props }: RowProps & { node: NodeView }) {
           >
             <QrCode aria-hidden="true" />
             {texts.qr.menu}
+          </DropdownMenuItem>
+        )}
+        {node.type !== "FOLDER" && (
+          <DropdownMenuItem
+            onSelect={() => {
+              props.onExpiry(node);
+            }}
+          >
+            <CalendarClock aria-hidden="true" />
+            {texts.expiries.menu}
           </DropdownMenuItem>
         )}
         {canManage(node.level) && (
@@ -1389,6 +1429,7 @@ function ListView({
                       {node.name}
                     </button>
                     <SharedMark sharing={node.sharing} />
+                    <NodeExpiryBadge node={node} {...props} />
                     {node.type === "FILE" && node.currentVersion > 1 && (
                       <Tooltip content={t.versionTip(node.currentVersion)}>
                         <button
@@ -1494,6 +1535,7 @@ function GridView({ items, ...props }: RowProps & { items: NodeView[] }) {
             {node.name}
           </button>
           <SharedMark sharing={node.sharing} />
+          <NodeExpiryBadge node={node} {...props} />
           <p className="text-xs text-muted-foreground">
             {node.sizeBytes === null ? formatDateTime(node.updatedAt) : formatBytes(node.sizeBytes)}
           </p>

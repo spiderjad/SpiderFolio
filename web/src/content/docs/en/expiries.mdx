@@ -1,0 +1,73 @@
+---
+title: "Expiries"
+description: "Give a file or a page an expiry date, with someone responsible and notices; the list, the calendar and the CSV export."
+group: uso-diario
+order: 9.4
+icon: clock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What they're for
+
+Many documents are valid until a date: a certificate, an insurance policy, a supplier contract, a machine's inspection. An **expiry** gives a file or a page that date, with someone **responsible** who gets notices before it expires.
+
+It's not the same as a [controlled document](/en/docs/controlled-documents)'s review date: a controlled document can have both.
+
+## Set an expiry
+
+In the explorer, open the **⋯** menu of a file, a page or a form and choose **Expiry**. It's also on the item's screen: on a page, **More actions** › **Expiry**; on a form, the **Expiry** button; in a file's preview, the **Expiry** button at the bottom.
+
+<Shot name="vencimiento" alt="The Expiry dialog with the date, the responsible, the notice days and the note" />
+
+1. Choose the date in **Expires on**.
+2. In **Responsible**, choose a person or a department. With a department, the notices go to its **heads and deputies**.
+3. In **Notify**, mark when to notify: by default **30 days before**, **7 days before** and **On the day**.
+4. If needed, write a **Note** with what needs doing.
+5. Press **Save**.
+
+If the responsible person can't see the item, SpiderFolio tells you when you save: they'll get the notices but won't be able to open it. Share it with them or choose someone else.
+
+To remove it, open the same dialog and press **Remove the expiry**.
+
+## Who can
+
+- **See it**: whoever can see the item.
+- **Set, change or remove it**: whoever can **edit** the item, or whoever has the **Manage expiry dates** capability in their role and can see it. Everyone else sees the expiry read-only.
+
+Setting, removing and exporting expiries is recorded in the audit log.
+
+## The badges
+
+When it's close (within the largest notice), the item shows **Due …** in amber; once the date has passed, **Expired …** in red. They appear in the explorer, next to the name, and on the item's screen. A valid expiry that's still far off shows no badge. Press the badge to open the expiry.
+
+## The notices
+
+At **8:00 company time**, whoever is responsible gets a notice in the bell and by email on each notice day you marked. If you change the date, the notices start over.
+
+An item in the **trash** doesn't notify; restore it and it notifies again. Deleted for good, its expiry goes too.
+
+## When you upload a new version
+
+When you upload a new version of a file with an expiry (with **Upload a new version** or by replacing the file), SpiderFolio offers to update it with **the same term it had**: if it expired a year after it was set, it proposes a year from today. You can **Update**, **Choose another day** or **Leave it**.
+
+## The Expiries screen
+
+In the side menu, **Expiries** shows all the ones you can see. The number next to it counts **only yours** (as the responsible, or of a department you lead) due soon or expired.
+
+<Shot name="vencimientos" alt="The expiries list with filters by space, department, responsible and state" />
+
+- Filter by **Space**, **Department** (the responsible's or the space's), **Responsible**, **State** (**Valid**, **Due soon**, **Expired**) and dates.
+- **Calendar** shows the month, with each item on its day in its state's color.
+- **Export CSV** downloads the list with the same filters.
+
+<Shot name="vencimientos-calendario" alt="The month calendar view with the expiries on their days" />
+
+On **Home**, the **Your expiries** card shows yours due soon or expired.
+
+## Related
+
+- [Files](/en/docs/files)
+- [Pages](/en/docs/pages)
+- [Controlled documents](/en/docs/controlled-documents)
+- [Roles and permissions](/en/docs/roles-and-permissions)

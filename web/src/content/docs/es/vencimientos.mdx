@@ -1,0 +1,73 @@
+---
+title: "Vencimientos"
+description: "Ponerle fecha de vencimiento a un archivo o una página, con responsable y avisos; la lista, el calendario y la exportación a CSV."
+group: uso-diario
+order: 9.4
+icon: clock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+Muchos documentos valen hasta una fecha: un certificado, un seguro, un contrato con un proveedor, la habilitación de una máquina. Un **vencimiento** le pone esa fecha a un archivo o una página, con un **responsable** que recibe los avisos antes de que venza.
+
+No es lo mismo que la fecha de revisión de un [documento controlado](/es/docs/documentos-controlados): un documento controlado puede tener las dos.
+
+## Poner un vencimiento
+
+En el explorador, abre el menú **⋯** de un archivo, una página o un formulario y elige **Vencimiento**. También está en la pantalla del elemento: en una página, **Más acciones** › **Vencimiento**; en un formulario, el botón **Vencimiento**; en la vista previa de un archivo, el botón **Vencimiento** abajo.
+
+<Shot name="vencimiento" alt="El diálogo Vencimiento con la fecha, el responsable, los días de aviso y la nota" />
+
+1. Elige la fecha en **Vence el**.
+2. En **Responsable**, elige una persona o un departamento. Si eliges un departamento, los avisos les llegan a sus **jefes y subjefes**.
+3. En **Avisar**, marca cuándo avisar: por defecto, **30 días antes**, **7 días antes** y **El mismo día**.
+4. Si hace falta, escribe una **Nota** con lo que hay que hacer.
+5. Pulsa **Guardar**.
+
+Si la persona responsable no puede ver el elemento, SpiderFolio te lo avisa al guardar: le van a llegar los avisos, pero no va a poder abrirlo. Compártelo con esa persona o elige otro responsable.
+
+Para quitarlo, abre el mismo diálogo y pulsa **Quitar el vencimiento**.
+
+## Quién puede
+
+- **Verlo**: quien puede ver el elemento.
+- **Ponerlo, cambiarlo o quitarlo**: quien puede **editar** el elemento, o quien tiene la capacidad **Gestionar vencimientos** en su rol y puede verlo. El resto ve el vencimiento en solo lectura.
+
+Poner, quitar y exportar vencimientos queda en la auditoría.
+
+## Las insignias
+
+Cuando falta poco (dentro del mayor de los días de aviso), el elemento muestra **Vence el …** en ámbar; cuando ya pasó la fecha, **Venció el …** en rojo. Aparecen en el explorador, junto al nombre, y en la pantalla del elemento. Un vencimiento vigente y lejano no muestra insignia. Pulsa la insignia para abrir el vencimiento.
+
+## Los avisos
+
+A las **8:00 de la empresa**, el responsable recibe un aviso en la campana y por email cada día de aviso que marcaste. Si cambias la fecha, los avisos vuelven a empezar.
+
+Un elemento en la **papelera** no avisa; si lo restauras, vuelve a avisar. Si se borra para siempre, su vencimiento desaparece.
+
+## Al subir una versión nueva
+
+Cuando subes una versión nueva de un archivo con vencimiento (con **Subir una versión nueva** o reemplazando el archivo), SpiderFolio te ofrece actualizarlo con **el mismo plazo que tenía**: si vencía un año después de cuando se puso, propone un año desde hoy. Puedes **Actualizar**, **Elegir otra fecha** o **Dejar como está**.
+
+## La pantalla Vencimientos
+
+En el menú lateral, **Vencimientos** muestra todos los que puedes ver. El número junto al ítem cuenta **solo los tuyos** (como responsable, o de un departamento que diriges) por vencer o vencidos.
+
+<Shot name="vencimientos" alt="La lista de vencimientos con filtros por espacio, departamento, responsable y estado" />
+
+- Filtra por **Espacio**, **Departamento** (el del responsable o el del espacio), **Responsable**, **Estado** (**Vigentes**, **Por vencer**, **Vencidos**) y fechas.
+- **Calendario** muestra el mes, con cada elemento en su día y en el color de su estado.
+- **Exportar CSV** descarga la lista con los mismos filtros.
+
+<Shot name="vencimientos-calendario" alt="La vista de calendario del mes con los vencimientos en sus días" />
+
+En **Inicio**, la tarjeta **Tus vencimientos** muestra los tuyos por vencer o vencidos.
+
+## Relacionado
+
+- [Archivos](/es/docs/archivos)
+- [Páginas](/es/docs/paginas)
+- [Documentos controlados](/es/docs/documentos-controlados)
+- [Roles y permisos](/es/docs/roles-y-permisos)

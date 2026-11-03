@@ -119,6 +119,11 @@ export const routes = [
                 lazy: page(() => import("@/features/home/dashboard-page"), "DashboardPage"),
               },
               {
+                // File and page expiries (docs/spec/vencimientos.md): only what the person sees.
+                path: "vencimientos",
+                lazy: page(() => import("@/features/expiries/expiries-page"), "ExpiriesPage"),
+              },
+              {
                 // Occupational health and safety (docs/spec/seguridad-salud.md): only while it's on.
                 path: "seguridad",
                 lazy: page(() => import("@/features/safety/safety-common"), "RequireSafety"),

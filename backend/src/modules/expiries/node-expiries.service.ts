@@ -32,7 +32,15 @@ export interface NodeExpiryView {
 }
 
 export interface ExpiryRow {
-  node: { id: string; name: string; type: string; spaceId: string; spaceName: string; parentId: string | null };
+  node: {
+    id: string;
+    name: string;
+    type: string;
+    spaceId: string;
+    spaceName: string;
+    spaceDepartmentId: string | null;
+    parentId: string | null;
+  };
   dueOn: string;
   state: ExpiryState;
   responsible: { type: "person" | "department"; id: string; name: string } | null;
@@ -64,7 +72,9 @@ async function responsibleOf(
   const people = new Map(
     (
       await ctx.db.membership.findMany({
-        where: { id: { in: rows.flatMap((r) => (r.responsibleId === null ? [] : [r.responsibleId])) } },
+        where: {
+          id: { in: rows.flatMap((r) => (r.responsibleId === null ? [] : [r.responsibleId])) },
+        },
         select: { id: true, user: { select: { name: true } } },
       })
     ).map((row) => [row.id, row.user.name]),
@@ -85,7 +95,11 @@ async function responsibleOf(
   );
   return (row: { responsibleId: string | null; responsibleDepartmentId: string | null }) =>
     row.responsibleId !== null
-      ? { type: "person" as const, id: row.responsibleId, name: people.get(row.responsibleId) ?? "" }
+      ? {
+          type: "person" as const,
+          id: row.responsibleId,
+          name: people.get(row.responsibleId) ?? "",
+        }
       : row.responsibleDepartmentId !== null
         ? {
             type: "department" as const,
@@ -105,6 +119,12 @@ export async function getNodeExpiry(
   });
   if (row === null) return { expiry: null, canEdit };
   const who = await responsibleOf(ctx, [row]);
+  // The day it was last set, from the audit (updatedAt also moves when a notice goes out).
+  const lastSet = await ctx.db.auditLog.findFirst({
+    where: { entityType: "Node", entityId: nodeId, action: "node.expiry.set" },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+  });
   const responsibleCantSee =
     row.responsibleId !== null &&
     !(await whoCanSee(ctx.db, nodeId, [row.responsibleId])).has(row.responsibleId);
@@ -115,7 +135,7 @@ export async function getNodeExpiry(
       responsible: who(row),
       noticeDays: row.noticeDays,
       note: row.note,
-      setAt: row.updatedAt,
+      setAt: lastSet?.createdAt ?? row.createdAt,
       responsibleCantSee,
     },
     canEdit,
@@ -131,7 +151,9 @@ export async function setNodeExpiry(
   if (!canEdit) throw forbidden();
   const responsible = input.responsible;
   if (responsible?.type === "person") {
-    const found = await ctx.db.membership.count({ where: { id: responsible.id, status: "ACTIVE" } });
+    const found = await ctx.db.membership.count({
+      where: { id: responsible.id, status: "ACTIVE" },
+    });
     if (found === 0) throw notFound();
   } else if (responsible?.type === "department") {
     if ((await ctx.db.department.count({ where: { id: responsible.id } })) === 0) throw notFound();
@@ -161,7 +183,9 @@ export async function setNodeExpiry(
 export async function removeNodeExpiry(ctx: AdminContext, nodeId: string): Promise<void> {
   const { node, canEdit } = await loadNode(ctx, nodeId);
   if (!canEdit) throw forbidden();
-  const removed = await ctx.db.expiry.deleteMany({ where: { kind: NODE_EXPIRY, subjectId: nodeId } });
+  const removed = await ctx.db.expiry.deleteMany({
+    where: { kind: NODE_EXPIRY, subjectId: nodeId },
+  });
   if (removed.count === 0) throw notFound();
   await auditAdmin(ctx, {
     action: "node.expiry.remove",
@@ -222,7 +246,8 @@ async function visibleRows(ctx: AdminContext, filters: ExpiryFilters): Promise<E
       return [];
     }
     const state = expiryState(day, dayOf(row.dueOn), row.noticeDays);
-    if (filters.status !== undefined && filters.status !== "all" && state !== filters.status) return [];
+    if (filters.status !== undefined && filters.status !== "all" && state !== filters.status)
+      return [];
     return [
       {
         node: {
@@ -231,6 +256,7 @@ async function visibleRows(ctx: AdminContext, filters: ExpiryFilters): Promise<E
           type: node.type,
           spaceId: node.spaceId,
           spaceName: node.space.name,
+          spaceDepartmentId: node.space.departmentId,
           parentId: node.parentId,
         },
         dueOn: dayOf(row.dueOn),
@@ -319,7 +345,8 @@ export async function responsibleOptions(
 }> {
   const { canEdit } = await loadNode(ctx, nodeId);
   if (!canEdit) throw forbidden();
-  const text = q === undefined || q === "" ? undefined : { contains: q, mode: "insensitive" as const };
+  const text =
+    q === undefined || q === "" ? undefined : { contains: q, mode: "insensitive" as const };
   const [members, departments] = await Promise.all([
     ctx.db.membership.findMany({
       where: { status: "ACTIVE", ...(text === undefined ? {} : { user: { name: text } }) },
@@ -334,9 +361,47 @@ export async function responsibleOptions(
       take: 20,
     }),
   ]);
-  const seeing = await whoCanSee(ctx.db, nodeId, members.map((row) => row.id));
+  const seeing = await whoCanSee(
+    ctx.db,
+    nodeId,
+    members.map((row) => row.id),
+  );
   return {
     people: members.map((row) => ({ id: row.id, name: row.user.name, canSee: seeing.has(row.id) })),
     departments,
+  };
+}
+
+/** What the list's filters offer: only the spaces, departments and people in what the person sees. */
+export async function expiryFilterOptions(ctx: AdminContext): Promise<{
+  spaces: { id: string; name: string }[];
+  departments: { id: string; name: string }[];
+  people: { id: string; name: string }[];
+}> {
+  const rows = await visibleRows(ctx, { status: "all" });
+  const spaces = new Map(rows.map((row) => [row.node.spaceId, row.node.spaceName]));
+  const people = new Map(
+    rows.flatMap((row) =>
+      row.responsible?.type === "person"
+        ? [[row.responsible.id, row.responsible.name] as const]
+        : [],
+    ),
+  );
+  const departmentIds = new Set(
+    rows.flatMap((row) => [
+      ...(row.responsible?.type === "department" ? [row.responsible.id] : []),
+      ...(row.node.spaceDepartmentId === null ? [] : [row.node.spaceDepartmentId]),
+    ]),
+  );
+  const departments = await ctx.db.department.findMany({
+    where: { id: { in: [...departmentIds] } },
+    select: { id: true, name: true },
+  });
+  const sorted = (entries: Iterable<readonly [string, string]>) =>
+    [...entries].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    spaces: sorted(spaces),
+    departments: sorted(departments.map((row) => [row.id, row.name] as const)),
+    people: sorted(people),
   };
 }

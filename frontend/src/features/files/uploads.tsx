@@ -23,6 +23,8 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { overviewKey } from "@/features/home/home-api";
+import { expiriesKeys } from "@/features/expiries/expiries-api";
+import { NewVersionExpiryPrompt } from "@/features/expiries/expiry-dialog";
 import { filesApi, filesKeys, type ConflictMode, type UploadTicket } from "./api";
 import { texts } from "@/i18n";
 
@@ -116,6 +118,8 @@ export function UploadsProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<readonly UploadItem[]>([]);
   const controllers = useRef(new Map<string, AbortController>());
   const started = useRef(new Set<string>());
+  // A new version of a file: if it has an expiry, offer the same term again.
+  const [versioned, setVersioned] = useState<{ id: string; name: string } | null>(null);
 
   const patch = useCallback((id: string, changes: Partial<UploadItem>) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, ...changes } : item)));
@@ -182,6 +186,12 @@ export function UploadsProvider({ children }: { children: ReactNode }) {
         const result = await filesApi.completeUpload(workspaceSlug, ticket.id);
         patch(item.id, { status: "done" });
         item.onDone?.({ id: result.node.id, name: result.node.name });
+        if (item.mode === "replace") {
+          await queryClient.invalidateQueries({
+            queryKey: expiriesKeys.node(workspaceSlug, result.node.id),
+          });
+          setVersioned({ id: result.node.id, name: result.node.name });
+        }
         if (result.duplicateOf !== null) toast.info(texts.files.uploads.duplicate);
         // Listados, historial de versiones y espacios (el contador de la cuota).
         await queryClient.invalidateQueries({ queryKey: filesKeys.all(workspaceSlug) });
@@ -297,6 +307,12 @@ export function UploadsProvider({ children }: { children: ReactNode }) {
     <UploadsContext.Provider value={value}>
       {children}
       <UploadPanel />
+      <NewVersionExpiryPrompt
+        target={versioned}
+        onClose={() => {
+          setVersioned(null);
+        }}
+      />
       <ConflictDialog />
     </UploadsContext.Provider>
   );

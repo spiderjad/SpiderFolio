@@ -1,6 +1,7 @@
 // Marco de la app (10.4): sidebar de 260 px que se contrae a 72 px (solo íconos), barra superior
 // fina y contenido sobre bg-surface. En móvil, el sidebar es un panel lateral (Sheet).
 // Los ítems de módulos que todavía no existen no se muestran.
+import { expiriesApi, expiriesKeys } from "@/features/expiries/expiries-api";
 import { peopleApi } from "@/features/safety/safety-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -727,6 +728,13 @@ function SidebarContent({
     staleTime: 60_000,
     enabled: safetyOn,
   });
+  const expiryCount = useQuery({
+    queryKey: expiriesKeys.myCount(slug),
+    queryFn: () => expiriesApi.myCount(slug),
+    select: (data) => data.count,
+    staleTime: 60_000,
+    enabled: role !== "GUEST" && !inAdmin,
+  });
   const unseenShared = sharedSummary.data?.unseen ?? 0;
   const indicatorOf = (to: string): Indicator | undefined => {
     if (to === `/app/${slug}/mis-documentos` && readingCount > 0) {
@@ -752,6 +760,15 @@ function SidebarContent({
         count,
         tone: "warning",
         label: texts.safety.people.pendingCount(count),
+      };
+    }
+    if (to === `/app/${slug}/vencimientos` && (expiryCount.data ?? 0) > 0) {
+      const count = expiryCount.data ?? 0;
+      return {
+        kind: "count",
+        count,
+        tone: "warning",
+        label: texts.expiries.pendingCount(count),
       };
     }
     if (to === `/app/${slug}/files/shared` && unseenShared > 0) {

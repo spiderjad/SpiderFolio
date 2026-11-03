@@ -12,6 +12,7 @@ import {
 } from "./node-expiries.schemas.ts";
 import {
   exportExpiries,
+  expiryFilterOptions,
   getNodeExpiry,
   listExpiries,
   myExpiries,
@@ -71,10 +72,18 @@ export function nodeExpiryRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantR
       method: "get",
       path: "/expiries/export",
       guards: [
-        sensitiveRateLimit(deps, { name: "expiries-export", windowMs: HOUR, limit: 30, key: byUser }),
+        sensitiveRateLimit(deps, {
+          name: "expiries-export",
+          windowMs: HOUR,
+          limit: 30,
+          key: byUser,
+        }),
       ],
       handler: async (req, res) => {
-        const file = await exportExpiries(adminContextOf(req), ExpiryFiltersSchema.parse(req.query));
+        const file = await exportExpiries(
+          adminContextOf(req),
+          ExpiryFiltersSchema.parse(req.query),
+        );
         res.setHeader("Content-Type", "text/csv; charset=utf-8");
         res.setHeader(
           "Content-Disposition",
@@ -82,6 +91,13 @@ export function nodeExpiryRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantR
         );
         res.setHeader("Cache-Control", "no-store");
         res.send(file.body);
+      },
+    },
+    {
+      method: "get",
+      path: "/expiries/filters",
+      handler: async (req, res) => {
+        res.json(await expiryFilterOptions(adminContextOf(req)));
       },
     },
     {

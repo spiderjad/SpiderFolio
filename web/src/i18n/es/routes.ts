@@ -40,6 +40,7 @@ export const routes: LocaleRoutes = {
     requiredReading: "lecturas-obligatorias",
     myDocuments: "mis-documentos",
     qr: "codigos-qr",
+    expiries: "vencimientos",
     forms: "formularios",
     safety: "seguridad-y-salud-laboral",
     search: "busqueda",

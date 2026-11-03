@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  CalendarClock,
   CalendarDays,
   Camera,
   ChevronDown,
@@ -43,6 +44,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { readChoice, useListParams } from "@/features/admin/list-params";
 import { filesKeys } from "@/features/files/api";
 import { QrDialog } from "@/features/qr/qr-dialog";
+import { ExpiryBadge, ExpiryDialog, useNodeExpiry } from "@/features/expiries/expiry-dialog";
 import { ApiError } from "@/lib/api";
 import { cn, formatDateTime } from "@/lib/utils";
 import {
@@ -230,6 +232,8 @@ function Editor({ form }: { form: FormDetail }) {
   // «Registros» opens by default; «Diseño» and «Ajustes» only for whoever can edit.
   const tab = form.canEdit ? readChoice(params, "pestana", TABS, "registros") : "registros";
   const [qr, setQr] = useState(false);
+  const [expiryOpen, setExpiryOpen] = useState(false);
+  const expiry = useNodeExpiry(node.id).data?.expiry ?? null;
 
   return (
     <div className="mx-auto grid w-full min-w-0 max-w-6xl grid-cols-1 gap-4">
@@ -246,7 +250,26 @@ function Editor({ form }: { form: FormDetail }) {
           <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight">{node.name}</h1>
           <Badge tone="primary">{t.editor.version(form.template.version)}</Badge>
           {editable && dirty && <Badge tone="warning">{t.editor.unsaved}</Badge>}
+          {expiry !== null && (
+            <ExpiryBadge
+              dueOn={expiry.dueOn}
+              state={expiry.state}
+              onClick={() => {
+                setExpiryOpen(true);
+              }}
+            />
+          )}
           <div className="ml-auto flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                setExpiryOpen(true);
+              }}
+            >
+              <CalendarClock className="size-4" aria-hidden="true" />
+              {texts.expiries.menu}
+            </Button>
             {form.template.fields.length > 0 && (
               <Button asChild size="lg">
                 <Link to={`/app/${workspaceSlug}/files/${space.id}/form/${node.id}/fill`}>
@@ -257,6 +280,12 @@ function Editor({ form }: { form: FormDetail }) {
             )}
           </div>
         </div>
+        <ExpiryDialog
+          target={expiryOpen ? { id: node.id, name: node.name } : null}
+          onClose={() => {
+            setExpiryOpen(false);
+          }}
+        />
         <QrDialog
           target={qr ? { id: node.id, name: node.name, text: t.qr } : null}
           onClose={() => {

@@ -346,6 +346,7 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/expiries/space/:id", url: (ids) => `/expiries/space/${ids.spaceId}` },
   { method: "get", path: "/expiries", url: () => "/expiries" },
   { method: "get", path: "/expiries/export", url: () => "/expiries/export" },
+  { method: "get", path: "/expiries/filters", url: () => "/expiries/filters" },
   { method: "get", path: "/expiries/mine", url: () => "/expiries/mine" },
   { method: "get", path: "/expiries/mine/count", url: () => "/expiries/mine/count" },
   { method: "get", path: "/spaces/:id/access", url: (ids) => `/spaces/${ids.spaceId}/access` },

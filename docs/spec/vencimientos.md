@@ -37,6 +37,11 @@ una página (también un formulario). Es distinto de la fecha de revisión de lo
   `status`, `from`, `to`), `GET /expiries/export` (CSV, hasta 10.000), `GET /expiries/space/:id` (los de
   un espacio, para las insignias del explorador), `GET /expiries/mine` (los propios por vencer o vencidos,
   para Inicio) y `GET /expiries/mine/count` (el contador del menú: solo lo propio, por vencer o vencido).
+- `GET /expiries/filters`: espacios, departamentos y personas que aparecen en lo que la persona ve (las
+  opciones de los filtros, sin exponer el directorio). `GET /nodes/:id/expiry/responsible-options?q=`:
+  personas (con si pueden ver el elemento) y departamentos, solo para quien puede poner el vencimiento.
+- «El mismo plazo» toma el día en que se puso del último `node.expiry.set` de la auditoría (`updatedAt`
+  también cambia cuando sale un aviso).
 
 ## Pantallas
 
@@ -51,6 +56,7 @@ una página (también un formulario). Es distinto de la fecha de revisión de lo
 ## Fases
 
 1. **Datos, API y avisos**: tipo `node`, responsable departamento y nota en el motor, rutas, pausa en la
-   papelera, avisos a las 8:00 (campana y email), tests de permisos, aislamiento y avisos.
+   papelera, avisos a las 8:00 (campana y email). Hecha; los tests de permisos, aislamiento y avisos van
+   al cierre del módulo (CLAUDE.md, «Pruebas»).
 2. **Pantallas**: diálogo, insignias, pantalla con lista, calendario y CSV, Inicio, contador, propuesta al
-   subir una versión nueva, guías es/en y capturas.
+   subir una versión nueva, guías es/en y capturas. Hecha.

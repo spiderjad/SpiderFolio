@@ -9,7 +9,13 @@ export const DEFAULT_NOTICE_DAYS = [30, 7, 0] as const;
 
 export type ExpiryRow = Pick<
   Expiry,
-  "id" | "kind" | "subjectId" | "membershipId" | "responsibleId" | "responsibleDepartmentId" | "dueOn"
+  | "id"
+  | "kind"
+  | "subjectId"
+  | "membershipId"
+  | "responsibleId"
+  | "responsibleDepartmentId"
+  | "dueOn"
 >;
 
 export interface ExpiryKind {

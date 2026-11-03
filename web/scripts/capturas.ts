@@ -75,7 +75,12 @@ interface Capture {
   /** Where the screen lives, if it's outside the app (the consent screen). */
   prefix?: string;
   /** Data the screen needs, set right before it (only in this database). */
-  before?: (input: { workspaceId: string; slug: string; locale: Locale }) => Promise<void>;
+  before?: (input: {
+    workspaceId: string;
+    slug: string;
+    locale: Locale;
+    ids: Ids;
+  }) => Promise<void>;
 }
 
 /** The license read is remembered 30 s by the API (LICENSE_CACHE_MS): wait it out after a change. */
@@ -468,6 +473,60 @@ async function demoForm(locale: Locale, slug: string): Promise<void> {
   demoForms.set(locale, { id, record });
 }
 
+const demoExpiriesDone = new Set<Locale>();
+
+/** Expiries on the demo space's pages and files (docs/spec/vencimientos.md), relative to today. */
+async function demoExpiries(locale: Locale, slug: string, ids: Ids): Promise<void> {
+  if (demoExpiriesDone.has(locale)) return;
+  const owner = await ownerToken(locale);
+  const nodes = await db.query<{ id: string }>(
+    `SELECT n.id FROM "Node" n WHERE n."spaceId" = $1 AND n.type IN ('PAGE', 'FILE')
+      AND n."trashedAt" IS NULL AND n.id NOT IN ($2, $3) ORDER BY n.name LIMIT 4`,
+    [ids.procedures, ids.slicer, ids.control],
+  );
+  const people = await db.query<{ id: string }>(
+    `SELECT m.id FROM "Membership" m JOIN "Workspace" w ON w.id = m."workspaceId"
+      WHERE w.slug = $1 AND m.status = 'ACTIVE' ORDER BY m."createdAt" LIMIT 3`,
+    [slug],
+  );
+  const department = await db.query<{ id: string }>(
+    `SELECT d.id FROM "Department" d JOIN "Workspace" w ON w.id = d."workspaceId"
+      WHERE w.slug = $1 ORDER BY d.name LIMIT 1`,
+    [slug],
+  );
+  const day = (offset: number) => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + offset);
+    return date.toISOString().slice(0, 10);
+  };
+  const person = (index: number) => {
+    const row = people.rows[index % Math.max(1, people.rows.length)];
+    return row === undefined ? null : { type: "person", id: row.id };
+  };
+  const team =
+    department.rows[0] === undefined ? null : { type: "department", id: department.rows[0].id };
+  const note = locale === "es" ? "Renovar con el proveedor." : "Renew with the supplier.";
+  const plan: [string, number, object | null, string | null][] = [
+    [ids.slicer, 5, person(0), note],
+    [ids.control, -3, team, null],
+    ...nodes.rows.map((row, index): [string, number, object | null, string | null] => [
+      row.id,
+      [12, 40, 2, 90][index] ?? 30,
+      index % 2 === 0 ? person(index + 1) : team,
+      null,
+    ]),
+  ];
+  for (const [id, offset, responsible, text] of plan) {
+    await formCall(owner, slug, "PUT", `/nodes/${id}/expiry`, {
+      dueOn: day(offset),
+      responsible,
+      noticeDays: [30, 7, 0],
+      note: text,
+    });
+  }
+  demoExpiriesDone.add(locale);
+}
+
 /** The demo form with a QR code already made, so the dialog shows its preview and downloads. */
 async function demoFormQr(locale: Locale, slug: string): Promise<void> {
   await demoForm(locale, slug);
@@ -628,6 +687,26 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i) => `/app/${i.slug}/files/${i.procedures}/p/${i.slicer}`,
     then: (page, locale) => fromMenu(page, locale, LABELS[locale].qr),
+  },
+  // Expiries of files and pages (docs/spec/vencimientos.md).
+  {
+    name: "vencimientos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/vencimientos`,
+    before: ({ slug, locale, ids }) => demoExpiries(locale, slug, ids),
+  },
+  {
+    name: "vencimientos-calendario",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/vencimientos?vista=calendar`,
+    before: ({ slug, locale, ids }) => demoExpiries(locale, slug, ids),
+  },
+  {
+    name: "vencimiento",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/files/${i.procedures}/p/${i.slicer}`,
+    before: ({ slug, locale, ids }) => demoExpiries(locale, slug, ids),
+    then: (page, locale) => fromMenu(page, locale, locale === "es" ? "Vencimiento" : "Expiry"),
   },
   // Forms and records: the demo form, created the first time (demoForm).
   {
@@ -950,7 +1029,12 @@ try {
                 `SELECT id FROM "Workspace" WHERE slug = $1`,
                 [ids.slug],
               );
-              await capture.before({ workspaceId: rows[0]?.id ?? "", slug: ids.slug, locale });
+              await capture.before({
+                workspaceId: rows[0]?.id ?? "",
+                slug: ids.slug,
+                locale,
+                ids,
+              });
             }
             // Only for this capture: the usage shown elsewhere (home, admin) stays the real one.
             if (capture.bian) await page.route(BIAN_USAGE, fakeBianUsage(bian));

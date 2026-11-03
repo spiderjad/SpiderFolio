@@ -2,6 +2,7 @@
 // existe y lo que puede usar; un ítem sin permiso no aparece, ni deshabilitado.
 import {
   BookOpen,
+  CalendarClock,
   Briefcase,
   HardHat,
   ClipboardCheck,
@@ -104,6 +105,10 @@ export function navItems(
       label: texts.documents.nav,
       icon: ClipboardCheck,
     });
+  }
+  // Expiries of what the person sees: everyone but external guests.
+  if (person.role.base !== "GUEST") {
+    items.push({ to: `/app/${slug}/vencimientos`, label: texts.expiries.nav, icon: CalendarClock });
   }
   // Occupational health and safety, while it's on: everyone but external guests.
   if (person.workspace.safety.enabled && person.role.base !== "GUEST") {
@@ -269,6 +274,7 @@ export function sectionTitle(
   if (pathname.endsWith("/profile")) return texts.profile.title;
   if (pathname.includes("/admin/departments")) return texts.admin.nav.departments;
   if (pathname.includes("/admin/positions")) return texts.admin.nav.positions;
+  if (pathname.includes("/vencimientos")) return texts.expiries.nav;
   if (pathname.includes("/seguridad")) return texts.safety.terms[safetyTerms].module;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;
