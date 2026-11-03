@@ -52,14 +52,17 @@ una página (también un formulario). Es distinto de la fecha de revisión de lo
 - **Insignias**, siempre que hay vencimiento, con el tiempo que queda y el color del estado: verde «Vence en
   31 días», ámbar «Vence en 5 días», rojo «Venció hace 2 días» (la fecha, en el tooltip). En el explorador y
   en la pantalla del elemento.
-- **Sin responsable elegido**, lo es quien lo pone (el diálogo lo dice): siempre alguien recibe el aviso.
+- **Sin responsable elegido**, lo es quien lo pone (el diálogo lo dice): siempre alguien recibe el aviso. Los
+  vencimientos anteriores a esa regla sin responsable los asignó una migración (`expiry_missing_responsible`) a
+  quien los puso (según `node.expiry.set` en la auditoría, si sigue activo) o, si no, al propietario.
 - **Sugerir con Bian** (`POST /nodes/:id/expiry/suggest`): lee el texto vigente de la página o el archivo y
   propone fecha, nota y responsable (este solo si el nombre coincide con exactamente una persona o un
   departamento). Nunca guarda: rellena el diálogo. Solo con Bian activo, para quien puede ponerlo, con la
   cuota de Bian (se devuelve si falla), el documento como dato y auditoría `ai.expiry_suggest` sin contenido.
 - **Vencimientos** (`/app/:slug/vencimientos`): lista con filtros en la URL y vista de calendario por mes;
   exportar a CSV. Ítem del menú lateral con el contador de lo propio: rojo si hay alguno vencido, ámbar si
-  solo hay por vencer (`/expiries/mine/count` → `{ count, expired }`).
+  solo hay por vencer (`/expiries/mine/count` → `{ count, expired }`); al pasar el puntero, el detalle
+  («1 vencido · 2 por vencer»).
 - **Inicio**: tarjeta con los propios por vencer y vencidos.
 
 ## Fases

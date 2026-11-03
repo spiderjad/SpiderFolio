@@ -9,6 +9,13 @@ export const expiriesTexts = {
       : count === 1
         ? "1 vencimiento tuyo por vencer"
         : `${String(count)} vencimientos tuyos por vencer`,
+  countDetail: (expired: number, dueSoon: number) =>
+    [
+      expired > 0 ? (expired === 1 ? "1 vencido" : `${String(expired)} vencidos`) : null,
+      dueSoon > 0 ? `${String(dueSoon)} por vencer` : null,
+    ]
+      .filter((part) => part !== null)
+      .join(" · "),
   badge: {
     dueIn: (days: number) =>
       days === 0 ? "Vence hoy" : days === 1 ? "Vence en 1 día" : `Vence en ${String(days)} días`,

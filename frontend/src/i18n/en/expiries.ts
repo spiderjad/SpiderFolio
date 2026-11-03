@@ -12,6 +12,13 @@ export const expiriesTexts: Catalog<typeof EsExpiries> = {
       : count === 1
         ? "1 expiry of yours due soon"
         : `${String(count)} expiries of yours due soon`,
+  countDetail: (expired: number, dueSoon: number) =>
+    [
+      expired > 0 ? `${String(expired)} expired` : null,
+      dueSoon > 0 ? `${String(dueSoon)} due soon` : null,
+    ]
+      .filter((part) => part !== null)
+      .join(" · "),
   badge: {
     dueIn: (days: number) =>
       days === 0 ? "Due today" : days === 1 ? "Due in 1 day" : `Due in ${String(days)} days`,

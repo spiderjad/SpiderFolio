@@ -1,6 +1,8 @@
 // Expiries of files and pages (docs/spec/vencimientos.md): who sees and sets them, the lists only show
 // what the person sees, another company's element is 404, a department's heads and deputies get the
 // notices, the trash waits and «Sugerir con Bian» never saves and respects permissions and the quota.
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type Anthropic from "@anthropic-ai/sdk";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -458,5 +460,108 @@ describe("Sugerir con Bian", () => {
     const res = await w.suggest(w.ws.token, w.pageId);
     expect(res.status).not.toBe(200);
     expect(w.model.calls).toHaveLength(0);
+  });
+});
+
+describe("vencimientos viejos sin responsable (migración)", () => {
+  /** The migration's SQL, run again on purpose-made old rows (it's idempotent). */
+  const migration = () => {
+    const dir = fileURLToPath(new URL("../../prisma/migrations/", import.meta.url));
+    const name = readdirSync(dir).find((entry) => entry.endsWith("_expiry_missing_responsible"));
+    if (name === undefined) throw new Error("Falta la migración");
+    return readFileSync(`${dir}${name}/migration.sql`, "utf8");
+  };
+
+  it("pasan a quien los puso (según la auditoría) o, si no se sabe, al propietario", async () => {
+    const w = await world("Vencimientos viejos");
+    const [byEditor, unknown, byGone] = [
+      w.pageId,
+      (await w.makePage()).node.id,
+      (await w.makePage()).node.id,
+    ];
+    const department = await ctx.prisma.department.create({
+      data: { workspaceId: w.ws.workspaceId, name: "Calidad" },
+    });
+    const teamPage = (await w.makePage()).node.id;
+    const gone = await addMember(ctx, w.ws, { name: "Ida Seha" });
+    await ctx.prisma.membership.update({
+      where: { id: gone.membership.id },
+      data: { status: "SUSPENDED" },
+    });
+    // As they were stored before the rule: no responsible, no setById.
+    for (const subjectId of [byEditor, unknown, byGone]) {
+      await ctx.prisma.expiry.create({
+        data: {
+          workspaceId: w.ws.workspaceId,
+          kind: "node",
+          subjectId,
+          dueOn: new Date(`${day(2)}T00:00:00Z`),
+        },
+      });
+    }
+    await ctx.prisma.expiry.create({
+      data: {
+        workspaceId: w.ws.workspaceId,
+        kind: "node",
+        subjectId: teamPage,
+        dueOn: new Date(`${day(2)}T00:00:00Z`),
+        responsibleDepartmentId: department.id,
+      },
+    });
+    for (const [entityId, actor] of [
+      [byEditor, w.editor.user.id],
+      [byGone, gone.user.id],
+    ] as const) {
+      await ctx.prisma.auditLog.create({
+        data: {
+          workspaceId: w.ws.workspaceId,
+          actorId: actor,
+          action: "node.expiry.set",
+          entityType: "Node",
+          entityId,
+        },
+      });
+    }
+    // Before: nobody counts the editor's.
+    expect((await w.call("get", w.editor.token, "/expiries/mine/count")).body).toEqual({
+      count: 0,
+      expired: 0,
+    });
+
+    await ctx.prisma.$executeRawUnsafe(migration());
+
+    const responsibleOf = async (subjectId: string) =>
+      (await ctx.prisma.expiry.findFirstOrThrow({ where: { kind: "node", subjectId } }))
+        .responsibleId;
+    expect(await responsibleOf(byEditor)).toBe(w.editor.membership.id);
+    expect(await responsibleOf(unknown)).toBe(w.ownerMembership.id);
+    // Who set it is no longer active: the owner.
+    expect(await responsibleOf(byGone)).toBe(w.ownerMembership.id);
+    // A department's stays the department's.
+    const team = await ctx.prisma.expiry.findFirstOrThrow({
+      where: { kind: "node", subjectId: teamPage },
+    });
+    expect(team).toMatchObject({ responsibleId: null, responsibleDepartmentId: department.id });
+
+    // Now they're counted and told.
+    expect((await w.call("get", w.editor.token, "/expiries/mine/count")).body).toEqual({
+      count: 1,
+      expired: 0,
+    });
+    const expiry = await expiryOf(byEditor);
+    await sendExpiryNotices(notifyDeps(), new Date(), { anyHour: true });
+    expect(
+      await ctx.prisma.notification.count({
+        where: {
+          kind: "expiry_due",
+          expiryId: expiry?.id ?? "",
+          membershipId: w.editor.membership.id,
+        },
+      }),
+    ).toBe(1);
+
+    // Run again, nothing changes.
+    await ctx.prisma.$executeRawUnsafe(migration());
+    expect(await responsibleOf(byEditor)).toBe(w.editor.membership.id);
   });
 });

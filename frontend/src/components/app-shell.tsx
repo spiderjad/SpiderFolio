@@ -121,7 +121,14 @@ function EdgeHandle({
 
 /** Aviso de un ítem: un contador (lecturas, aprobaciones) o un punto (compartidos nuevos). */
 type Indicator =
-  | { kind: "count"; count: number; tone: "primary" | "warning" | "danger"; label: string }
+  | {
+      kind: "count";
+      count: number;
+      tone: "primary" | "warning" | "danger";
+      label: string;
+      /** Shown when hovering the count (expiries: «1 vencido · 2 por vencer»). */
+      detail?: string;
+    }
   | { kind: "dot"; tone: "primary" | "warning"; label: string };
 
 const toneClass = {
@@ -169,7 +176,11 @@ function NavItem({
   return (
     <Tooltip
       side="right"
-      content={indicator === undefined ? label : `${label} · ${indicator.label}`}
+      content={
+        indicator === undefined
+          ? label
+          : `${label} · ${indicator.kind === "count" && indicator.detail !== undefined ? indicator.detail : indicator.label}`
+      }
       disabled={!collapsed}
     >
       <NavLink
@@ -210,17 +221,19 @@ function NavItem({
         <span className={cn("flex-1 truncate pr-2", fade(collapsed))}>{label}</span>
         {indicator !== undefined &&
           (indicator.kind === "count" ? (
-            <span
-              aria-label={indicator.label}
-              className={cn(
-                "mr-2 rounded-full px-1.5 text-[11px] font-semibold leading-5",
-                toneClass[indicator.tone],
-                collapsed && "hidden",
-                fade(collapsed),
-              )}
-            >
-              {indicator.count > 99 ? "99+" : indicator.count}
-            </span>
+            <Tooltip content={indicator.detail ?? indicator.label} disabled={collapsed}>
+              <span
+                aria-label={indicator.label}
+                className={cn(
+                  "mr-2 rounded-full px-1.5 text-[11px] font-semibold leading-5",
+                  toneClass[indicator.tone],
+                  collapsed && "hidden",
+                  fade(collapsed),
+                )}
+              >
+                {indicator.count > 99 ? "99+" : indicator.count}
+              </span>
+            </Tooltip>
           ) : (
             <span
               role="img"
@@ -770,6 +783,7 @@ function SidebarContent({
         count,
         tone: expired > 0 ? "danger" : "warning",
         label: texts.expiries.pendingCount(count, expired),
+        detail: texts.expiries.countDetail(expired, count - expired),
       };
     }
     if (to === `/app/${slug}/files/shared` && unseenShared > 0) {
