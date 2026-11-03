@@ -39,6 +39,15 @@ async function ofMembership(prisma: PrismaClient, membershipId: string | null): 
 
 export async function emailLocale(prisma: PrismaClient, job: EmailJob): Promise<Locale> {
   switch (job.kind) {
+    case "audit-room-invite":
+    case "audit-room-code": {
+      // The auditor has no account: the company's language.
+      const room = await prisma.auditRoom.findUnique({
+        where: { id: job.roomId },
+        select: { workspace: { select: { settings: true } } },
+      });
+      return room === null ? DEFAULT_LOCALE : readWorkspaceLocale(room.workspace.settings);
+    }
     case "invitation": {
       const invitation = await prisma.invitation.findUnique({
         where: { id: job.invitationId },

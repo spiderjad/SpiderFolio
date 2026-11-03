@@ -62,5 +62,6 @@ export const formMessages = localized("formMessages");
 export const formNoticeTexts = localized("formNoticeTexts");
 export const expiryNoticeTexts = localized("expiryNoticeTexts");
 export const safetyIncidentEmailTexts = localized("safetyIncidentEmailTexts");
+export const auditRoomTexts = localized("auditRoomTexts");
 export const safetyTexts = localized("safetyTexts");
 export const formExportTexts = localized("formExportTexts");

@@ -42,6 +42,10 @@ export const EmailJobSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("expiry-notice"), notificationId: z.string().min(1) }),
   // A new accident or incident, to whoever has safety.health: the worker reads the Notification.
   z.strictObject({ kind: z.literal("safety-incident-notice"), notificationId: z.string().min(1) }),
+  // Audit rooms (docs/spec/salas-de-auditoria.md): the link to the auditor, and their one-time code
+  // (created by the worker when it sends it: the code never travels in the queue).
+  z.strictObject({ kind: z.literal("audit-room-invite"), roomId: z.string().min(1) }),
+  z.strictObject({ kind: z.literal("audit-room-code"), roomId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-ready"), exportId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("export-failed"), exportId: z.string().min(1) }),
 ]);

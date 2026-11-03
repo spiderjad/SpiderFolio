@@ -72,6 +72,36 @@ const cases: IsolationCase[] = [
     url: () => "/admin/positions/x",
   },
   { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
+  // Audit rooms: A's room is 404 for B (each one sees only its own rooms).
+  { method: "get", path: "/admin/audit-rooms", url: () => "/admin/audit-rooms" },
+  {
+    method: "post",
+    path: "/admin/audit-rooms",
+    url: () => "/admin/audit-rooms",
+    body: { name: "Ajena", auditorEmail: "auditor@ajeno.test", expiresOn: "2099-01-01" },
+  },
+  { method: "get", path: "/admin/audit-rooms/:id", url: () => "/admin/audit-rooms/x" },
+  {
+    method: "post",
+    path: "/admin/audit-rooms/:id/items",
+    url: () => "/admin/audit-rooms/x/items",
+    body: { kind: "node", nodeId: "x" },
+  },
+  {
+    method: "delete",
+    path: "/admin/audit-rooms/:id/items/:itemId",
+    url: () => "/admin/audit-rooms/x/items/y",
+  },
+  {
+    method: "post",
+    path: "/admin/audit-rooms/:id/revoke",
+    url: () => "/admin/audit-rooms/x/revoke",
+  },
+  {
+    method: "post",
+    path: "/admin/audit-rooms/:id/resend",
+    url: () => "/admin/audit-rooms/x/resend",
+  },
   // The module is off in B: its own screens are 404 too.
   { method: "get", path: "/safety/items", url: () => "/safety/items", ownStatus: 404 },
   { method: "post", path: "/safety/items", url: () => "/safety/items", body: { name: "Ajeno" } },

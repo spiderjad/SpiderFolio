@@ -13,6 +13,8 @@ import "../modules/expiries/kinds.ts";
 import { withLocale } from "../i18n/locales.ts";
 import { emailLocale } from "./email-locale.ts";
 import { alertFailedEmail } from "../modules/email-settings/system-email.ts";
+import { randomInt } from "node:crypto";
+import { AUDIT_CODE_MINUTES, auditCodeHash } from "../modules/audit-rooms/codes.ts";
 import { randomToken, sha256 } from "../lib/crypto.ts";
 import { issueAuthToken } from "../modules/auth/auth-tokens.ts";
 import type { Mailer } from "../lib/mailer.ts";
@@ -558,6 +560,55 @@ async function sendExpiryNoticeEmail(
   await deps.mailer.send({ to: recipient.user.email, workspaceId: notice.workspaceId, ...email });
 }
 
+/** An audit room's link, or a fresh one-time code (only the last one works), while the room is open. */
+async function sendAuditRoomEmail(
+  deps: WorkerDeps,
+  job: Extract<EmailJob, { kind: "audit-room-invite" | "audit-room-code" }>,
+): Promise<void> {
+  const room = await deps.prisma.auditRoom.findUnique({
+    where: { id: job.roomId },
+    select: {
+      id: true,
+      name: true,
+      auditorEmail: true,
+      expiresAt: true,
+      revokedAt: true,
+      workspaceId: true,
+      workspace: { select: { name: true, settings: true } },
+    },
+  });
+  if (room === null || room.revokedAt !== null || room.expiresAt <= new Date()) {
+    deps.logger.warn({ kind: job.kind }, "Email omitido: la sala ya no está abierta");
+    return;
+  }
+  let code: string | undefined;
+  if (job.kind === "audit-room-code") {
+    code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+    const db = forTenant(deps.prisma, room.workspaceId);
+    await db.auditRoomCode.deleteMany({ where: { roomId: room.id, usedAt: null } });
+    await db.auditRoomCode.create({
+      data: {
+        roomId: room.id,
+        codeHash: auditCodeHash(room.id, code),
+        expiresAt: new Date(Date.now() + AUDIT_CODE_MINUTES * 60_000),
+      },
+    });
+  }
+  const until = formatDayIn(room.expiresAt, zoneOf(room.workspace.settings), currentLocale());
+  const email = buildEmail(job, {
+    recipientName: "",
+    appUrl: deps.appUrl,
+    auditRoom: {
+      company: room.workspace.name,
+      room: room.name,
+      until,
+      url: new URL(`/auditoria/${room.id}`, deps.appUrl).toString(),
+      ...(code === undefined ? {} : { code }),
+    },
+  });
+  await deps.mailer.send({ to: room.auditorEmail, workspaceId: room.workspaceId, ...email });
+}
+
 /** A new accident or incident: only while the recipient is active and can still see health data. */
 async function sendSafetyIncidentEmail(
   deps: WorkerDeps,
@@ -619,6 +670,10 @@ async function sendEmail(deps: WorkerDeps, job: EmailJob): Promise<void> {
   }
   if (job.kind === "expiry-notice") {
     await sendExpiryNoticeEmail(deps, job);
+    return;
+  }
+  if (job.kind === "audit-room-invite" || job.kind === "audit-room-code") {
+    await sendAuditRoomEmail(deps, job);
     return;
   }
   if (job.kind === "safety-incident-notice") {
@@ -830,6 +885,9 @@ export async function cleanupExpired(
     // Directory sign-ins (OIDC) never finished, of every company.
     deps.prisma.ssoFlow.deleteMany({ where: { expiresAt: { lt: now } } }),
   ]);
+  // Audit rooms: the auditors' expired sessions and codes, of every company.
+  await deps.prisma.auditRoomSession.deleteMany({ where: { expiresAt: { lt: now } } });
+  await deps.prisma.auditRoomCode.deleteMany({ where: { expiresAt: { lt: now } } });
   await expireExports(deps, now);
   const result = {
     rateLimitBuckets: buckets.count,

@@ -52,6 +52,8 @@ export const NOTIFICATION_KINDS = [
   "expiry_due",
   /** An accident or incident was reported (to whoever has safety.health; `detail` = incident id). */
   "safety_incident",
+  /** The auditor of an audit room came in for the first time (to whoever created it; `detail` = room). */
+  "audit_room_access",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

@@ -166,7 +166,13 @@ async function addControlSheet(pdf: PDFDocument, info: ControlInfo): Promise<voi
  */
 export async function stampPdf(
   bytes: Uint8Array,
-  options: { watermark: string; obsolete: boolean; controlSheet?: ControlInfo },
+  options: {
+    watermark: string;
+    obsolete: boolean;
+    controlSheet?: ControlInfo;
+    /** A light diagonal text across each page (an audit room's copy). */
+    diagonal?: string;
+  },
 ): Promise<Uint8Array> {
   let pdf: PDFDocument;
   try {
@@ -181,6 +187,18 @@ export async function stampPdf(
   for (const page of pdf.getPages()) {
     const { width, height } = page.getSize();
     page.drawText(text, { x: 28, y: 14, size: 7.5, font, color: rgb(0.35, 0.35, 0.35) });
+    if (options.diagonal !== undefined) {
+      const size = Math.min(width, height) / 22;
+      page.drawText(safe(options.diagonal, font), {
+        x: width * 0.12,
+        y: height * 0.3,
+        size,
+        font,
+        color: rgb(0.45, 0.45, 0.45),
+        opacity: 0.18,
+        rotate: degrees(40),
+      });
+    }
     if (options.obsolete) {
       const size = Math.min(width, height) / 6;
       page.drawText(safe(controlledPdfTexts.obsolete, bold), {
@@ -194,5 +212,48 @@ export async function stampPdf(
       });
     }
   }
+  return await pdf.save();
+}
+
+/** Word, Excel and the like as a PDF, with the LibreOffice inside Gotenberg (internal network only). */
+export async function convertWithLibreOffice(
+  baseUrl: string,
+  file: { name: string; bytes: Uint8Array },
+): Promise<Uint8Array> {
+  const form = new FormData();
+  form.append("files", new Blob([new Uint8Array(file.bytes)]), file.name);
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/forms/libreoffice/convert`, {
+      method: "POST",
+      body: form,
+      signal: AbortSignal.timeout(120_000),
+    });
+  } catch {
+    throw new AppError("UNAVAILABLE");
+  }
+  if (!response.ok) throw new AppError("UNAVAILABLE");
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+/** A PNG or JPEG on an A4 page (scaled to fit), as a PDF. */
+export async function imageToPdf(bytes: Uint8Array, mimeType: string): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  const image = mimeType === "image/png" ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+  const page = pdf.addPage([595.28, 841.89]);
+  const margin = 36;
+  const scale = Math.min(
+    (page.getWidth() - margin * 2) / image.width,
+    (page.getHeight() - margin * 2) / image.height,
+    1,
+  );
+  const width = image.width * scale;
+  const height = image.height * scale;
+  page.drawImage(image, {
+    x: (page.getWidth() - width) / 2,
+    y: page.getHeight() - margin - height,
+    width,
+    height,
+  });
   return await pdf.save();
 }

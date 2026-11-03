@@ -255,6 +255,11 @@ model Workspace {
   safetyCourses       SafetyCourse[]
   safetyTrainings     SafetyTraining[]
   safetySignSessions  SafetySignSession[]
+  auditRooms          AuditRoom[]
+  auditRoomItems      AuditRoomItem[]
+  auditRoomCodes      AuditRoomCode[]
+  auditRoomSessions   AuditRoomSession[]
+  auditRoomAccesses   AuditRoomAccess[]
   safetyFitness       SafetyFitness[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
@@ -405,30 +410,30 @@ model Position {
 /// vencimientos»). `kind` names the item type (safety.ppe, safety.training…) and `subjectId` the item
 /// in its own table (no FK). Notices go out at 8:00 in the company's zone when a threshold is reached.
 model Expiry {
-  id            String    @id @default(cuid())
-  workspaceId   String
-  kind          String
-  subjectId     String
+  id                      String    @id @default(cuid())
+  workspaceId             String
+  kind                    String
+  subjectId               String
   /// The person it is about, if any (membership; no FK).
-  membershipId  String?
+  membershipId            String?
   /// Who has to take care of it (membership; no FK).
-  responsibleId String?
+  responsibleId           String?
   /// Or a department: its heads and deputies are told (no FK).
   responsibleDepartmentId String?
   /// A note about what to do (up to 500).
-  note          String?
+  note                    String?
   /// Who set it last (membership; no FK): told when no responsible can see the item.
-  setById       String?
+  setById                 String?
   /// The company day it expires on.
-  dueOn         DateTime  @db.Date
+  dueOn                   DateTime  @db.Date
   /// Days before dueOn to give notice (0 = the same day).
-  noticeDays    Int[]     @default([30, 7, 0])
+  noticeDays              Int[]     @default([30, 7, 0])
   /// The thresholds already notified (moving dueOn clears them).
-  noticesSent   Int[]     @default([])
+  noticesSent             Int[]     @default([])
   /// Renewed, replaced or no longer applies: no more notices.
-  resolvedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  resolvedAt              DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -509,26 +514,26 @@ model SafetyDeliveryLine {
 /// An accident or incident (docs/spec/seguridad-salud.md, «Accidentes e incidentes»): what's structured
 /// of a record of the module's base form, to filter and follow it. Health data: only `safety.health`.
 model SafetyIncident {
-  id            String    @id @default(cuid())
-  workspaceId   String
+  id           String    @id @default(cuid())
+  workspaceId  String
   /// The FormRecord it comes from (no FK: records are never deleted).
-  recordId      String
+  recordId     String
   /// leave (accident with sick leave), no_leave, incident, near_miss.
-  type          String
+  type         String
   /// minor, serious, very_serious, fatal; null when it doesn't apply.
-  severity      String?
+  severity     String?
   /// The company day it happened.
-  occurredOn    DateTime  @db.Date
-  place         String?
+  occurredOn   DateTime  @db.Date
+  place        String?
   /// Whoever was affected (membership; no FK), and their first department then.
-  membershipId  String?
-  departmentId  String?
-  reportedById  String
+  membershipId String?
+  departmentId String?
+  reportedById String
   /// OPEN or CLOSED.
-  status        String    @default("OPEN")
-  closedAt      DateTime?
-  closedById    String?
-  createdAt     DateTime  @default(now())
+  status       String    @default("OPEN")
+  closedAt     DateTime?
+  closedById   String?
+  createdAt    DateTime  @default(now())
 
   workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actions   SafetyAction[]
@@ -609,18 +614,18 @@ model SafetyTraining {
 /// In-person training signed by each attendee on their own phone (docs/spec/seguridad-salud.md): a QR
 /// or link for one course and day, for the attendees chosen; open until it's closed or expires.
 model SafetySignSession {
-  id           String    @id @default(cuid())
-  workspaceId  String
-  courseId     String
+  id          String    @id @default(cuid())
+  workspaceId String
+  courseId    String
   /// The day of the training (as the tablet's attendance).
-  completedOn  DateTime  @db.Date
+  completedOn DateTime  @db.Date
   /// Who has to sign (memberships; no FK).
-  attendeeIds  String[]
+  attendeeIds String[]
   /// Whoever gives the training: recorded as the one who registered each signature.
-  createdById  String
-  expiresAt    DateTime
-  closedAt     DateTime?
-  createdAt    DateTime  @default(now())
+  createdById String
+  expiresAt   DateTime
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
 
   workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   course    SafetyCourse @relation(fields: [courseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
@@ -1786,4 +1791,105 @@ model OAuthToken {
 
   @@index([grantId])
   @@index([expiresAt])
+}
+
+/// An audit room (docs/spec/salas-de-auditoria.md): read-only, for one external auditor, until it expires
+/// (30 days at most) or is revoked. The auditor has no account nor seat.
+model AuditRoom {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  name          String
+  auditorEmail  String
+  expiresAt     DateTime
+  allowDownload Boolean   @default(false)
+  createdById   String
+  revokedAt     DateTime?
+  revokedById   String?
+  /// When the auditor first came in (whoever created it is told once).
+  firstAccessAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  items     AuditRoomItem[]
+  codes     AuditRoomCode[]
+  sessions  AuditRoomSession[]
+  accesses  AuditRoomAccess[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, createdAt])
+}
+
+/// What a room shares: a node (document or folder), a space or a report with its parameters.
+model AuditRoomItem {
+  id          String   @id @default(cuid())
+  workspaceId String
+  roomId      String
+  /// NODE, SPACE or REPORT.
+  kind        String
+  nodeId      String?
+  spaceId     String?
+  /// readings, approvals, form-records, training, ppe, audit-log.
+  report      String?
+  /// The report's parameters (node, form, course, dates, filters).
+  params      Json?
+  title       String
+  addedById   String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  room      AuditRoom @relation(fields: [roomId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, roomId])
+}
+
+/// A one-time code sent to the auditor's email (hash; 10 minutes; 5 tries).
+model AuditRoomCode {
+  id          String    @id @default(cuid())
+  workspaceId String
+  roomId      String
+  codeHash    String
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  room      AuditRoom @relation(fields: [roomId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, roomId])
+}
+
+/// The auditor's session: its own cookie (hash of the token), never longer than the room.
+model AuditRoomSession {
+  id          String   @id @default(cuid())
+  workspaceId String
+  roomId      String
+  tokenHash   String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  room      AuditRoom @relation(fields: [roomId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, roomId])
+}
+
+/// Each time the auditor comes in, views or downloads something (for whoever created the room).
+model AuditRoomAccess {
+  id          String   @id @default(cuid())
+  workspaceId String
+  roomId      String
+  /// enter, view, download.
+  action      String
+  itemId      String?
+  /// What was opened, as shown (a document's name, a report's title).
+  what        String?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  room      AuditRoom @relation(fields: [roomId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, roomId, createdAt])
 }

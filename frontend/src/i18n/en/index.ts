@@ -282,6 +282,7 @@ export const en: Messages = {
     formDue: (what: string) => `“${what}” is due to be filled in.`,
     expiryDue: (what: string, when: string) => `“${what}” ${when}.`,
     safetyIncident: (who: string) => `${who} reported an accident or incident.`,
+    auditRoomAccess: "The auditor came into an audit room for the first time.",
     expiryGone: "An expiry that no longer exists.",
     formOverdue: (what: string) => `“${what}” wasn't filled in last period.`,
     directorySyncStopped:

@@ -11,6 +11,7 @@ import {
   formNoticeTexts,
   expiryNoticeTexts,
   safetyIncidentEmailTexts,
+  auditRoomTexts,
   mentionEmailTexts,
   sharedEmailTexts,
 } from "../i18n/index.ts";
@@ -46,6 +47,8 @@ export interface EmailContext {
   expiryNotice?: { expired: boolean; what: string; when: string; url: string };
   /** A new accident or incident (safety-incident-notice): who reported it and where it opens. */
   safetyIncident?: { who: string; url: string };
+  /** An audit room's link or code: the company, the room, until when, the link and the code. */
+  auditRoom?: { company: string; room: string; until: string; url: string; code?: string };
   /** Datos de un aviso de documento controlado (document-notice). */
   documentNotice?: {
     kind:
@@ -283,6 +286,29 @@ export function buildEmail(job: EmailJob, context: EmailContext): EmailContent {
         title: t.title[state],
         paragraphs: [t.greeting(name), t.body(notice.what, notice.when)],
         action: { label: t.action, url: notice.url },
+        footnotes: [t.footnote],
+      });
+    }
+    case "audit-room-invite": {
+      const t = auditRoomTexts.invite;
+      const room = context.auditRoom;
+      if (room === undefined) throw new Error("Faltan los datos de la sala");
+      return renderEmail({
+        subject: t.subject(room.company),
+        title: t.title,
+        paragraphs: [t.body(room.company, room.room, room.until), t.how],
+        action: { label: t.action, url: room.url },
+        footnotes: [t.footnote],
+      });
+    }
+    case "audit-room-code": {
+      const t = auditRoomTexts.code;
+      const room = context.auditRoom;
+      if (room?.code === undefined) throw new Error("Faltan los datos del código");
+      return renderEmail({
+        subject: t.subject(room.code),
+        title: t.title,
+        paragraphs: [t.body(room.room), room.code],
         footnotes: [t.footnote],
       });
     }

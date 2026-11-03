@@ -284,6 +284,7 @@ export const es = {
     formDue: (what: string) => `Toca llenar «${what}».`,
     expiryDue: (what: string, when: string) => `«${what}» ${when}.`,
     safetyIncident: (who: string) => `${who} comunicó un accidente o incidente.`,
+    auditRoomAccess: "El auditor entró por primera vez a una sala de auditoría.",
     expiryGone: "Un vencimiento que ya no existe.",
     formOverdue: (what: string) => `«${what}» quedó sin llenar en el período anterior.`,
     directorySyncStopped:

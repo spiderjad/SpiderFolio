@@ -91,6 +91,8 @@ export async function exportRecords(
   formId: string,
   format: "csv" | "pdf",
   filters: RecordFilters,
+  /** An audit room's report: the auditor's access is logged by the room, not as an export. */
+  options: { audit?: boolean } = {},
 ): Promise<ExportFile> {
   const form = await ctx.db.node.findFirst({
     where: { id: formId, trashedAt: null, type: "FORM" },
@@ -131,12 +133,13 @@ export async function exportRecords(
   const zone = await companyZone(ctx.db);
   const locale = currentLocale();
   const when = (date: Date) => formatDateTimeIn(date, zone, locale);
-  await auditAdmin(ctx, {
-    action: "form.records.export",
-    entityType: "Node",
-    entityId: formId,
-    metadata: { format, rows: records.length, filters: { ...filters } },
-  });
+  if (options.audit !== false)
+    await auditAdmin(ctx, {
+      action: "form.records.export",
+      entityType: "Node",
+      entityId: formId,
+      metadata: { format, rows: records.length, filters: { ...filters } },
+    });
 
   if (format === "csv") {
     const columns = exportColumns(versions);

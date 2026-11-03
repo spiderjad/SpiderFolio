@@ -162,6 +162,14 @@ export function monitorSystemMailer(
 /** Workspaces an email belongs to: its own, or the recipient's for account emails. */
 export async function workspacesOfEmailJob(prisma: PrismaClient, job: EmailJob): Promise<string[]> {
   switch (job.kind) {
+    case "audit-room-invite":
+    case "audit-room-code":
+      return idsOf(
+        await prisma.auditRoom.findUnique({
+          where: { id: job.roomId },
+          select: { workspaceId: true },
+        }),
+      );
     case "invitation":
       return idsOf(
         await prisma.invitation.findUnique({

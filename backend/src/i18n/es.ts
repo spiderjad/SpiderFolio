@@ -1051,3 +1051,81 @@ export const expiryTexts = {
     states: { valid: "Vigente", due_soon: "Por vencer", expired: "Vencido" },
   },
 };
+
+/** Audit rooms (docs/spec/salas-de-auditoria.md): the auditor's emails, the watermark and the reports. */
+export const auditRoomTexts = {
+  watermark: (email: string, when: string) => `Copia para auditoría · ${email} · ${when}`,
+  invite: {
+    subject: (company: string) => `${company} te comparte una sala de auditoría`,
+    title: "Tienes una sala de auditoría",
+    body: (company: string, room: string, until: string) =>
+      `${company} compartió contigo la sala «${room}», en solo lectura, hasta el ${until}.`,
+    how: "Al abrirla, pide el código: te llega a este email y vale una sola vez.",
+    action: "Abrir la sala",
+    footnote: "Si no esperabas este email, puedes ignorarlo: sin el código no se entra.",
+  },
+  code: {
+    subject: (code: string) => `Tu código para la sala de auditoría: ${code}`,
+    title: "Tu código de acceso",
+    body: (room: string) =>
+      `Este es tu código para entrar a «${room}». Vale 10 minutos y una sola vez:`,
+    footnote: "Si no lo pediste, ignora este email: nadie entra sin el código.",
+  },
+  errors: {
+    closed: "Esta sala ya no está disponible: venció o la revocaron.",
+    badCode: "El código no es correcto o ya venció. Pide uno nuevo.",
+    tooManyTries: "Demasiados intentos con este código. Pide uno nuevo.",
+    noSession: "Tu acceso a la sala terminó. Vuelve a pedir el código.",
+    maxDays: "La sala puede durar hasta 30 días.",
+    pastDate: "El vencimiento tiene que ser una fecha futura.",
+    notShareable: "Ese elemento no se puede compartir en una sala.",
+    unsupported:
+      "Este tipo de archivo no se puede mostrar en la sala. Comparte un PDF, Word, Excel o una imagen.",
+    noDownload: "Esta sala no permite descargar.",
+    creatorGone: "Quien creó la sala ya no está en la empresa: la sala no se puede abrir.",
+  },
+  reports: {
+    readings: (doc: string) => `Cumplimiento de lecturas · ${doc}`,
+    approvals: (doc: string) => `Historial de aprobaciones y versiones · ${doc}`,
+    formRecords: (form: string, from: string, to: string) =>
+      `Registros de «${form}» · ${from} a ${to}`,
+    training: (course: string) => `Constancias de formación · ${course}`,
+    ppe: (from: string, to: string) => `Entregas de EPIs · ${from} a ${to}`,
+    auditLog: (from: string, to: string) => `Registro de auditoría · ${from} a ${to}`,
+    generated: (when: string) => `Generado el ${when}.`,
+    columns: {
+      person: "Persona",
+      status: "Estado",
+      readAt: "Leyó",
+      version: "Versión",
+      state: "Estado",
+      published: "Publicada",
+      approvals: "Aprobaciones",
+      change: "Cambio",
+      date: "Fecha",
+      by: "Por",
+      record: "Registro",
+      values: "Respuestas",
+      item: "Equipo",
+      quantity: "Cantidad",
+      action: "Acción",
+      what: "Sobre",
+      completed: "Hecha",
+      source: "Cómo",
+      until: "Vence",
+    },
+    readingStatus: {
+      read: "Leído",
+      pending: "Pendiente",
+      overdue: "Vencido",
+      noAccess: "Sin acceso",
+    },
+    sources: { READING: "Lectura", IN_PERSON: "Presencial" },
+    decisions: { APPROVED: "Aprobó", CHANGES_REQUESTED: "Pidió cambios", REJECTED: "Rechazó" },
+    empty: "Sin datos en este período.",
+    voided: "Anulado",
+  },
+  notice: {
+    firstAccess: "entró por primera vez",
+  },
+} as const;

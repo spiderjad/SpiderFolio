@@ -22,10 +22,10 @@ export interface PdfDeps {
 }
 
 /** Tope de un PDF subido que se estampa en memoria. */
-const MAX_STAMP_BYTES = 60 * 1024 * 1024;
+export const MAX_STAMP_BYTES = 60 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-async function toBuffer(stream: Readable, max: number): Promise<Buffer> {
+export async function toBuffer(stream: Readable, max: number): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of stream as AsyncIterable<Buffer>) {
@@ -105,6 +105,32 @@ async function inWorkspaceLocale<T>(db: TenantDb, fn: () => Promise<T>): Promise
 }
 
 /** Genera (y guarda) el PDF de una página publicada. Devuelve la clave en el bucket. */
+/**
+ * A page's images as data: URIs, for its HTML: Gotenberg never goes to the internet. One that can't be
+ * read stays as «[Imagen]».
+ */
+export async function pageImageSources(
+  db: TenantDb,
+  deps: Pick<PdfDeps, "storage">,
+  nodeId: string,
+): Promise<Map<string, string>> {
+  const images = new Map<string, string>();
+  const rows = await db.pageImage.findMany({
+    where: { nodeId, confirmedAt: { not: null } },
+    select: { id: true, storageKey: true, mimeType: true, sizeBytes: true },
+  });
+  for (const image of rows) {
+    if (Number(image.sizeBytes) > MAX_IMAGE_BYTES) continue;
+    try {
+      const data = await toBuffer(await deps.storage.stream(image.storageKey), MAX_IMAGE_BYTES);
+      images.set(image.id, `data:${image.mimeType};base64,${data.toString("base64")}`);
+    } catch {
+      // Unreadable: left out.
+    }
+  }
+  return images;
+}
+
 export function ensureControlledPdf(
   db: TenantDb,
   deps: PdfDeps,
@@ -127,21 +153,7 @@ async function generateControlledPdf(
   if (row.content === null) {
     throw new AppError("BAD_REQUEST", { message: contentMessages.noPdfForVersion });
   }
-  // Las imágenes de la página viajan dentro del HTML (data: URI); Gotenberg no sale a internet.
-  const images = new Map<string, string>();
-  const rows = await db.pageImage.findMany({
-    where: { nodeId, confirmedAt: { not: null } },
-    select: { id: true, storageKey: true, mimeType: true, sizeBytes: true },
-  });
-  for (const image of rows) {
-    if (Number(image.sizeBytes) > MAX_IMAGE_BYTES) continue;
-    try {
-      const data = await toBuffer(await deps.storage.stream(image.storageKey), MAX_IMAGE_BYTES);
-      images.set(image.id, `data:${image.mimeType};base64,${data.toString("base64")}`);
-    } catch {
-      // Una imagen que no se puede leer queda como «[Imagen]».
-    }
-  }
+  const images = await pageImageSources(db, deps, nodeId);
   const body = contentToHtml(row.content as JSONContent, {
     imageSrc: (id) => images.get(id) ?? null,
   });

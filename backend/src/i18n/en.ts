@@ -1061,3 +1061,80 @@ export const expiryTexts: Catalog<typeof Es.expiryTexts> = {
     states: { valid: "Valid", due_soon: "Due soon", expired: "Expired" },
   },
 };
+
+export const auditRoomTexts: Catalog<typeof Es.auditRoomTexts> = {
+  watermark: (email: string, when: string) => `Audit copy · ${email} · ${when}`,
+  invite: {
+    subject: (company: string) => `${company} shares an audit room with you`,
+    title: "You have an audit room",
+    body: (company: string, room: string, until: string) =>
+      `${company} shared the room “${room}” with you, read-only, until ${until}.`,
+    how: "When you open it, ask for the code: it comes to this email and works only once.",
+    action: "Open the room",
+    footnote:
+      "If you weren't expecting this email, you can ignore it: nobody gets in without the code.",
+  },
+  code: {
+    subject: (code: string) => `Your audit room code: ${code}`,
+    title: "Your access code",
+    body: (room: string) =>
+      `This is your code to enter “${room}”. It works for 10 minutes and only once:`,
+    footnote: "If you didn't ask for it, ignore this email: nobody gets in without the code.",
+  },
+  errors: {
+    closed: "This room is no longer available: it expired or was revoked.",
+    badCode: "The code isn't right or has expired. Ask for a new one.",
+    tooManyTries: "Too many tries with this code. Ask for a new one.",
+    noSession: "Your access to the room ended. Ask for the code again.",
+    maxDays: "A room can last up to 30 days.",
+    pastDate: "The expiry has to be a future date.",
+    notShareable: "That item can't be shared in a room.",
+    unsupported:
+      "This type of file can't be shown in the room. Share a PDF, Word, Excel or an image.",
+    noDownload: "This room doesn't allow downloads.",
+    creatorGone: "Whoever created the room is no longer in the company: the room can't be opened.",
+  },
+  reports: {
+    readings: (doc: string) => `Reading compliance · ${doc}`,
+    approvals: (doc: string) => `Approvals and versions history · ${doc}`,
+    formRecords: (form: string, from: string, to: string) =>
+      `Records of “${form}” · ${from} to ${to}`,
+    training: (course: string) => `Training records · ${course}`,
+    ppe: (from: string, to: string) => `PPE handouts · ${from} to ${to}`,
+    auditLog: (from: string, to: string) => `Audit log · ${from} to ${to}`,
+    generated: (when: string) => `Generated on ${when}.`,
+    columns: {
+      person: "Person",
+      status: "Status",
+      readAt: "Read",
+      version: "Version",
+      state: "State",
+      published: "Published",
+      approvals: "Approvals",
+      change: "Change",
+      date: "Date",
+      by: "By",
+      record: "Record",
+      values: "Answers",
+      item: "Equipment",
+      quantity: "Quantity",
+      action: "Action",
+      what: "On",
+      completed: "Done",
+      source: "How",
+      until: "Expires",
+    },
+    readingStatus: { read: "Read", pending: "Pending", overdue: "Overdue", noAccess: "No access" },
+    sources: { READING: "Reading", IN_PERSON: "In person" },
+    decisions: {
+      APPROVED: "Approved",
+      CHANGES_REQUESTED: "Asked for changes",
+      REJECTED: "Rejected",
+    },
+    empty: "No data in this period.",
+    voided: "Voided",
+  },
+  notice: {
+    firstAccess: "came in for the first time",
+  },
+};

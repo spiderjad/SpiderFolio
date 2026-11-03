@@ -45,7 +45,8 @@ export interface NotificationView {
     | "form_due"
     | "form_overdue"
     | "expiry_due"
-    | "safety_incident";
+    | "safety_incident"
+    | "audit_room_access";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -131,6 +132,9 @@ function pathOf(
   if (item.kind === "safety_incident") {
     return `/app/${slug}/seguridad/incidentes/${item.detail ?? ""}`;
   }
+  if (item.kind === "audit_room_access") {
+    return `/app/${slug}/admin/audit-rooms/${item.detail ?? ""}`;
+  }
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
   }
@@ -164,6 +168,7 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
   }
   if (item.kind === "directory_sync_stopped") return t.directorySyncStopped;
   if (item.kind === "safety_incident") return t.safetyIncident(item.actor?.name ?? "");
+  if (item.kind === "audit_room_access") return t.auditRoomAccess;
   if (item.kind === "expiry_due") {
     return item.expiry === null || item.expiresAt === null
       ? t.expiryGone
