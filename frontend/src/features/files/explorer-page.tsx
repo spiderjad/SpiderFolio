@@ -27,6 +27,7 @@ import {
   Sparkles,
   QrCode,
   CalendarClock,
+  FileSearch,
 } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type RefObject } from "react";
@@ -80,6 +81,7 @@ import { ControlDialog } from "../documents/control-dialog";
 import { QrDialog } from "../qr/qr-dialog";
 import { useSpaceExpiries, type ExpiryState } from "../expiries/expiries-api";
 import { ExpiryBadge, ExpiryDialog } from "../expiries/expiry-dialog";
+import { AddToRoomDialog } from "../audit-rooms/add-to-room";
 import { ShareDialog } from "../sharing/share-dialog";
 import { SharedMark } from "../sharing/shared-mark";
 import { NewPageDialog } from "../pages/new-page-dialog";
@@ -165,6 +167,7 @@ export function ExplorerPage() {
   const [controlNode, setControlNode] = useState<NodeView | null>(null);
   const [qrNode, setQrNode] = useState<NodeView | null>(null);
   const [expiryNode, setExpiryNode] = useState<NodeView | null>(null);
+  const [roomNode, setRoomNode] = useState<NodeView | null>(null);
   const expiries = useSpaceExpiries(workspaceSlug, spaceId);
   const [previewing, setPreviewing] = useState<NodeView | null>(null);
   const [zipNode, setZipNode] = useState<{ id: string; name: string } | null>(null);
@@ -446,6 +449,7 @@ export function ExplorerPage() {
     onControl: setControlNode,
     onQr: setQrNode,
     onExpiry: setExpiryNode,
+    onAuditRoom: setRoomNode,
     expiries: expiries.data,
     onImportZip: setZipNode,
     onTrash: (node: NodeView) => {
@@ -846,6 +850,14 @@ export function ExplorerPage() {
           if (reviewId !== null) patch({ revisar: undefined });
         }}
       />
+      <AddToRoomDialog
+        target={
+          roomNode === null ? null : { id: roomNode.id, name: roomNode.name, type: roomNode.type }
+        }
+        onClose={() => {
+          setRoomNode(null);
+        }}
+      />
       <ExpiryDialog
         target={
           expiryNode === null
@@ -1066,6 +1078,7 @@ interface RowProps {
   onControl: (node: NodeView) => void;
   onQr: (node: NodeView) => void;
   onExpiry: (node: NodeView) => void;
+  onAuditRoom: (node: NodeView) => void;
   /** The space's expiries by node (for the badges). */
   expiries: ReadonlyMap<string, { dueOn: string; state: ExpiryState }> | undefined;
   onImportZip: (node: NodeView) => void;
@@ -1268,6 +1281,16 @@ function NodeMenu({ node, ...props }: RowProps & { node: NodeView }) {
           >
             <CalendarClock aria-hidden="true" />
             {texts.expiries.menu}
+          </DropdownMenuItem>
+        )}
+        {membership.capabilities.includes("audit.share") && (
+          <DropdownMenuItem
+            onSelect={() => {
+              props.onAuditRoom(node);
+            }}
+          >
+            <FileSearch aria-hidden="true" />
+            {texts.auditRooms.add.menu}
           </DropdownMenuItem>
         )}
         {canManage(node.level) && (

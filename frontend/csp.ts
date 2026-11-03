@@ -9,7 +9,8 @@
 //
 // El origen de S3 (el de las URLs prefirmadas de subida y descarga) se agrega a connect-src (subir
 // y leer texto), img-src (imágenes) y frame-src (vista previa de PDF): el origen exacto de la
-// configuración, local o de producción, sin comodines.
+// configuración, local o de producción, sin comodines. frame-src mantiene 'self': el visor de una sala de
+// auditoría muestra PDF que sirve la propia API (docs/spec/salas-de-auditoria.md).
 export const CSP_DIRECTIVES = {
   "default-src": ["'self'"],
   "script-src": ["'self'"],
@@ -55,7 +56,7 @@ export function cspDirectives(storageOrigin: string | null = null): Directives {
     ...base,
     "img-src": [...CSP_DIRECTIVES["img-src"], storageOrigin],
     "connect-src": [...CSP_DIRECTIVES["connect-src"], storageOrigin],
-    "frame-src": [storageOrigin],
+    "frame-src": ["'self'", storageOrigin],
   };
 }
 

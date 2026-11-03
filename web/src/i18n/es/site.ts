@@ -200,7 +200,7 @@ export const site = {
       },
       {
         q: "¿Qué son los plugins?",
-        a: "Funciones comerciales opcionales (políticas de seguridad avanzadas, importación desde OneDrive, conector MCP, plantillas por rubro, salas de auditoría) que se activan con una licencia verificada sin conexión. Sin ellas, todo lo demás funciona igual.",
+        a: "Funciones comerciales opcionales (políticas de seguridad avanzadas, importación desde OneDrive, conector MCP, plantillas por rubro) que se activan con una licencia verificada sin conexión. Sin ellas, todo lo demás funciona igual.",
       },
       {
         q: "¿Mi equipo necesita aprender algo nuevo?",

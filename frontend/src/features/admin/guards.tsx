@@ -43,6 +43,10 @@ export function RequireLimits() {
   return <RequireCapability section="limits" />;
 }
 
+export function RequireAuditRooms() {
+  return <RequireCapability section="auditRooms" />;
+}
+
 export function RequireAudit() {
   return <RequireCapability section="audit" />;
 }

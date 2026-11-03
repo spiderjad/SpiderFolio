@@ -473,6 +473,60 @@ async function demoForm(locale: Locale, slug: string): Promise<void> {
   demoForms.set(locale, { id, record });
 }
 
+const demoRooms = new Map<Locale, string>();
+
+/** An audit room with what it shares and a few of the auditor's accesses (docs/spec/salas-de-auditoria.md). */
+async function demoAuditRoom(locale: Locale, slug: string, ids: Ids): Promise<void> {
+  if (demoRooms.has(locale)) return;
+  const owner = await ownerToken(locale);
+  const day = (offset: number) => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + offset);
+    return date.toISOString().slice(0, 10);
+  };
+  const es = locale === "es";
+  const created = (await formCall(owner, slug, "POST", "/admin/audit-rooms", {
+    name: es ? "Auditoría ISO 22000 · noviembre" : "ISO 22000 audit · November",
+    auditorEmail: es ? "auditora@certificadora.example" : "auditor@certifier.example",
+    expiresOn: day(14),
+    allowDownload: true,
+  })) as { room: { id: string } };
+  const id = created.room.id;
+  for (const item of [
+    { kind: "space", spaceId: ids.procedures },
+    { kind: "approvals", nodeId: ids.control },
+    { kind: "readings", nodeId: ids.control },
+    { kind: "audit-log", from: day(-30), to: day(0), action: "document." },
+  ]) {
+    await formCall(owner, slug, "POST", `/admin/audit-rooms/${id}/items`, item);
+  }
+  const workspace = await db.query<{ id: string }>(`SELECT id FROM "Workspace" WHERE slug = $1`, [
+    slug,
+  ]);
+  const accesses: [string, string | null, number][] = [
+    ["enter", null, 50],
+    [
+      "view",
+      es
+        ? "Procedimientos › Uso de la cortadora de fiambres"
+        : "Procedures › Using the meat slicer",
+      46,
+    ],
+    ["view", es ? "Historial de aprobaciones y versiones" : "Approvals and versions history", 41],
+    ["download", es ? "Cumplimiento de lecturas" : "Reading compliance", 38],
+  ];
+  for (const [action, what, minutes] of accesses) {
+    await db.query(
+      `INSERT INTO "AuditRoomAccess" (id, "workspaceId", "roomId", action, what, ip, "createdAt")
+       VALUES (gen_random_uuid()::text, $1, $2, $3, $4, '83.45.120.17', now() - ($5 || ' minutes')::interval)`,
+      [workspace.rows[0]?.id ?? "", id, action, what, String(minutes)],
+    );
+  }
+  demoRooms.set(locale, id);
+}
+
+const roomOf = (locale: Locale) => demoRooms.get(locale) ?? "";
+
 const demoExpiriesDone = new Set<Locale>();
 
 /** Expiries on the demo space's pages and files (docs/spec/vencimientos.md), relative to today. */
@@ -707,6 +761,26 @@ const CAPTURES: Capture[] = [
     path: (i) => `/app/${i.slug}/files/${i.procedures}/p/${i.slicer}`,
     before: ({ slug, locale, ids }) => demoExpiries(locale, slug, ids),
     then: (page, locale) => fromMenu(page, locale, locale === "es" ? "Vencimiento" : "Expiry"),
+  },
+  // Audit rooms (docs/spec/salas-de-auditoria.md).
+  {
+    name: "salas-auditoria",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/admin/audit-rooms`,
+    before: ({ slug, locale, ids }) => demoAuditRoom(locale, slug, ids),
+  },
+  {
+    name: "sala-auditoria",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/admin/audit-rooms/${roomOf(locale)}`,
+    before: ({ slug, locale, ids }) => demoAuditRoom(locale, slug, ids),
+  },
+  {
+    name: "sala-auditor",
+    who: "owner",
+    prefix: "/auditoria/",
+    path: (_i, locale) => `/auditoria/${roomOf(locale)}`,
+    before: ({ slug, locale, ids }) => demoAuditRoom(locale, slug, ids),
   },
   // Forms and records: the demo form, created the first time (demoForm).
   {

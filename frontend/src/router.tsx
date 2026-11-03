@@ -40,6 +40,11 @@ export const routes = [
       { index: true, element: <Navigate to="/app" replace /> },
       // Lo que abre un código QR escaneado: con o sin sesión, según el código.
       { path: "q/:token", lazy: page(() => import("@/features/qr/scan-page"), "ScanPage") },
+      // An audit room's external auditor: no account, with or without a member's session.
+      {
+        path: "auditoria/:roomId",
+        lazy: page(() => import("@/features/audit-rooms/auditor-page"), "AuditorPage"),
+      },
       {
         element: <GuestOnly />,
         children: [
@@ -343,6 +348,20 @@ export const routes = [
                           () => import("@/features/admin/security/security-page"),
                           "SecurityPage",
                         ),
+                      },
+                    ],
+                  },
+                  {
+                    // Audit rooms (docs/spec/salas-de-auditoria.md): audit.share.
+                    lazy: page(() => import("@/features/admin/guards"), "RequireAuditRooms"),
+                    children: [
+                      {
+                        path: "audit-rooms",
+                        lazy: page(() => import("@/features/audit-rooms/rooms-page"), "RoomsPage"),
+                      },
+                      {
+                        path: "audit-rooms/:roomId",
+                        lazy: page(() => import("@/features/audit-rooms/room-page"), "RoomPage"),
                       },
                     ],
                   },

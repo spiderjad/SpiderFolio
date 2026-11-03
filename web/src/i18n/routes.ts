@@ -48,6 +48,7 @@ export const DOC_KEYS = [
   "myDocuments",
   "qr",
   "expiries",
+  "auditRooms",
   "forms",
   "safety",
   "search",

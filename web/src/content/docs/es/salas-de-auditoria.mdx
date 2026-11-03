@@ -1,0 +1,69 @@
+---
+title: "Salas de auditoría"
+description: "Compartir con un auditor externo solo lo que pide, en solo lectura y por tiempo limitado, con marca de agua y registro de cada acceso."
+group: uso-diario
+order: 9.7
+icon: lock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirven
+
+En una auditoría (ISO, de un cliente, de sanidad), el auditor pide ver ciertos documentos y registros. Una **sala de auditoría** le da acceso a eso y a nada más: **sin cuenta ni plaza**, en **solo lectura**, hasta una fecha y con todo lo que ve en PDF con la marca de agua «Copia para auditoría · [su email] · [fecha]». Cada vez que entra, ve o descarga algo, queda registrado.
+
+Es gratis, parte de SpiderFolio. La arma quien tiene la capacidad **Compartir auditorías** (`audit.share`) en su rol; ver [Roles y permisos](/es/docs/roles-y-permisos).
+
+## Crear una sala
+
+En **Administración › Salas de auditoría**, pulsa **Nueva sala**:
+
+1. **Nombre**: por ejemplo, «Auditoría ISO 22000 · noviembre».
+2. **Email del auditor**: ahí le llegan el enlace y el código para entrar.
+3. **Vence el**: hasta 30 días. Ese día, al terminar, la sala se cierra sola.
+4. **Permitir descargar**: sin esto, el auditor ve los PDF en pantalla, sin botón de descarga.
+
+Al crearla, el auditor recibe el enlace por email. Después agregas lo que compartes.
+
+<Shot name="salas-auditoria" alt="La lista de salas de auditoría con su auditor, vencimiento, estado y último acceso" />
+
+## Qué se comparte
+
+- **Documentos, carpetas y espacios**: desde el menú **⋯** del explorador (o de la tarjeta del espacio), **Agregar a una sala de auditoría**. Una carpeta o un espacio incluye lo que tiene adentro al momento de verlo. Los documentos controlados se muestran en su versión vigente.
+- **Informes de un documento controlado**: desde su menú **⋯**, el **cumplimiento de lecturas** o el **historial de aprobaciones y versiones**.
+- **Registros de un formulario**, entre dos fechas: desde el menú **⋯** del formulario.
+- En la sala, **Agregar un informe**: las **constancias de formación** de un curso y las **entregas de EPIs** entre dos fechas (con [Seguridad y salud laboral](/es/docs/seguridad-y-salud-laboral)), y el **registro de auditoría** filtrado por fechas y acción.
+
+Nunca se comparten accidentes, incidentes ni aptitud: son datos de salud. Solo puedes agregar lo que tú ves, y cada informe pide la capacidad que ya hace falta para verlo (por ejemplo, el registro de auditoría pide **Ver el registro de auditoría**). La sala muestra siempre lo que ve quien la creó: si pierde el acceso a algo, el auditor deja de verlo.
+
+Todo se muestra como **PDF con marca de agua**: las páginas, los PDF, los archivos de Word, Excel o PowerPoint (se convierten) y las imágenes. Otros formatos no se pueden mostrar. Necesita [Gotenberg](/es/docs/gotenberg).
+
+<Shot name="sala-auditoria" alt="Una sala: lo que comparte, agregar un informe y los accesos del auditor" />
+
+## Cómo entra el auditor
+
+1. Abre el enlace del email.
+2. Pulsa **Enviarme el código**: le llega a ese mismo email. Vale **una sola vez**, por 10 minutos, y se bloquea tras 5 intentos fallidos.
+3. Escribe el código y entra: ve solo la sala, con **Ver** (y **Descargar**, si lo permitiste) en cada elemento.
+
+Su acceso dura hasta 8 horas; después vuelve a pedir el código. No ve nada más de la empresa ni ocupa plaza.
+
+<Shot name="sala-auditor" alt="La pantalla del auditor para pedir el código de acceso" />
+
+## Accesos, reenvío y revocación
+
+En la sala, **Accesos del auditor** muestra cada entrada, cada documento que vio y cada descarga, con fecha e IP. La primera vez que entra, quien creó la sala recibe un aviso en la campana.
+
+- **Reenviar el enlace**: si el auditor no encuentra el email.
+- **Revocar la sala**: deja de entrar de inmediato y no se puede volver a abrir. Lo que ya vio queda en el registro.
+
+Crear, revocar, agregar y quitar queda además en la auditoría de la empresa. Cada uno ve las salas que creó; el propietario ve todas.
+
+Lo que se ve en un navegador siempre se puede capturar: la marca de agua con el email y la fecha es lo que identifica cada copia.
+
+## Relacionado
+
+- [Documentos controlados](/es/docs/documentos-controlados)
+- [Lecturas obligatorias](/es/docs/lecturas-obligatorias)
+- [Formularios y registros](/es/docs/formularios)
+- [Roles y permisos](/es/docs/roles-y-permisos)

@@ -18,6 +18,7 @@ import { connectorTexts } from "./connector";
 import { formsTexts } from "./forms";
 import { safetyTexts } from "./safety";
 import { expiriesTexts } from "./expiries";
+import { auditRoomsTexts } from "./audit-rooms";
 import { termsTexts } from "./terms";
 
 export const en: Messages = {
@@ -39,6 +40,7 @@ export const en: Messages = {
   forms: formsTexts,
   safety: safetyTexts,
   expiries: expiriesTexts,
+  auditRooms: auditRoomsTexts,
   terms: termsTexts,
   app: { name: "SpiderFolio", loading: "Loading SpiderFolio…" },
   kiosk: {

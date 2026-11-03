@@ -1,0 +1,69 @@
+---
+title: "Audit rooms"
+description: "Share with an external auditor only what they ask for, read-only and for a limited time, with a watermark and a record of every access."
+group: uso-diario
+order: 9.7
+icon: lock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What they're for
+
+In an audit (ISO, a customer's, a health inspection), the auditor asks to see certain documents and records. An **audit room** gives them access to that and nothing else: **no account nor seat**, **read-only**, until a date, and everything they see is a PDF with the watermark “Audit copy · [their email] · [date]”. Every time they come in, view or download something, it's recorded.
+
+It's free, part of SpiderFolio. Whoever has the **Share audits** capability (`audit.share`) in their role builds it; see [Roles and permissions](/en/docs/roles-and-permissions).
+
+## Create a room
+
+In **Administration › Audit rooms**, press **New room**:
+
+1. **Name**: for example, “ISO 22000 audit · November”.
+2. **Auditor's email**: the link and the code to get in go there.
+3. **Expires on**: up to 30 days. At the end of that day the room closes on its own.
+4. **Allow downloads**: without it, the auditor sees the PDFs on screen, with no download button.
+
+Once it's created, the auditor gets the link by email. Then you add what you share.
+
+<Shot name="salas-auditoria" alt="The list of audit rooms with their auditor, expiry, state and last access" />
+
+## What you share
+
+- **Documents, folders and spaces**: from the explorer's **⋯** menu (or the space card's), **Add to an audit room**. A folder or a space includes what's inside it when it's viewed. Controlled documents are shown in their current version.
+- **A controlled document's reports**: from its **⋯** menu, the **reading compliance** or the **approvals and versions history**.
+- **A form's records**, between two dates: from the form's **⋯** menu.
+- In the room, **Add a report**: a course's **training records** and the **PPE handouts** between two dates (with [Occupational health and safety](/en/docs/occupational-health-and-safety)), and the **audit log** filtered by dates and action.
+
+Accidents, incidents and fitness are never shared: they're health data. You can only add what you can see, and each report needs the capability already needed to see it (for example, the audit log needs **View the audit log**). The room always shows what its creator sees: if they lose access to something, the auditor stops seeing it.
+
+Everything is shown as a **watermarked PDF**: pages, PDFs, Word, Excel or PowerPoint files (converted) and images. Other formats can't be shown. It needs [Gotenberg](/en/docs/gotenberg).
+
+<Shot name="sala-auditoria" alt="A room: what it shares, adding a report and the auditor's accesses" />
+
+## How the auditor gets in
+
+1. They open the link in the email.
+2. They press **Send me the code**: it goes to that same email. It works **only once**, for 10 minutes, and locks after 5 wrong tries.
+3. They type the code and get in: they see only the room, with **View** (and **Download**, if you allowed it) on each item.
+
+Their access lasts up to 8 hours; then they ask for the code again. They see nothing else of the company and take no seat.
+
+<Shot name="sala-auditor" alt="The auditor's screen to ask for the access code" />
+
+## Accesses, resending and revoking
+
+In the room, **The auditor's accesses** shows every entry, every document they viewed and every download, with date and IP. The first time they come in, whoever created the room gets a notice in the bell.
+
+- **Send the link again**: if the auditor can't find the email.
+- **Revoke the room**: they can't get in any more, right away, and it can't be reopened. What they already saw stays in the log.
+
+Creating, revoking, adding and removing are also recorded in the company's audit log. Each person sees the rooms they created; the owner sees all of them.
+
+Whatever is seen in a browser can always be captured: the watermark with the email and the date is what identifies each copy.
+
+## Related
+
+- [Controlled documents](/en/docs/controlled-documents)
+- [Required reading](/en/docs/required-reading)
+- [Forms and records](/en/docs/forms)
+- [Roles and permissions](/en/docs/roles-and-permissions)

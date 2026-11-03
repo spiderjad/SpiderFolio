@@ -201,7 +201,7 @@ export const site: Catalog<typeof esSite> = {
       },
       {
         q: "What are plugins?",
-        a: "Optional commercial features (advanced security policies, OneDrive import, MCP connector, industry templates, audit rooms) enabled with a license that is verified offline. Without them, everything else works the same.",
+        a: "Optional commercial features (advanced security policies, OneDrive import, MCP connector, industry templates) enabled with a license that is verified offline. Without them, everything else works the same.",
       },
       {
         q: "Does my team need to learn anything new?",

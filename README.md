@@ -125,7 +125,7 @@ More: [email (SMTP)](docs/install/email.md), [updating](docs/install/upgrading.m
 
 The core is complete and free. Some business features are offered as plugins that are activated with
 a license verified offline: advanced security policies (require 2FA, allowed domains, SSO), import from
-OneDrive and SharePoint, an MCP connector for Claude, industry templates and audit rooms. Without a
+OneDrive and SharePoint, an MCP connector for Claude and industry templates. Without a
 license, SpiderFolio works just the same. See [docs/spec/plugins.md](docs/spec/plugins.md) and the
 [Plugins](https://spiderfolio.spiderjad.com/plugins) page.
 

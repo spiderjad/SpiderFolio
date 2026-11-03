@@ -35,7 +35,7 @@ describe("CSP con el origen de S3", () => {
     const directives = cspDirectives("http://localhost:9000");
     expect(directives["img-src"]).toContain("http://localhost:9000");
     expect(directives["connect-src"]).toContain("http://localhost:9000");
-    expect(directives["frame-src"]).toEqual(["http://localhost:9000"]);
+    expect(directives["frame-src"]).toEqual(["'self'", "http://localhost:9000"]);
     expect(directives["script-src"]).toEqual(["'self'"]);
     expect(directives["worker-src"]).toEqual(["'self'"]);
     expect(directives["manifest-src"]).toEqual(["'self'"]);

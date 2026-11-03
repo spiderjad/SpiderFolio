@@ -151,6 +151,35 @@ async function request(path: string, options: RequestOptions): Promise<Response>
   return res;
 }
 
+/**
+ * For someone without an account (an audit room's auditor): no access token and no session renewal; a 401
+ * is just an error (their own cookie, scoped to their room, is the only credential).
+ */
+export async function guestApi<T>(
+  path: string,
+  options: Pick<RequestOptions, "method" | "body" | "signal"> = {},
+): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        "Accept-Language": locale,
+        ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
+      },
+      credentials: "same-origin",
+      ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
+      ...(options.signal === undefined ? {} : { signal: options.signal }),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throw new NetworkError();
+  }
+  if (!res.ok) throw await toApiError(res);
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
 /** Request a la API. Devuelve el JSON (o undefined en 204) o lanza ApiError/NetworkError. */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const res = await request(path, options);

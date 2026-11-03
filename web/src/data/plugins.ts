@@ -157,23 +157,6 @@ export const PLUGINS: readonly CatalogPlugin[] = [
       },
     },
   },
-  {
-    id: "audit-rooms",
-    icon: "clipboard",
-    price: "paid",
-    version: null,
-    minCore: null,
-    text: {
-      es: {
-        title: "Salas de auditoría",
-        text: "Comparte con el auditor externo solo lo que pide, por tiempo limitado, con marca de agua y registro de todo lo que consultó.",
-      },
-      en: {
-        title: "Audit rooms",
-        text: "Share with the external auditor only what they ask for, for a limited time, with a watermark and a record of everything they looked at.",
-      },
-    },
-  },
 ];
 
 /** The «plugins» Release, where the free plugins are downloaded from (never «latest»). */

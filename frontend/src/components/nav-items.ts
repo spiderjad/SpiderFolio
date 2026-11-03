@@ -7,6 +7,7 @@ import {
   HardHat,
   ClipboardCheck,
   FileCheck2,
+  FileSearch,
   FolderOpen,
   Gauge,
   KeyRound,
@@ -55,6 +56,8 @@ export const adminSections = {
   license: ["workspace.settings"],
   limits: ["workspace.settings", "storage.view"],
   audit: ["audit.view"],
+  /** Audit rooms: whoever shares with external auditors. */
+  auditRooms: ["audit.share"],
 } as const;
 
 type Person = Pick<Membership, "role" | "capabilities" | "leadsDepartments" | "seatType"> & {
@@ -77,7 +80,7 @@ export function canSee(person: Person, section: keyof typeof adminSections): boo
   if (section === "license") return role.base === "OWNER";
   if (section === "security" || section === "bian" || section === "limits" || section === "audit")
     return byCapability;
-  if (section === "roles" || section === "access") return byCapability;
+  if (section === "roles" || section === "access" || section === "auditRooms") return byCapability;
   // Documentos: quien tiene las capacidades, o un jefe (ve solo su área).
   if (section === "documents") return byCapability || person.leadsDepartments;
   if (section === "positions") return byCapability || person.leadsDepartments;
@@ -197,6 +200,14 @@ export function navItems(
       plugins: true,
     });
   }
+  if (canSee(person, "auditRooms")) {
+    items.push({
+      to: `/app/${slug}/admin/audit-rooms`,
+      label: texts.auditRooms.nav,
+      icon: FileSearch,
+      group: t.group,
+    });
+  }
   if (canSee(person, "audit")) {
     items.push({
       to: `/app/${slug}/admin/audit`,
@@ -282,6 +293,7 @@ export function sectionTitle(
   if (pathname.includes("/admin/bian")) return texts.admin.nav.bian;
   if (pathname.includes("/admin/license")) return texts.admin.nav.license;
   if (pathname.includes("/admin/limits")) return texts.admin.nav.limits;
+  if (pathname.includes("/admin/audit-rooms")) return texts.auditRooms.nav;
   if (pathname.includes("/admin/audit")) return texts.admin.nav.audit;
   return texts.dashboard.title;
 }

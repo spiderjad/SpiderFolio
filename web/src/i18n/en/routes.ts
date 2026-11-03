@@ -41,6 +41,7 @@ export const routes: LocaleRoutes = {
     myDocuments: "my-documents",
     qr: "qr-codes",
     expiries: "expiries",
+    auditRooms: "audit-rooms",
     forms: "forms",
     safety: "occupational-health-and-safety",
     search: "search",

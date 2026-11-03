@@ -131,7 +131,9 @@ export function auditorRouter(deps: AppDeps): Router {
       `${download ? "attachment" : "inline"}; filename="auditoria.pdf"; filename*=UTF-8''${name}`,
     );
     res.setHeader("Cache-Control", "no-store");
-    // Shown inside the room's viewer only, never framed by another site.
+    // Shown inside the room's viewer (the app, same origin), never framed by another site: like the
+    // local storage's previews, this response may only be framed by the app itself.
+    res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'self'");
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.send(Buffer.from(file.body));
   });

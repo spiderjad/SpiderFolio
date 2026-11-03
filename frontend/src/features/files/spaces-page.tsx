@@ -9,6 +9,7 @@ import {
   ArchiveRestore,
   ArrowDown,
   ArrowUp,
+  FileSearch,
   FolderOpen,
   LayoutGrid,
   List,
@@ -37,6 +38,7 @@ import {
 import { adminErrorText, loadErrorIcon, loadErrorText } from "@/features/admin/admin-utils";
 import { useListParams, useSearchParam } from "@/features/admin/list-params";
 import { useMembership } from "@/features/home/workspace-layout";
+import { AddToRoomDialog } from "@/features/audit-rooms/add-to-room";
 import { ShareDialog } from "@/features/sharing/share-dialog";
 import { SharedMark } from "@/features/sharing/shared-mark";
 import { SearchField } from "@/components/ui/filter-bar";
@@ -115,6 +117,7 @@ export function SpacesPage() {
     patch({ crear: undefined });
   }, [wantsCreate, canCreate, patch]);
   const [sharing, setSharing] = useState<SpaceView | null>(null);
+  const [rooming, setRooming] = useState<SpaceView | null>(null);
   const [archiving, setArchiving] = useState<SpaceView | null>(null);
 
   const list = useInfiniteList<SpaceView>({
@@ -167,6 +170,8 @@ export function SpacesPage() {
   const actions = {
     onEdit: setEditing,
     onShare: setSharing,
+    // Whoever shares with external auditors (audit.share) adds a whole space to a room.
+    ...(capabilities.includes("audit.share") ? { onAuditRoom: setRooming } : {}),
     onArchive: setArchiving,
     onRestore: (space: SpaceView) => {
       restore.mutate(space);
@@ -376,6 +381,12 @@ export function SpacesPage() {
           setEditing(null);
         }}
       />
+      <AddToRoomDialog
+        target={rooming === null ? null : { id: rooming.id, name: rooming.name, type: "SPACE" }}
+        onClose={() => {
+          setRooming(null);
+        }}
+      />
       <ShareDialog
         subject={
           sharing === null
@@ -411,6 +422,7 @@ export function SpacesPage() {
 interface Actions {
   onEdit: (space: SpaceView) => void;
   onShare: (space: SpaceView) => void;
+  onAuditRoom?: (space: SpaceView) => void;
   onArchive: (space: SpaceView) => void;
   onRestore: (space: SpaceView) => void;
   onFavorite: (space: SpaceView) => void;
@@ -589,6 +601,16 @@ function SpaceMenu({ space, actions }: { space: SpaceView; actions: Actions }) {
           <Users aria-hidden="true" />
           {t.manage}
         </DropdownMenuItem>
+        {actions.onAuditRoom !== undefined && (
+          <DropdownMenuItem
+            onSelect={() => {
+              actions.onAuditRoom?.(space);
+            }}
+          >
+            <FileSearch aria-hidden="true" />
+            {texts.auditRooms.add.menu}
+          </DropdownMenuItem>
+        )}
         {space.archived ? (
           <DropdownMenuItem
             onSelect={() => {
