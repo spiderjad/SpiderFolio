@@ -967,3 +967,17 @@ export const formExportTexts = {
   tooMany: (max: string) => `Son más de ${max} registros. Acota las fechas y vuelve a exportar.`,
   pageFooter: (page: string, total: string) => `Página ${page} de ${total}`,
 } as const;
+
+export const expiryTexts = {
+  csv: {
+    fileName: "vencimientos.csv",
+    tooMany: "Hay demasiados vencimientos para exportar. Filtrá la lista y probá de nuevo.",
+    dueOn: "Vence",
+    element: "Elemento",
+    space: "Espacio",
+    state: "Estado",
+    responsible: "Responsable",
+    note: "Nota",
+    states: { valid: "Vigente", due_soon: "Por vencer", expired: "Vencido" },
+  },
+};

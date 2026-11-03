@@ -24,6 +24,7 @@ import { directoryRoutes } from "./modules/directory/directory.routes.ts";
 import { fileRoutes } from "./modules/files/files.routes.ts";
 import { importRoutes } from "./modules/imports/imports.routes.ts";
 import { trashRoutes } from "./modules/trash/trash.routes.ts";
+import { nodeExpiryRoutes } from "./modules/expiries/node-expiries.routes.ts";
 import { nodeRoutes } from "./modules/nodes/nodes.routes.ts";
 import { commentRoutes } from "./modules/comments/comments.routes.ts";
 import { linkRoutes } from "./modules/nodes/links.routes.ts";
@@ -112,6 +113,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...accessExplainRoutes(deps),
     ...accessAuditRoutes(),
     ...nodeRoutes(deps),
+    ...nodeExpiryRoutes(deps),
     ...linkRoutes(),
     ...documentRoutes(deps),
     ...qrRoutes(deps),

@@ -412,6 +412,10 @@ model Expiry {
   membershipId  String?
   /// Who has to take care of it (membership; no FK).
   responsibleId String?
+  /// Or a department: its heads and deputies are told (no FK).
+  responsibleDepartmentId String?
+  /// A note about what to do (up to 500).
+  note          String?
   /// The company day it expires on.
   dueOn         DateTime  @db.Date
   /// Days before dueOn to give notice (0 = the same day).

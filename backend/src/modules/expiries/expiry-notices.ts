@@ -46,6 +46,7 @@ export async function sendExpiryNotices(
       for (const expiry of rows) {
         const kind = expiryKindOf(expiry.kind);
         if (kind === undefined || (await kind.paused?.(db)) === true) continue;
+        if ((await kind.waiting?.(db, expiry)) === true) continue;
         const left = daysUntil(today, dayOf(expiry.dueOn));
         const notice = noticeFor(left, expiry.noticeDays, expiry.noticesSent);
         if (!notice.notify) continue;
@@ -54,7 +55,7 @@ export async function sendExpiryNotices(
           await db.expiry.update({ where: { id: expiry.id }, data: { resolvedAt: now } });
           continue;
         }
-        const wanted = await (kind.recipients?.(db, expiry) ?? defaultRecipients(expiry));
+        const wanted = await (kind.recipients?.(db, expiry) ?? defaultRecipients(db, expiry));
         const active = await db.membership.findMany({
           where: { id: { in: [...new Set(wanted)] }, status: "ACTIVE" },
           select: { id: true },

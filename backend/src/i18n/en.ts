@@ -981,3 +981,17 @@ export const formExportTexts: Catalog<typeof Es.formExportTexts> = {
     `There are more than ${max} records. Narrow the dates down and export again.`,
   pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
 };
+
+export const expiryTexts: Catalog<typeof Es.expiryTexts> = {
+  csv: {
+    fileName: "expiries.csv",
+    tooMany: "There are too many expiries to export. Filter the list and try again.",
+    dueOn: "Due",
+    element: "Item",
+    space: "Space",
+    state: "State",
+    responsible: "Responsible",
+    note: "Note",
+    states: { valid: "Valid", due_soon: "Due soon", expired: "Expired" },
+  },
+};

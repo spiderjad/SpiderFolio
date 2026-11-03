@@ -9,7 +9,7 @@ export const DEFAULT_NOTICE_DAYS = [30, 7, 0] as const;
 
 export type ExpiryRow = Pick<
   Expiry,
-  "id" | "kind" | "subjectId" | "membershipId" | "responsibleId" | "dueOn"
+  "id" | "kind" | "subjectId" | "membershipId" | "responsibleId" | "responsibleDepartmentId" | "dueOn"
 >;
 
 export interface ExpiryKind {
@@ -26,6 +26,8 @@ export interface ExpiryKind {
   recipients?: (db: TenantDb, expiry: ExpiryRow) => Promise<string[]>;
   /** While true for a company (its module is off), no notices go out and nothing is resolved. */
   paused?: (db: TenantDb) => Promise<boolean>;
+  /** While true for one item (in the trash), it gives no notices; it's not resolved either. */
+  waiting?: (db: TenantDb, expiry: ExpiryRow) => Promise<boolean>;
 }
 
 const kinds = new Map<string, ExpiryKind>();
@@ -52,6 +54,8 @@ export interface SetExpiryInput {
   dueOn: string;
   membershipId?: string | null;
   responsibleId?: string | null;
+  responsibleDepartmentId?: string | null;
+  note?: string | null;
   noticeDays?: readonly number[];
 }
 
@@ -67,6 +71,7 @@ export async function setExpiry(db: TenantDb, input: SetExpiryInput): Promise<Ex
     subjectId: true,
     membershipId: true,
     responsibleId: true,
+    responsibleDepartmentId: true,
     dueOn: true,
   } as const;
   const current = await db.expiry.findFirst({
@@ -76,6 +81,10 @@ export async function setExpiry(db: TenantDb, input: SetExpiryInput): Promise<Ex
   const people = {
     ...(input.membershipId === undefined ? {} : { membershipId: input.membershipId }),
     ...(input.responsibleId === undefined ? {} : { responsibleId: input.responsibleId }),
+    ...(input.responsibleDepartmentId === undefined
+      ? {}
+      : { responsibleDepartmentId: input.responsibleDepartmentId }),
+    ...(input.note === undefined ? {} : { note: input.note }),
   };
   if (current === null) {
     return await db.expiry.create({
@@ -113,11 +122,28 @@ export async function resolveExpiry(db: TenantDb, kind: string, subjectId: strin
   });
 }
 
-/** By default: whoever is responsible and the person it is about. */
-export function defaultRecipients(expiry: ExpiryRow): string[] {
+/**
+ * By default: whoever is responsible (a person, or the heads and deputies of the responsible
+ * department) and the person it is about.
+ */
+export async function defaultRecipients(db: TenantDb, expiry: ExpiryRow): Promise<string[]> {
+  const leaders =
+    expiry.responsibleDepartmentId === null
+      ? []
+      : (
+          await db.departmentMember.findMany({
+            where: {
+              departmentId: expiry.responsibleDepartmentId,
+              position: { in: ["HEAD", "DEPUTY"] },
+            },
+            select: { membershipId: true },
+          })
+        ).map((row) => row.membershipId);
   return [
     ...new Set(
-      [expiry.responsibleId, expiry.membershipId].filter((id): id is string => id !== null),
+      [expiry.responsibleId, expiry.membershipId, ...leaders].filter(
+        (id): id is string => id !== null,
+      ),
     ),
   ];
 }

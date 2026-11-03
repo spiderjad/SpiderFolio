@@ -307,6 +307,8 @@ export async function purgeTrashRoot(
     for (const level of [...levels.keys()].sort((a, b) => b - a)) {
       for (const ids of chunks(levels.get(level) ?? [], CHUNK)) {
         await tx.node.deleteMany({ where: { id: { in: ids } } });
+        // Their expiries go with them (no FK: the engine is generic).
+        await tx.expiry.deleteMany({ where: { kind: "node", subjectId: { in: ids } } });
       }
     }
     if (bytes > 0n) {

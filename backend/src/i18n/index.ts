@@ -53,6 +53,7 @@ export const mfaResetMessages = localized("mfaResetMessages");
 export const controlledPdfTexts = localized("controlledPdfTexts");
 export const qrTexts = localized("qrTexts");
 export const accessExportLabels = localized("accessExportLabels");
+export const expiryTexts = localized("expiryTexts");
 export const auditExportLabels = localized("auditExportLabels");
 export const readingExportLabels = localized("readingExportLabels");
 export const bianAdminTexts = localized("bianAdminTexts");
