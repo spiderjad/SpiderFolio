@@ -21,10 +21,16 @@ In the explorer, open the **⋯** menu of a file, a page or a form and choose **
 <Shot name="vencimiento" alt="The Expiry dialog with the date, the responsible, the notice days and the note" />
 
 1. Choose the date in **Expires on**.
-2. In **Responsible**, choose a person or a department. With a department, the notices go to its **heads and deputies**.
+2. In **Responsible**, choose a person or a department. With a department, the notices go to its **heads and deputies**. If you choose no one, you're responsible: someone always gets the notices.
 3. In **Notify**, mark when to notify: by default **30 days before**, **7 days before** and **On the day**.
 4. If needed, write a **Note** with what needs doing.
 5. Press **Save**.
+
+### Suggest with Bian
+
+If [Bian](/en/docs/bian) is on, the dialog has the **Suggest with Bian** button: it reads the page's or the file's text and, if the document says until when it's valid ("valid until", "expires", "expiry date"…), it suggests the date. It can also suggest a note and someone responsible, if the document names them and they match a person or a department of the company. Under the button you see which sentence of the document the date comes from.
+
+**It isn't saved on its own**: review the suggestion and press **Save**. It uses one Bian query from your quota, and only someone who can set the expiry can ask for it. Forms have no text to read.
 
 If the responsible person can't see the item, SpiderFolio tells you when you save: they'll get the notices but won't be able to open it. Share it with them or choose someone else.
 
@@ -39,7 +45,13 @@ Setting, removing and exporting expiries is recorded in the audit log.
 
 ## The badges
 
-When it's close (within the largest notice), the item shows **Due …** in amber; once the date has passed, **Expired …** in red. They appear in the explorer, next to the name, and on the item's screen. A valid expiry that's still far off shows no badge. Press the badge to open the expiry.
+Every item with an expiry shows a badge with the time left, in its state's color:
+
+- green, **Due in 31 days**, while it's valid;
+- amber, **Due in 5 days**, when it's close (within the largest notice);
+- red, **Expired 2 days ago**, once the date has passed.
+
+They appear in the explorer, next to the name, and on the item's screen. Hover to see the date; press the badge to open the expiry.
 
 ## The notices
 
@@ -53,7 +65,7 @@ When you upload a new version of a file with an expiry (with **Upload a new vers
 
 ## The Expiries screen
 
-In the side menu, **Expiries** shows all the ones you can see. The number next to it counts **only yours** (as the responsible, or of a department you lead) due soon or expired.
+In the side menu, **Expiries** shows all the ones you can see. The number next to it counts **only yours** (as the responsible, or of a department you lead) due soon or expired: **red** if any has expired, **amber** if they're only due soon.
 
 <Shot name="vencimientos" alt="The expiries list with filters by space, department, responsible and state" />
 

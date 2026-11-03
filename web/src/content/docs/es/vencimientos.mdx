@@ -21,10 +21,16 @@ En el explorador, abre el menú **⋯** de un archivo, una página o un formular
 <Shot name="vencimiento" alt="El diálogo Vencimiento con la fecha, el responsable, los días de aviso y la nota" />
 
 1. Elige la fecha en **Vence el**.
-2. En **Responsable**, elige una persona o un departamento. Si eliges un departamento, los avisos les llegan a sus **jefes y subjefes**.
+2. En **Responsable**, elige una persona o un departamento. Si eliges un departamento, los avisos les llegan a sus **jefes y subjefes**. Si no eliges a nadie, el responsable eres tú: siempre hay alguien que recibe los avisos.
 3. En **Avisar**, marca cuándo avisar: por defecto, **30 días antes**, **7 días antes** y **El mismo día**.
 4. Si hace falta, escribe una **Nota** con lo que hay que hacer.
 5. Pulsa **Guardar**.
+
+### Sugerir con Bian
+
+Si [Bian](/es/docs/bian) está activo, el diálogo tiene el botón **Sugerir con Bian**: lee el texto de la página o del archivo y, si el documento dice hasta cuándo vale («válido hasta», «vence», «caduca»…), propone la fecha. También puede proponer una nota y un responsable, si el documento lo nombra y coincide con una persona o un departamento de la empresa. Debajo del botón ves de qué frase del documento sale la fecha.
+
+**No se guarda solo**: revisa lo que propone y pulsa **Guardar**. Usa una consulta de Bian de tu cuota y solo lo puede pedir quien puede poner el vencimiento. Los formularios no tienen texto para leer.
 
 Si la persona responsable no puede ver el elemento, SpiderFolio te lo avisa al guardar: le van a llegar los avisos, pero no va a poder abrirlo. Compártelo con esa persona o elige otro responsable.
 
@@ -39,7 +45,13 @@ Poner, quitar y exportar vencimientos queda en la auditoría.
 
 ## Las insignias
 
-Cuando falta poco (dentro del mayor de los días de aviso), el elemento muestra **Vence el …** en ámbar; cuando ya pasó la fecha, **Venció el …** en rojo. Aparecen en el explorador, junto al nombre, y en la pantalla del elemento. Un vencimiento vigente y lejano no muestra insignia. Pulsa la insignia para abrir el vencimiento.
+Todo elemento con vencimiento muestra una insignia con el tiempo que le queda, en el color de su estado:
+
+- en verde, **Vence en 31 días**, mientras está vigente;
+- en ámbar, **Vence en 5 días**, cuando falta poco (dentro del mayor de los días de aviso);
+- en rojo, **Venció hace 2 días**, cuando ya pasó la fecha.
+
+Aparecen en el explorador, junto al nombre, y en la pantalla del elemento. Al pasar el puntero se ve la fecha; pulsa la insignia para abrir el vencimiento.
 
 ## Los avisos
 
@@ -53,7 +65,7 @@ Cuando subes una versión nueva de un archivo con vencimiento (con **Subir una v
 
 ## La pantalla Vencimientos
 
-En el menú lateral, **Vencimientos** muestra todos los que puedes ver. El número junto al ítem cuenta **solo los tuyos** (como responsable, o de un departamento que diriges) por vencer o vencidos.
+En el menú lateral, **Vencimientos** muestra todos los que puedes ver. El número junto al ítem cuenta **solo los tuyos** (como responsable, o de un departamento que diriges) por vencer o vencidos: en **rojo** si alguno ya venció, en **ámbar** si solo hay por vencer.
 
 <Shot name="vencimientos" alt="La lista de vencimientos con filtros por espacio, departamento, responsable y estado" />
 

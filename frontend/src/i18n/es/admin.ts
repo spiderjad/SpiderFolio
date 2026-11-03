@@ -82,7 +82,8 @@ export const capabilityTexts = {
   },
   "expirations.manage": {
     label: "Gestionar vencimientos",
-    description: "Pone y cambia los vencimientos de los archivos y páginas que puede ver, aunque no pueda editarlos.",
+    description:
+      "Pone y cambia los vencimientos de los archivos y páginas que puede ver, aunque no pueda editarlos.",
   },
   "audit.view": {
     label: "Ver el registro de auditoría",

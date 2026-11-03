@@ -330,7 +330,13 @@ const cases: IsolationCase[] = [
     body: {},
   },
   { method: "get", path: "/nodes/:id/access", url: (ids) => `/nodes/${ids.nodeId}/access` },
-  { method: "get", path: "/nodes/:id/expiry", url: (ids) => `/nodes/${ids.nodeId}/expiry` },
+  // ids.nodeId is a folder, and folders have no expiry: 404 in B too.
+  {
+    method: "get",
+    path: "/nodes/:id/expiry",
+    url: (ids) => `/nodes/${ids.nodeId}/expiry`,
+    ownStatus: 404,
+  },
   {
     method: "put",
     path: "/nodes/:id/expiry",
@@ -339,9 +345,15 @@ const cases: IsolationCase[] = [
   },
   { method: "delete", path: "/nodes/:id/expiry", url: (ids) => `/nodes/${ids.nodeId}/expiry` },
   {
+    method: "post",
+    path: "/nodes/:id/expiry/suggest",
+    url: (ids) => `/nodes/${ids.nodeId}/expiry/suggest`,
+  },
+  {
     method: "get",
     path: "/nodes/:id/expiry/responsible-options",
     url: (ids) => `/nodes/${ids.nodeId}/expiry/responsible-options`,
+    ownStatus: 404,
   },
   { method: "get", path: "/expiries/space/:id", url: (ids) => `/expiries/space/${ids.spaceId}` },
   { method: "get", path: "/expiries", url: () => "/expiries" },

@@ -250,7 +250,7 @@ export function ExpiriesPage() {
 }
 
 function ExpiryList({ slug, filters }: { slug: string; filters: ExpiryFilters }) {
-  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string; type: string } | null>(null);
   const list = useInfiniteList<ExpiryRow>({
     queryKey: expiriesKeys.list(slug, filters),
     fetchPage: (cursor, signal) => expiriesApi.list(slug, filters, cursor, signal),
@@ -265,7 +265,11 @@ function ExpiryList({ slug, filters }: { slug: string; filters: ExpiryFilters })
             type="button"
             className="font-medium underline-offset-4 hover:underline"
             onClick={() => {
-              setEditing({ id: row.original.node.id, name: row.original.node.name });
+              setEditing({
+                id: row.original.node.id,
+                name: row.original.node.name,
+                type: row.original.node.type,
+              });
             }}
           >
             {formatUtcDate(row.original.dueOn)}
@@ -359,7 +363,7 @@ function ExpiryCalendar({
     queryKey: [...expiriesKeys.list(slug, range), "month"],
     queryFn: ({ signal }) => expiriesApi.list(slug, range, undefined, signal, 100),
   });
-  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string; type: string } | null>(null);
   const byDay = new Map<string, ExpiryRow[]>();
   for (const row of month100.data?.items ?? []) {
     byDay.set(row.dueOn, [...(byDay.get(row.dueOn) ?? []), row]);
@@ -462,7 +466,11 @@ function ExpiryCalendar({
                                 : "bg-success-soft text-success-soft-foreground",
                           )}
                           onClick={() => {
-                            setEditing({ id: row.node.id, name: row.node.name });
+                            setEditing({
+                              id: row.node.id,
+                              name: row.node.name,
+                              type: row.node.type,
+                            });
                           }}
                         >
                           {row.node.name}

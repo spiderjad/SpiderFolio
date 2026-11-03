@@ -281,7 +281,7 @@ function Editor({ form }: { form: FormDetail }) {
           </div>
         </div>
         <ExpiryDialog
-          target={expiryOpen ? { id: node.id, name: node.name } : null}
+          target={expiryOpen ? { id: node.id, name: node.name, type: "FORM" } : null}
           onClose={() => {
             setExpiryOpen(false);
           }}

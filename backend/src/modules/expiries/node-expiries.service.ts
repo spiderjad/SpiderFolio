@@ -1,6 +1,7 @@
 // Expiries of files and pages (docs/spec/vencimientos.md): one per element, with a responsible (a person
 // or a department), notice days and a note. Seeing one needs seeing the element; setting it, editing the
-// element or expirations.manage over what one sees. Lists only show what the person sees.
+// element or expirations.manage over what one sees. Lists only show what the person sees. With no
+// responsible chosen, whoever sets it is: someone always gets the notices.
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
 import { pageOf, offsetArgs, type Page } from "../../lib/pagination.ts";
 import { dayIn, zoneOf } from "../../lib/time-zone.ts";
@@ -52,7 +53,7 @@ async function today(ctx: Pick<AdminContext, "db">): Promise<string> {
   return dayIn(new Date(), zoneOf(workspace?.settings));
 }
 
-async function loadNode(ctx: AdminContext, id: string) {
+export async function loadNode(ctx: AdminContext, id: string) {
   const node = await ctx.db.node.findFirst({
     where: { id, trashedAt: null, type: { not: "FOLDER" } },
     select: { id: true, name: true, type: true, spaceId: true, parentId: true },
@@ -149,21 +150,21 @@ export async function setNodeExpiry(
 ): Promise<{ expiry: NodeExpiryView | null; canEdit: boolean }> {
   const { node, canEdit } = await loadNode(ctx, nodeId);
   if (!canEdit) throw forbidden();
-  const responsible = input.responsible;
-  if (responsible?.type === "person") {
+  const responsible = input.responsible ?? { type: "person" as const, id: ctx.tenant.membershipId };
+  if (responsible.type === "person") {
     const found = await ctx.db.membership.count({
       where: { id: responsible.id, status: "ACTIVE" },
     });
     if (found === 0) throw notFound();
-  } else if (responsible?.type === "department") {
+  } else {
     if ((await ctx.db.department.count({ where: { id: responsible.id } })) === 0) throw notFound();
   }
   await setExpiry(ctx.db, {
     kind: NODE_EXPIRY,
     subjectId: nodeId,
     dueOn: input.dueOn,
-    responsibleId: responsible?.type === "person" ? responsible.id : null,
-    responsibleDepartmentId: responsible?.type === "department" ? responsible.id : null,
+    responsibleId: responsible.type === "person" ? responsible.id : null,
+    responsibleDepartmentId: responsible.type === "department" ? responsible.id : null,
     note: input.note ?? null,
     noticeDays: input.noticeDays ?? DEFAULT_NOTICE_DAYS,
   });
@@ -174,7 +175,7 @@ export async function setNodeExpiry(
     metadata: {
       name: node.name,
       dueOn: input.dueOn,
-      responsible: responsible === null ? null : { ...responsible },
+      responsible: { ...responsible },
     },
   });
   return await getNodeExpiry(ctx, nodeId);
@@ -317,7 +318,7 @@ export async function spaceExpiries(
 /** What the person has to see to as responsible (themselves, or a department they head): due soon or expired. */
 export async function myExpiries(
   ctx: AdminContext,
-): Promise<{ items: ExpiryRow[]; total: number }> {
+): Promise<{ items: ExpiryRow[]; total: number; expired: number }> {
   const led = (
     await ctx.db.departmentMember.findMany({
       where: { membershipId: ctx.tenant.membershipId, position: { in: ["HEAD", "DEPUTY"] } },
@@ -331,7 +332,11 @@ export async function myExpiries(
       ((row.responsible.type === "person" && row.responsible.id === ctx.tenant.membershipId) ||
         (row.responsible.type === "department" && led.includes(row.responsible.id))),
   );
-  return { items: rows.slice(0, 20), total: rows.length };
+  return {
+    items: rows.slice(0, 20),
+    total: rows.length,
+    expired: rows.filter((row) => row.state === "expired").length,
+  };
 }
 
 /** People and departments to choose as responsible (for whoever can set the expiry). */

@@ -121,14 +121,15 @@ function EdgeHandle({
 
 /** Aviso de un ítem: un contador (lecturas, aprobaciones) o un punto (compartidos nuevos). */
 type Indicator =
-  | { kind: "count"; count: number; tone: "primary" | "warning"; label: string }
+  | { kind: "count"; count: number; tone: "primary" | "warning" | "danger"; label: string }
   | { kind: "dot"; tone: "primary" | "warning"; label: string };
 
 const toneClass = {
   primary: "bg-primary text-primary-foreground",
   warning: "bg-warning text-warning-foreground",
+  danger: "bg-danger text-danger-foreground",
 } as const;
-const dotClass = { primary: "bg-primary", warning: "bg-warning" } as const;
+const dotClass = { primary: "bg-primary", warning: "bg-warning", danger: "bg-danger" } as const;
 
 /**
  * Ítem del menú, fila de 36 px. Expandido: ícono de 18 px y texto en la misma línea, con fondo en toda
@@ -731,7 +732,6 @@ function SidebarContent({
   const expiryCount = useQuery({
     queryKey: expiriesKeys.myCount(slug),
     queryFn: () => expiriesApi.myCount(slug),
-    select: (data) => data.count,
     staleTime: 60_000,
     enabled: role !== "GUEST" && !inAdmin,
   });
@@ -762,13 +762,14 @@ function SidebarContent({
         label: texts.safety.people.pendingCount(count),
       };
     }
-    if (to === `/app/${slug}/vencimientos` && (expiryCount.data ?? 0) > 0) {
-      const count = expiryCount.data ?? 0;
+    if (to === `/app/${slug}/vencimientos` && (expiryCount.data?.count ?? 0) > 0) {
+      const { count, expired } = expiryCount.data ?? { count: 0, expired: 0 };
+      // Red if any has expired; amber if they're only due soon.
       return {
         kind: "count",
         count,
-        tone: "warning",
-        label: texts.expiries.pendingCount(count),
+        tone: expired > 0 ? "danger" : "warning",
+        label: texts.expiries.pendingCount(count, expired),
       };
     }
     if (to === `/app/${slug}/files/shared` && unseenShared > 0) {

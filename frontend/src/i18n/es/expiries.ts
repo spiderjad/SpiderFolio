@@ -3,13 +3,18 @@
 export const expiriesTexts = {
   nav: "Vencimientos",
   menu: "Vencimiento",
-  pendingCount: (count: number) =>
-    count === 1
-      ? "1 vencimiento tuyo por atender"
-      : `${String(count)} vencimientos tuyos por atender`,
+  pendingCount: (count: number, expired: number) =>
+    expired > 0
+      ? `${String(count)} ${count === 1 ? "vencimiento tuyo por atender" : "vencimientos tuyos por atender"}, ${String(expired)} ${expired === 1 ? "vencido" : "vencidos"}`
+      : count === 1
+        ? "1 vencimiento tuyo por vencer"
+        : `${String(count)} vencimientos tuyos por vencer`,
   badge: {
-    dueSoon: (date: string) => `Vence el ${date}`,
-    expired: (date: string) => `Venció el ${date}`,
+    dueIn: (days: number) =>
+      days === 0 ? "Vence hoy" : days === 1 ? "Vence en 1 día" : `Vence en ${String(days)} días`,
+    expiredAgo: (days: number) =>
+      days === 1 ? "Venció hace 1 día" : `Venció hace ${String(days)} días`,
+    dueOn: (date: string) => `Vence el ${date}`,
     open: "Ver el vencimiento",
   },
   states: { valid: "Vigente", due_soon: "Por vencer", expired: "Vencido" },
@@ -19,7 +24,9 @@ export const expiriesTexts = {
       "Avisa al responsable en la campana y por email, a las 8:00 de la empresa, los días que elijas.",
     dueOn: "Vence el",
     responsible: "Responsable",
-    responsiblePlaceholder: "Sin responsable",
+    responsiblePlaceholder: "Tú (quien lo pone)",
+    responsibleHint:
+      "Si no eliges a nadie, el responsable eres tú: alguien tiene que recibir los avisos.",
     department: "Departamento · avisa a jefes y subjefes",
     cantSee: "No puede ver este elemento",
     cantSeeWarning: (name: string) =>
@@ -38,6 +45,13 @@ export const expiriesTexts = {
     none: "Este elemento no tiene vencimiento.",
     loadError: "No se pudo cargar el vencimiento.",
     invalidDate: "Elige la fecha en que vence.",
+    suggest: "Sugerir con Bian",
+    suggesting: "Bian está leyendo el documento…",
+    suggested:
+      "Bian propone esto a partir del documento. Revísalo y pulsa Guardar: no se guarda solo.",
+    evidence: (text: string) => `Según el documento: «${text}»`,
+    noDate:
+      "Bian no encontró una fecha de vencimiento en el documento. Si propuso una nota o un responsable, ya están en el formulario.",
   },
   newVersion: {
     title: "¿Actualizar el vencimiento?",

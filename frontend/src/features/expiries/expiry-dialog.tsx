@@ -1,7 +1,7 @@
 // The expiry of a file or a page (docs/spec/vencimientos.md): its badge, the dialog to set it and the
 // prompt after a new version. The server checks who can set it; here a reader only sees it.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -11,12 +11,14 @@ import { Banner, Badge, Skeleton } from "@/components/ui/display";
 import { FormField, Input, Textarea } from "@/components/ui/form";
 import { Dialog, DialogContent, Tooltip } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
+import { bianApi, bianKeys } from "@/features/bian/bian-api";
 import { cn, dayInputOf, formatUtcDate } from "@/lib/utils";
 import {
   addDays,
   daysBetween,
   expiriesApi,
   expiriesKeys,
+  type ExpirySuggestion,
   type ExpiryState,
   type NodeExpiry,
 } from "./expiries-api";
@@ -25,7 +27,7 @@ import { texts } from "@/i18n";
 const t = texts.expiries;
 const NOTICE_CHOICES = [60, 30, 15, 7, 1, 0] as const;
 
-/** «Vence el …» in amber or «Venció el …» in red; nothing while it's valid and far. */
+/** Always while it has one: how long is left, in its state's color (green, amber, red). */
 export function ExpiryBadge({
   dueOn,
   state,
@@ -37,26 +39,21 @@ export function ExpiryBadge({
   onClick?: () => void;
   className?: string;
 }) {
-  if (state === "valid") return null;
-  const label =
-    state === "expired"
-      ? t.badge.expired(formatUtcDate(dueOn))
-      : t.badge.dueSoon(formatUtcDate(dueOn));
+  const days = daysBetween(companyToday(), dueOn);
+  const label = days < 0 ? t.badge.expiredAgo(-days) : t.badge.dueIn(days);
+  const date = t.badge.dueOn(formatUtcDate(dueOn));
   const badge = (
-    <Badge
-      tone={state === "expired" ? "danger" : "warning"}
-      className={cn("shrink-0 gap-1", className)}
-    >
+    <Badge tone={toneOf(state)} className={cn("shrink-0 gap-1", className)} title={date}>
       <CalendarClock className="size-3" strokeWidth={2} aria-hidden="true" />
       {label}
     </Badge>
   );
   if (onClick === undefined) return badge;
   return (
-    <Tooltip content={t.badge.open}>
+    <Tooltip content={`${date}. ${t.badge.open}`}>
       <button
         type="button"
-        aria-label={`${label}. ${t.badge.open}`}
+        aria-label={`${label}. ${date}. ${t.badge.open}`}
         className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         onClick={(event) => {
           event.stopPropagation();
@@ -138,7 +135,8 @@ export function ExpiryDialog({
   proposedDueOn,
   onClose,
 }: {
-  target: { id: string; name: string } | null;
+  /** `type` is the node's (PAGE, FILE, FORM): Bian only reads pages and files. */
+  target: { id: string; name: string; type?: string } | null;
   proposedDueOn?: string | undefined;
   onClose: () => void;
 }) {
@@ -166,7 +164,7 @@ function ExpiryDialogBody({
   proposedDueOn,
   onClose,
 }: {
-  target: { id: string; name: string };
+  target: { id: string; name: string; type?: string };
   proposedDueOn: string | undefined;
   onClose: () => void;
 }) {
@@ -194,6 +192,34 @@ function ExpiryDialogBody({
     // Only when it loads: later edits are the person's.
   }, [loaded]);
   const source = useResponsibleSource(workspaceSlug, target.id);
+  const bian = useQuery({
+    queryKey: bianKeys.usage(workspaceSlug),
+    queryFn: () => bianApi.usage(workspaceSlug),
+    staleTime: 30_000,
+    enabled: canEdit && target.type !== "FORM",
+  });
+  const bianOn = bian.data?.availability.available === true && target.type !== "FORM";
+  const [suggested, setSuggested] = useState<ExpirySuggestion | null>(null);
+  const suggest = useMutation({
+    mutationFn: () => expiriesApi.suggest(workspaceSlug, target.id),
+    onSuccess: async ({ suggestion }) => {
+      // Only fills the form: the person reviews it and saves.
+      setSuggested(suggestion);
+      if (suggestion.dueOn !== null) {
+        setDueOn(suggestion.dueOn);
+        setError(null);
+      }
+      if (suggestion.note !== null) setNote(suggestion.note);
+      if (suggestion.responsible !== null) {
+        setResponsible(`${suggestion.responsible.type}:${suggestion.responsible.id}`);
+        setResponsibleLabel(suggestion.responsible.name);
+      }
+      await queryClient.invalidateQueries({ queryKey: bianKeys.usage(workspaceSlug) });
+    },
+    onError: (err) => {
+      toast.error(adminErrorText(err));
+    },
+  });
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: expiriesKeys.all(workspaceSlug) });
   const save = useMutation({
@@ -290,7 +316,7 @@ function ExpiryDialogBody({
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">{d.responsible}</dt>
-              <dd>{expiry.responsible?.name ?? d.responsiblePlaceholder}</dd>
+              <dd>{expiry.responsible?.name ?? "—"}</dd>
             </div>
             {expiry.note !== null && (
               <div>
@@ -303,6 +329,34 @@ function ExpiryDialogBody({
         )
       ) : (
         <div className="grid gap-4">
+          {bianOn && (
+            <div className="grid gap-2">
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={suggest.isPending}
+                  onClick={() => {
+                    suggest.mutate();
+                  }}
+                >
+                  <Sparkles className="size-4" aria-hidden="true" />
+                  {suggest.isPending ? d.suggesting : d.suggest}
+                </Button>
+              </div>
+              {suggested !== null && (
+                <div
+                  role="status"
+                  className="grid gap-1 rounded-lg bg-primary-soft px-3 py-2 text-xs text-primary-soft-foreground"
+                >
+                  <p>{suggested.dueOn === null ? d.noDate : d.suggested}</p>
+                  {suggested.evidence !== null && (
+                    <p className="italic">{d.evidence(suggested.evidence)}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <FormField label={d.dueOn} error={error ?? undefined}>
             {(field) => (
               <Input
@@ -316,7 +370,7 @@ function ExpiryDialogBody({
               />
             )}
           </FormField>
-          <FormField label={d.responsible}>
+          <FormField label={d.responsible} hint={d.responsibleHint}>
             {(field) => (
               <Combobox
                 {...field}

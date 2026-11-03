@@ -141,7 +141,7 @@ function PageEditor({ page }: { page: PageDetail }) {
   const [sharing, setSharing] = useState(false);
   const [controlling, setControlling] = useState(false);
   const [qr, setQr] = useState(false);
-  const expiry = useExpiryControl({ id: page.node.id, name: page.node.name });
+  const expiry = useExpiryControl({ id: page.node.id, name: page.node.name, type: "PAGE" });
   const accessNotice = useAccessNotice({
     pageId: page.node.id,
     spaceId,

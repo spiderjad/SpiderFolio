@@ -3,6 +3,8 @@ import type { Request } from "express";
 import { sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
+import type { BianDeps } from "../bian/ask.service.ts";
+import { suggestExpiry } from "./expiry-suggest.service.ts";
 import {
   ExpiryFiltersSchema,
   ListExpiriesQuerySchema,
@@ -24,8 +26,9 @@ import {
 
 const HOUR = 3_600_000;
 
-export function nodeExpiryRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] {
+export function nodeExpiryRoutes(deps: AppDeps): TenantRoute[] {
   const byUser = (req: Request) => req.auth?.userId ?? "";
+  const bian: BianDeps = { ...deps, anthropic: deps.anthropic ?? null };
   return [
     {
       method: "get",
@@ -59,6 +62,27 @@ export function nodeExpiryRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantR
         const { id } = NodeParamsSchema.parse(req.params);
         const { q } = OptionsQuerySchema.parse(req.query);
         res.json(await responsibleOptions(adminContextOf(req), id, q));
+      },
+    },
+    {
+      method: "post",
+      path: "/nodes/:id/expiry/suggest",
+      // As Bian's other requests: 20 a minute per person (besides the query limits).
+      guards: [
+        sensitiveRateLimit(deps, {
+          name: "bian-expiry-suggest",
+          windowMs: 60_000,
+          limit: 20,
+          key: byUser,
+        }),
+      ],
+      handler: async (req, res) => {
+        const { id } = NodeParamsSchema.parse(req.params);
+        const controller = new AbortController();
+        res.on("close", () => {
+          if (!res.writableEnded) controller.abort();
+        });
+        res.json(await suggestExpiry(adminContextOf(req), bian, id, controller.signal));
       },
     },
     {
@@ -111,7 +135,8 @@ export function nodeExpiryRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantR
       method: "get",
       path: "/expiries/mine/count",
       handler: async (req, res) => {
-        res.json({ count: (await myExpiries(adminContextOf(req))).total });
+        const mine = await myExpiries(adminContextOf(req));
+        res.json({ count: mine.total, expired: mine.expired });
       },
     },
     {

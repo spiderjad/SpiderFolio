@@ -47,10 +47,17 @@ una página (también un formulario). Es distinto de la fecha de revisión de lo
 
 - Diálogo **Vencimiento** desde el menú «⋯» del elemento en el explorador y desde su pantalla (página,
   archivo y formulario).
-- **Insignias**: «Vence el …» en ámbar (por vencer) y «Venció» en rojo, en el explorador y en la pantalla
-  del elemento; vigente y lejos, sin insignia.
+- **Insignias**, siempre que hay vencimiento, con el tiempo que queda y el color del estado: verde «Vence en
+  31 días», ámbar «Vence en 5 días», rojo «Venció hace 2 días» (la fecha, en el tooltip). En el explorador y
+  en la pantalla del elemento.
+- **Sin responsable elegido**, lo es quien lo pone (el diálogo lo dice): siempre alguien recibe el aviso.
+- **Sugerir con Bian** (`POST /nodes/:id/expiry/suggest`): lee el texto vigente de la página o el archivo y
+  propone fecha, nota y responsable (este solo si el nombre coincide con exactamente una persona o un
+  departamento). Nunca guarda: rellena el diálogo. Solo con Bian activo, para quien puede ponerlo, con la
+  cuota de Bian (se devuelve si falla), el documento como dato y auditoría `ai.expiry_suggest` sin contenido.
 - **Vencimientos** (`/app/:slug/vencimientos`): lista con filtros en la URL y vista de calendario por mes;
-  exportar a CSV. Ítem del menú lateral con el contador de lo propio.
+  exportar a CSV. Ítem del menú lateral con el contador de lo propio: rojo si hay alguno vencido, ámbar si
+  solo hay por vencer (`/expiries/mine/count` → `{ count, expired }`).
 - **Inicio**: tarjeta con los propios por vencer y vencidos.
 
 ## Fases

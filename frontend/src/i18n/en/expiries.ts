@@ -6,11 +6,18 @@ import type { expiriesTexts as EsExpiries } from "../es/expiries";
 export const expiriesTexts: Catalog<typeof EsExpiries> = {
   nav: "Expiries",
   menu: "Expiry",
-  pendingCount: (count: number) =>
-    count === 1 ? "1 expiry of yours to handle" : `${String(count)} expiries of yours to handle`,
+  pendingCount: (count: number, expired: number) =>
+    expired > 0
+      ? `${String(count)} ${count === 1 ? "expiry of yours to handle" : "expiries of yours to handle"}, ${String(expired)} expired`
+      : count === 1
+        ? "1 expiry of yours due soon"
+        : `${String(count)} expiries of yours due soon`,
   badge: {
-    dueSoon: (date: string) => `Due ${date}`,
-    expired: (date: string) => `Expired ${date}`,
+    dueIn: (days: number) =>
+      days === 0 ? "Due today" : days === 1 ? "Due in 1 day" : `Due in ${String(days)} days`,
+    expiredAgo: (days: number) =>
+      days === 1 ? "Expired 1 day ago" : `Expired ${String(days)} days ago`,
+    dueOn: (date: string) => `Due ${date}`,
     open: "See the expiry",
   },
   states: { valid: "Valid", due_soon: "Due soon", expired: "Expired" },
@@ -20,7 +27,8 @@ export const expiriesTexts: Catalog<typeof EsExpiries> = {
       "Tells whoever is responsible in the bell and by email, at 8:00 company time, on the days you choose.",
     dueOn: "Expires on",
     responsible: "Responsible",
-    responsiblePlaceholder: "No one",
+    responsiblePlaceholder: "You (whoever sets it)",
+    responsibleHint: "If you choose no one, you're responsible: someone has to get the notices.",
     department: "Department · tells its heads and deputies",
     cantSee: "Can’t see this item",
     cantSeeWarning: (name: string) =>
@@ -39,6 +47,13 @@ export const expiriesTexts: Catalog<typeof EsExpiries> = {
     none: "This item has no expiry.",
     loadError: "Couldn’t load the expiry.",
     invalidDate: "Choose the day it expires.",
+    suggest: "Suggest with Bian",
+    suggesting: "Bian is reading the document…",
+    suggested:
+      "Bian suggests this from the document. Review it and press Save: it isn’t saved on its own.",
+    evidence: (text: string) => `From the document: “${text}”`,
+    noDate:
+      "Bian found no expiry date in the document. If it suggested a note or someone responsible, they’re already in the form.",
   },
   newVersion: {
     title: "Update the expiry?",

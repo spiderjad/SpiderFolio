@@ -7,7 +7,7 @@ import { DropdownMenuItem } from "@/components/ui/overlay";
 import { ExpiryBadge, ExpiryDialog, useNodeExpiry } from "./expiry-dialog";
 import { texts } from "@/i18n";
 
-export function useExpiryControl(node: { id: string; name: string }) {
+export function useExpiryControl(node: { id: string; name: string; type: string }) {
   const [open, setOpen] = useState(false);
   const current = useNodeExpiry(node.id);
   const expiry = current.data?.expiry ?? null;

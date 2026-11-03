@@ -60,6 +60,13 @@ export interface ExpiryFilters {
   to?: string | undefined;
 }
 
+export interface ExpirySuggestion {
+  dueOn: string | null;
+  evidence: string | null;
+  note: string | null;
+  responsible: { type: "person" | "department"; id: string; name: string; canSee: boolean } | null;
+}
+
 export interface ResponsibleOptions {
   people: { id: string; name: string; canSee: boolean }[];
   departments: { id: string; name: string }[];
@@ -113,7 +120,12 @@ export const expiriesApi = {
       w(slug, `/expiries/space/${id}`),
     ),
   mine: (slug: string) => api<{ items: ExpiryRow[]; total: number }>(w(slug, "/expiries/mine")),
-  myCount: (slug: string) => api<{ count: number }>(w(slug, "/expiries/mine/count")),
+  myCount: (slug: string) =>
+    api<{ count: number; expired: number }>(w(slug, "/expiries/mine/count")),
+  suggest: (slug: string, id: string) =>
+    api<{ suggestion: ExpirySuggestion }>(w(slug, `/nodes/${id}/expiry/suggest`), {
+      method: "POST",
+    }),
 };
 
 /** A space's expiries by node, for the explorer's badges. */

@@ -847,7 +847,11 @@ export function ExplorerPage() {
         }}
       />
       <ExpiryDialog
-        target={expiryNode === null ? null : { id: expiryNode.id, name: expiryNode.name }}
+        target={
+          expiryNode === null
+            ? null
+            : { id: expiryNode.id, name: expiryNode.name, type: expiryNode.type }
+        }
         onClose={() => {
           setExpiryNode(null);
         }}

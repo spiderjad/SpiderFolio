@@ -86,7 +86,7 @@ function PreviewBody({
     gcTime: 0,
   });
   const failed = ticket.isError || text.isError;
-  const expiry = useExpiryControl({ id: node.id, name: node.name });
+  const expiry = useExpiryControl({ id: node.id, name: node.name, type: "FILE" });
 
   return (
     <DialogContent

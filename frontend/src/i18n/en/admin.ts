@@ -86,7 +86,8 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
   },
   "expirations.manage": {
     label: "Manage expiry dates",
-    description: "Sets and changes the expiry dates of the files and pages they can see, even without editing them.",
+    description:
+      "Sets and changes the expiry dates of the files and pages they can see, even without editing them.",
   },
   "audit.view": {
     label: "View the audit log",
