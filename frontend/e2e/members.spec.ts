@@ -66,7 +66,8 @@ test("invitar, aceptar desde el email, ver y suspender a la persona", async ({ p
   await dialog.getByLabel("Emails").fill(guestEmail);
   await dialog.getByRole("button", { name: "Enviar invitaciones" }).click();
   await expect(page.getByText("Invitación enviada.")).toBeVisible();
-  await expect(page.getByText(guestEmail)).toBeVisible();
+  // In the pending list (the dialog, still closing, also shows it in its field).
+  await expect(page.getByLabel("Invitaciones pendientes").getByText(guestEmail)).toBeVisible();
   // Ocupa una plaza completa: el dueño y la invitación.
   // No plans: each company sets its own limit, and by default there's none.
   await expect(page.getByText("2 (sin límite)")).toBeVisible();
