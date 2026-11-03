@@ -309,7 +309,7 @@ describe("accidentes: en investigación y aviso por email", () => {
         systemStorage: ctx.deps.systemStorage,
         mailer: {
           send: (message) => {
-            sent.push(message as never);
+            sent.push(message);
             return Promise.resolve();
           },
         },
