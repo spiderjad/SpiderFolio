@@ -14,13 +14,21 @@ on:
         required: true
 
 permissions:
+  actions: read
   contents: write
 
 jobs:
+  # Only core versions (vX.Y.Z): never the «plugins» Release of the free plugins; and only with the CI
+  # of that commit green (ci-gate.yml).
+  ci:
+    if: startsWith(github.event.release.tag_name || inputs.tag, 'v')
+    uses: ./.github/workflows/ci-gate.yml
+    with:
+      ref: ${{ github.event.release.tag_name || inputs.tag }}
+
   bundle:
     name: Adjuntar paquete
-    # Only core versions (vX.Y.Z): never the «plugins» Release of the free plugins.
-    if: startsWith(github.event.release.tag_name || inputs.tag, 'v')
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

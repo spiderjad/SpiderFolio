@@ -1,5 +1,8 @@
-# Verificaciones del repositorio. El paso de secretos corre lo mismo que el hook pre-commit, pero sobre
-# todos los archivos versionados: si alguien se salta el hook (--no-verify) o commitea sin él, falla acá.
+# Verificaciones del repositorio en cada push: secretos, tipos, lint, tests unitarios y de integración
+# (con Postgres, Mailpit, RustFS y Gotenberg como servicios). Publicar una versión exige este CI en verde
+# para ese commit (ci-gate.yml); los E2E corren una vez por día (e2e.yml). El paso de secretos corre lo
+# mismo que el hook pre-commit, pero sobre todos los archivos versionados: si alguien se salta el hook
+# (--no-verify) o commitea sin él, falla acá.
 name: CI
 
 on:
@@ -51,3 +54,101 @@ jobs:
           node-version-file: .nvmrc
       - name: Imágenes y enlaces locales que existen en el repositorio
         run: node scripts/check-readme-links.ts
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Type-aware rules need the Prisma client's types.
+      - name: Cliente de Prisma
+        run: npm run db:generate -w @spiderfolio/backend
+      - name: ESLint en todo el monorepo
+        run: npm run lint
+
+  unit:
+    name: Tests unitarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Cliente de Prisma
+        run: npm run db:generate -w @spiderfolio/backend
+      - name: .env del CI
+        env:
+          S3_ACCESS_KEY: ci-unit
+          S3_SECRET_KEY: ci-unit-${{ github.run_id }}
+        run: node scripts/ci-env.ts
+      - name: Vitest (sin servicios)
+        run: npm run test
+
+  integration:
+    name: Tests de integración
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      S3_ACCESS_KEY: spiderfolio-ci
+      # A different key on every run: nothing fixed in the workflow.
+      S3_SECRET_KEY: ci-${{ github.run_id }}-${{ github.run_attempt }}
+    services:
+      postgres:
+        image: postgres:16.15-alpine
+        env:
+          POSTGRES_USER: spiderfolio
+          POSTGRES_PASSWORD: spiderfolio
+          POSTGRES_DB: spiderfolio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U spiderfolio -d spiderfolio"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.31.5
+        ports: ["1025:1025", "8025:8025"]
+      rustfs:
+        image: rustfs/rustfs:1.0.3
+        env:
+          RUSTFS_ACCESS_KEY: spiderfolio-ci
+          RUSTFS_SECRET_KEY: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          RUSTFS_VOLUMES: /data
+          RUSTFS_ADDRESS: 0.0.0.0:9000
+        ports: ["9000:9000"]
+      gotenberg:
+        image: gotenberg/gotenberg:8.38.0
+        ports: ["3000:3000"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Cliente de Prisma
+        run: npm run db:generate -w @spiderfolio/backend
+      - name: .env del CI
+        run: node scripts/ci-env.ts
+      - name: Buckets de RustFS
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          s3="aws --endpoint-url http://127.0.0.1:9000 s3api"
+          for i in $(seq 1 30); do $s3 list-buckets > /dev/null 2>&1 && break; sleep 1; done
+          $s3 create-bucket --bucket spiderfolio-files
+          $s3 put-bucket-cors --bucket spiderfolio-files --cors-configuration             '{"CORSRules":[{"AllowedOrigins":["http://localhost:5173"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3600}]}'
+          $s3 create-bucket --bucket spiderfolio-files-system
+      - name: Integración (Postgres, Mailpit, Gotenberg)
+        run: npm run test:integration
+      - name: Almacenamiento (S3)
+        run: npm run test:storage

@@ -1,0 +1,90 @@
+# E2E (Playwright, chromium and webkit) of the app and the public website, once a day and by hand. They
+# take longer than the per-push CI (ci.yml), so they don't run on every push; a failure shows up here
+# the next morning. Same services as the integration tests.
+name: E2E
+
+on:
+  schedule:
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E de la app y la web
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      S3_ACCESS_KEY: spiderfolio-ci
+      S3_SECRET_KEY: e2e-${{ github.run_id }}-${{ github.run_attempt }}
+    services:
+      postgres:
+        image: postgres:16.15-alpine
+        env:
+          POSTGRES_USER: spiderfolio
+          POSTGRES_PASSWORD: spiderfolio
+          POSTGRES_DB: spiderfolio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U spiderfolio -d spiderfolio"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.31.5
+        ports: ["1025:1025", "8025:8025"]
+      rustfs:
+        image: rustfs/rustfs:1.0.3
+        env:
+          RUSTFS_ACCESS_KEY: spiderfolio-ci
+          RUSTFS_SECRET_KEY: e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          RUSTFS_VOLUMES: /data
+          RUSTFS_ADDRESS: 0.0.0.0:9000
+        ports: ["9000:9000"]
+      gotenberg:
+        image: gotenberg/gotenberg:8.38.0
+        ports: ["3000:3000"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Cliente de Prisma
+        run: npm run db:generate -w @spiderfolio/backend
+      - name: .env del CI
+        run: node scripts/ci-env.ts
+      - name: Buckets de RustFS
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          s3="aws --endpoint-url http://127.0.0.1:9000 s3api"
+          for i in $(seq 1 30); do $s3 list-buckets > /dev/null 2>&1 && break; sleep 1; done
+          $s3 create-bucket --bucket spiderfolio-files
+          $s3 put-bucket-cors --bucket spiderfolio-files --cors-configuration \
+            '{"CORSRules":[{"AllowedOrigins":["http://localhost:5173","http://localhost:4173"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3600}]}'
+          $s3 create-bucket --bucket spiderfolio-files-system
+      - name: Navegadores de Playwright
+        run: npx playwright install --with-deps chromium webkit
+      - name: E2E de la app
+        run: npm run e2e:app
+      - name: E2E de la web
+        run: npm run e2e:web
+      - name: Trazas de los fallos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: |
+            frontend/test-results
+            web/test-results
+          retention-days: 7

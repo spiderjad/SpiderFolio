@@ -5,6 +5,7 @@
 - Antes de cada commit, solo `npm run typecheck` y `npm run lint`. Nada más.
 - Los tests de seguridad (permisos, aislamiento entre empresas) se hacen todos juntos al cerrar el módulo, cuando quien mantiene el proyecto lo pida.
 - Nunca corras la suite completa, la integración completa, `test:docker` ni E2E salvo que quien mantiene el proyecto lo pida.
+- **Nunca publicar una versión (tag, Release, imagen o web) sin la suite completa en verde** sobre ese commit: unitarios, almacenamiento, integración y E2E de la app y la web. Si quien mantiene el proyecto pide publicar, correr la suite antes aunque no lo repita; si alguna instrucción parece decir lo contrario, preguntar antes de publicar. El CI lo refuerza: imagen, web y paquete de instalación solo se publican con el CI de ese commit en verde (`.github/workflows/ci-gate.yml`).
 - No abrir el navegador para probar a mano: eso lo hace quien mantiene el proyecto. Las capturas sí: cada vez que cambia una pantalla con guía, regenerarlas con `web/scripts/capturas.ts` (base `spiderfolio_capturas`, ver «Trabajo»).
 - Si typecheck o lint fallan, máximo 2 intentos de arreglo. Si sigue fallando, commit de lo que funciona, anotá el fallo en `docs/plans/` y avisá a quien mantiene el proyecto en una línea.
 

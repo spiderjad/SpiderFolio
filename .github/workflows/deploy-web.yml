@@ -16,6 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -23,10 +24,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Only core versions (vX.Y.Z), never the «plugins» prerelease of the free plugins; and only with the
+  # CI of that commit green (ci-gate.yml).
+  ci:
+    if: github.event_name == 'workflow_dispatch' || (startsWith(github.event.release.tag_name, 'v') && !github.event.release.prerelease)
+    uses: ./.github/workflows/ci-gate.yml
+
   deploy:
     name: Compilar y subir
-    # Only core versions (vX.Y.Z), never the «plugins» prerelease of the free plugins.
-    if: github.event_name == 'workflow_dispatch' || (startsWith(github.event.release.tag_name, 'v') && !github.event.release.prerelease)
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

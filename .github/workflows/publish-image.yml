@@ -16,6 +16,7 @@ on:
         required: false
 
 permissions:
+  actions: read
   contents: read
   packages: write
 
@@ -23,8 +24,15 @@ env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/spiderfolio
 
 jobs:
+  # A version is only published with the CI of its commit green (ci-gate.yml).
+  ci:
+    uses: ./.github/workflows/ci-gate.yml
+    with:
+      ref: ${{ inputs.tag || github.sha }}
+
   build:
     name: Compilar (${{ matrix.platform }})
+    needs: ci
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     strategy:

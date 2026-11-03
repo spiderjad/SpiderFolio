@@ -1,0 +1,47 @@
+# Gate for everything that publishes a version (image, web, install bundle): the CI (ci.yml) of that
+# commit has to be green. If it's still running it waits for it (up to 60 minutes); if it failed, was
+# cancelled or never ran, publishing stops here. Called by the other workflows, never on its own.
+name: CI en verde
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: "Tag, branch or commit to check (empty: the one that triggered the workflow)"
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  gate:
+    name: CI en verde del commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Esperar el CI de ese commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ inputs.ref || github.sha }}
+        run: |
+          sha=$(gh api "repos/$REPO/commits/$REF" --jq .sha)
+          echo "Commit: $sha"
+          for i in $(seq 1 60); do
+            runs=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$sha&per_page=20" \
+              --jq '[.workflow_runs[] | {status, conclusion}]')
+            if echo "$runs" | jq -e 'any(.[]; .conclusion == "success")' > /dev/null; then
+              echo "CI en verde: se puede publicar."
+              exit 0
+            fi
+            if echo "$runs" | jq -e 'length > 0 and all(.[]; .status == "completed")' > /dev/null; then
+              echo "::error::El CI de $sha no está en verde: no se publica. Arreglalo y vuelve a publicar."
+              exit 1
+            fi
+            echo "El CI de $sha todavía no terminó (o no empezó); espero un minuto…"
+            sleep 60
+          done
+          echo "::error::El CI de $sha no terminó en 60 minutos: no se publica."
+          exit 1
