@@ -2,7 +2,7 @@
 
 Núcleo, abierto y gratis. Plan aprobado el 02/11/2026. Se apoya en lo que ya existe: formularios y
 registros (docs/spec/formularios.md), documentos controlados, lectura obligatoria, QR y los avisos de las
-8:00 de cada empresa. Fuera de esta versión: la CAE (módulo del núcleo aparte, activable por empresa como este; ver docs/plans/pendientes.md), las estadísticas oficiales (Delt@,
+8:00 de cada empresa. Fuera de esta versión: la CAE (va dentro de este módulo, con su propio interruptor: docs/spec/cae.md), las estadísticas oficiales (Delt@,
 índices de frecuencia) y las integraciones con mutuas.
 
 ## Activación y términos
@@ -191,6 +191,30 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
 
 Cada fase: commit propio, tests de lo tocado (permisos y aislamiento entre empresas incluidos) y guías
 es/en de las pantallas que cambian.
+
+## Lo que falta (relevado el 07/11/2026)
+
+Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después de la CAE
+(docs/spec/cae.md, que va dentro de este módulo):
+
+6. **Planificación de la actividad preventiva** (Ley 31/1995, art. 16): las medidas dejan de ser solo de
+   los accidentes. `SafetyAction` suma un origen (`INCIDENT | RISK_ASSESSMENT | INSPECTION | OTHER`) y la
+   referencia (`incidentId?`, `nodeId?` del documento EVR, `recordId?` de una inspección), prioridad y
+   coste estimado opcional. Pantalla «Planificación» con todas las medidas, filtros y CSV; desde una EVR o
+   un registro de inspección no conforme se crean medidas. Mismos vencimientos `safety.action`.
+7. **Indicadores de siniestralidad**: horas trabajadas y plantilla media por mes (las carga quien
+   gestiona el módulo), e índices de frecuencia, gravedad e incidencia calculados con los accidentes con
+   baja (días de baja: campo nuevo, opcional, del caso, sin datos médicos). Panel en Resumen y CSV. Sin
+   Delt@ ni partes oficiales.
+8. **Emergencias y simulacros**: el plan de autoprotección o de emergencia como documento controlado
+   (tipo PEM, revisión anual), equipos de emergencia (personas con su función: jefe de emergencia,
+   primeros auxilios, evacuación…, con formación exigida) y registro de simulacros (fecha, escenario,
+   tiempo de evacuación, incidencias y medidas que generan, origen `DRILL`).
+9. **Consulta y participación**: delegados de prevención y comité de seguridad y salud (miembros), con
+   sus reuniones como actas (página o documento) y los acuerdos como medidas (origen `COMMITTEE`).
+
+Los permisos de trabajo (caliente, altura, espacios confinados, eléctricos) van en la fase 4 de la CAE y
+sirven también para los trabajadores propios.
 
 ## Pendientes hechos (03/11/2026)
 

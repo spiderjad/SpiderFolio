@@ -101,7 +101,7 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 
 ## Pendientes (leer al empezar una sesión)
 Lista viva en `docs/plans/pendientes.md`. Lo principal:
-- Módulos del núcleo que faltan, apagados por defecto y activables por empresa como Seguridad y salud: **CAE** (PRL) y **Calidad alimentaria** (IFS 8 / BRCGS 9; notas y orden en `docs/plans/2026-11-07-modulo-calidad.md`). Primero su spec, no código.
+- Módulos del núcleo que faltan, apagados por defecto y activables por empresa como Seguridad y salud: **CAE** (PRL, dentro de Prevención con interruptor propio, docs/spec/cae.md) y **Calidad alimentaria** (módulo aparte en el menú) (IFS 8 / BRCGS 9; notas y orden en `docs/plans/2026-11-07-modulo-calidad.md`). Primero su spec, no código.
 - Migración a spider-ui, etapas 2 a 5 (`docs/plans/2026-11-07-spider-ui.md`).
 - «Licencia y plugins» solo lo ve la dueña en el menú: decidir si el admin lo ve.
 - Entorno de la Mac (Prisma generate, lint con más memoria, puerto 5432, pre-commit): ver la lista.
@@ -125,6 +125,7 @@ Lista viva en `docs/plans/pendientes.md`. Lo principal:
 | Conector para Claude (MCP) | docs/spec/conector-mcp.md |
 | Formularios y registros | docs/spec/formularios.md |
 | Seguridad y salud laboral, puestos, vencimientos | docs/spec/seguridad-salud.md |
+| CAE (contratas, dentro de Prevención) | docs/spec/cae.md |
 | Vencimientos de archivos y páginas | docs/spec/vencimientos.md |
 | Salas de auditoría | docs/spec/salas-de-auditoria.md |
 | Fase 2 | docs/spec/fase-2.md |
