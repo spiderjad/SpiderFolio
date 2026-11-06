@@ -1,13 +1,14 @@
-# Módulo de Calidad alimentaria (plugin de pago) — notas
+# Módulo de Calidad alimentaria (núcleo) — notas
 
 Estado: idea anotada el 07/11/2026. No implementar hasta que quien mantiene el proyecto lo pida. Paso
 siguiente: escribir `docs/spec/calidad.md` y revisarlo antes de tocar código.
 
 ## Decisiones
 
-- **Plugin comercial**, como la CAE: entra por los puntos de extensión (docs/spec/plugins.md), se activa
-  por empresa con una licencia que lo incluya y el núcleo nunca depende de él. Id propuesto:
-  `food-quality` (sumarlo a `COMMERCIAL_PLUGIN_IDS` en `@spiderfolio/plugin-sdk` cuando se empiece).
+- **Núcleo, abierto y gratis** (decidido el 07/11/2026), como la CAE y como Seguridad y salud: apagado
+  por defecto, la dueña o el admin lo activa por empresa desde Administración (igual que
+  `Workspace.settings.safety`: `GET/PUT /admin/<módulo>`, con su espacio, capacidades propias y auditoría
+  `<módulo>.enable` / `.disable`). Las integraciones de terceros (SAP, ADA MES) sí pueden ir como plugin.
 - Pensado primero para cárnicas. Normas que se auditan hoy: **IFS Food versión 8** (obligatoria desde el
   01/01/2024) y **BRCGS Food Safety Issue 9** (publicada el 01/08/2022; la Issue 10 todavía no salió).
   Además, lo que revisa la inspección sanitaria oficial.

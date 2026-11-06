@@ -101,7 +101,7 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 
 ## Pendientes (leer al empezar una sesión)
 Lista viva en `docs/plans/pendientes.md`. Lo principal:
-- Módulos de pago que faltan, activados por empresa con licencia: **CAE** (PRL) y **Calidad alimentaria** (IFS 8 / BRCGS 9; notas y orden en `docs/plans/2026-11-07-modulo-calidad.md`). Primero su spec, no código.
+- Módulos del núcleo que faltan, apagados por defecto y activables por empresa como Seguridad y salud: **CAE** (PRL) y **Calidad alimentaria** (IFS 8 / BRCGS 9; notas y orden en `docs/plans/2026-11-07-modulo-calidad.md`). Primero su spec, no código.
 - Migración a spider-ui, etapas 2 a 5 (`docs/plans/2026-11-07-spider-ui.md`).
 - «Licencia y plugins» solo lo ve la dueña en el menú: decidir si el admin lo ve.
 - Entorno de la Mac (Prisma generate, lint con más memoria, puerto 5432, pre-commit): ver la lista.

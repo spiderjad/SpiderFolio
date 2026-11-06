@@ -2,13 +2,13 @@
 
 Lista viva. Al terminar algo, se marca o se borra de acá.
 
-## Módulos por hacer (plugins de pago, se activan por empresa con licencia)
+## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 
-- [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: falta. Ya prevista en
-      docs/spec/seguridad-salud.md como plugin de pago fuera de la primera versión; el motor de vencimientos
+- [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: falta. Antes figuraba en
+      docs/spec/seguridad-salud.md como plugin de pago; decidido el 07/11/2026 que va en el núcleo; el motor de vencimientos
       ya tiene lo genérico (`responsibleDepartmentId`, `note`, tipo `cae.document`). Falta su spec.
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
-      [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Se activa igual que la CAE. Primero el
+      [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, se activa igual que la CAE. Primero el
       spec `docs/spec/calidad.md`.
 
 ## Migración a spider-ui

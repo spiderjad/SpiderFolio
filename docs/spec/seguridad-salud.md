@@ -2,7 +2,7 @@
 
 Núcleo, abierto y gratis. Plan aprobado el 02/11/2026. Se apoya en lo que ya existe: formularios y
 registros (docs/spec/formularios.md), documentos controlados, lectura obligatoria, QR y los avisos de las
-8:00 de cada empresa. Fuera de esta versión: la CAE (plugin de pago), las estadísticas oficiales (Delt@,
+8:00 de cada empresa. Fuera de esta versión: la CAE (módulo del núcleo aparte, activable por empresa como este; ver docs/plans/pendientes.md), las estadísticas oficiales (Delt@,
 índices de frecuencia) y las integraciones con mutuas.
 
 ## Activación y términos
