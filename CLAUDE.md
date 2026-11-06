@@ -22,6 +22,7 @@ Monorepo npm workspaces, Node 24, TypeScript estricto (sin `any` ni `@ts-ignore`
 - frontend/: React 18 + Vite, Tailwind 4, componentes propios sobre Radix en `components/ui`, React Router 7, TanStack Query/Table, Tiptap.
 - web/: Astro (web pública).
 - packages/: tailwind-preset, limits, content, plugin-sdk.
+- Diseño: **spider-ui** (`github:spiderjad/spider-ui#<sha>`, dependencia del preset) es el único sistema de app y web; el panel lleva su violeta (`--sp-primary`), no el monocromo de su guía. Antes de tocar interfaz, leer `node_modules/spider-ui/GUIDE.md` y docs/spec/diseno.md.
 - plugins/: plugins comerciales (privados; no se publican con el núcleo).
 - Local: docker-compose (postgres, mailpit, rustfs, gotenberg).
 
@@ -97,6 +98,13 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 - Cada cambio que toque una pantalla actualiza su guía en `web/src/content/docs/` en los dos idiomas (es y en). Si cambia lo que se ve, regenerar las capturas con `web/scripts/capturas.ts` (base propia `*_capturas`, nunca la de desarrollo).
 - Clips de demo (`web/scripts/clips.ts`): se regeneran solo cuando cambia algo visible en esas pantallas (documento controlado, QR, Bian, compartir), nunca en cada commit. Los MP4 de la web van en `web/public/clips/`; los GIF del README no se versionan: se suben a la Release con `CLIPS_RELEASE=vX.Y.Z` y el README los enlaza desde ahí.
 - Respuestas cortas.
+
+## Pendientes (leer al empezar una sesión)
+Lista viva en `docs/plans/pendientes.md`. Lo principal:
+- Módulos de pago que faltan, activados por empresa con licencia: **CAE** (PRL) y **Calidad alimentaria** (IFS 8 / BRCGS 9; notas y orden en `docs/plans/2026-11-07-modulo-calidad.md`). Primero su spec, no código.
+- Migración a spider-ui, etapas 2 a 5 (`docs/plans/2026-11-07-spider-ui.md`).
+- «Licencia y plugins» solo lo ve la dueña en el menú: decidir si el admin lo ve.
+- Entorno de la Mac (Prisma generate, lint con más memoria, puerto 5432, pre-commit): ver la lista.
 
 ## Índice de docs/spec (leer solo si la tarea lo necesita)
 | Tema | Archivo |
