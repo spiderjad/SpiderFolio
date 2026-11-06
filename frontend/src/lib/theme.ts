@@ -27,6 +27,8 @@ export function isDarkTheme(): boolean {
 function apply(preference: ThemePreference): void {
   const dark = preference === "dark" || (preference === "system" && systemPrefersDark());
   document.documentElement.classList.toggle("dark", dark);
+  // spider-ui reads the theme from data-theme (otherwise it follows the system).
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
   window.dispatchEvent(new CustomEvent(THEME_EVENT));
 }
 

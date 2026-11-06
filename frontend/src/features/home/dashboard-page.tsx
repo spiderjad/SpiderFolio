@@ -703,13 +703,13 @@ function CompanySection({ home, slug }: { home: HomeOverview; slug: string }) {
             xKey="date"
             formatX={formatDay}
             series={[
-              { key: "uploads", name: t.activity.series.uploads, color: "hsl(var(--primary))" },
+              { key: "uploads", name: t.activity.series.uploads, color: "var(--primary)" },
               {
                 key: "publications",
                 name: t.activity.series.publications,
-                color: "hsl(var(--warning))",
+                color: "var(--warning)",
               },
-              { key: "reads", name: t.activity.series.reads, color: "hsl(var(--success))" },
+              { key: "reads", name: t.activity.series.reads, color: "var(--success)" },
             ]}
           />
         </SectionCard>

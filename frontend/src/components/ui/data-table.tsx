@@ -121,7 +121,7 @@ export function DataTable<T>({
           className="w-full min-w-[720px] border-collapse text-left text-sm"
           aria-label={label}
         >
-          <thead className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]">
+          <thead className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_var(--border)]">
             <tr className="border-b border-border">
               {selection !== undefined && (
                 <th scope="col" className="w-12 px-4 py-3">

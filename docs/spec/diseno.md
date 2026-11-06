@@ -1,76 +1,34 @@
-10. Diseño (moderno y elegante, mismo sistema en app y web)
+10. Diseño (spider-ui, mismo sistema en app y web)
     10.1 Dirección visual
 
-SaaS moderno, luminoso y limpio, con referencia directa a las capturas de SpiderCitas (panel, página de funciones y documentación) que forman parte del brief. Si SpiderCitas es un producto propio, se pueden reutilizar sus componentes; si no, se toma solo el estilo, nunca su logo, nombre ni textos.
+El sistema de diseño es el paquete **spider-ui** (repositorio privado spiderjad/spider-ui, instalado con el commit fijado: `github:spiderjad/spider-ui#<sha>`, dependencia de packages/tailwind-preset). Es la única fuente de colores, tipografía, radios y sombras. Su guía viaja con el paquete (node_modules/spider-ui/GUIDE.md) y manda sobre esta sección. Para actualizarlo: `npm install -w @spiderfolio/tailwind-preset github:spiderjad/spider-ui#<commit nuevo>`. Nada dentro de node_modules/spider-ui se edita; si falta un componente que se repite en varios proyectos, se propone en spider-ui.
 
-Fondo blanco, superficies gris muy claro, tarjetas blancas con borde de 1 px suave y esquinas generosas (rounded-2xl en tarjetas, rounded-lg en botones e ítems de menú).
-Violeta como único color de marca (botones primarios, ítem activo, enlaces, checks, barras de gráficos). Verde, ámbar y rojo solo para estados.
-Tipografía sans moderna (Inter) para todo, y una serif de display (Instrument Serif) solo para los grandes títulos de la web y la documentación, que le da el toque elegante.
-Etiquetas en mayúsculas con mucho espaciado entre letras (EMPEZAR, GESTIÓN, CITAS HOY) para estructurar sin cajas extra.
-Íconos lineales finos (lucide, strokeWidth={1.75}), dentro de cuadrados redondeados con fondo tintado cuando acompañan un título.
-Degradado violeta muy tenue (≤ 6 % de opacidad) solo detrás de héroes y cabeceras de docs. Nunca degradados fuertes.
-Modo oscuro desde el día 1 (botón luna en web y app).
+Panel (la app: listados, formularios, ajustes, editores): estilo Vercel, monocromo. Fondo blanco, superficies gris muy claro, borde de 1 px suave; botón primario negro (una sola acción principal por vista), secundario blanco con borde, rojo solo para borrar. Sin violeta en el panel. Verde, ámbar y rojo solo para estados. Clases `v-*`.
+Acceso (login, registro, recuperar, código, bienvenida): estilo Stripe, violeta y ámbar. Clases `auth-*` con la estructura completa de la guía. No se mezclan los dos sistemas en una pantalla.
+Tipografía Inter (--sp-font) para todo. Etiquetas en mayúsculas con espaciado para estructurar sin cajas extra. Íconos lineales finos (lucide, strokeWidth={1.75}).
+Modo oscuro desde el día 1 (botón luna en web y app): spider-ui lo toma de `data-theme` en `<html>`; la app y la web ponen `data-theme` y la clase `.dark` (para la variante `dark:` de Tailwind) a la vez (frontend/public/compat.js, frontend/src/lib/theme.ts, web/public/theme-init.js y Header.astro).
+Colores: solo `var(--sp-*)`, los alias del preset (abajo) o las clases `spider-*`. Nunca hex sueltos ni la paleta de Tailwind.
 10.2 Tokens (packages/tailwind-preset)
-css
-:root {
---background: 0 0% 100%;
---surface: 240 5% 98%; /* fondo del área de contenido de la app _/
---foreground: 240 10% 8%;
---muted: 240 5% 96%;
---muted-foreground: 240 4% 44%;
---border: 240 6% 91%;
---input: 240 6% 88%;
---primary: 262 83% 58%; /_ violeta #7C3AED _/
---primary-foreground: 0 0% 100%;
---primary-soft: 262 100% 97%; /_ fondo del ítem activo, chips _/
---primary-soft-foreground: 263 70% 45%;
---success: 160 84% 39%; /_ #10B981, también 2.ª serie de gráficos _/
---warning: 38 92% 50%; /_ banners de aviso _/
---warning-soft: 48 100% 94%;
---success-foreground: 164 86% 10%; /_ texto sobre success _/
---success-soft: 152 76% 95%; /_ pastilla Vigente _/
---success-soft-foreground: 164 86% 22%;
---warning-foreground: 26 90% 12%; /_ texto del botón ámbar */
---warning-soft-foreground: 22 78% 26%;
---danger: 0 72% 51%;
---danger-foreground: 0 0% 100%;
---danger-soft: 0 86% 97%;
---danger-soft-foreground: 0 70% 35%;
---ring: 262 83% 58%;
---radius: 0.75rem;
-}
-.dark {
---background: 240 10% 6%;
---surface: 240 8% 8%;
---foreground: 0 0% 96%;
---muted: 240 6% 12%;
---muted-foreground: 240 5% 64%;
---border: 240 5% 16%;
---input: 240 5% 20%;
---primary: 263 85% 68%;
---primary-foreground: 240 10% 6%;
---primary-soft: 263 40% 16%;
---primary-soft-foreground: 263 90% 80%;
---success: 158 64% 52%;
---success-foreground: 160 84% 6%;
---success-soft: 160 40% 12%;
---success-soft-foreground: 156 72% 67%;
---warning: 38 92% 55%;
---warning-foreground: 26 90% 10%;
---warning-soft: 38 50% 14%;
---warning-soft-foreground: 46 97% 65%;
---danger: 0 84% 60%;
---danger-foreground: 240 10% 6%;
---danger-soft: 0 40% 14%;
---danger-soft-foreground: 0 94% 82%;
---ring: 263 85% 68%;
-}
 
-La fuente de verdad es packages/tailwind-preset/src/tokens.ts. De ahí se genera tokens.css (npm run tokens:css -w @spiderfolio/tailwind-preset; commiteado, no se edita a mano): las variables de :root y .dark, y un bloque @theme inline que borra la paleta de Tailwind (--color-*: initial) y mapea cada token a --color-<token>: hsl(var(--<token>)). Un test falla si tokens.css quedó desactualizado. Ni la app ni la web copian CSS. Convención: X es el color sólido, X-foreground el texto sobre X, X-soft el fondo tintado (pastillas, banners) y X-soft-foreground el texto sobre X-soft. Un test verifica contraste AA (4,5:1) de cada par texto/fondo en claro y oscuro, y 3:1 para el anillo de foco.
+Los componentes existentes usan clases semánticas (bg-primary, text-muted-foreground, border-border…). packages/tailwind-preset/tokens.css (generado por src/tokens-css.ts con `npm run tokens:css -w @spiderfolio/tailwind-preset`, no se edita a mano) define cada una como alias de un token de spider-ui:
 
-Color de acento por workspace: Workspace.accentColor es null por defecto (= violeta de la marca) y solo se guarda si el cliente elige otro, como #rrggbb en minúsculas. El backend lo valida con HEX_COLOR_RE (#RRGGBB) y lo normaliza con normalizeHex (@spiderfolio/tailwind-preset/accent, sin dependencias de Tailwind). La app calcula las variables con accentTokens(hex) (--primary, --primary-foreground, --primary-soft, --primary-soft-foreground y --ring, distintas para claro y oscuro; primaryForegroundFor elige blanco o casi negro según el contraste) y las aplica con document.documentElement.style.setProperty, volviendo a aplicarlas al cambiar de tema. Nunca con <style> en línea (CSP). Si accentIsLowContrastText(hex) es true, la configuración avisa que los enlaces se leerán mal, sin bloquear.
+| Token del preset | spider-ui |
+|---|---|
+| background / surface / muted | --sp-bg / --sp-bg-subtle / --sp-bg-muted |
+| foreground / muted-foreground | --sp-text-primary / --sp-text-secondary |
+| border / input / ring | --sp-border / --sp-border / --sp-focus |
+| primary / primary-foreground | --sp-inverse / --sp-on-inverse (negro sobre blanco; claro en oscuro) |
+| primary-soft / primary-soft-foreground | --sp-bg-muted / --sp-text-primary (ítem activo) |
+| success, warning, danger | --sp-success, --sp-warning, --sp-danger; -foreground: --sp-bg |
+| X-soft / X-soft-foreground | --sp-X-light / --sp-X (danger: --sp-danger-text) |
+| radius (sm, md, lg) / xl, 2xl | --sp-radius (6 px, botones) / --sp-radius-lg (10 px, tarjetas) |
+| shadow-card / shadow-pop | --sp-shadow / --sp-shadow-md |
 
-Preset (Tailwind 4, configurado en CSS): app y web hacen @import "tailwindcss"; y @import "@spiderfolio/tailwind-preset/preset.css";. preset.css no contiene valores de color: importa tw-animate-css y tokens.css, carga @tailwindcss/typography con @plugin, define el modo oscuro por clase (@custom-variant dark (&:where(.dark, .dark *))), las fuentes (--font-sans "Inter Variable", --font-display "Instrument Serif", --font-mono "JetBrains Mono Variable"), los radios derivados de --radius, las sombras shadow-card (casi imperceptible) y shadow-pop (menús y diálogos), los estilos base (bordes, body, prefers-reduced-motion) y el tema de prose con los tokens (@utility prose). La opacidad funciona con la sintaxis normal (bg-primary/50). Prohibido usar colores sueltos de Tailwind (bg-purple-600) en componentes: siempre tokens. La paleta está eliminada, así que esas clases directamente no existen. Tests del preset: compilan preset.css con @tailwindcss/node y verifican las clases de cada token, la ausencia de la paleta, dark por clase, prose, animaciones, fuentes, radios y sombras.
+El bloque @theme inline borra la paleta de Tailwind (--color-*: initial) y mapea --color-<token>: var(--<token>); la opacidad funciona con la sintaxis normal (bg-primary/50, vía color-mix). En CSS propio se usa var(--<token>) o var(--sp-*), nunca hsl(var(--x)). No hay bloque .dark: los valores cambian con los de spider-ui.
+
+Color de acento por workspace: Workspace.accentColor es null por defecto (= panel monocromo de spider-ui) y solo se guarda si el cliente elige otro, como #rrggbb en minúsculas. El backend lo valida con HEX_COLOR_RE (#RRGGBB) y lo normaliza con normalizeHex (@spiderfolio/tailwind-preset/accent, sin dependencias de Tailwind). La app calcula las variables con accentTokens(hex) (--primary, --primary-foreground, --primary-soft, --primary-soft-foreground y --ring, distintas para claro y oscuro; primaryForegroundFor elige blanco o casi negro según el contraste) y las aplica como hsl(...) con document.documentElement.style.setProperty, volviendo a aplicarlas al cambiar de tema. Nunca con <style> en línea (CSP). Si accentIsLowContrastText(hex) es true, la configuración avisa que los enlaces se leerán mal, sin bloquear. Los valores HSL de src/tokens.ts quedan solo para esas cuentas de contraste.
+
+Preset (Tailwind 4, configurado en CSS): app y web hacen @import "tailwindcss"; y @import "@spiderfolio/tailwind-preset/preset.css";. preset.css no contiene valores de color: importa tw-animate-css, spider-ui/spider-ui.css (tokens, v-* y auth-*), tokens.css y spider-ui/tailwind-v4.css (clases spider-*), carga @tailwindcss/typography con @plugin, define la variante dark por clase (@custom-variant dark (&:where(.dark, .dark *))), las fuentes (--font-sans y --font-mono de spider-ui; --font-display "Instrument Serif" solo en la web, pendiente de pasar a spider-ui), los radios, las sombras, los estilos base (bordes, body, prefers-reduced-motion) y el tema de prose con los tokens (@utility prose).
 
 10.3 Tipografía
 Uso Clases

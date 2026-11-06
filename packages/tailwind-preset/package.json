@@ -36,5 +36,8 @@
     "tw-animate-css": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "spider-ui": "github:spiderjad/spider-ui#0e6fa6e40ccf0ffe90aee4b2a9477b0d95afe5f9"
   }
 }

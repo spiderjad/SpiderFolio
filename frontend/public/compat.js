@@ -23,9 +23,10 @@
   var prefersDark =
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
-  if (preference === "dark" || (preference !== "light" && prefersDark)) {
-    root.classList.add("dark");
-  }
+  var dark = preference === "dark" || (preference !== "light" && prefersDark);
+  if (dark) root.classList.add("dark");
+  // spider-ui reads the theme from data-theme (otherwise it follows the system).
+  root.setAttribute("data-theme", dark ? "dark" : "light");
 
   function isSupported() {
     var css = window.CSS;

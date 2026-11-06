@@ -10,6 +10,8 @@
         stored === "dark" ||
         (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
       if (dark) root.classList.add("dark");
+      // spider-ui reads the theme from data-theme (otherwise it follows the system).
+      root.setAttribute("data-theme", dark ? "dark" : "light");
     } catch (e) {
       /* sin almacenamiento: se usa el tema del sistema */
     }

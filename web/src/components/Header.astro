@@ -127,6 +127,7 @@ const isActive = (href: string): boolean => {
     const button = target?.closest("[data-theme-toggle]");
     if (!button) return;
     const dark = document.documentElement.classList.toggle("dark");
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     try {
       window.localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
     } catch {

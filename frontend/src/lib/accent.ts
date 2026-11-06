@@ -15,7 +15,7 @@ export function clearAccent(root: HTMLElement = document.documentElement): void 
   for (const name of ACCENT_VARIABLES) root.style.removeProperty(name);
 }
 
-/** null (o un valor inválido) = color de la marca del preset. */
+/** null (or an invalid value) = the spider-ui color (monochrome panel). */
 export function applyAccent(
   accentColor: string | null,
   dark: boolean,
@@ -28,6 +28,7 @@ export function applyAccent(
   }
   const tokens = accentTokens(hex);
   for (const [name, value] of Object.entries(dark ? tokens.dark : tokens.light)) {
-    root.style.setProperty(name, value);
+    // The preset tokens are full colors (aliases of spider-ui), the accent math gives "H S% L%".
+    root.style.setProperty(name, `hsl(${value})`);
   }
 }

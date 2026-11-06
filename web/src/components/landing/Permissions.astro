@@ -96,16 +96,16 @@ const { t } = Astro.props;
     align-items: center;
     gap: 0.4rem;
     border-radius: 999px;
-    border: 1px solid hsl(var(--border));
-    background: hsl(var(--background));
+    border: 1px solid var(--border);
+    background: var(--background);
     padding: 0.35rem 0.75rem;
     font-size: 0.8125rem;
-    color: hsl(var(--muted-foreground));
+    color: var(--muted-foreground);
   }
   .chip.active {
-    border-color: hsl(var(--primary));
-    background: hsl(var(--primary-soft));
-    color: hsl(var(--primary-soft-foreground));
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary-soft-foreground);
     font-weight: 500;
   }
   .links {
@@ -120,23 +120,23 @@ const { t } = Astro.props;
     stroke-dasharray: 1;
   }
   .links .main {
-    stroke: hsl(var(--primary));
+    stroke: var(--primary);
   }
   .links .faint {
-    stroke: hsl(var(--border));
+    stroke: var(--border);
     stroke-dasharray: 0.04 0.03;
   }
   .folder {
     display: grid;
     gap: 0.35rem;
     border-radius: 0.75rem;
-    border: 1px solid hsl(var(--border));
-    background: hsl(var(--background));
+    border: 1px solid var(--border);
+    background: var(--background);
     padding: 0.85rem 1rem;
-    box-shadow: 0 10px 30px -18px hsl(var(--foreground) / 0.35);
+    box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--foreground) 35%, transparent);
   }
   .folder :global(svg) {
-    color: hsl(var(--primary));
+    color: var(--primary);
   }
   .path {
     font-weight: 600;
@@ -145,7 +145,7 @@ const { t } = Astro.props;
   }
   .why {
     font-size: 0.8125rem;
-    color: hsl(var(--muted-foreground));
+    color: var(--muted-foreground);
   }
   .people {
     display: flex;
@@ -158,9 +158,9 @@ const { t } = Astro.props;
     height: 1.75rem;
     margin-left: -0.35rem;
     border-radius: 999px;
-    border: 2px solid hsl(var(--background));
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    border: 2px solid var(--background);
+    background: var(--primary);
+    color: var(--primary-foreground);
     font-size: 0.75rem;
     font-weight: 600;
   }

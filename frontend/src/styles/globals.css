@@ -36,7 +36,7 @@
 }
 .scroll-thin:hover,
 .scroll-thin:focus-within {
-  scrollbar-color: hsl(var(--foreground) / 0.25) transparent;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 25%, transparent) transparent;
 }
 .scroll-thin::-webkit-scrollbar {
   width: 6px;
@@ -47,7 +47,7 @@
 }
 .scroll-thin:hover::-webkit-scrollbar-thumb,
 .scroll-thin:focus-within::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--foreground) / 0.25);
+  background-color: color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 
 /* Movimiento de la app (docs/spec/diseno.md 10.8): sutil y rápido. Duraciones, curvas y
@@ -57,7 +57,7 @@
   transition: border-color var(--motion-duration-fast) var(--motion-ease-out);
 }
 .card-hover:hover {
-  border-color: hsl(var(--foreground) / 0.25);
+  border-color: color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -222,9 +222,9 @@
   .bian-shimmer {
     background: linear-gradient(
         90deg,
-        hsl(var(--muted-foreground)) 0%,
-        hsl(var(--primary)) 50%,
-        hsl(var(--muted-foreground)) 100%
+        var(--muted-foreground) 0%,
+        var(--primary) 50%,
+        var(--muted-foreground) 100%
       )
       0 0 / 200% 100%;
     -webkit-background-clip: text;
@@ -247,7 +247,12 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.06), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--foreground) 6%, transparent),
+      transparent
+    );
     transform: translateX(-100%);
     animation: skeleton-shimmer 1.6s var(--motion-ease-out) infinite;
   }
@@ -268,5 +273,5 @@
 
 /* El fragmento que Bian citó, resaltado al abrir el documento. */
 ::highlight(bian-cite) {
-  background-color: hsl(var(--warning) / 0.35);
+  background-color: color-mix(in srgb, var(--warning) 35%, transparent);
 }

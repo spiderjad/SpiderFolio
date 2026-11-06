@@ -56,8 +56,8 @@ const finder = (row: number, col: number) =>
     justify-items: center;
     gap: 0.5rem;
     border-radius: 0.75rem;
-    border: 1px dashed hsl(var(--border));
-    background: hsl(var(--background));
+    border: 1px dashed var(--border);
+    background: var(--background);
     padding: 0.85rem;
   }
   .code {
@@ -74,33 +74,33 @@ const finder = (row: number, col: number) =>
     background: transparent;
   }
   .code span.on {
-    background: hsl(var(--foreground));
+    background: var(--foreground);
   }
   .scan {
     position: absolute;
     inset: 0 0 auto 0;
     height: 2px;
-    background: hsl(var(--primary));
-    box-shadow: 0 0 12px 2px hsl(var(--primary) / 0.6);
+    background: var(--primary);
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--primary) 60%, transparent);
     opacity: 0;
   }
   .label {
     font-family: var(--font-mono, monospace);
     font-size: 0.7rem;
-    color: hsl(var(--muted-foreground));
+    color: var(--muted-foreground);
   }
   .arrow {
-    color: hsl(var(--muted-foreground));
+    color: var(--muted-foreground);
   }
   .phone {
     display: grid;
     gap: 0.4rem;
     width: 9rem;
     border-radius: 1.25rem;
-    border: 1px solid hsl(var(--border));
-    background: hsl(var(--background));
+    border: 1px solid var(--border);
+    background: var(--background);
     padding: 0.9rem 0.8rem 1rem;
-    box-shadow: 0 14px 30px -18px hsl(var(--foreground) / 0.4);
+    box-shadow: 0 14px 30px -18px color-mix(in srgb, var(--foreground) 40%, transparent);
   }
   .notch {
     justify-self: center;
@@ -108,12 +108,12 @@ const finder = (row: number, col: number) =>
     height: 0.3rem;
     margin-bottom: 0.25rem;
     border-radius: 999px;
-    background: hsl(var(--muted));
+    background: var(--muted);
   }
   .line {
     height: 0.4rem;
     border-radius: 999px;
-    background: hsl(var(--muted));
+    background: var(--muted);
   }
   .w60 {
     width: 60%;
@@ -130,8 +130,8 @@ const finder = (row: number, col: number) =>
   .version {
     justify-self: start;
     border-radius: 999px;
-    background: hsl(var(--success-soft));
-    color: hsl(var(--success-soft-foreground));
+    background: var(--success-soft);
+    color: var(--success-soft-foreground);
     padding: 0.1rem 0.5rem;
     font-size: 0.7rem;
     font-weight: 500;
@@ -142,7 +142,7 @@ const finder = (row: number, col: number) =>
     gap: 0.3rem;
     margin-top: 0.25rem;
     font-size: 0.7rem;
-    color: hsl(var(--primary));
+    color: var(--primary);
   }
 
   @media (prefers-reduced-motion: no-preference) {

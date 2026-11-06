@@ -37,8 +37,8 @@ const { t } = Astro.props;
   .user {
     justify-self: end;
     border-bottom-right-radius: 0.3rem;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    background: var(--primary);
+    color: var(--primary-foreground);
   }
   .bian {
     position: relative;
@@ -46,8 +46,8 @@ const { t } = Astro.props;
     gap: 0.6rem;
     justify-self: start;
     border-bottom-left-radius: 0.3rem;
-    border: 1px solid hsl(var(--border));
-    background: hsl(var(--background));
+    border: 1px solid var(--border);
+    background: var(--background);
   }
   .answer {
     margin: 0;
@@ -61,8 +61,8 @@ const { t } = Astro.props;
     gap: 0.35rem;
     justify-self: start;
     border-radius: 999px;
-    background: hsl(var(--primary-soft));
-    color: hsl(var(--primary-soft-foreground));
+    background: var(--primary-soft);
+    color: var(--primary-soft-foreground);
     padding: 0.2rem 0.6rem;
     font-size: 0.75rem;
   }
@@ -84,7 +84,7 @@ const { t } = Astro.props;
       width: 0.4rem;
       height: 0.4rem;
       border-radius: 999px;
-      background: hsl(var(--muted-foreground));
+      background: var(--muted-foreground);
       animation: blink 1s ease-in-out infinite;
     }
     .chat.is-in .dots span:nth-child(2) {
