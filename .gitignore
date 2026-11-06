@@ -32,3 +32,8 @@ deploy/backups/
 
 # Demo GIFs (web/scripts/clips.ts): attached to a Release, never versioned.
 clips-gif/
+
+# Local folders outside the core (keys, licenses, DB dumps): never committed.
+claves/
+entregas/
+backups/
