@@ -3,7 +3,7 @@
 
 El sistema de diseño es el paquete **spider-ui** (repositorio privado spiderjad/spider-ui, instalado con el commit fijado: `github:spiderjad/spider-ui#<sha>`, dependencia de packages/tailwind-preset). Es la única fuente de colores, tipografía, radios y sombras. Su guía viaja con el paquete (node_modules/spider-ui/GUIDE.md) y manda sobre esta sección. Para actualizarlo: `npm install -w @spiderfolio/tailwind-preset github:spiderjad/spider-ui#<commit nuevo>`. Nada dentro de node_modules/spider-ui se edita; si falta un componente que se repite en varios proyectos, se propone en spider-ui.
 
-Panel (la app: listados, formularios, ajustes, editores): estilo Vercel, monocromo. Fondo blanco, superficies gris muy claro, borde de 1 px suave; botón primario negro (una sola acción principal por vista), secundario blanco con borde, rojo solo para borrar. Sin violeta en el panel. Verde, ámbar y rojo solo para estados. Clases `v-*`.
+Panel (la app: listados, formularios, ajustes, editores): estilo Vercel con el violeta de spider-ui (--sp-primary) como color de marca. Fondo blanco, superficies gris muy claro, borde de 1 px suave; botón primario violeta (una sola acción principal por vista), ítem activo y enlaces en violeta, secundario blanco con borde, rojo solo para borrar. Verde, ámbar y rojo solo para estados. Clases `v-*`. Decisión de SpiderFolio: se aparta del panel monocromo de la guía de spider-ui (botón negro); donde se use `v-btn-primary`, se le da el violeta con CSS propio del proyecto.
 Acceso (login, registro, recuperar, código, bienvenida): estilo Stripe, violeta y ámbar. Clases `auth-*` con la estructura completa de la guía. No se mezclan los dos sistemas en una pantalla.
 Tipografía Inter (--sp-font) para todo. Etiquetas en mayúsculas con espaciado para estructurar sin cajas extra. Íconos lineales finos (lucide, strokeWidth={1.75}).
 Modo oscuro desde el día 1 (botón luna en web y app): spider-ui lo toma de `data-theme` en `<html>`; la app y la web ponen `data-theme` y la clase `.dark` (para la variante `dark:` de Tailwind) a la vez (frontend/public/compat.js, frontend/src/lib/theme.ts, web/public/theme-init.js y Header.astro).
@@ -16,9 +16,9 @@ Los componentes existentes usan clases semánticas (bg-primary, text-muted-foreg
 |---|---|
 | background / surface / muted | --sp-bg / --sp-bg-subtle / --sp-bg-muted |
 | foreground / muted-foreground | --sp-text-primary / --sp-text-secondary |
-| border / input / ring | --sp-border / --sp-border / --sp-focus |
-| primary / primary-foreground | --sp-inverse / --sp-on-inverse (negro sobre blanco; claro en oscuro) |
-| primary-soft / primary-soft-foreground | --sp-bg-muted / --sp-text-primary (ítem activo) |
+| border / input / ring | --sp-border / --sp-border / --sp-primary |
+| primary / primary-foreground | --sp-primary / --sp-on-primary (violeta de la marca) |
+| primary-soft / primary-soft-foreground | --sp-primary-light / --sp-primary-text (ítem activo, chips) |
 | success, warning, danger | --sp-success, --sp-warning, --sp-danger; -foreground: --sp-bg |
 | X-soft / X-soft-foreground | --sp-X-light / --sp-X (danger: --sp-danger-text) |
 | radius (sm, md, lg) / xl, 2xl | --sp-radius (6 px, botones) / --sp-radius-lg (10 px, tarjetas) |
@@ -26,7 +26,7 @@ Los componentes existentes usan clases semánticas (bg-primary, text-muted-foreg
 
 El bloque @theme inline borra la paleta de Tailwind (--color-*: initial) y mapea --color-<token>: var(--<token>); la opacidad funciona con la sintaxis normal (bg-primary/50, vía color-mix). En CSS propio se usa var(--<token>) o var(--sp-*), nunca hsl(var(--x)). No hay bloque .dark: los valores cambian con los de spider-ui.
 
-Color de acento por workspace: Workspace.accentColor es null por defecto (= panel monocromo de spider-ui) y solo se guarda si el cliente elige otro, como #rrggbb en minúsculas. El backend lo valida con HEX_COLOR_RE (#RRGGBB) y lo normaliza con normalizeHex (@spiderfolio/tailwind-preset/accent, sin dependencias de Tailwind). La app calcula las variables con accentTokens(hex) (--primary, --primary-foreground, --primary-soft, --primary-soft-foreground y --ring, distintas para claro y oscuro; primaryForegroundFor elige blanco o casi negro según el contraste) y las aplica como hsl(...) con document.documentElement.style.setProperty, volviendo a aplicarlas al cambiar de tema. Nunca con <style> en línea (CSP). Si accentIsLowContrastText(hex) es true, la configuración avisa que los enlaces se leerán mal, sin bloquear. Los valores HSL de src/tokens.ts quedan solo para esas cuentas de contraste.
+Color de acento por workspace: Workspace.accentColor es null por defecto (= violeta de spider-ui) y solo se guarda si el cliente elige otro, como #rrggbb en minúsculas. El backend lo valida con HEX_COLOR_RE (#RRGGBB) y lo normaliza con normalizeHex (@spiderfolio/tailwind-preset/accent, sin dependencias de Tailwind). La app calcula las variables con accentTokens(hex) (--primary, --primary-foreground, --primary-soft, --primary-soft-foreground y --ring, distintas para claro y oscuro; primaryForegroundFor elige blanco o casi negro según el contraste) y las aplica como hsl(...) con document.documentElement.style.setProperty, volviendo a aplicarlas al cambiar de tema. Nunca con <style> en línea (CSP). Si accentIsLowContrastText(hex) es true, la configuración avisa que los enlaces se leerán mal, sin bloquear. Los valores HSL de src/tokens.ts quedan solo para esas cuentas de contraste.
 
 Preset (Tailwind 4, configurado en CSS): app y web hacen @import "tailwindcss"; y @import "@spiderfolio/tailwind-preset/preset.css";. preset.css no contiene valores de color: importa tw-animate-css, spider-ui/spider-ui.css (tokens, v-* y auth-*), tokens.css y spider-ui/tailwind-v4.css (clases spider-*), carga @tailwindcss/typography con @plugin, define la variante dark por clase (@custom-variant dark (&:where(.dark, .dark *))), las fuentes (--font-sans y --font-mono de spider-ui; --font-display "Instrument Serif" solo en la web, pendiente de pasar a spider-ui), los radios, las sombras, los estilos base (bordes, body, prefers-reduced-motion) y el tema de prose con los tokens (@utility prose).
 

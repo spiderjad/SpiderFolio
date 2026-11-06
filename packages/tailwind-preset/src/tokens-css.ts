@@ -12,7 +12,7 @@ const HEADER = `/*
  * Los valores salen de spider-ui (--sp-*).
  */`;
 
-/** SpiderFolio token → spider-ui token. Monochrome panel: primary is the black (inverse) button. */
+/** SpiderFolio token → spider-ui token. Primary is the spider-ui brand violet (--sp-primary). */
 export const spiderUiAliases: Readonly<Record<ColorToken, string>> = {
   background: "var(--sp-bg)",
   surface: "var(--sp-bg-subtle)",
@@ -21,11 +21,11 @@ export const spiderUiAliases: Readonly<Record<ColorToken, string>> = {
   "muted-foreground": "var(--sp-text-secondary)",
   border: "var(--sp-border)",
   input: "var(--sp-border)",
-  ring: "var(--sp-focus)",
-  primary: "var(--sp-inverse)",
-  "primary-foreground": "var(--sp-on-inverse)",
-  "primary-soft": "var(--sp-bg-muted)",
-  "primary-soft-foreground": "var(--sp-text-primary)",
+  ring: "var(--sp-primary)",
+  primary: "var(--sp-primary)",
+  "primary-foreground": "var(--sp-on-primary)",
+  "primary-soft": "var(--sp-primary-light)",
+  "primary-soft-foreground": "var(--sp-primary-text)",
   success: "var(--sp-success)",
   "success-foreground": "var(--sp-bg)",
   "success-soft": "var(--sp-success-light)",
