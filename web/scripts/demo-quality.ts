@@ -772,7 +772,7 @@ export async function demoAudits(
     `SELECT a.id FROM "QualityAudit" a JOIN "Workspace" w ON w.id = a."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoSuppliers(target, counts);
   const year = new Date().getFullYear();
   for (const audit of AUDITS[target.locale]) {
     const { audit: created } = await call<{ audit: { id: string } }>("POST", "/quality/audits", {
@@ -795,6 +795,237 @@ export async function demoAudits(
         openNc: finding.severity !== "MINOR" || audit.scheme !== "INTERNAL",
       });
       counts.findings = (counts.findings ?? 0) + 1;
+    }
+  }
+  return await demoSuppliers(target, counts);
+}
+
+interface DemoSupplier {
+  name: string;
+  category: "RAW_MATERIAL" | "INGREDIENT" | "PACKAGING" | "SERVICE";
+  supplies: string;
+  risk: "LOW" | "MEDIUM" | "HIGH";
+  fraudRisk: "LOW" | "MEDIUM" | "HIGH";
+  fraudNote?: string;
+  docs: { kind: string; name: string; days: number | null }[];
+  review?: { result: "APPROVED" | "CONDITIONAL" | "BLOCKED"; months: number; note: string };
+  nc?: { title: string; description: string };
+}
+
+const SUPPLIERS: Record<QualityLocale, DemoSupplier[]> = {
+  es: [
+    {
+      name: "Cárnicas del Valle S.A.",
+      category: "RAW_MATERIAL",
+      supplies: "Canal y piezas de cerdo de capa blanca",
+      risk: "HIGH",
+      fraudRisk: "MEDIUM",
+      fraudNote: "Especie y origen verificados por analítica de ADN cada semestre.",
+      docs: [
+        { kind: "CERT_IFS", name: "Certificado IFS Food 8", days: 210 },
+        { kind: "SPEC_SHEET", name: "Ficha técnica · pieza de jamón", days: null },
+      ],
+      review: {
+        result: "APPROVED",
+        months: -3,
+        note: "Sin incidencias; temperatura de recepción correcta.",
+      },
+    },
+    {
+      name: "Especias Mediterráneas S.L.",
+      category: "INGREDIENT",
+      supplies: "Pimentón, ajo y mezclas de especias (contienen mostaza)",
+      risk: "HIGH",
+      fraudRisk: "HIGH",
+      fraudNote: "Pimentón: riesgo de adulteración con colorantes; analítica por lote.",
+      docs: [
+        { kind: "CERT_BRCGS", name: "Certificado BRCGS Food Safety 9", days: 18 },
+        { kind: "ANALYSIS", name: "Analítica de colorantes Sudán", days: 60 },
+      ],
+      review: {
+        result: "CONDITIONAL",
+        months: -2,
+        note: "Mezcla nueva sin ficha técnica actualizada.",
+      },
+      nc: {
+        title: "Mezcla de especias sin la mostaza en la ficha técnica",
+        description: "La ficha técnica de la mezcla nueva no declara la mostaza que contiene.",
+      },
+    },
+    {
+      name: "Tripas Naturales del Norte S.L.",
+      category: "RAW_MATERIAL",
+      supplies: "Tripa natural de cerdo y vacuno",
+      risk: "HIGH",
+      fraudRisk: "LOW",
+      docs: [{ kind: "CERT_IFS", name: "Certificado IFS Food 8", days: -12 }],
+      review: {
+        result: "APPROVED",
+        months: -13,
+        note: "Homologado tras la auditoría de proveedor.",
+      },
+    },
+    {
+      name: "Envases Plásticos Ibéricos S.A.",
+      category: "PACKAGING",
+      supplies: "Bandejas y film para loncheados",
+      risk: "LOW",
+      fraudRisk: "LOW",
+      docs: [
+        { kind: "SPEC_SHEET", name: "Declaración de conformidad (Reglamento 10/2011)", days: 400 },
+      ],
+      review: { result: "APPROVED", months: -6, note: "Documentación completa." },
+    },
+    {
+      name: "Plagas Control Sur S.L.",
+      category: "SERVICE",
+      supplies: "Control de plagas y mapa de cebos",
+      risk: "MEDIUM",
+      fraudRisk: "LOW",
+      docs: [{ kind: "CERT_OTHER", name: "Inscripción en el ROESB", days: 300 }],
+    },
+  ],
+  en: [
+    {
+      name: "Valley Meats Ltd",
+      category: "RAW_MATERIAL",
+      supplies: "White pig carcasses and cuts",
+      risk: "HIGH",
+      fraudRisk: "MEDIUM",
+      fraudNote: "Species and origin checked by DNA analysis every six months.",
+      docs: [
+        { kind: "CERT_IFS", name: "IFS Food 8 certificate", days: 210 },
+        { kind: "SPEC_SHEET", name: "Technical sheet · ham cut", days: null },
+      ],
+      review: {
+        result: "APPROVED",
+        months: -3,
+        note: "No incidents; correct reception temperature.",
+      },
+    },
+    {
+      name: "Mediterranean Spices Ltd",
+      category: "INGREDIENT",
+      supplies: "Paprika, garlic and spice mixes (contain mustard)",
+      risk: "HIGH",
+      fraudRisk: "HIGH",
+      fraudNote: "Paprika: risk of adulteration with dyes; analysis per lot.",
+      docs: [
+        { kind: "CERT_BRCGS", name: "BRCGS Food Safety 9 certificate", days: 18 },
+        { kind: "ANALYSIS", name: "Sudan dyes analysis", days: 60 },
+      ],
+      review: {
+        result: "CONDITIONAL",
+        months: -2,
+        note: "New mix without an updated technical sheet.",
+      },
+      nc: {
+        title: "Spice mix without mustard in the technical sheet",
+        description: "The new mix's technical sheet doesn't declare the mustard it contains.",
+      },
+    },
+    {
+      name: "Northern Natural Casings Ltd",
+      category: "RAW_MATERIAL",
+      supplies: "Natural pork and beef casings",
+      risk: "HIGH",
+      fraudRisk: "LOW",
+      docs: [{ kind: "CERT_IFS", name: "IFS Food 8 certificate", days: -12 }],
+      review: { result: "APPROVED", months: -13, note: "Approved after the supplier audit." },
+    },
+    {
+      name: "Iberian Plastic Packaging Ltd",
+      category: "PACKAGING",
+      supplies: "Trays and film for sliced products",
+      risk: "LOW",
+      fraudRisk: "LOW",
+      docs: [
+        { kind: "SPEC_SHEET", name: "Declaration of compliance (Regulation 10/2011)", days: 400 },
+      ],
+      review: { result: "APPROVED", months: -6, note: "Complete documents." },
+    },
+    {
+      name: "South Pest Control Ltd",
+      category: "SERVICE",
+      supplies: "Pest control and bait map",
+      risk: "MEDIUM",
+      fraudRisk: "LOW",
+      docs: [{ kind: "CERT_OTHER", name: "Biocide services registration", days: 300 }],
+    },
+  ],
+};
+
+/**
+ * Phase 4 (docs/spec/calidad.md, «Fase 4»): suppliers in every state, with certificates valid, due soon
+ * and expired, their reviews and a nonconformity. Idempotent: if the company has suppliers, nothing.
+ */
+export async function demoSuppliers(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT s.id FROM "QualitySupplier" s JOIN "Workspace" w ON w.id = s."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const members = await call<{ items: { id: string; email: string | null }[] }>(
+    "GET",
+    "/admin/members?pageSize=100",
+  );
+  const ownerId = members.items.find((item) => item.email === target.peopleEmails[0])?.id ?? null;
+  const monthsFrom = (months: number) => {
+    const date = new Date();
+    date.setUTCMonth(date.getUTCMonth() + months);
+    return date.toISOString().slice(0, 10);
+  };
+  for (const supplier of SUPPLIERS[target.locale]) {
+    const { supplier: created } = await call<{ supplier: { id: string } }>(
+      "POST",
+      "/quality/suppliers",
+      {
+        name: supplier.name,
+        category: supplier.category,
+        supplies: supplier.supplies,
+        risk: supplier.risk,
+        fraudRisk: supplier.fraudRisk,
+        fraudNote: supplier.fraudNote ?? null,
+        ownerId,
+      },
+    );
+    counts.suppliers = (counts.suppliers ?? 0) + 1;
+    for (const doc of supplier.docs) {
+      await call("POST", `/quality/suppliers/${created.id}/docs`, {
+        kind: doc.kind,
+        name: doc.name,
+        nodeId: null,
+        validUntil: doc.days === null ? null : day(doc.days),
+      });
+    }
+    if (supplier.review !== undefined) {
+      await call("POST", `/quality/suppliers/${created.id}/reviews`, {
+        reviewedOn: monthsFrom(supplier.review.months),
+        scores: {
+          quality: 4,
+          service: 4,
+          documents: supplier.review.result === "CONDITIONAL" ? 2 : 4,
+          incidents: 4,
+        },
+        result: supplier.review.result,
+        note: supplier.review.note,
+      });
+    }
+    if (supplier.nc !== undefined && ownerId !== null) {
+      await call("POST", "/quality/ncs", {
+        title: supplier.nc.title,
+        description: supplier.nc.description,
+        detectedOn: day(-8),
+        origin: "SUPPLIER",
+        severity: "MAJOR",
+        ownerId,
+        departmentId: null,
+        supplierId: created.id,
+      });
     }
   }
   return counts;

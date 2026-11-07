@@ -1,0 +1,67 @@
+---
+title: "Suppliers"
+description: "The supplier register with their risk and fraud vulnerability, their certificates and technical sheets with expiry, their yearly review and their nonconformities."
+group: calidad
+order: 5
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+IFS Food 8 and BRCGS 9 ask to approve each supplier according to the risk of what it supplies, to keep its
+certificates and technical sheets in force, to review it every year and to assess the fraud vulnerability of
+each raw material. **Suppliers** (Quality menu) brings all of that together.
+
+## The register
+
+The list shows each supplier with its category, the **risk** of what it supplies, its **status** (**Pending**,
+**Approved**, **Conditional** or **Blocked**), the worst state of its **certificates** (**Valid**, **Due soon**
+or **Expired**) and its **next review**, in red with “Review due” once it's passed. Search by name, tax ID or
+what it supplies, and filter by status, category and risk.
+
+<Shot
+  name="calidad-proveedores"
+  alt="The supplier register with their risk, status, certificates and next review"
+/>
+
+**New supplier** (whoever manages quality) asks for the name, the tax ID, the **category** (raw material,
+ingredient and additive, packaging, service or other), **what it supplies**, its **risk**, the **fraud
+vulnerability** with its assessment (for example, paprika and dyes), the contact and **who follows it**. It's
+**Pending** until its first review.
+
+## The record
+
+<Shot
+  name="calidad-proveedor"
+  alt="A conditional spice supplier, with a certificate due soon and its review"
+/>
+
+- **Documents**: certificates (IFS, BRCGS or others), technical sheets, approval questionnaires and analyses,
+  each with its **expiry**. Whoever follows the supplier is told 30 days before, 7 days before and on the day,
+  also in [Expiries](/en/docs/expiries). A document can point to a file in the supplier's folder: **Open the
+  folder** creates it inside **Suppliers** in the Quality space; upload the PDF there and choose it when adding
+  the document. A document that no longer applies is **archived**.
+- **Reviews**: **Review** asks for the date, a score from 1 to 5 for quality, service, documents and
+  incidents, the **result** (**Approved**, **Conditional** or **Blocked**) and its grounds. The supplier moves
+  to that status and its next review is set **12 months** later (**6** if conditional), with its notice. While
+  reviewing you see how many open nonconformities it has.
+- **Nonconformities**: its own. **Open nonconformity** creates one with origin **Supplier**, linked to it; the
+  NC's record links the supplier.
+
+**Archive** takes the supplier off the list (filter **Archived** to see it) without deleting anything.
+
+## Who sees what
+
+| Who                        | What they see and do                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| **Manage quality**         | Everything: adds, edits, reviews, loads documents, opens NCs and archives.                 |
+| **View quality**           | Reads the register and each record.                                                        |
+| Whoever follows a supplier | Sees it even without capabilities and loads and archives its documents; doesn't review it. |
+
+## Related
+
+- [Nonconformities and CAPA](/en/docs/nonconformities)
+- [Expiries](/en/docs/expiries)
+- [Audits](/en/docs/audits)

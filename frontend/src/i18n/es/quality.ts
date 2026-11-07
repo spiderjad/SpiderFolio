@@ -518,7 +518,7 @@ export const qualityTexts = {
     subtitle:
       "Quién suministra qué, con su riesgo, sus certificados y fichas técnicas vigentes y su evaluación anual.",
     create: "Nuevo proveedor",
-    search: "Buscar por nombre, CIF o lo que suministra",
+    search: "Buscar proveedor",
     anyStatus: "Activos",
     archivedFilter: "Archivados",
     anyCategory: "Cualquier categoría",

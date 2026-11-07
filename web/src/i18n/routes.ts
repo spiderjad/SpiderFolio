@@ -64,6 +64,7 @@ export const DOC_KEYS = [
   "qualityNcs",
   "qualityHaccp",
   "qualityAudits",
+  "qualitySuppliers",
   "search",
   "bian",
   "security2fa",

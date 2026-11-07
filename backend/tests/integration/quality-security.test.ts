@@ -861,3 +861,184 @@ describe("calidad fase 3: auditorías", () => {
     ).toBe(400);
   });
 });
+
+// ─── Phase 4: suppliers ─────────────────────────────────────────────────────────────────
+
+interface SupplierBody {
+  supplier: {
+    id: string;
+    status: string;
+    access: string;
+    nextReviewOn: string | null;
+    certificates: string | null;
+    docs: { id: string; state: string }[];
+  };
+}
+
+const supplierInput = (name: string, extra: object = {}) => ({
+  name,
+  category: "INGREDIENT",
+  supplies: "Pimentón y especias",
+  risk: "HIGH",
+  ...extra,
+});
+
+describe("calidad fase 4: proveedores", () => {
+  it("quality.view lee; un miembro no ve ni la lista; solo quality.manage da de alta y evalúa", async () => {
+    const created = await api(w.ws.slug, w.manager.token).post(
+      "/quality/suppliers",
+      supplierInput("Especias Uno"),
+    );
+    expect(created.status).toBe(201);
+    const id = (created.body as SupplierBody).supplier.id;
+    expect((created.body as SupplierBody).supplier.status).toBe("PENDING");
+    expect((await api(w.ws.slug, w.viewer.token).get(`/quality/suppliers/${id}`)).status).toBe(200);
+    expect(
+      (await api(w.ws.slug, w.viewer.token).post("/quality/suppliers", supplierInput("Otro")))
+        .status,
+    ).toBe(403);
+    const plain = api(w.ws.slug, w.plain.token);
+    expect((await plain.get(`/quality/suppliers/${id}`)).status).toBe(404);
+    expect(((await plain.get("/quality/suppliers")).body as { total: number }).total).toBe(0);
+    // Names are unique without caring about case.
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).post(
+          "/quality/suppliers",
+          supplierInput("especias uno"),
+        )
+      ).status,
+    ).toBe(409);
+  });
+
+  it("quien lo sigue carga documentos pero no lo evalúa; la evaluación fija estado y próxima", async () => {
+    const created = await api(w.ws.slug, w.manager.token).post(
+      "/quality/suppliers",
+      supplierInput("Tripas Dos", { ownerId: w.owner.membership.id }),
+    );
+    const id = (created.body as SupplierBody).supplier.id;
+    const follower = api(w.ws.slug, w.owner.token);
+    expect(
+      ((await follower.get(`/quality/suppliers/${id}`)).body as SupplierBody).supplier.access,
+    ).toBe("owner");
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const doc = await follower.post(`/quality/suppliers/${id}/docs`, {
+      kind: "CERT_IFS",
+      name: "Certificado IFS",
+      validUntil: soon,
+    });
+    expect(doc.status).toBe(201);
+    expect((doc.body as SupplierBody).supplier.certificates).toBe("due_soon");
+    const expiry = await ctx.prisma.expiry.findFirst({
+      where: {
+        kind: "quality.supplier_doc",
+        subjectId: (doc.body as SupplierBody).supplier.docs[0]?.id ?? "",
+      },
+    });
+    expect(expiry?.responsibleId).toBe(w.owner.membership.id);
+    const review = {
+      reviewedOn: "2026-11-01",
+      scores: { quality: 4, service: 4, documents: 2, incidents: 4 },
+      result: "CONDITIONAL",
+      note: "Ficha técnica sin actualizar.",
+    };
+    expect((await follower.post(`/quality/suppliers/${id}/reviews`, review)).status).toBe(403);
+    expect((await follower.patch(`/quality/suppliers/${id}`, { name: "x" })).status).toBe(403);
+    const reviewed = await api(w.ws.slug, w.manager.token).post(
+      `/quality/suppliers/${id}/reviews`,
+      review,
+    );
+    expect((reviewed.body as SupplierBody).supplier).toMatchObject({
+      status: "CONDITIONAL",
+      nextReviewOn: "2027-05-01",
+    });
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).post(`/quality/suppliers/${id}/reviews`, {
+          ...review,
+          scores: { ...review.scores, quality: 6 },
+        })
+      ).status,
+    ).toBe(400);
+  });
+
+  it("un documento solo apunta a un archivo de su carpeta; archivado no recibe nada", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const created = await manager.post("/quality/suppliers", supplierInput("Envases Tres"));
+    const id = (created.body as SupplierBody).supplier.id;
+    const outside = await ctx.prisma.node.create({
+      data: {
+        workspaceId: w.ws.workspaceId,
+        spaceId: w.spaceId,
+        type: "FILE",
+        name: "suelto.pdf",
+        nameKey: "suelto.pdf",
+        position: "a0",
+        createdById: w.ws.membershipId,
+        updatedById: w.ws.membershipId,
+        mimeType: "application/pdf",
+        sizeBytes: 10n,
+      },
+    });
+    expect(
+      (
+        await manager.post(`/quality/suppliers/${id}/docs`, {
+          kind: "OTHER",
+          name: "x",
+          nodeId: outside.id,
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (await manager.post(`/quality/suppliers/${id}/archive`, { archived: true })).status,
+    ).toBe(200);
+    expect(
+      (await manager.post(`/quality/suppliers/${id}/docs`, { kind: "OTHER", name: "x" })).status,
+    ).toBe(409);
+  });
+
+  it("una NC se liga a un proveedor solo con origen Proveedor; otra empresa, 404", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const created = await manager.post("/quality/suppliers", supplierInput("Cárnicas Cuatro"));
+    const id = (created.body as SupplierBody).supplier.id;
+    expect(
+      (await manager.post("/quality/ncs", { ...ncInput(w.owner.membership.id), supplierId: id }))
+        .status,
+    ).toBe(400);
+    const linked = await manager.post("/quality/ncs", {
+      ...ncInput(w.owner.membership.id),
+      origin: "SUPPLIER",
+      supplierId: id,
+    });
+    expect(linked.status).toBe(201);
+    const other = await world("Calidad proveedor ajeno");
+    const theirs = await api(other.ws.slug, other.manager.token).post(
+      "/quality/suppliers",
+      supplierInput("Ajeno"),
+    );
+    const theirId = (theirs.body as SupplierBody).supplier.id;
+    expect((await manager.get(`/quality/suppliers/${theirId}`)).status).toBe(404);
+    expect((await manager.patch(`/quality/suppliers/${theirId}`, { name: "x" })).status).toBe(404);
+    expect(
+      (await manager.post(`/quality/suppliers/${theirId}/docs`, { kind: "OTHER", name: "x" }))
+        .status,
+    ).toBe(404);
+    expect(
+      (
+        await manager.post("/quality/ncs", {
+          ...ncInput(w.owner.membership.id),
+          origin: "SUPPLIER",
+          supplierId: theirId,
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await manager.post(
+          "/quality/suppliers",
+          supplierInput("Con dueño ajeno", { ownerId: other.manager.membership.id }),
+        )
+      ).status,
+    ).toBe(404);
+  });
+});

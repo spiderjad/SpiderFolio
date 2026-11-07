@@ -431,6 +431,24 @@ vencimientos, su evaluación anual y sus no conformidades.
 - Ficha (`/calidad/proveedores/:id`): datos, riesgo y fraude, documentos con su estado y vencimiento,
   evaluaciones, NC, **Abrir la carpeta**.
 
+### Hecho (fase 4)
+
+Hecha el 07/11/2026. Migración `quality_suppliers` (`QualitySupplier`, `QualitySupplierDoc`,
+`QualitySupplierReview` y `QualityNc.supplierId`). Backend en `suppliers.service.ts` y `suppliers.schemas.ts`,
+vencimientos `quality.supplier_doc` y `quality.supplier_review`; pantallas **Proveedores**
+(`/calidad/proveedores`) y la ficha de cada uno; la NC enlaza su proveedor y se abre desde la ficha. Demo
+(`demoSuppliers`), capturas `calidad-proveedores` y `calidad-proveedor`, guía **Proveedores** (es y en) y tests
+de seguridad.
+
+Simplificaciones:
+
+- Un documento apunta a un archivo de la carpeta del proveedor (se sube con el explorador y se elige); no hay
+  subida desde la propia ficha.
+- La evaluación es una puntuación de 1 a 5 en cuatro criterios fijos y un resultado elegido por quien evalúa
+  (no se calcula de la puntuación).
+- El estado de los certificados en la lista mira solo los certificados (no fichas ni analíticas).
+- Un proveedor archivado no recibe documentos ni evaluaciones; se recupera desde su ficha.
+
 ### API (fase 4)
 
 - `GET /quality/suppliers` (cursor, `q`, `status`, `category`, `risk`), `POST /quality/suppliers`,

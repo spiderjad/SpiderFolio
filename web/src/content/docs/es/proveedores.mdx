@@ -1,0 +1,67 @@
+---
+title: "Proveedores"
+description: "El registro de proveedores con su riesgo y su vulnerabilidad al fraude, sus certificados y fichas técnicas con vencimiento, su evaluación anual y sus no conformidades."
+group: calidad
+order: 5
+icon: users
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 y BRCGS 9 piden homologar a cada proveedor según el riesgo de lo que suministra, tener sus
+certificados y fichas técnicas vigentes, evaluarlo cada año y valorar la vulnerabilidad al fraude de cada
+materia prima. En **Proveedores** (menú de Calidad) está todo eso junto.
+
+## El registro
+
+La lista muestra cada proveedor con su categoría, el **riesgo** de lo que suministra, su **estado**
+(**Pendiente**, **Homologado**, **Condicional** o **Bloqueado**), el peor estado de sus **certificados**
+(**Vigente**, **Por vencer** o **Vencido**) y su **próxima evaluación**, en rojo con «Toca evaluar» cuando ya
+pasó. Se busca por nombre, CIF o lo que suministra, y se filtra por estado, categoría y riesgo.
+
+<Shot
+  name="calidad-proveedores"
+  alt="El registro de proveedores con su riesgo, estado, certificados y próxima evaluación"
+/>
+
+**Nuevo proveedor** (quien gestiona calidad) pide el nombre, el CIF, la **categoría** (materia prima,
+ingrediente y aditivo, envase y embalaje, servicio u otro), **qué suministra**, su **riesgo**, la
+**vulnerabilidad al fraude** con su valoración (por ejemplo, el pimentón y los colorantes), el contacto y
+**quién lo sigue**. Queda **Pendiente** hasta su primera evaluación.
+
+## La ficha
+
+<Shot
+  name="calidad-proveedor"
+  alt="Un proveedor de especias condicional, con un certificado por vencer y su evaluación"
+/>
+
+- **Documentos**: certificados (IFS, BRCGS u otros), fichas técnicas, cuestionarios de homologación y
+  analíticas, cada uno con su **vencimiento**. Quien sigue al proveedor recibe el aviso 30 días antes, 7 días
+  antes y el mismo día, también en [Vencimientos](/es/docs/vencimientos). Un documento puede apuntar a un
+  archivo de la carpeta del proveedor: **Abrir la carpeta** la crea dentro de **Proveedores** en el espacio
+  Calidad; sube ahí el PDF y elígelo al agregar el documento. Un documento que ya no aplica se **archiva**.
+- **Evaluaciones**: **Evaluar** pide la fecha, una puntuación de 1 a 5 en calidad, servicio, documentación e
+  incidencias, el **resultado** (**Homologado**, **Condicional** o **Bloqueado**) y su fundamento. El
+  proveedor pasa a ese estado y su próxima evaluación queda a los **12 meses** (a los **6** si es
+  condicional), con su aviso. Al evaluar se ve cuántas no conformidades tiene abiertas.
+- **No conformidades**: las suyas. **Abrir no conformidad** crea una con origen **Proveedor**, ligada a él; la
+  ficha de la NC enlaza al proveedor.
+
+**Archivar** saca al proveedor de la lista (filtro **Archivados** para verlo) sin borrar nada.
+
+## Quién ve qué
+
+| Quién                      | Qué ve y qué hace                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| **Gestionar calidad**      | Todo: da de alta, edita, evalúa, carga documentos, abre NC y archiva.             |
+| **Ver calidad**            | Lee el registro y cada ficha.                                                     |
+| Quien sigue a un proveedor | Lo ve aunque no tenga capacidades y carga y archiva sus documentos; no lo evalúa. |
+
+## Relacionado
+
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Vencimientos](/es/docs/vencimientos)
+- [Auditorías](/es/docs/auditorias)

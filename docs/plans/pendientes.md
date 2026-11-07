@@ -51,9 +51,9 @@ Hay que analizar y decidir con él, sin código todavía:
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
       [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, **módulo aparte en el menú**,
       activable por empresa como Prevención. Spec [docs/spec/calidad.md](../spec/calidad.md) aprobada;
-      **fases 1 a 3 cerradas** (07/11/2026): no conformidades y CAPA; plan APPCC, PCC, plantilla
-      cárnica y producto retenido; auditorías con su cobertura y hallazgos. Con sus tests de seguridad.
-      Sigue la fase 4 (proveedores).
+      **fases 1 a 4 cerradas** (07/11/2026): no conformidades y CAPA; plan APPCC, PCC, plantilla
+      cárnica y producto retenido; auditorías con su cobertura y hallazgos; proveedores con documentos,
+      vencimientos y evaluación. Con sus tests de seguridad. Sigue la fase 5 (reclamaciones y retirada).
 
 ## Migración a spider-ui
 

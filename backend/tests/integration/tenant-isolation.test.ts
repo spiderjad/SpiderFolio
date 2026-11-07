@@ -74,6 +74,65 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
   // Food quality (docs/spec/calidad.md). B's module is off: its own reads are 404 too.
   { method: "get", path: "/admin/quality", url: () => "/admin/quality" },
+  // Food quality, phase 4: suppliers.
+  { method: "get", path: "/quality/suppliers", url: () => "/quality/suppliers", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/suppliers",
+    url: () => "/quality/suppliers",
+    body: { name: "Ajeno", category: "OTHER", supplies: "Ajeno", risk: "LOW" },
+  },
+  {
+    method: "get",
+    path: "/quality/suppliers/:id",
+    url: () => "/quality/suppliers/x",
+    ownStatus: 404,
+  },
+  {
+    method: "patch",
+    path: "/quality/suppliers/:id",
+    url: () => "/quality/suppliers/x",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/quality/suppliers/:id/archive",
+    url: () => "/quality/suppliers/x/archive",
+    body: { archived: true },
+  },
+  {
+    method: "post",
+    path: "/quality/suppliers/:id/folder",
+    url: () => "/quality/suppliers/x/folder",
+  },
+  {
+    method: "get",
+    path: "/quality/suppliers/:id/files",
+    url: () => "/quality/suppliers/x/files",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/quality/suppliers/:id/docs",
+    url: () => "/quality/suppliers/x/docs",
+    body: { kind: "OTHER", name: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/quality/supplier-docs/:id/archive",
+    url: () => "/quality/supplier-docs/x/archive",
+  },
+  {
+    method: "post",
+    path: "/quality/suppliers/:id/reviews",
+    url: () => "/quality/suppliers/x/reviews",
+    body: {
+      reviewedOn: "2026-11-01",
+      scores: { quality: 3, service: 3, documents: 3, incidents: 3 },
+      result: "APPROVED",
+      note: "Ajeno",
+    },
+  },
   // Food quality, phase 3: audits and findings.
   {
     method: "get",

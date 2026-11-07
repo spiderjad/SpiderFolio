@@ -517,7 +517,7 @@ export const qualityTexts: typeof es = {
     subtitle:
       "Who supplies what, with its risk, its certificates and technical sheets in force and its yearly review.",
     create: "New supplier",
-    search: "Search by name, tax ID or what it supplies",
+    search: "Search suppliers",
     anyStatus: "Active",
     archivedFilter: "Archived",
     anyCategory: "Any category",

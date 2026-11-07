@@ -522,6 +522,7 @@ async function demoQualityOf(locale: Locale, slug: string): Promise<void> {
 }
 
 const demoAuditIds = new Map<Locale, string>();
+const demoSupplierIds = new Map<Locale, string>();
 const qualityAuditOf = (locale: Locale) => {
   const id = demoAuditIds.get(locale);
   if (id === undefined) throw new Error("La auditoría IFS de la demo todavía no está");
@@ -1030,6 +1031,29 @@ const CAPTURES: Capture[] = [
       const id = rows[0]?.id;
       if (id === undefined) throw new Error("demoQualityOf no dejó la auditoría IFS");
       demoAuditIds.set(locale, id);
+    },
+  },
+  {
+    // Phase 4: the supplier register and the spice supplier (conditional, certificate due soon, an NC).
+    name: "calidad-proveedores",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/proveedores`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-proveedor",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/proveedores/${demoSupplierIds.get(locale) ?? ""}`,
+    before: async ({ slug, locale }) => {
+      await demoQualityOf(locale, slug);
+      const { rows } = await db.query<{ id: string }>(
+        `SELECT s.id FROM "QualitySupplier" s JOIN "Workspace" w ON w.id = s."workspaceId"
+          WHERE w.slug = $1 AND s.status = 'CONDITIONAL' LIMIT 1`,
+        [slug],
+      );
+      const id = rows[0]?.id;
+      if (id === undefined) throw new Error("demoQualityOf no dejó el proveedor condicional");
+      demoSupplierIds.set(locale, id);
     },
   },
   {
