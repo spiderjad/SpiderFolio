@@ -523,6 +523,7 @@ async function demoQualityOf(locale: Locale, slug: string): Promise<void> {
 
 const demoAuditIds = new Map<Locale, string>();
 const demoSupplierIds = new Map<Locale, string>();
+const demoProductIds = new Map<Locale, string>();
 const qualityAuditOf = (locale: Locale) => {
   const id = demoAuditIds.get(locale);
   if (id === undefined) throw new Error("La auditoría IFS de la demo todavía no está");
@@ -1080,6 +1081,34 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i) => `/app/${i.slug}/calidad/prerrequisitos`,
     before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-plan-analitico",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/plan-analitico`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-productos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/productos`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-producto",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/productos/${demoProductIds.get(locale) ?? ""}`,
+    before: async ({ slug, locale }) => {
+      await demoQualityOf(locale, slug);
+      const { rows } = await db.query<{ id: string }>(
+        `SELECT p.id FROM "QualityProduct" p JOIN "Workspace" w ON w.id = p."workspaceId"
+          WHERE w.slug = $1 AND p.code = 'JC-02' LIMIT 1`,
+        [slug],
+      );
+      const id = rows[0]?.id;
+      if (id === undefined) throw new Error("demoQualityOf no dejó el producto JC-02");
+      demoProductIds.set(locale, id);
+    },
   },
   {
     name: "calidad-comunicar",

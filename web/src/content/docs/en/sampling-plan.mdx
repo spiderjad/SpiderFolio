@@ -1,0 +1,63 @@
+---
+title: "Sampling plan"
+description: "Sampling of product, surfaces, environment and water: what is analysed, against which criterion and how often, the laboratory's result and the nonconformity if it goes wrong."
+group: calidad
+order: 9
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+IFS Food 8 and BRCGS 9 ask for a risk-based testing plan: product, surfaces, environment (Listeria in the
+ready-to-eat areas) and water, with their criteria and the follow-up of trends. In the Quality area,
+**Sampling plan** gathers the sampling points and their results.
+
+<Shot
+  name="calidad-plan-analitico"
+  alt="The sampling points by type, with the last result, the next sample and their state"
+/>
+
+## Create a point
+
+Whoever manages quality presses **New point** and chooses:
+
+- the **type** (product, surfaces, environment or water), the **point** and the **zone**;
+- the **product**, for a product sample;
+- the **parameter** (for example, _Listeria monocytogenes_), the **criterion** and, for a value, the
+  **maximum limit** and its **unit**;
+- **every how many days**, the **next sample**, the **laboratory** and the **responsible** person, who is told
+  7 days before, the day before and on the day.
+
+Each point shows **Up to date**, **Due soon** or **Overdue**, like prerequisites.
+
+## Record a result
+
+The point's responsible person (or whoever manages quality) presses **Record result** and enters the sample
+date and the **value** or the **presence** (detected or not detected). The screen proposes conforming or not
+by the limit; the person confirms it. The laboratory report is chosen from the **Sampling plan** folder of the
+Quality space (the folder button opens it to upload it).
+
+Not conforming: **Open a nonconformity** creates it with origin **Laboratory**, the point and the parameter in
+the title, in the hands of the point's responsible person (see
+[Nonconformities and CAPA](/en/docs/nonconformities)).
+
+## Trends
+
+Each point's **history** shows its results with the limit. When the last two are not conforming, the point is
+marked **Repeated**.
+
+## Who sees what
+
+| Who                          | What they see and do                                          |
+| ---------------------------- | ------------------------------------------------------------- |
+| **Manage quality**           | Everything: creates, edits, archives and records.             |
+| **View quality**             | Reads every point and its history.                            |
+| A point's responsible person | Sees it in **Mine** › **My samples** and records its results. |
+
+## Related
+
+- [Products and labels](/en/docs/products-and-labels)
+- [Prerequisites](/en/docs/prerequisites)
+- [Expiries](/en/docs/expiries)

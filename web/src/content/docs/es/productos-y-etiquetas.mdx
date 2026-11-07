@@ -1,0 +1,76 @@
+---
+title: "Productos y etiquetas"
+description: "La ficha técnica de cada producto (ingredientes, alérgenos, nutricional y vida útil), sus estudios de vida útil y la aprobación de sus etiquetas contra el Reglamento 1169/2011."
+group: calidad
+order: 8
+icon: file
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 y BRCGS 9 piden especificaciones de producto al día, una vida útil demostrada y etiquetas
+revisadas contra esa especificación. En el área Calidad, **Productos** reúne lo que fabrica la empresa con su
+ficha técnica, sus estudios de vida útil y sus etiquetas.
+
+<Shot
+  name="calidad-productos"
+  alt="La lista de productos con su familia, alérgenos, vida útil y el estado de su etiqueta"
+/>
+
+## La ficha técnica
+
+Quien gestiona calidad pulsa **Nuevo producto** y completa:
+
+- el **código**, el **nombre** y la **familia**;
+- los **ingredientes**, en orden de peso como en la etiqueta;
+- los **alérgenos** que contiene y los que **puede contener** (trazas), entre los 14 del Reglamento
+  1169/2011;
+- la **vida útil** en días, la **conservación** y si es **listo para consumo** (cuenta para la Listeria del
+  Reglamento 2073/2005);
+- la **información nutricional** por 100 g, si se quiere (los ocho valores).
+
+Cada producto tiene su **carpeta** en el espacio Calidad (botón **Carpeta**): ahí se suben el arte de las
+etiquetas, los informes de vida útil y el documento de la ficha, que se enlaza desde **Editar ficha**.
+
+La ficha tiene una **versión**. Cambiar los ingredientes, los alérgenos, las trazas, el nutricional o la vida
+útil la sube: la etiqueta aprobada antes queda **Desactualizada** hasta que se apruebe otra.
+
+<Shot
+  name="calidad-producto"
+  alt="La ficha de un producto con sus alérgenos, el nutricional, las etiquetas y los estudios de vida útil"
+/>
+
+## Aprobar una etiqueta
+
+1. **Enviar a revisión**: se elige el arte de la carpeta y se explica qué cambia. Quien gestiona calidad
+   recibe el aviso.
+2. **Revisar**: la lista de comprobación del artículo 9 del Reglamento 1169/2011 (denominación, ingredientes,
+   alérgenos destacados, cantidad neta, fecha, conservación, operador, lote, origen e información
+   nutricional), con la ficha vigente al lado. Origen y nutricional admiten **No aplica**.
+3. **Aprobar** exige todo correcto; **Rechazar**, las observaciones. Aprobar una etiqueta deja la anterior
+   como **Sustituida**.
+
+El estado de la etiqueta de cada producto es **Aprobada**, **Desactualizada**, **En revisión** o **Sin
+etiqueta**.
+
+## Estudios de vida útil
+
+**Nuevo estudio** registra el inicio, los días a demostrar y si incluye **Listeria monocytogenes**. Al
+terminar, **Registrar resultado**: **Aprobado** o **No superado**, la conclusión y el informe. No superado
+puede **abrir una no conformidad** con origen **Analítica**. Un producto listo para consumo sin estudio
+aprobado aparece como **Sin estudio de vida útil**.
+
+## Quién ve qué
+
+| Quién                 | Qué ve y qué hace                                 |
+| --------------------- | ------------------------------------------------- |
+| **Gestionar calidad** | Todo: fichas, estudios, envía y revisa etiquetas. |
+| **Ver calidad**       | Lee los productos, sus etiquetas y sus estudios.  |
+
+## Relacionado
+
+- [Plan analítico](/es/docs/plan-analitico)
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Calidad: primeros pasos](/es/docs/calidad)

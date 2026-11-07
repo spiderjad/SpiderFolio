@@ -60,6 +60,8 @@ export const routes: LocaleRoutes = {
     qualitySuppliers: "suppliers",
     qualityComplaints: "complaints-and-recall",
     qualityPrps: "prerequisites",
+    qualityProducts: "products-and-labels",
+    qualitySampling: "sampling-plan",
     search: "search",
     bian: "bian",
     security2fa: "security-and-2fa",

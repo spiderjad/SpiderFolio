@@ -1,0 +1,62 @@
+---
+title: "Plan analítico"
+description: "El muestreo de producto, superficies, ambiente y agua: qué se analiza, contra qué criterio y cada cuánto, el resultado del laboratorio y la no conformidad si sale mal."
+group: calidad
+order: 9
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 y BRCGS 9 piden un plan de análisis basado en el riesgo: producto, superficies, ambiente (la
+Listeria en las zonas de listos para consumo) y agua, con sus criterios y el seguimiento de las tendencias.
+En el área Calidad, **Plan analítico** reúne los puntos de muestreo y sus resultados.
+
+<Shot
+  name="calidad-plan-analitico"
+  alt="Los puntos de muestreo por tipo, con el último resultado, la próxima muestra y su estado"
+/>
+
+## Crear un punto
+
+Quien gestiona calidad pulsa **Nuevo punto** y elige:
+
+- el **tipo** (producto, superficies, ambiente o agua), el **punto** y la **zona**;
+- el **producto**, si es una muestra de producto;
+- el **parámetro** (por ejemplo, _Listeria monocytogenes_), el **criterio** y, si es un valor, el **límite
+  máximo** y su **unidad**;
+- **cada cuántos días**, la **próxima muestra**, el **laboratorio** y el **responsable**, que recibe los
+  avisos 7 días antes, el día anterior y el mismo día.
+
+Cada punto sale **Al día**, **Por vencer** o **Vencido**, como los prerrequisitos.
+
+## Registrar un resultado
+
+El responsable del punto (o quien gestiona calidad) pulsa **Registrar resultado** y pone la fecha de la
+muestra, el **valor** o la **presencia** (detectado o no detectado). La pantalla propone conforme o no
+conforme según el límite; la persona lo confirma. El informe del laboratorio se elige de la carpeta **Plan
+analítico** del espacio Calidad (el botón de la carpeta la abre para subirlo).
+
+No conforme: **Abrir una no conformidad** la crea con origen **Analítica**, el punto y el parámetro en el
+título, a cargo del responsable del punto (ver [No conformidades y CAPA](/es/docs/no-conformidades)).
+
+## Tendencias
+
+El **historial** de cada punto muestra sus resultados con el límite. Cuando los dos últimos no son conformes,
+el punto se marca **Repetido**.
+
+## Quién ve qué
+
+| Quién                      | Qué ve y qué hace                                                 |
+| -------------------------- | ----------------------------------------------------------------- |
+| **Gestionar calidad**      | Todo: crea, edita, archiva y registra.                            |
+| **Ver calidad**            | Lee todos los puntos y su historial.                              |
+| El responsable de un punto | Lo ve en **Lo mío** › **Mis muestras** y registra sus resultados. |
+
+## Relacionado
+
+- [Productos y etiquetas](/es/docs/productos-y-etiquetas)
+- [Prerrequisitos](/es/docs/prerrequisitos)
+- [Vencimientos](/es/docs/vencimientos)

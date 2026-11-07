@@ -1472,7 +1472,7 @@ export async function demoPrps(
     `SELECT p.id FROM "QualityPrp" p JOIN "Workspace" w ON w.id = p."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoProducts(target, counts);
   const members = await call<{ items: { id: string; email: string | null }[] }>(
     "GET",
     "/admin/members?pageSize=100",
@@ -1498,6 +1498,425 @@ export async function demoPrps(
         note: check.note ?? null,
         openNc: check.note !== undefined,
         severity: "MINOR",
+      });
+    }
+  }
+  return await demoProducts(target, counts);
+}
+
+type Allergen = "GLUTEN" | "MILK" | "MUSTARD" | "SULPHITES" | "SOY" | "CELERY";
+
+interface DemoProduct {
+  code: string;
+  name: string;
+  family: string;
+  ingredients: string;
+  allergens: Allergen[];
+  mayContain: Allergen[];
+  shelfLifeDays: number;
+  storage: string;
+  readyToEat: boolean;
+  /** approved: label approved and current; outdated: approved, then the sheet changed; review: sent. */
+  label: "approved" | "outdated" | "review" | "none";
+  /** A shelf life study: passed, pending or none. */
+  study: "passed" | "pending" | "none";
+}
+
+const nutrition = {
+  energyKj: 1590,
+  energyKcal: 383,
+  fat: 32,
+  saturates: 12,
+  carbs: 2.1,
+  sugars: 0.9,
+  protein: 22,
+  salt: 3.8,
+};
+
+const PRODUCTS: Record<"es" | "en", DemoProduct[]> = {
+  es: [
+    {
+      code: "CH-01",
+      name: "Chorizo curado extra",
+      family: "Curados",
+      ingredients:
+        "Carne de cerdo, sal, pimentón, ajo, lactosa, dextrosa, conservadores (E-252, E-250).",
+      allergens: ["MILK"],
+      mayContain: [],
+      shelfLifeDays: 180,
+      storage: "En lugar fresco y seco",
+      readyToEat: true,
+      label: "approved",
+      study: "passed",
+    },
+    {
+      code: "JC-02",
+      name: "Jamón cocido extra",
+      family: "Cocidos",
+      ingredients:
+        "Jamón de cerdo, agua, sal, dextrosa, estabilizante (E-451), antioxidante (E-316), conservador (E-250).",
+      allergens: [],
+      mayContain: ["SOY"],
+      shelfLifeDays: 45,
+      storage: "Entre 0 y 4 °C",
+      readyToEat: true,
+      label: "outdated",
+      study: "pending",
+    },
+    {
+      code: "SF-03",
+      name: "Salchichas frescas",
+      family: "Frescos",
+      ingredients: "Carne de cerdo, agua, pan rallado (trigo), sal, especias, sulfitos.",
+      allergens: ["GLUTEN", "SULPHITES"],
+      mayContain: ["MUSTARD", "CELERY"],
+      shelfLifeDays: 7,
+      storage: "Entre 0 y 4 °C",
+      readyToEat: false,
+      label: "review",
+      study: "none",
+    },
+    {
+      code: "SL-04",
+      name: "Salami loncheado",
+      family: "Loncheados",
+      ingredients: "Carne de cerdo, sal, leche en polvo, especias, mostaza, conservadores (E-252).",
+      allergens: ["MILK", "MUSTARD"],
+      mayContain: [],
+      shelfLifeDays: 60,
+      storage: "Entre 0 y 4 °C",
+      readyToEat: true,
+      label: "none",
+      study: "none",
+    },
+  ],
+  en: [
+    {
+      code: "CH-01",
+      name: "Extra cured chorizo",
+      family: "Cured meats",
+      ingredients: "Pork, salt, paprika, garlic, lactose, dextrose, preservatives (E-252, E-250).",
+      allergens: ["MILK"],
+      mayContain: [],
+      shelfLifeDays: 180,
+      storage: "In a cool, dry place",
+      readyToEat: true,
+      label: "approved",
+      study: "passed",
+    },
+    {
+      code: "JC-02",
+      name: "Extra cooked ham",
+      family: "Cooked meats",
+      ingredients:
+        "Pork ham, water, salt, dextrose, stabiliser (E-451), antioxidant (E-316), preservative (E-250).",
+      allergens: [],
+      mayContain: ["SOY"],
+      shelfLifeDays: 45,
+      storage: "Between 0 and 4 °C",
+      readyToEat: true,
+      label: "outdated",
+      study: "pending",
+    },
+    {
+      code: "SF-03",
+      name: "Fresh sausages",
+      family: "Fresh",
+      ingredients: "Pork, water, breadcrumbs (wheat), salt, spices, sulphites.",
+      allergens: ["GLUTEN", "SULPHITES"],
+      mayContain: ["MUSTARD", "CELERY"],
+      shelfLifeDays: 7,
+      storage: "Between 0 and 4 °C",
+      readyToEat: false,
+      label: "review",
+      study: "none",
+    },
+    {
+      code: "SL-04",
+      name: "Sliced salami",
+      family: "Sliced",
+      ingredients: "Pork, salt, milk powder, spices, mustard, preservatives (E-252).",
+      allergens: ["MILK", "MUSTARD"],
+      mayContain: [],
+      shelfLifeDays: 60,
+      storage: "Between 0 and 4 °C",
+      readyToEat: true,
+      label: "none",
+      study: "none",
+    },
+  ],
+};
+
+const LABEL_CHECKS = [
+  "name",
+  "ingredients",
+  "allergens",
+  "netQuantity",
+  "date",
+  "storage",
+  "operator",
+  "lot",
+  "origin",
+  "nutrition",
+] as const;
+
+interface DemoPoint {
+  kind: "PRODUCT" | "SURFACE" | "ENVIRONMENT" | "WATER";
+  name: string;
+  zone: string | null;
+  parameter: string;
+  criterion: string;
+  maxValue: number | null;
+  unit: string | null;
+  everyDays: number;
+  laboratory: string;
+  person: number;
+  /** An index of PRODUCTS, for product samples. */
+  product?: number;
+  /** Oldest first: days ago, the value (or detected) and, for the last bad one, its NC note. */
+  results: { ago: number; value?: number; detected?: boolean; nc?: string }[];
+}
+
+const POINTS: Record<"es" | "en", DemoPoint[]> = {
+  es: [
+    {
+      kind: "ENVIRONMENT",
+      name: "Sumidero de la sala de loncheado",
+      zone: "Zona 3, sin contacto",
+      parameter: "Listeria monocytogenes",
+      criterion: "Ausencia",
+      maxValue: null,
+      unit: null,
+      everyDays: 14,
+      laboratory: "Laboratorio Agroalimentario del Norte",
+      person: 1,
+      results: [
+        { ago: 30, detected: false },
+        { ago: 16, detected: true },
+        {
+          ago: 2,
+          detected: true,
+          nc: "Segundo positivo seguido en el sumidero: revisar limpieza y desinfección de la sala.",
+        },
+      ],
+    },
+    {
+      kind: "SURFACE",
+      name: "Cinta de la loncheadora",
+      zone: "Zona 1, contacto",
+      parameter: "Enterobacterias",
+      criterion: "≤ 10 ufc/cm²",
+      maxValue: 10,
+      unit: "ufc/cm²",
+      everyDays: 7,
+      laboratory: "Laboratorio Agroalimentario del Norte",
+      person: 1,
+      results: [
+        { ago: 14, value: 4 },
+        { ago: 7, value: 2 },
+      ],
+    },
+    {
+      kind: "PRODUCT",
+      name: "Salami loncheado al final de la vida útil",
+      zone: null,
+      parameter: "Listeria monocytogenes",
+      criterion: "≤ 100 ufc/g (Reglamento 2073/2005)",
+      maxValue: 100,
+      unit: "ufc/g",
+      everyDays: 30,
+      laboratory: "Laboratorio Agroalimentario del Norte",
+      person: 0,
+      product: 3,
+      results: [{ ago: 40, value: 10 }],
+    },
+    {
+      kind: "WATER",
+      name: "Grifo de la sala de despiece",
+      zone: null,
+      parameter: "Cloro libre residual",
+      criterion: "Entre 0,2 y 1 mg/L",
+      maxValue: 1,
+      unit: "mg/L",
+      everyDays: 30,
+      laboratory: "Autocontrol interno",
+      person: 1,
+      results: [{ ago: 20, value: 0.6 }],
+    },
+  ],
+  en: [
+    {
+      kind: "ENVIRONMENT",
+      name: "Drain of the slicing room",
+      zone: "Zone 3, no contact",
+      parameter: "Listeria monocytogenes",
+      criterion: "Absence",
+      maxValue: null,
+      unit: null,
+      everyDays: 14,
+      laboratory: "Northern Food Laboratory",
+      person: 1,
+      results: [
+        { ago: 30, detected: false },
+        { ago: 16, detected: true },
+        {
+          ago: 2,
+          detected: true,
+          nc: "Second positive in a row in the drain: review the room's cleaning and disinfection.",
+        },
+      ],
+    },
+    {
+      kind: "SURFACE",
+      name: "Slicer belt",
+      zone: "Zone 1, contact",
+      parameter: "Enterobacteriaceae",
+      criterion: "≤ 10 cfu/cm²",
+      maxValue: 10,
+      unit: "cfu/cm²",
+      everyDays: 7,
+      laboratory: "Northern Food Laboratory",
+      person: 1,
+      results: [
+        { ago: 14, value: 4 },
+        { ago: 7, value: 2 },
+      ],
+    },
+    {
+      kind: "PRODUCT",
+      name: "Sliced salami at the end of its shelf life",
+      zone: null,
+      parameter: "Listeria monocytogenes",
+      criterion: "≤ 100 cfu/g (Regulation 2073/2005)",
+      maxValue: 100,
+      unit: "cfu/g",
+      everyDays: 30,
+      laboratory: "Northern Food Laboratory",
+      person: 0,
+      product: 3,
+      results: [{ ago: 40, value: 10 }],
+    },
+    {
+      kind: "WATER",
+      name: "Tap of the cutting room",
+      zone: null,
+      parameter: "Free residual chlorine",
+      criterion: "Between 0.2 and 1 mg/L",
+      maxValue: 1,
+      unit: "mg/L",
+      everyDays: 30,
+      laboratory: "Internal check",
+      person: 1,
+      results: [{ ago: 20, value: 0.6 }],
+    },
+  ],
+};
+
+/** Products, labels and studies, and the sampling plan (phase 6b). */
+export async function demoProducts(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT p.id FROM "QualityProduct" p JOIN "Workspace" w ON w.id = p."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const members = await call<{ items: { id: string; email: string | null }[] }>(
+    "GET",
+    "/admin/members?pageSize=100",
+  );
+  const idOf = (index: number) =>
+    members.items.find((item) => item.email === target.peopleEmails[index])?.id ?? null;
+  const ok = Object.fromEntries(LABEL_CHECKS.map((check) => [check, "ok"]));
+  const productIds: string[] = [];
+  for (const item of PRODUCTS[target.locale]) {
+    const { product } = await call<{ product: { id: string } }>("POST", "/quality/products", {
+      code: item.code,
+      name: item.name,
+      family: item.family,
+      ingredients: item.ingredients,
+      allergens: item.allergens,
+      mayContain: item.mayContain,
+      nutrition: item.family === "Frescos" || item.family === "Fresh" ? null : nutrition,
+      shelfLifeDays: item.shelfLifeDays,
+      storage: item.storage,
+      readyToEat: item.readyToEat,
+      notes: null,
+    });
+    productIds.push(product.id);
+    counts.products = (counts.products ?? 0) + 1;
+    type Detail = { product: { labels: { id: string }[]; studies: { id: string }[] } };
+    if (item.label !== "none") {
+      const sent = await call<Detail>("POST", `/quality/products/${product.id}/labels`, {
+        nodeId: null,
+        note: null,
+      });
+      const label = sent.product.labels[0];
+      if (label !== undefined && item.label !== "review") {
+        await call("POST", `/quality/labels/${label.id}/review`, {
+          decision: "APPROVE",
+          checks: { ...ok, origin: "na" },
+          reviewNote: null,
+        });
+      }
+      if (item.label === "outdated") {
+        await call("PATCH", `/quality/products/${product.id}`, {
+          shelfLifeDays: item.shelfLifeDays + 15,
+        });
+      }
+    }
+    if (item.study !== "none") {
+      const created = await call<Detail>("POST", `/quality/products/${product.id}/studies`, {
+        startedOn: day(-(item.shelfLifeDays + 20)),
+        targetDays: item.shelfLifeDays,
+        listeria: item.readyToEat,
+      });
+      const study = created.product.studies[0];
+      if (study !== undefined && item.study === "passed") {
+        await call("POST", `/quality/studies/${study.id}/result`, {
+          result: "PASSED",
+          resultOn: day(-15),
+          conclusion: null,
+          reportNodeId: null,
+          openNc: false,
+          severity: "MINOR",
+        });
+      }
+    }
+  }
+  for (const point of POINTS[target.locale]) {
+    const first = point.results[0]?.ago ?? 0;
+    const { point: created } = await call<{ point: { id: string } }>("POST", "/quality/sampling", {
+      kind: point.kind,
+      name: point.name,
+      productId: point.product === undefined ? null : (productIds[point.product] ?? null),
+      zone: point.zone,
+      parameter: point.parameter,
+      criterion: point.criterion,
+      maxValue: point.maxValue,
+      unit: point.unit,
+      everyDays: point.everyDays,
+      laboratory: point.laboratory,
+      responsibleId: idOf(point.person),
+      nextDueOn: day(-first),
+    });
+    counts.samplingPoints = (counts.samplingPoints ?? 0) + 1;
+    for (const result of point.results) {
+      const conforming =
+        result.detected === true
+          ? false
+          : result.value === undefined || point.maxValue === null || result.value <= point.maxValue;
+      await call("POST", `/quality/sampling/${created.id}/results`, {
+        sampledOn: day(-result.ago),
+        value: result.value ?? null,
+        detected: result.detected ?? null,
+        conforming,
+        reportNodeId: null,
+        note: result.nc ?? null,
+        openNc: result.nc !== undefined,
+        severity: "MAJOR",
       });
     }
   }
