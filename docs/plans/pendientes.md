@@ -34,7 +34,8 @@ Hay que analizar y decidir con él, sin código todavía:
 - [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: fases 1 a 6 hechas (07/11/2026). Núcleo, **dentro de
       Prevención** como pestaña «Contratas (CAE)», con su propio interruptor en la configuración del
       módulo (apagado por defecto). Spec y fases en `docs/spec/cae.md`.
-  - [ ] Tests de seguridad del portal de contratas (al cerrar el módulo, con los de permisos y
+  - [x] Tests de seguridad del portal de contratas (hechos al cerrar el módulo, 07/11/2026:
+        `backend/tests/integration/cae-portal.test.ts` y `cae-security.test.ts`), con los de permisos y
         aislamiento de la CAE): fuerza bruta del código (límites por acceso+IP y por IP, bloqueo a los 10
         fallos, error genérico igual para acceso inexistente, revocado, vencido o bloqueado); entre empresas
         (trabajadores, requisitos, subidas, permisos e información de otra contrata del mismo tenant dan
@@ -53,7 +54,7 @@ Hay que analizar y decidir con él, sin código todavía:
 
 - [ ] Etapas 2 a 5 en [2026-11-07-spider-ui.md](2026-11-07-spider-ui.md) (componentes `v-*`, acceso
       `auth-*`, web, guías y capturas). El panel usa el violeta de spider-ui, no el monocromo de su guía.
-- [ ] Reescribir los tests del preset (`packages/tailwind-preset/tests`) para los alias `var(--sp-*)`.
+- [x] Reescribir los tests del preset (`packages/tailwind-preset/tests`) para los alias `var(--sp-*)` (07/11/2026).
 
 ## Plugins
 

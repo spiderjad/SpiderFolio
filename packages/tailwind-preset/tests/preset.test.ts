@@ -1,10 +1,11 @@
-// El preset compilado con Tailwind 4, igual que lo harán @tailwindcss/vite en la app y la web.
+// The preset compiled with Tailwind 4, as @tailwindcss/vite does in the app and the web. Colors,
+// fonts, radii and shadows come from spider-ui: every SpiderFolio token is an alias of a --sp-* var.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { compile } from "@tailwindcss/node";
 import { beforeAll, describe, expect, it } from "vitest";
-import { buildTokensCss } from "../src/tokens-css.ts";
-import { colorTokenNames, darkTokens, lightTokens } from "../src/tokens.ts";
+import { buildTokensCss, spiderUiAliases } from "../src/tokens-css.ts";
+import { colorTokenNames } from "../src/tokens.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
@@ -14,13 +15,28 @@ describe("tokens.css", () => {
     expect(committed.replaceAll("\r\n", "\n")).toBe(buildTokensCss());
   });
 
-  it("define cada token en :root y en .dark", () => {
+  it("cada token es un alias de una variable de spider-ui (--sp-*), sin valores propios", () => {
     const css = buildTokensCss();
     for (const name of colorTokenNames) {
-      expect(css).toContain(`--${name}: ${lightTokens[name]};`);
-      expect(css).toContain(`--${name}: ${darkTokens[name]};`);
-      expect(css).toContain(`--color-${name}: hsl(var(--${name}));`);
+      expect(spiderUiAliases[name]).toMatch(/^var\(--sp-[a-z-]+\)$/u);
+      expect(css).toContain(`--${name}: ${spiderUiAliases[name]};`);
+      expect(css).toContain(`--color-${name}: var(--${name});`);
     }
+    expect(css).toContain("--radius: var(--sp-radius);");
+    // No color literals: the values live in spider-ui (it switches light and dark itself).
+    expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|hsl\(\d|rgb\(/iu);
+    expect(css).not.toContain(".dark {");
+  });
+
+  it("las variables a las que apunta existen en spider-ui", () => {
+    const spiderUi = readFileSync(
+      fileURLToPath(import.meta.resolve("spider-ui/tokens.css")),
+      "utf8",
+    );
+    const used = new Set(
+      [...buildTokensCss().matchAll(/var\((--sp-[a-z-]+)\)/gu)].map((match) => match[1]),
+    );
+    for (const name of used) expect(spiderUi, name).toContain(`${String(name)}:`);
   });
 });
 
@@ -44,9 +60,9 @@ describe("preset.css compilado", () => {
     const candidates = colorTokenNames.map((name) => `bg-${name}`);
     const css = build([...candidates, "bg-primary/50", "text-success-soft-foreground"]);
     for (const name of colorTokenNames) {
-      expect(rule(css, `.bg-${name}`), name).toContain(`hsl(var(--${name}))`);
+      expect(rule(css, `.bg-${name}`), name).toContain(`var(--${name})`);
     }
-    expect(rule(css, String.raw`.bg-primary\/50`)).toContain("50%");
+    expect(rule(css, String.raw`.bg-primary\/50`)).toContain("var(--primary) 50%");
     expect(rule(css, ".text-success-soft-foreground")).toContain("--success-soft-foreground");
   });
 
@@ -70,10 +86,12 @@ describe("preset.css compilado", () => {
     expect(rule(css, ".text-current")).not.toBeNull();
   });
 
-  it("dark: funciona por clase .dark", () => {
+  it("dark: funciona por clase .dark (no por la preferencia del sistema)", () => {
     const css = build(["dark:bg-surface"]);
     expect(css).toContain(String.raw`.dark\:bg-surface:where(.dark, .dark *)`);
-    expect(css).not.toContain("prefers-color-scheme");
+    expect(rule(css, String.raw`.dark\:bg-surface:where(.dark, .dark *)`)).toContain(
+      "var(--surface)",
+    );
   });
 
   it("prose usa los tokens, 17 px e interlineado 1.75, por encima del tema del plugin", () => {
@@ -82,8 +100,9 @@ describe("preset.css compilado", () => {
     const ours = css.indexOf("font-size: 1.0625rem");
     expect(ours).toBeGreaterThan(-1);
     expect(ours).toBeGreaterThan(plugin);
-    expect(css).toContain("--tw-prose-body: hsl(var(--foreground));");
-    expect(css).toContain("--tw-prose-links: hsl(var(--primary));");
+    expect(css).toContain("--tw-prose-body: var(--foreground);");
+    expect(css).toContain("--tw-prose-links: var(--primary);");
+    expect(css).toContain("--tw-prose-pre-bg: var(--muted);");
   });
 
   it("incluye las animaciones de tw-animate-css", () => {
@@ -91,20 +110,32 @@ describe("preset.css compilado", () => {
     expect(rule(css, ".animate-in")).not.toBeNull();
   });
 
-  it("fuentes, radios y sombras de la marca", () => {
-    const css = build(["font-sans", "font-display", "font-mono", "rounded-lg", "shadow-card"]);
-    expect(css).toContain('"Inter Variable"');
+  it("fuentes, radios y sombras de spider-ui", () => {
+    const css = build([
+      "font-sans",
+      "font-display",
+      "font-mono",
+      "rounded-lg",
+      "rounded-xl",
+      "shadow-card",
+      "shadow-pop",
+    ]);
+    expect(rule(css, ".font-sans")).toContain("var(--sp-font)");
+    expect(rule(css, ".font-mono")).toContain("var(--sp-font-mono)");
     expect(css).toContain('"Instrument Serif"');
-    expect(css).toContain('"JetBrains Mono Variable"');
-    expect(rule(css, ".rounded-lg")).toContain("var(--radius)");
-    expect(rule(css, ".shadow-card")).not.toBeNull();
-    expect(css).toContain("--radius: 0.75rem;");
+    expect(rule(css, ".rounded-lg")).toContain("var(--sp-radius)");
+    expect(rule(css, ".rounded-xl")).toContain("var(--sp-radius-lg)");
+    expect(rule(css, ".shadow-card")).toContain("var(--sp-shadow)");
+    expect(rule(css, ".shadow-pop")).toContain("var(--sp-shadow-md)");
+    // spider-ui's own tokens come with the preset.
+    expect(css).toContain("--sp-primary:");
   });
 
   it("estilos base: bordes, cuerpo y movimiento reducido", () => {
     const css = build([]);
-    expect(css).toContain("border-color: hsl(var(--border));");
-    expect(css).toContain("background-color: hsl(var(--background));");
+    expect(css).toContain("border-color: var(--border);");
+    expect(css).toContain("background-color: var(--background);");
+    expect(css).toContain("--motion-duration-fast: 150ms;");
     expect(css).toContain("prefers-reduced-motion: reduce");
   });
 });

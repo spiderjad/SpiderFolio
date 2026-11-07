@@ -169,6 +169,7 @@ describe("activar el módulo", () => {
       enabled: false,
       terms: "es",
       space: null,
+      cae: { enabled: false, accessLog: false, folder: null },
     });
     const on = await a.put("/admin/safety", { enabled: true, terms: "latam", examples: true });
     expect(on.status, JSON.stringify(on.body)).toBe(200);
@@ -200,7 +201,12 @@ describe("activar el módulo", () => {
     const membership = (
       me.body as { memberships: { workspace: { slug: string; safety: unknown } }[] }
     ).memberships.find((m) => m.workspace.slug === ws.slug);
-    expect(membership?.workspace.safety).toEqual({ enabled: false, terms: "latam" });
+    expect(membership?.workspace.safety).toEqual({
+      enabled: false,
+      terms: "latam",
+      cae: false,
+      caeAccessLog: false,
+    });
     const actions = await ctx.prisma.auditLog.findMany({
       where: { workspaceId: ws.workspaceId, action: { startsWith: "safety." } },
       select: { action: true },

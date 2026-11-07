@@ -1,5 +1,10 @@
+// The token names and the values kept for the per-workspace accent math (src/accent.ts): the colors
+// the app shows come from spider-ui through tokens.css (tests/preset.test.ts); these reference values
+// must still define the same tokens in both themes and keep AA contrast, since the accent is checked
+// against them.
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "../src/color.ts";
+import { spiderUiAliases } from "../src/tokens-css.ts";
 import {
   colorTokenNames,
   darkTokens,
@@ -11,9 +16,10 @@ import {
 const themes = { claro: lightTokens, oscuro: darkTokens } as const;
 
 describe("tokens", () => {
-  it("los dos temas definen exactamente los mismos tokens", () => {
+  it("los dos temas y los alias de spider-ui definen exactamente los mismos tokens", () => {
     expect(Object.keys(lightTokens).sort()).toEqual([...colorTokenNames].sort());
     expect(Object.keys(darkTokens).sort()).toEqual([...colorTokenNames].sort());
+    expect(Object.keys(spiderUiAliases).sort()).toEqual([...colorTokenNames].sort());
   });
 
   for (const [theme, tokens] of Object.entries(themes)) {
