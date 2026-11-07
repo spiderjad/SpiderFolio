@@ -209,6 +209,10 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/crisis-page"), "CrisisPage"),
                   },
                   {
+                    path: "prerrequisitos",
+                    lazy: page(() => import("@/features/quality/prps-page"), "PrpsPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),

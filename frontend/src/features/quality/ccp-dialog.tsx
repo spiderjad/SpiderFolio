@@ -15,7 +15,7 @@ import { texts } from "@/i18n";
 
 const t = texts.quality.haccp;
 
-function useFormSource(): ComboboxSource {
+export function useFormSource(): ComboboxSource {
   const { workspaceSlug = "" } = useParams();
   return useMemo<ComboboxSource>(
     () => ({

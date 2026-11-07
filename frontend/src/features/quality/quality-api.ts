@@ -814,3 +814,109 @@ export const complaintsApi = {
     },
   ) => api<{ crisis: Crisis }>(w(slug, "/quality/recall-tests"), { method: "POST", body }),
 };
+
+// Prerequisite programmes and the dashboard (docs/spec/calidad.md, «Fase 6a»).
+export const PRP_KINDS = [
+  "CLEANING",
+  "PEST",
+  "WATER",
+  "CALIBRATION",
+  "GLASS",
+  "WASTE",
+  "OTHER",
+] as const;
+export type PrpKind = (typeof PRP_KINDS)[number];
+export type PrpState = "ok" | "due_soon" | "overdue";
+
+export interface Prp {
+  id: string;
+  kind: PrpKind;
+  name: string;
+  location: string | null;
+  everyDays: number;
+  responsible: { id: string; name: string } | null;
+  form: { id: string; name: string; spaceId: string } | null;
+  lastDoneOn: string | null;
+  nextDueOn: string;
+  state: PrpState;
+  notes: string | null;
+  archived: boolean;
+  access: "manage" | "responsible" | "read";
+}
+
+export interface PrpCheck {
+  id: string;
+  doneOn: string;
+  conforming: boolean;
+  note: string | null;
+  nc: { id: string; code: string } | null;
+  by: { id: string; name: string };
+}
+
+export interface PrpBody {
+  kind: PrpKind;
+  name: string;
+  location: string | null;
+  everyDays: number;
+  responsibleId: string | null;
+  formId: string | null;
+  nextDueOn: string;
+  notes: string | null;
+}
+
+export interface QualityDashboard {
+  ncs: {
+    bySeverity: Record<Severity, number>;
+    byOrigin: { origin: (typeof NC_ORIGINS)[number]; count: number }[];
+    overdueActions: number;
+    verificationsDue: number;
+    averageCloseDays: number | null;
+  };
+  haccp: { records: number; outOfLimits: number; holdsPending: number };
+  suppliers: { docsExpired: number; docsExpiring: number; reviewsOverdue: number };
+  complaints: { open: number; overdue: number; perMillion: number | null; year: number };
+  audits: {
+    upcoming: { id: string; title: string; scheme: string; plannedOn: string }[];
+    coverage: { standard: "IFS8" | "BRCGS9"; covered: number; chapters: number }[];
+  };
+  prps: { overdue: number; dueSoon: number; nonConforming: number };
+}
+
+export const prpKeys = {
+  list: (slug: string, filters: { kind?: PrpKind; archived?: boolean }) =>
+    ["w", slug, "quality", "prps", filters] as const,
+  checks: (slug: string, id: string) => ["w", slug, "quality", "prp", id, "checks"] as const,
+  dashboard: (slug: string) => ["w", slug, "quality", "dashboard"] as const,
+};
+
+export const prpsApi = {
+  list: (slug: string, filters: { kind?: PrpKind; archived?: boolean }) =>
+    api<{ prps: Prp[] }>(
+      w(
+        slug,
+        `/quality/prps?${listQuery({ kind: filters.kind, archived: filters.archived === true ? "1" : undefined })}`,
+      ),
+    ),
+  create: (slug: string, body: PrpBody) =>
+    api<{ prp: Prp }>(w(slug, "/quality/prps"), { method: "POST", body }),
+  update: (slug: string, id: string, body: PrpBody) =>
+    api<{ prp: Prp }>(w(slug, `/quality/prps/${id}`), { method: "PATCH", body }),
+  archive: (slug: string, id: string, archived: boolean) =>
+    api<{ prp: Prp }>(w(slug, `/quality/prps/${id}/${archived ? "archive" : "restore"}`), {
+      method: "POST",
+    }),
+  checks: (slug: string, id: string) =>
+    api<{ checks: PrpCheck[] }>(w(slug, `/quality/prps/${id}/checks`)),
+  check: (
+    slug: string,
+    id: string,
+    body: {
+      doneOn: string;
+      conforming: boolean;
+      note: string | null;
+      openNc: boolean;
+      severity: Severity;
+    },
+  ) => api<{ prp: Prp }>(w(slug, `/quality/prps/${id}/checks`), { method: "POST", body }),
+  dashboard: (slug: string) => api<QualityDashboard>(w(slug, "/quality/dashboard")),
+};

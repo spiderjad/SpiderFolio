@@ -7,6 +7,7 @@ import {
   CalendarSearch,
   PackageX,
   ShieldAlert,
+  SprayCan,
   ClipboardX,
   Megaphone,
   MessageSquareWarning,
@@ -149,6 +150,7 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     items.push({ to: `${base}/proveedores`, label: q.suppliers, icon: Truck });
     items.push({ to: `${base}/reclamaciones`, label: q.complaints, icon: MessageSquareWarning });
     items.push({ to: `${base}/crisis`, label: q.crisis, icon: Siren });
+    items.push({ to: `${base}/prerrequisitos`, label: q.prps, icon: SprayCan });
   }
   items.push({
     to: `${base}/mis-acciones`,
@@ -171,6 +173,8 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
       icon: MessageSquareWarning,
       group: q.mine,
     });
+    // The prerequisite controls in their charge (the list only shows those).
+    items.push({ to: `${base}/prerrequisitos`, label: q.myPrps, icon: SprayCan, group: q.mine });
   }
   items.push(...spaceItems(slug, context.spaces.QUALITY, texts.shell.areas.areaSpaces));
   return items;
