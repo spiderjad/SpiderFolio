@@ -1,0 +1,76 @@
+---
+title: "Training, assessments and fitness"
+description: "Courses with a reading record and in-person or phone signatures, risk assessments with a yearly review and each person's fitness for work."
+group: prevencion
+order: 3
+icon: book
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Training
+
+A **course** is a [controlled document](/en/docs/controlled-documents): the saw procedure, the emergency plan,
+food handling. That way training is always on the version in force.
+
+**Create a course.** In **Training**, whoever manages the area clicks **New course**, chooses the document and,
+if they like, its **Valid for months**.
+
+- **Who has to do it** comes from its [required reading](/en/docs/required-reading): departments,
+  **positions** or people.
+- The **“I have read and understood”** of the current version is the **record**, with its date. With a
+  validity, it expires: the person is told 30 days before, 7 days before and on the day, and the course shows
+  **Confirm I did it again**.
+- Each course shows every person with their state (**Up to date**, **Due soon**, **Expired**, **Pending**),
+  and each person's sheet shows their training.
+
+<Shot name="formacion" alt="A course: each person with their state and in-person training" />
+
+### In-person training with signatures
+
+1. On the course, click **Record in-person training**.
+2. Choose the **Attendees** and the **Date**.
+3. Each attendee signs in their box with a finger (for example, passing the tablet around).
+
+**Attendance record PDF** downloads that day's sheet with every signature; it needs
+[Gotenberg](/en/docs/gotenberg).
+
+### Let them sign on their phones
+
+Instead of passing the tablet around, with the attendees and the date chosen click **Let them sign on their
+phones**:
+
+- It shows a **QR code** (and **Copy the link**) for that signing.
+- Each attendee scans it, signs in with their username (or **Sign in with PIN**), sees the course, the date
+  and who gave it, and signs with a finger.
+- Only the people on the list can sign, each for themselves and once.
+- Whoever gave it sees live who signed and who's missing, and can **Close the signing** whenever they want;
+  otherwise it closes on its own after 24 hours. **Show the QR code** shows it again while it's open.
+
+The signatures go into the same day's **Attendance record PDF**, wherever they were signed.
+
+## Risk assessments
+
+Turning the area on creates the **Risk assessment** document type (EVR, reviewed every 12 months). Upload your
+assessments as controlled documents of that type:
+
+- When an EVR is published, its review date is told to the heads and deputies of its owner department (or
+  whoever made it, without one) 30 days before, 7 days before and on the day.
+- From an EVR's controlled document window, **New preventive measure** creates a
+  [planning](/en/docs/preventive-planning) measure tied to that assessment.
+
+## Fitness for work
+
+**Fitness for work** says whether a person can do their position's tasks, according to the medical check-up.
+On each person's sheet, whoever has **Health data: accidents and fitness for work** clicks **Record fitness**:
+
+- **Fit**, **Fit with restrictions** (with the tasks they can't do, never the causes) or **Not fit**;
+- and until when it's valid.
+
+Medical data is never stored. Each person sees their own. Before it expires the person and whoever recorded it
+are told; the earlier one stays in the history.
+
+## Related
+
+- [PPE and each person's sheet](/en/docs/ppe#each-persons-sheet)
+- [Audit rooms](/en/docs/audit-rooms): share a course's training records with an auditor

@@ -1,0 +1,109 @@
+---
+title: "EPIs: entregas y reposición"
+description: "El catálogo de equipos de protección, la entrega firmada con su constancia en PDF, la reposición y la ficha de prevención de cada persona."
+group: prevencion
+order: 2
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+Cada entrega de un **equipo de protección individual** (EPI; EPP en Latinoamérica) queda registrada con la
+firma de quien lo recibe, sin papeles. La app sabe qué necesita cada **puesto**, avisa cuando un equipo hay
+que reponerlo y muestra a quién le falta algo. Necesita el área [Prevención](/es/docs/seguridad-y-salud-laboral)
+activa.
+
+| Quién                                       | Qué puede hacer                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| Con **Gestionar seguridad y salud laboral** | Todas las entregas y el catálogo; registra y anula entregas.         |
+| Jefes y subjefes                            | Ver las entregas y los EPIs de las personas de su área (y subáreas). |
+| Todos los demás                             | Ver sus propias entregas y sus EPIs.                                 |
+
+## El catálogo
+
+En **Catálogo** están los equipos de tu empresa. Pulsa **Nuevo equipo** y completa:
+
+- **Nombre** («Guantes anticorte») y, si quieres, una **Categoría** («Manos»).
+- **Se entrega por talla**: al entregarlo se pide la talla.
+- **Vida útil en meses**: se repone a los N meses de cada entrega, y se avisa (ver más abajo). Sin vida útil,
+  no hay reposición.
+- **Puestos que lo necesitan**: a quien tenga uno de esos puestos y no lo haya recibido, se le ve en
+  **Le falta**.
+
+Un equipo que ya no se usa se **Archiva**: deja de ofrecerse en las entregas y las anteriores se conservan.
+**Ver archivados** los muestra y desde cada uno puedes pulsar **Recuperar**.
+
+<Shot
+  name="epis-catalogo"
+  alt="El catálogo de EPIs, con la vida útil y los puestos de cada equipo"
+/>
+
+## Registrar una entrega
+
+1. En **EPIs**, pulsa **Nueva entrega**.
+2. En **Quién recibe**, elige a la persona. Si a su puesto le falta algo, lo verás arriba («Le falta: …»).
+3. Agrega los **Equipos** con su **Cantidad** y, si van por talla, la **Talla**.
+4. La persona lee el texto de conformidad y **firma en el recuadro** con el dedo (en una tablet o un celular)
+   o con el mouse.
+5. Pulsa **Registrar entrega**.
+
+La entrega queda con quién la recibió, quién la entregó, la fecha y la hora de la empresa, y la firma. No se
+cambia ni se borra.
+
+<Shot name="epis-nueva" alt="Nueva entrega: la persona, lo que le falta, los equipos y la firma" />
+
+## Ver una entrega y la constancia
+
+Al abrir una entrega ves los equipos, la talla, el día de **Reponer el** y la firma. **Constancia en PDF**
+descarga la constancia firmada para archivar o imprimir; necesita [Gotenberg](/es/docs/gotenberg). Descargarla
+queda en la auditoría.
+
+Si se cargó mal (otra persona, otro equipo), quien gestiona el área puede **Anular** con un **Motivo**. Se
+sigue viendo, marcada como anulada, y deja de contar para la reposición.
+
+<Shot name="epis" alt="La lista de entregas de EPIs con sus filtros" />
+
+## Avisos de reposición
+
+Cuando un equipo con vida útil se acerca a su día de reposición, la persona y quien se lo entregó reciben un
+aviso en la campana y por email: a los 30 días, a los 7 y el mismo día, a las 8:00 de la zona horaria de la
+empresa. Una entrega nueva del mismo equipo a la misma persona reemplaza a la anterior, y anular una entrega
+quita su aviso. Todos los avisos están también en [Vencimientos](/es/docs/vencimientos).
+
+## La ficha de cada persona
+
+Cada persona tiene su **ficha de prevención**, que junta sus EPIs, su [formación y su
+aptitud](/es/docs/formacion-y-aptitud) y su rol en [emergencias](/es/docs/emergencias-y-simulacros). Se abre:
+
+- desde **Personas**, en el menú de Prevención (quien gestiona el área ve a todas; los jefes, a su área), con
+  buscador, filtros por **Puesto** y **Departamento** y una columna de **Avisos**: EPIs que le faltan, cursos
+  vencidos o pendientes y aptitud por vencer;
+- desde **Administración** › **Miembros**, en el menú de cada persona: **Ficha de prevención**;
+- la propia, desde **Mi ficha** en el menú de Prevención o desde **Mi perfil**.
+
+En la ficha se ven:
+
+- **Le falta**: lo que pide su puesto y no tiene, o tiene vencido.
+- **EPIs que tiene**: el último de cada equipo, con su día de reposición y su estado (**Vigente**, **Por
+  vencer** o **Vencido**).
+- **Entregas**: todas las que recibió.
+
+En la ficha de otra persona están solo las acciones sobre ella: **Entregar EPIs a…** y, con **Datos de salud**,
+**Registrar aptitud**.
+
+**Descargar la ficha (PDF)** arma la ficha en un PDF: sus EPIs, lo que le falta y su formación. Para quien tiene
+**Datos de salud: accidentes y aptitud** también lleva su aptitud y sus accidentes e incidentes, con un aviso de
+que es confidencial; cada persona puede descargar la suya (con su aptitud). Necesita
+[Gotenberg](/es/docs/gotenberg) y queda en la auditoría.
+
+<Shot
+  name="epis-ficha"
+  alt="La ficha de una persona: lo que le falta, sus EPIs, su formación, su aptitud y sus accidentes"
+/>
+
+## Relacionado
+
+- [Departamentos y puestos](/es/docs/departamentos#puestos)
+- [Salas de auditoría](/es/docs/salas-de-auditoria): compartir las entregas entre dos fechas con un auditor

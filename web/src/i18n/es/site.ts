@@ -20,10 +20,10 @@ export const site = {
   /** Botón de los bloques de código (src/scripts/code-copy.ts). */
   code: { copy: "Copiar", copied: "Copiado ✓" },
   home: {
-    eyebrow: "Open source · Documentación interna para pymes",
+    eyebrow: "Open source · Documentación y prevención para pymes",
     title: "La documentación de tu empresa, por fin en orden.",
     subtitle:
-      "Páginas, archivos y documentos controlados con permisos que se entienden, en tu propio servidor. Reemplaza el caos de carpetas compartidas por un lugar donde cada persona ve lo que le corresponde.",
+      "Páginas, archivos y documentos controlados con permisos que se entienden, y la prevención de riesgos laborales con sus contratas, en tu propio servidor. Cada departamento entra a su espacio y cada persona ve lo que le corresponde.",
     installNote: "Gratis y open source (AGPLv3). Se instala con Docker en una tarde.",
     mock: {
       path: "/Procedimientos/Control de documentos",
@@ -67,7 +67,7 @@ export const site = {
     },
     featuresAnchor: "funciones",
     featuresEyebrow: "Funciones",
-    featuresTitle: "Todo lo que necesita tu documentación",
+    featuresTitle: "Documentación y prevención, en un solo lugar",
     features: [
       {
         icon: "folder",
@@ -100,10 +100,44 @@ export const site = {
         ],
       },
       {
+        icon: "shield",
+        tone: "warning",
+        title: "Prevención (PRL)",
+        items: [
+          "EPIs con entrega firmada y reposición",
+          "Formación, accidentes e indicadores",
+          "Planificación, emergencias y comité",
+        ],
+      },
+      {
+        icon: "qr",
+        tone: "info",
+        title: "Contratas (CAE)",
+        items: [
+          "Documentos de cada empresa y trabajador, con vencimientos",
+          "Portería con QR: puede entrar o no, y por qué",
+          "Portal para que la contrata suba lo suyo",
+        ],
+      },
+      {
+        icon: "grid",
+        tone: "success",
+        title: "Formularios y registros",
+        items: [
+          "Inspecciones y controles con QR",
+          "Respuestas no conformes que generan medidas",
+          "Registros exportables",
+        ],
+      },
+      {
         icon: "clipboard",
         tone: "info",
         title: "Auditoría",
-        items: ["Registro exportable", "PDF controlado", "Informes de lecturas y accesos"],
+        items: [
+          "Registro exportable y PDF controlado",
+          "Informes de lecturas y accesos",
+          "Salas de auditoría para el auditor externo",
+        ],
       },
       {
         icon: "sparkles",
@@ -116,7 +150,7 @@ export const site = {
         ],
       },
       {
-        icon: "shield",
+        icon: "lock",
         tone: "success",
         title: "Administración",
         items: [
@@ -126,6 +160,50 @@ export const site = {
         ],
       },
     ],
+    areas: {
+      eyebrow: "Por áreas",
+      title: "Cada departamento entra a su espacio",
+      text: "La app se ordena en áreas, cada una con su menú. Cada persona ve solo las que usa y entra directo a la suya.",
+      soon: "Próximamente",
+      items: [
+        {
+          icon: "home",
+          title: "Inicio",
+          text: "Lo pendiente de cada persona: lecturas, aprobaciones, formularios, vencimientos y medidas.",
+          soon: false,
+        },
+        {
+          icon: "file-check",
+          title: "Documentación",
+          text: "Documentos controlados, aprobaciones, lecturas, vencimientos y salas de auditoría.",
+          soon: false,
+        },
+        {
+          icon: "book",
+          title: "Wiki",
+          text: "Los espacios de cada departamento, con páginas y archivos.",
+          soon: false,
+        },
+        {
+          icon: "shield",
+          title: "Prevención",
+          text: "EPIs, formación, accidentes, planificación, emergencias, comité y contratas (CAE).",
+          soon: false,
+        },
+        {
+          icon: "check",
+          title: "Calidad",
+          text: "Calidad alimentaria (IFS y BRCGS): no conformidades, acciones correctivas y auditorías.",
+          soon: true,
+        },
+        {
+          icon: "lock",
+          title: "Administración",
+          text: "Miembros, departamentos, roles, seguridad y límites, solo para quien administra.",
+          soon: false,
+        },
+      ],
+    },
     plant: {
       eyebrow: "Pensado para la planta",
       title: "La versión vigente, en el puesto de trabajo",
@@ -199,6 +277,10 @@ export const site = {
         a: "En tu servidor: la base de datos, los archivos (en disco o en el S3 que elijas) y las copias de seguridad. Nada pasa por nuestros servidores.",
       },
       {
+        q: "¿Sirve para la prevención de riesgos y las contratas?",
+        a: "Sí. El área de Prevención (PRL o SST) trae EPIs con entrega firmada, formación, accidentes con sus indicadores, planificación preventiva, emergencias y simulacros y el comité. La coordinación con contratas (CAE) controla los documentos de cada empresa y trabajador, responde en portería si alguien puede entrar y da a cada contrata un portal para subir lo suyo. Viene en el núcleo, gratis, y se activa por empresa.",
+      },
+      {
         q: "¿Qué son los plugins?",
         a: "Funciones comerciales opcionales (políticas de seguridad avanzadas, importación desde OneDrive, conector MCP, plantillas por rubro) que se activan con una licencia verificada sin conexión. Sin ellas, todo lo demás funciona igual.",
       },
@@ -247,6 +329,7 @@ export const site = {
     groups: {
       empezar: "Empezar",
       "uso-diario": "Para usuarios",
+      prevencion: "Prevención (PRL)",
       administracion: "Administración",
       seguridad: "Seguridad",
       autoalojamiento: "Autoalojamiento",

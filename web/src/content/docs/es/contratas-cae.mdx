@@ -1,0 +1,201 @@
+---
+title: "Contratas (CAE)"
+description: "Coordinación de actividades empresariales: empresas externas y sus trabajadores, documentos exigidos con revisión y vencimientos, información del centro y permisos de trabajo."
+group: prevencion
+order: 8
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+La **coordinación de actividades empresariales** (CAE: Ley 31/1995, art. 24, y Real Decreto 171/2004 en España;
+en Latinoamérica, la obligación equivalente de cada país) responde tres preguntas:
+
+- ¿qué empresas externas trabajan en el centro?
+- ¿su documentación y la de cada trabajador está al día?
+- ¿pueden entrar hoy?
+
+Va dentro de Prevención, en la sección **Contratas** (**Contratistas** con los términos de Latinoamérica). Esta
+guía es para quien la gestiona. La entrada al centro está en [Portería y accesos](/es/docs/porteria-y-accesos)
+y lo que ve la contrata, en [Portal de contratas](/es/docs/portal-de-contratas).
+
+## Activarla
+
+1. Con [Prevención](/es/docs/seguridad-y-salud-laboral#activarlo) activa, el propietario va a
+   **Administración** › **Seguridad** › **General**.
+2. Debajo del área, marca **Coordinación de actividades empresariales (CAE)**.
+3. Si quieres, marca también **Cargar ejemplos del sector alimentario**.
+4. Guarda.
+
+La primera vez se crean la carpeta **Contratas** (o **Contratistas**) en el espacio de Prevención y el
+**catálogo de documentos exigidos** de tu país. Nunca pisa lo que ya tengas con el mismo nombre. Apagar
+Prevención apaga también la CAE, y desactivarla oculta la sección sin borrar nada.
+
+## Quién ve qué
+
+Dos capacidades en [Roles y permisos](/es/docs/roles-y-permisos):
+
+| Capacidad                                  | Qué permite                                                                                                                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Gestionar contratas (CAE)**              | Dar de alta y cambiar empresas, trabajadores y el catálogo; revisar documentos; emitir permisos; bloquear y archivar. Por defecto, el propietario y el Administrador.    |
+| **Consultar si una contrata puede entrar** | Solo la [portería](/es/docs/porteria-y-accesos): si una empresa o un trabajador está autorizado y por qué, sin contactos ni documentos. Para portería y jefes de equipo. |
+
+El **responsable interno** de cada empresa (una persona de tu empresa) ve su ficha completa aunque no tenga
+esas capacidades, y recibe sus avisos.
+
+## Empresas
+
+La lista muestra cada empresa con su tipo, su responsable interno, cuántos trabajadores tiene y su estado:
+
+- **Autorizada** (verde): puede trabajar en el centro.
+- **Incompleta** (ámbar): le falta algo; se ve el primer motivo.
+- **Bloqueada** (rojo): alguien la bloqueó, con un motivo.
+- **Archivada**: ya no trabaja con tu empresa.
+
+Se busca por nombre o identificación fiscal y se filtra por tipo y estado.
+
+<Shot
+  name="cae-empresas"
+  alt="La lista de contratas con su estado: autorizada, incompleta o bloqueada"
+/>
+
+**Dar de alta una empresa.** Pulsa **Nueva empresa** y completa:
+
+- el nombre y la identificación fiscal;
+- el **tipo**: **Contrata**, **Subcontrata** (depende de una contrata) o **Empresa concurrente** (comparte el
+  centro sin contrato con tu empresa);
+- qué hace en el centro, el **responsable interno** y el contacto;
+- si trabaja por un tiempo, las fechas de inicio y fin.
+
+Cada empresa tiene su propia carpeta dentro de **Contratas**, con su nombre; si cambias el nombre de la empresa,
+cambia el de la carpeta.
+
+## La ficha de la empresa
+
+Arriba dice en verde si puede trabajar en el centro o, en rojo, **todos** los motivos por los que no («Falta:
+…», «Empresa bloqueada: …», «Terminó de trabajar el …»). Debajo están sus datos, el enlace a su carpeta, sus
+documentos, la información del centro, sus trabajadores, su acceso al portal y sus accesos de hoy.
+
+- **Bloquear** pide un motivo; **Desbloquear** lo deshace.
+- **Archivar** la saca de las listas sin borrar nada (sus trabajadores y documentos se conservan).
+- Una subcontrata solo está autorizada si su contrata también lo está.
+- **Autorizados hoy (PDF)** descarga un PDF con la empresa, el día, su estado y cada trabajador con si puede
+  entrar y por qué no. Necesita [Gotenberg](/es/docs/gotenberg).
+
+<Shot
+  name="cae-empresa"
+  alt="La ficha de una contrata autorizada: datos, documentos, información del centro y trabajadores"
+/>
+
+## Trabajadores
+
+En la ficha de la empresa, **Agregar trabajador** pide el nombre, el documento de identidad (opcional) y el
+puesto o tarea.
+
+- Los trabajadores de las contratas **no son miembros** de tu empresa: no tienen cuenta ni ocupan plaza.
+- **No guardes datos de salud**: de la aptitud médica solo se registra que el certificado se presentó.
+- La ficha de cada trabajador dice si puede entrar y por qué, con sus documentos, y se puede editar, bloquear o
+  archivar. Desde ahí sale también su [tarjeta con QR](/es/docs/porteria-y-accesos#qr-del-trabajador).
+
+<Shot name="cae-trabajador" alt="La ficha de un trabajador de una contrata con sus documentos" />
+
+## Documentos exigidos
+
+El catálogo, en la pestaña **Documentos exigidos**, tiene los documentos que se piden a cada empresa y a cada
+trabajador (seguro de responsabilidad civil, evaluación de riesgos de su actividad, formación, entrega de
+EPIs…). De cada uno se decide:
+
+- **cuánto vale**, para proponer el vencimiento al subirlo;
+- **a qué empresas** se pide: todas, contratas y subcontratas, o solo empresas concurrentes;
+- si es **obligatorio**: uno obligatorio que falta impide trabajar en el centro.
+
+Se ordenan con las flechas, se editan, se agregan y se archivan.
+
+<Shot
+  name="cae-catalogo"
+  alt="El catálogo de documentos exigidos y la información para contratas"
+/>
+
+## Subir y revisar documentos
+
+En la ficha de la empresa (o del trabajador), cada documento exigido muestra su estado: **Al día**, **Por
+vencer** (vence en 30 días o menos), **Vencido**, **Por revisar**, **Rechazado** o **Falta**.
+
+1. Pulsa **Subir** en el documento.
+2. Elige el archivo y la fecha de vencimiento (se propone según la validez del documento).
+3. Si ya lo revisaste, marca **Aceptarlo ya**; si no, queda **Por revisar**.
+
+El archivo va a la carpeta de la empresa; los de un trabajador, a una carpeta con su nombre dentro de la de la
+empresa, que se crea con su primer documento. Para subir hace falta poder editar en el espacio de Prevención.
+La contrata también puede subirlos ella misma desde el [portal](/es/docs/portal-de-contratas).
+
+**Revisar.** La pestaña **Por revisar** reúne los documentos sin revisar de todas las empresas, el más antiguo
+primero; su número aparece en la pestaña **Contratas** y la lista de empresas muestra cuántos tiene cada una.
+
+- **Aceptar** lo convierte en el vigente (se puede corregir el vencimiento); el anterior queda en el
+  **Historial**. Con fecha de vencimiento, el responsable interno recibe los avisos 30 días antes, 7 días antes
+  y el día que vence, como cualquier otro [vencimiento](/es/docs/vencimientos).
+- **Rechazar** pide un motivo, que se muestra junto al documento (también en el portal de la contrata).
+- El nombre del archivo lo abre en otra pestaña; para verlo hace falta acceso a la carpeta, como cualquier
+  archivo.
+
+Un documento obligatorio cuenta solo si está **aceptado y no venció**.
+
+<Shot
+  name="cae-empresa-incompleta"
+  alt="Una contrata incompleta: un documento vencido, uno rechazado, uno por revisar y los que faltan"
+/>
+
+<Shot
+  name="cae-revisar"
+  alt="La bandeja Por revisar con los documentos sin revisar de todas las contratas"
+/>
+
+## Información del centro
+
+La empresa titular del centro tiene que informar a cada empresa externa de los riesgos del centro, las medidas
+de emergencia y sus instrucciones (Real Decreto 171/2004, artículos 7 a 9).
+
+- **Elegir qué se entrega.** En **Documentos exigidos**, la tarjeta **Información para contratas** elige qué
+  documentos controlados vigentes son esa información (por ejemplo, el [plan de
+  emergencia](/es/docs/emergencias-y-simulacros) y las normas del centro).
+- **Exigirla.** Con **Exigirla para autorizar** marcado (lo está por defecto), una empresa que no recibió la
+  versión vigente de cada uno no está autorizada, con el motivo «Falta entregar la información del centro: …».
+  Si publicas una versión nueva de un documento, hay que volver a entregarla.
+- **Registrar la entrega.** En la ficha de cada empresa, **Información del centro** muestra qué recibió y qué le
+  falta. **Registrar entrega** pide qué documentos se entregan, quién los recibe por la empresa externa, la
+  fecha y, si se puede, su firma en la pantalla. Cada entrega queda con su **Constancia (PDF)**: los documentos
+  con su versión, la declaración de quien recibe y su firma.
+
+## Permisos de trabajo
+
+La pestaña **Permisos** reúne los permisos de trabajos con riesgos especiales: **Trabajos en caliente**,
+**Trabajos en altura**, **Espacios confinados**, **Trabajos eléctricos** u **Otro**. Valen para los
+trabajadores de una contrata y también para el personal propio.
+
+1. Pulsa **Nuevo permiso** y elige el tipo, la empresa externa (vacía si lo hace solo personal propio), el
+   lugar y el trabajo.
+2. Indica desde y hasta cuándo vale: unos pocos días como máximo; para más, se emite otro.
+3. Agrega a las personas. Solo se pueden agregar trabajadores autorizados.
+4. Revisa las **medidas de prevención**, que se proponen según el tipo y se pueden editar.
+5. El permiso nace como **Borrador**. **Aprobar y activar** pide marcar cada medida como comprobada y tu firma.
+
+Aprobado, vale entre sus fechas (**Programado**, **Activo**, **Vencido**). Se **cierra** al terminar el
+trabajo, con observaciones, o se **anula** con un motivo. Cada permiso se descarga en PDF con la firma de quien
+lo aprobó, y en portería se ven los permisos activos de cada trabajador. Los emite quien gestiona las
+contratas; quien consulta contratas los ve.
+
+<Shot name="cae-permisos" alt="La lista de permisos de trabajo con sus filtros" />
+
+<Shot
+  name="cae-permiso"
+  alt="Un permiso de trabajo en caliente activo, con sus personas y medidas"
+/>
+
+## Relacionado
+
+- [Portería y accesos](/es/docs/porteria-y-accesos)
+- [Portal de contratas](/es/docs/portal-de-contratas)
+- [Vencimientos](/es/docs/vencimientos)

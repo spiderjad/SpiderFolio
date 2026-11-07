@@ -1,0 +1,66 @@
+---
+title: "Gatehouse and access"
+description: "Know at the entrance whether a contractor's worker can come in, with their QR card, and keep the entry and exit log."
+group: prevencion
+order: 9
+icon: qr
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+At the site entrance you need a single answer: **can this person come in?** The **Gatehouse** tab, inside
+[Contractors](/en/docs/contractors-cae), gives it large, made for the entrance's phone or tablet.
+
+## Who uses it
+
+- Whoever has **Check whether a contractor can come in** (see [Roles and
+  permissions](/en/docs/roles-and-permissions)): the gatehouse, security, team leads. Opening Health & safety
+  takes them straight to the gatehouse, and they don't see PPE, training or accidents.
+- Whoever manages contractors sees it too.
+
+## Check a person
+
+1. Type the name, the last characters of the ID or the company's name.
+2. Tap the person.
+3. The answer shows up large: green **Can come in** or red **Can't come in**, with **every** reason (an expired
+   document, the company blocked, the site information not handed over…).
+
+It only shows the name, the company, the job, the last 3 characters of the ID and their active work permits:
+**never the documents**. Checks with a negative answer go into the audit log; positive ones don't.
+
+<Shot name="cae-porteria-ok" alt="The gatehouse on a phone: Can come in, in green" />
+
+<Shot
+  name="cae-porteria-no"
+  alt="The gatehouse on a phone: Can't come in, in red with the reasons"
+/>
+
+## Worker's QR
+
+On each worker's record, **QR card** shows their card (name, company and QR) ready to print. At the entrance,
+scanning the QR opens the gatehouse with that person already chosen.
+
+Seeing the answer needs signing in to SpiderFolio with permission to check contractors: the code is no use
+outside the company and shows nothing to someone who scans it without that permission.
+
+<Shot name="cae-tarjeta" alt="The worker's card with their QR, ready to print" />
+
+## Entry and exit log
+
+It's optional. The owner turns it on in **Administration** › **Security** › **General**, below CAE, with
+**Record entries and exits at the gate**.
+
+- The gatehouse answer adds **Record entry** and **Record exit**. Someone who isn't authorized can't be checked
+  in.
+- The **Accesses** tab shows a day's entries and exits (today, unless you choose another) and filters by
+  company: it tells you who's inside in an emergency.
+- Each company's record shows its **Today's accesses**.
+
+<Shot name="cae-accesos" alt="The day's accesses recorded at the gate" />
+
+## Related
+
+- [Contractors (CAE)](/en/docs/contractors-cae)
+- [QR codes](/en/docs/qr-codes)

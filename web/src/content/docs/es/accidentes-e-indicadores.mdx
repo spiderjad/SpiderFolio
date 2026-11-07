@@ -1,0 +1,88 @@
+---
+title: "Accidentes e indicadores"
+description: "Comunicar accidentes, incidentes y casi accidentes, investigarlos con sus medidas y calcular los índices de frecuencia, gravedad e incidencia."
+group: prevencion
+order: 4
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Comunicar un accidente o incidente
+
+Cualquier persona de la empresa puede comunicar un **accidente**, un **incidente** o un **casi accidente**:
+
+- con **Comunicar un accidente**, en **Lo mío** del menú de Prevención o en el Resumen;
+- o escaneando el **QR** del formulario, pegado por ejemplo en la línea o en el comedor.
+
+Se abre dentro de Prevención, con la fecha de hoy y la hora actual ya puestas, y al enviar vuelve a donde
+estaba. Se llena el formulario **Accidente o incidente**, que el área crea en su espacio: fecha y hora, lugar,
+persona afectada, tipo, gravedad, qué pasó, causas, fotos y testigos. **No escribas datos médicos ni
+diagnósticos.**
+
+Los campos fijos de ese formulario no se pueden quitar ni cambiar de tipo u opciones (en el editor llevan
+**Campo fijo**); sí se les puede cambiar el texto y agregar campos propios.
+
+## Quién ve los casos
+
+Un accidente es **dato de salud**. Los casos los ve solo quien tiene **Datos de salud: accidentes y aptitud**
+(por defecto, solo el propietario; ver [Roles y permisos](/es/docs/roles-y-permisos)). Quien comunicó un caso
+ve lo que comunicó.
+
+Cada caso nuevo avisa a quienes tienen esa capacidad en la campana y por email. El email no dice qué pasó ni a
+quién: solo quién lo comunicó y el enlace al caso.
+
+## Investigar un caso
+
+En **Accidentes** los casos se filtran por fechas, tipo y estado, y se exportan a CSV. Al abrir un caso:
+
+- **Ver lo que se comunicó** abre el registro del formulario.
+- **Agregar medida**: una medida correctiva con **Responsable** y fecha (**Para el**). El responsable recibe un
+  aviso 7 días antes, el día anterior y el mismo día, y la ve en **Mis medidas**, donde la marca como hecha (sin
+  ver los datos del caso). La medida entra también en la [planificación](/es/docs/planificacion-preventiva).
+- **Pasar a investigación** mientras se analizan las causas: el caso queda **En investigación** (sigue entre los
+  abiertos y se puede filtrar aparte); **Volver a abierto** lo deshace.
+- **Cerrar el caso** cuando todas las medidas están hechas; se puede **Reabrir**.
+
+<Shot name="accidentes" alt="La lista de accidentes e incidentes con sus filtros" />
+
+## Indicadores de siniestralidad
+
+La sección **Indicadores** (para quien gestiona el área o tiene **Datos de salud: accidentes y aptitud**)
+calcula los índices con las definiciones del INSST:
+
+| Índice                   | Cálculo                                            |
+| ------------------------ | -------------------------------------------------- |
+| **Índice de frecuencia** | accidentes con baja × 1 000 000 / horas trabajadas |
+| **Índice de gravedad**   | días de baja × 1 000 / horas trabajadas            |
+| **Índice de incidencia** | accidentes con baja × 100 000 / plantilla media    |
+
+En Latinoamérica cada país puede definirlos de otra forma: la pantalla lo recuerda.
+
+Se ven el año hasta la fecha y los últimos 12 meses, y un gráfico por mes con el índice de frecuencia y los
+accidentes con baja. **Exportar CSV** descarga los meses del año y los dos periodos.
+
+<Shot
+  name="indicadores"
+  alt="Los indicadores de siniestralidad: índices del año y de los últimos 12 meses, el gráfico por mes y las horas de cada mes"
+/>
+
+### Qué hay que cargar
+
+- **Horas y plantilla de cada mes**: quien gestiona el área carga las horas trabajadas y la plantilla media de
+  cada mes, de toda la empresa o de un departamento. Sin ellas no hay índice: si faltan meses, la pantalla lo
+  avisa.
+- **Días de baja**: los accidentes con baja son los casos de tipo «Accidente con baja». En cada uno, quien
+  tiene los datos de salud anota los **Días de baja** (solo el número, sin datos médicos); cuentan para el
+  índice de gravedad.
+
+### Por departamento
+
+Los índices por departamento los ve solo quien tiene los datos de salud, porque con pocos accidentes un
+departamento puede señalar a una persona. Los demás ven solo los números de la empresa, que no dicen nada de
+ningún caso.
+
+## Relacionado
+
+- [Formularios y registros](/es/docs/formularios)
+- [Códigos QR](/es/docs/codigos-qr)

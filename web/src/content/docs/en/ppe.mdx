@@ -1,0 +1,108 @@
+---
+title: "PPE: handouts and replacement"
+description: "The protective equipment catalog, signed handouts with their PDF receipt, replacement and each person's health and safety sheet."
+group: prevencion
+order: 2
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+Every handout of **personal protective equipment** (PPE) is recorded with the signature of whoever receives it,
+with no paper. The app knows what each **position** needs, gives notice when an item has to be replaced and
+shows who's missing something. It needs the [Health & safety](/en/docs/occupational-health-and-safety) area on.
+
+| Who                                            | What they can do                                                      |
+| ---------------------------------------------- | --------------------------------------------------------------------- |
+| With **Manage occupational health and safety** | Every handout and the catalog; records and voids handouts.            |
+| Heads and deputies                             | See the handouts and PPE of the people in their area (and sub-areas). |
+| Everyone else                                  | See their own handouts and PPE.                                       |
+
+## The catalog
+
+Under **Catalog** are your company's items. Click **New item** and fill in:
+
+- **Name** (“Cut-resistant gloves”) and, if you like, a **Category** (“Hands”).
+- **Handed out by size**: the size is asked for at each handout.
+- **Life in months**: it's replaced N months after each handout, with notices (see below). Without a life,
+  there's no replacement.
+- **Positions that need it**: whoever has one of those positions and hasn't received it shows it under
+  **Missing**.
+
+An item no longer used is **Archived**: it's no longer offered at handouts and the earlier ones are kept.
+**Show archived** lists them, and from each one you can **Restore** it.
+
+<Shot name="epis-catalogo" alt="The PPE catalog, with each item's life and positions" />
+
+## Record a handout
+
+1. In **PPE**, click **New handout**.
+2. Under **Received by**, choose the person. If something their position requires is missing, it shows at
+   the top (“Missing: …”).
+3. Add the **Items** with their **Quantity** and, if they go by size, the **Size**.
+4. The person reads the statement and **signs in the box** with a finger (on a tablet or phone) or the mouse.
+5. Click **Record handout**.
+
+The handout keeps who received it, who handed it out, the company's date and time, and the signature. It's
+never changed or deleted.
+
+<Shot
+  name="epis-nueva"
+  alt="New handout: the person, what they lack, the items and the signature"
+/>
+
+## View a handout and its receipt
+
+Opening a handout shows the items, the size, the **Replace on** day and the signature. **PDF receipt**
+downloads the signed receipt to file or print; it needs [Gotenberg](/en/docs/gotenberg). Downloading it is
+recorded in the audit log.
+
+If it was entered wrongly (another person, another item), whoever manages the area can **Void** it with a
+**Reason**. It still shows, marked as voided, and no longer counts for replacement.
+
+<Shot name="epis" alt="The list of PPE handouts with its filters" />
+
+## Replacement notices
+
+When an item with a life gets close to its replacement day, the person and whoever handed it out get a notice
+in the bell and by email: 30 days before, 7 days before and on the day, at 8:00 in the company's time zone. A
+new handout of the same item to the same person replaces the earlier one, and voiding a handout removes its
+notice. Every notice is also under [Expiries](/en/docs/expiries).
+
+## Each person's sheet
+
+Each person has their **health and safety sheet**, which brings together their PPE, their [training and
+fitness](/en/docs/training-and-fitness) and their [emergency](/en/docs/emergencies-and-drills) role. It opens:
+
+- from **People**, in the Health & safety menu (whoever manages the area sees everyone; heads, their area),
+  with a search box, **Position** and **Department** filters and an **Alerts** column: PPE missing, courses
+  expired or pending and fitness due soon;
+- from **Administration** › **Members**, in each person's menu: **Health and safety sheet**;
+- your own, from **My sheet** in the Health & safety menu or from **My profile**.
+
+The sheet shows:
+
+- **Missing**: what their position requires and they don't have, or have expired.
+- **PPE they have**: the latest of each item, with its replacement day and its state (**Valid**, **Due
+  soon** or **Expired**).
+- **Handouts**: every one they received.
+
+On someone else's sheet there are only actions on them: **Hand out PPE to…** and, with **Health data**,
+**Record fitness**.
+
+**Download the sheet (PDF)** puts the sheet in a PDF: their PPE, what's missing and their training. For whoever
+has **Health data: accidents and fitness for work** it also has their fitness and their accidents and
+incidents, with a note that it's confidential; each person can download their own (with their fitness). It
+needs [Gotenberg](/en/docs/gotenberg) and it's recorded in the audit log.
+
+<Shot
+  name="epis-ficha"
+  alt="A person's sheet: what they lack, their PPE, their training, their fitness for work and their accidents"
+/>
+
+## Related
+
+- [Departments and positions](/en/docs/departments#positions)
+- [Audit rooms](/en/docs/audit-rooms): share the handouts between two dates with an auditor

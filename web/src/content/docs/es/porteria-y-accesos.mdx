@@ -1,0 +1,68 @@
+---
+title: "Portería y accesos"
+description: "Saber en la entrada si un trabajador de una contrata puede pasar, con su tarjeta QR, y llevar el registro de entradas y salidas."
+group: prevencion
+order: 9
+icon: qr
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+En la entrada del centro hace falta una sola respuesta: **¿esta persona puede pasar?** La pestaña **Portería**,
+dentro de [Contratas](/es/docs/contratas-cae), la da en grande, pensada para el teléfono o la tablet de la
+entrada.
+
+## Quién la usa
+
+- Quien tiene **Consultar si una contrata puede entrar** (ver [Roles y
+  permisos](/es/docs/roles-y-permisos)): portería, vigilancia, jefes de equipo. Al entrar a Prevención va
+  directo a la portería y no ve EPIs, formación ni accidentes.
+- Quien gestiona las contratas también la ve.
+
+## Consultar a una persona
+
+1. Escribe el nombre, los últimos caracteres del documento o el nombre de la empresa.
+2. Toca a la persona.
+3. La respuesta sale grande: en verde **Puede entrar** o en rojo **No puede entrar**, con **todos** los
+   motivos (un documento vencido, la empresa bloqueada, la información del centro sin entregar…).
+
+Solo muestra el nombre, la empresa, el puesto, los 3 últimos caracteres del documento y sus permisos de trabajo
+activos: **nunca los documentos**. Las consultas con resultado negativo quedan en el registro de auditoría; las
+positivas, no.
+
+<Shot name="cae-porteria-ok" alt="Portería en el teléfono: Puede entrar, en verde" />
+
+<Shot
+  name="cae-porteria-no"
+  alt="Portería en el teléfono: No puede entrar, en rojo con los motivos"
+/>
+
+## QR del trabajador
+
+En la ficha de cada trabajador, **Tarjeta con QR** muestra su tarjeta (nombre, empresa y QR) lista para
+imprimir. En la entrada, escanear el QR abre la portería con esa persona ya elegida.
+
+Para ver la respuesta hace falta entrar a SpiderFolio con permiso para consultar contratas: el código no sirve
+fuera de la empresa ni muestra nada a quien lo escanea sin ese permiso.
+
+<Shot name="cae-tarjeta" alt="La tarjeta del trabajador con su QR, lista para imprimir" />
+
+## Registro de entradas y salidas
+
+Es opcional. El propietario lo activa en **Administración** › **Seguridad** › **General**, debajo de la CAE,
+con **Registrar entradas y salidas en portería**.
+
+- La respuesta de portería suma **Registrar entrada** y **Registrar salida**. A quien no está autorizado no se
+  le puede registrar la entrada.
+- La pestaña **Accesos** muestra las entradas y salidas de un día (hoy, si no eliges otro) y se filtra por
+  empresa: sirve para saber quién está dentro en caso de emergencia.
+- La ficha de cada empresa muestra sus **Accesos de hoy**.
+
+<Shot name="cae-accesos" alt="Los accesos del día registrados en portería" />
+
+## Relacionado
+
+- [Contratas (CAE)](/es/docs/contratas-cae)
+- [Códigos QR](/es/docs/codigos-qr)

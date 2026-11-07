@@ -1,0 +1,194 @@
+---
+title: "Contractors (CAE)"
+description: "Coordination of business activities: external companies and their workers, required documents with review and expiries, site information and work permits."
+group: prevencion
+order: 8
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+**Coordination of business activities** (CAE: Law 31/1995, art. 24, and Royal Decree 171/2004 in Spain; in
+Latin America, each country's equivalent duty) answers three questions:
+
+- which external companies work at the site?
+- are their documents and each worker's up to date?
+- can they come in today?
+
+It lives inside Health & safety, in the **Contractors** section. This guide is for whoever manages it. The site
+entrance is in [Gatehouse and access](/en/docs/gatehouse-and-access) and what the contractor sees, in
+[Contractors' portal](/en/docs/contractors-portal).
+
+## Turn it on
+
+1. With [Health & safety](/en/docs/occupational-health-and-safety#turn-it-on) on, the owner goes to
+   **Administration** › **Security** › **General**.
+2. Below the area, tick **Coordination of business activities (CAE)**.
+3. If you like, also tick **Load food industry examples**.
+4. Save.
+
+The first time, the **Contractors** folder is created in the Health & safety space, along with your country's
+**catalog of required documents**. It never overwrites what you already have with the same name. Turning Health
+& safety off turns CAE off too, and turning CAE off hides the section without deleting anything.
+
+## Who sees what
+
+Two capabilities in [Roles and permissions](/en/docs/roles-and-permissions):
+
+| Capability                                 | What it allows                                                                                                                                                             |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Manage contractors (CAE)**               | Add and change companies, workers and the catalog; review documents; issue permits; block and archive. By default, the owner and the Administrator.                        |
+| **Check whether a contractor can come in** | Only the [gatehouse](/en/docs/gatehouse-and-access): whether a company or a worker is authorized and why, without contacts or documents. For the gatehouse and team leads. |
+
+Each company's **internal contact** (a person in your company) sees its whole record even without those
+capabilities, and gets its notices.
+
+## Companies
+
+The list shows each company with its type, its internal contact, how many workers it has and its status:
+
+- **Authorized** (green): it can work at the site.
+- **Incomplete** (amber): something's missing; the first reason shows.
+- **Blocked** (red): someone blocked it, with a reason.
+- **Archived**: it no longer works with your company.
+
+Search by name or tax ID and filter by type and status.
+
+<Shot
+  name="cae-empresas"
+  alt="The list of contractors with their status: authorized, incomplete or blocked"
+/>
+
+**Add a company.** Click **New company** and fill in:
+
+- the name and tax ID;
+- the **type**: **Contractor**, **Subcontractor** (works for a contractor) or **Concurrent company** (shares
+  the site without a contract with your company);
+- what it does at the site, the **internal contact** and the contact details;
+- if it works for a while, the start and end dates.
+
+Each company gets its own folder inside **Contractors**, named after it; renaming the company renames the
+folder.
+
+## The company's record
+
+At the top it says in green whether it can work at the site or, in red, **every** reason it can't (“Missing:
+…”, “Company blocked: …”, “Stopped working on …”). Below are its details, the link to its folder, its documents,
+the site information, its workers, its portal access and today's accesses.
+
+- **Block** asks for a reason; **Unblock** undoes it.
+- **Archive** takes it off the lists without deleting anything (its workers and documents are kept).
+- A subcontractor is only authorized if its contractor is too.
+- **Authorized today (PDF)** downloads a PDF with the company, the day, its status and each worker with whether
+  they can come in and why not. It needs [Gotenberg](/en/docs/gotenberg).
+
+<Shot
+  name="cae-empresa"
+  alt="An authorized contractor's record: details, documents, site information and workers"
+/>
+
+## Workers
+
+In the company's record, **Add worker** asks for the name, the ID document (optional) and the job or task.
+
+- Contractors' workers **aren't members** of your company: they have no account and take no seat.
+- **Don't store health data**: for medical fitness only the fact that the certificate was presented is
+  recorded.
+- Each worker's record says whether they can come in and why, with their documents, and they can be edited,
+  blocked or archived. Their [QR card](/en/docs/gatehouse-and-access#workers-qr) is there too.
+
+<Shot name="cae-trabajador" alt="A contractor's worker's record with their documents" />
+
+## Required documents
+
+The catalog, in the **Required documents** tab, has the documents asked of each company and each worker. For
+each one you decide:
+
+- **how long it's valid**, to suggest the expiry date when uploading;
+- **which companies** it's asked of: all, contractors and subcontractors, or concurrent companies only;
+- whether it's **mandatory**: a missing mandatory one keeps them from working at the site.
+
+Reorder them with the arrows, edit, add and archive them.
+
+<Shot
+  name="cae-catalogo"
+  alt="The catalog of required documents and the information for contractors"
+/>
+
+## Upload and review documents
+
+In the company's (or worker's) record, each required document shows its status: **Up to date**, **Due soon**
+(expires within 30 days), **Expired**, **To review**, **Rejected** or **Missing**.
+
+1. Click **Upload** on the document.
+2. Choose the file and the expiry date (suggested from the document's validity).
+3. If you've already reviewed it, tick **Accept it now**; otherwise it's left **To review**.
+
+The file goes into the company's folder; a worker's go into a folder with their name inside the company's,
+created with their first document. Uploading needs edit access to the Health & safety space. The contractor can
+also upload them itself from the [portal](/en/docs/contractors-portal).
+
+**Review.** The **To review** tab gathers the unreviewed documents of every company, oldest first; their number
+shows on the **Contractors** tab and the list of companies shows how many each one has.
+
+- **Accept** makes it the current one (you can correct the expiry date); the previous one stays in the
+  **History**. With an expiry date, the internal contact gets the notices 30 days before, 7 days before and on
+  the day, like any other [expiry](/en/docs/expiries).
+- **Reject** asks for a reason, shown next to the document (in the contractor's portal too).
+- The file's name opens it in another tab; seeing it needs access to the folder, like any file.
+
+A mandatory document only counts if it's **accepted and hasn't expired**.
+
+<Shot
+  name="cae-empresa-incompleta"
+  alt="An incomplete contractor: an expired document, a rejected one, one to review and the missing ones"
+/>
+
+<Shot name="cae-revisar" alt="The To review inbox with every contractor's unreviewed documents" />
+
+## Site information
+
+The company that owns the site has to inform each external company of the site's risks, the emergency
+measures and its instructions (Royal Decree 171/2004, articles 7 to 9).
+
+- **Choose what's handed over.** In **Required documents**, the **Information for contractors** card chooses
+  which controlled documents in force are that information (for example, the [emergency
+  plan](/en/docs/emergencies-and-drills) and the site rules).
+- **Require it.** With **Require it to authorize** ticked (it is by default), a company that hasn't received the
+  version in force of each one isn't authorized, with the reason “The site information hasn't been handed over:
+  …”. If you publish a new version of a document, it has to be handed over again.
+- **Record the handover.** On each company's record, **Site information** shows what it received and what it's
+  missing. **Record a handover** asks which documents are handed over, who receives them for the external
+  company, the date and, if possible, their signature on screen. Each handover keeps its **Receipt (PDF)**: the
+  documents with their version, the statement of whoever receives it and their signature.
+
+## Work permits
+
+The **Permits** tab gathers the permits for jobs with special risks: **Hot work**, **Work at height**,
+**Confined spaces**, **Electrical work** or **Other**. They apply to a contractor's workers and also to own
+staff.
+
+1. Click **New permit** and choose the type, the external company (empty if only own staff do it), the location
+   and the work.
+2. Set from and until when it's valid: a few days at most; for longer, issue another one.
+3. Add the people. Only authorized workers can be added.
+4. Check the **precautions**, suggested by type and editable.
+5. The permit starts as a **Draft**. **Approve and activate** asks you to tick each precaution as checked and to
+   sign.
+
+Once approved, it's valid between its dates (**Scheduled**, **Active**, **Expired**). It's **closed** when the
+work ends, with notes, or **cancelled** with a reason. Each permit downloads as a PDF with the signature of
+whoever approved it, and the gatehouse shows each worker's active permits. Whoever manages contractors issues
+them; whoever checks contractors sees them.
+
+<Shot name="cae-permisos" alt="The list of work permits with its filters" />
+
+<Shot name="cae-permiso" alt="An active hot work permit, with its people and precautions" />
+
+## Related
+
+- [Gatehouse and access](/en/docs/gatehouse-and-access)
+- [Contractors' portal](/en/docs/contractors-portal)
+- [Expiries](/en/docs/expiries)

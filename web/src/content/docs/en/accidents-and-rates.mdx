@@ -1,0 +1,87 @@
+---
+title: "Accidents and rates"
+description: "Report accidents, incidents and near misses, investigate them with their measures and calculate the frequency, severity and incidence rates."
+group: prevencion
+order: 4
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Report an accident or incident
+
+Anyone in the company can report an **accident**, an **incident** or a **near miss**:
+
+- with **Report an accident**, under **Mine** in the Health & safety menu or on the Summary;
+- or by scanning the form's **QR code**, posted for example on the line or in the canteen.
+
+It opens inside Health & safety, with today's date and the time now already filled in, and once sent it goes
+back to where you were. They fill in the **Accident or incident** form, which the area creates in its space:
+date and time, place, person affected, type, severity, what happened, causes, photos and witnesses. **Don't
+write medical data or diagnoses.**
+
+That form's fixed fields can't be removed nor change their type or options (in the editor they show **Fixed
+field**); their text can change and you can add your own fields.
+
+## Who sees the cases
+
+An accident is **health data**. Cases are only seen by whoever has **Health data: accidents and fitness for
+work** (by default, only the owner; see [Roles and permissions](/en/docs/roles-and-permissions)). Whoever
+reported a case sees what they reported.
+
+Each new case gives a notice to whoever has that capability, in the bell and by email. The email doesn't say
+what happened nor to whom: only who reported it and the link to the case.
+
+## Investigate a case
+
+Under **Accidents** you filter cases by dates, type and status, and export them to CSV. Opening a case:
+
+- **See what was reported** opens the form's record.
+- **Add measure**: a corrective measure with a **Responsible** and a date (**By**). The responsible gets a
+  notice 7 days before, the day before and on the day, and sees it in **My measures**, where they mark it done
+  (without seeing the case's details). The measure also goes into the [planning](/en/docs/preventive-planning).
+- **Move to investigation** while the causes are looked into: the case is **Under investigation** (still among
+  the open ones, and it can be filtered on its own); **Back to open** undoes it.
+- **Close the case** once every measure is done; it can be **Reopened**.
+
+<Shot name="accidentes" alt="The list of accidents and incidents with its filters" />
+
+## Accident rates
+
+The **Rates** section (for whoever manages the area or has **Health data: accidents and fitness for work**)
+calculates the rates with the definitions of Spain's INSST:
+
+| Rate               | Calculation                                        |
+| ------------------ | -------------------------------------------------- |
+| **Frequency rate** | accidents with leave × 1,000,000 / hours worked    |
+| **Severity rate**  | days of leave × 1,000 / hours worked               |
+| **Incidence rate** | accidents with leave × 100,000 / average headcount |
+
+In Latin America each country may define them differently: the screen says so.
+
+It shows the year to date and the last 12 months, and a chart by month with the frequency rate and the
+accidents with leave. **Export CSV** downloads the year's months and both periods.
+
+<Shot
+  name="indicadores"
+  alt="Accident rates: the year's and last 12 months' rates, the chart by month and each month's hours"
+/>
+
+### What you need to enter
+
+- **Hours and headcount of each month**: whoever manages the area enters each month's hours worked and average
+  headcount, for the whole company or a department. Without them there's no rate: if months are missing, the
+  screen says so.
+- **Days of leave**: accidents with leave are the cases of type “Accident with sick leave”. On each one,
+  whoever has health data enters the **Days of leave** (only the number, no medical data); they count for the
+  severity rate.
+
+### By department
+
+Rates by department are only for whoever has health data, because with few accidents a department can point at
+a person. Everyone else sees only the company's figures, which say nothing about any case.
+
+## Related
+
+- [Forms and records](/en/docs/forms)
+- [QR codes](/en/docs/qr-codes)

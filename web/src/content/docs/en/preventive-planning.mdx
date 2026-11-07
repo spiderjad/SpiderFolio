@@ -1,0 +1,54 @@
+---
+title: "Preventive planning"
+description: "Every preventive and corrective measure of the company in one place, with owner, due date, priority, cost and where each one came from."
+group: prevencion
+order: 5
+icon: grid
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+The **planning of the preventive activity** gathers every measure of the company in a single list, as article
+16 of Spain's Law 31/1995 asks: what has to be done, by whom, by when and why. Whoever manages the area sees it
+in the **Planning** section.
+
+Each measure has:
+
+- a **responsible person** and a **due date**;
+- a **priority**: high, medium or low;
+- if you want, an **estimated cost**;
+- its **origin**, with a link to what created it.
+
+| Origin                   | Where it's created                                                                                        |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| **Risk assessment**      | In an EVR's controlled document window, **New preventive measure**.                                       |
+| **Inspection**           | In a form record with **non-conforming** answers (the monthly inspection), **Create preventive measure**. |
+| **Accident or incident** | On the case, **Add measure** (see [Accidents](/en/docs/accidents-and-rates#investigate-a-case)).          |
+| **Drill**                | On the drill, **New measure** (see [Emergencies](/en/docs/emergencies-and-drills)).                       |
+| **Committee**            | On the meeting, **New agreement** (see [Committee](/en/docs/safety-committee)).                           |
+| **Other**                | In the planning, **New measure**.                                                                         |
+
+<Shot
+  name="planificacion"
+  alt="The planning of the preventive activity with its filters, origins and priorities"
+/>
+
+## Follow the measures
+
+- Filter by status (pending, overdue, done or all), origin, priority, responsible person and dates; the filters
+  stay in the address, so you can bookmark or share a view.
+- **Export CSV** downloads what's shown, for example for the yearly report or the audit.
+- The responsible person is told 7 days before, the day before and on the day, and sees it in **My measures**,
+  where they mark it done. Whoever manages the area can also edit it or mark it done from the planning.
+
+## Accident measures
+
+An accident's measures are health data. Whoever sees the planning without **Health data: accidents and fitness
+for work** only reads “Accident or incident”, not which one, and can't change them.
+
+## Related
+
+- [Forms and records](/en/docs/forms): non-conforming answers
+- [Expiries](/en/docs/expiries)

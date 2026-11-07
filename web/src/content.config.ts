@@ -5,6 +5,7 @@ import { z } from "astro/zod";
 export const docGroups = [
   "empezar",
   "uso-diario",
+  "prevencion",
   "administracion",
   "seguridad",
   "autoalojamiento",

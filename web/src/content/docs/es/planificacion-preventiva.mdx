@@ -1,0 +1,54 @@
+---
+title: "Planificación preventiva"
+description: "Todas las medidas preventivas y correctivas de la empresa en un solo lugar, con responsable, fecha, prioridad, coste y de dónde salió cada una."
+group: prevencion
+order: 5
+icon: grid
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+La **planificación de la actividad preventiva** reúne todas las medidas de la empresa en una sola lista, como
+pide el artículo 16 de la Ley 31/1995: lo que hay que hacer, quién, para cuándo y por qué. La ve quien
+gestiona el área, en la sección **Planificación**.
+
+Cada medida tiene:
+
+- un **responsable** y una **fecha límite**;
+- una **prioridad**: alta, media o baja;
+- si quieres, un **coste estimado**;
+- su **origen**, con un enlace a lo que la generó.
+
+| Origen                    | De dónde se crea                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Evaluación de riesgos** | En la ventana de documento controlado de una EVR, **Nueva medida preventiva**.                                     |
+| **Inspección**            | En un registro de formulario con respuestas **no conformes** (la inspección mensual), **Crear medida preventiva**. |
+| **Accidente o incidente** | En el caso, **Agregar medida** (ver [Accidentes](/es/docs/accidentes-e-indicadores#investigar-un-caso)).           |
+| **Simulacro**             | En el simulacro, **Nueva medida** (ver [Emergencias](/es/docs/emergencias-y-simulacros)).                          |
+| **Comité**                | En la reunión, **Nuevo acuerdo** (ver [Comité](/es/docs/comite-de-seguridad)).                                     |
+| **Otra**                  | En la planificación, **Nueva medida**.                                                                             |
+
+<Shot
+  name="planificacion"
+  alt="La planificación de la actividad preventiva con sus filtros, orígenes y prioridades"
+/>
+
+## Seguir las medidas
+
+- Se filtra por estado (pendientes, vencidas, hechas o todas), origen, prioridad, responsable y fechas; los
+  filtros quedan en la dirección, así que puedes guardar o compartir una vista.
+- **Exportar CSV** descarga lo que se ve, por ejemplo para la memoria anual o la auditoría.
+- Al responsable se le avisa 7 días antes, el día anterior y el mismo día, y la ve en **Mis medidas**, donde la
+  marca como hecha. Quien gestiona el área también puede editarla o marcarla hecha desde la planificación.
+
+## Medidas de accidentes
+
+Las medidas de un accidente son datos de salud. Quien ve la planificación sin **Datos de salud: accidentes y
+aptitud** solo lee «Accidente o incidente», sin saber cuál, y no puede cambiarlas.
+
+## Relacionado
+
+- [Formularios y registros](/es/docs/formularios): respuestas no conformes
+- [Vencimientos](/es/docs/vencimientos)

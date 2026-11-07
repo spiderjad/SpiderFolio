@@ -1,8 +1,8 @@
 ---
-title: "Seguridad y salud laboral"
-description: "Activar el módulo de PRL o SST, el catálogo de EPIs, la entrega firmada con su constancia, la reposición y lo que le falta a cada persona según su puesto."
-group: uso-diario
-order: 9.6
+title: "Prevención: primeros pasos"
+description: "Qué trae el área de Prevención (PRL o SST), cómo se activa, cómo se organiza el menú y quién ve qué."
+group: prevencion
+order: 1
 icon: shield
 ---
 
@@ -10,530 +10,101 @@ import Shot from "../../../components/Shot.astro";
 
 ## Para qué sirve
 
-El módulo de **Seguridad y salud laboral** (PRL en España, SST en Latinoamérica) reúne lo que pide la
-prevención en planta: la entrega de equipos de protección individual con la firma de quien los recibe, su
-reposición, y lo que le falta a cada persona según su puesto. Se apoya en los
-[puestos](/es/docs/departamentos#puestos), los documentos controlados y los formularios.
+**Prevención** (PRL en España, SST en Latinoamérica) es el área de la app que reúne lo que pide la
+prevención de riesgos laborales en una pyme, sin planillas sueltas ni carpetas paralelas. Se apoya en lo que
+ya usas en el resto de la app: los [puestos](/es/docs/departamentos#puestos), los
+[documentos controlados](/es/docs/documentos-controlados) y los [formularios](/es/docs/formularios).
 
-Por ahora trae la entrega de **EPIs**, los **accidentes e incidentes**, la **formación** y las **evaluaciones
-de riesgos**. Y la **aptitud** de cada persona. Si la activas, también la coordinación con
-[contratas (CAE)](#contratas-cae).
+| Parte                                                         | Para qué                                                                                 |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [EPIs](/es/docs/epis)                                         | Catálogo, entrega firmada con su constancia, reposición y lo que le falta a cada puesto. |
+| [Formación y aptitud](/es/docs/formacion-y-aptitud)           | Cursos con constancia y firma, evaluaciones de riesgos y aptitud de cada persona.        |
+| [Accidentes e indicadores](/es/docs/accidentes-e-indicadores) | Comunicar e investigar casos, y los índices de frecuencia, gravedad e incidencia.        |
+| [Planificación preventiva](/es/docs/planificacion-preventiva) | Todas las medidas de la empresa con responsable, fecha, prioridad y coste.               |
+| [Emergencias y simulacros](/es/docs/emergencias-y-simulacros) | Plan de emergencia, equipo con su formación y registro de simulacros.                    |
+| [Comité de seguridad](/es/docs/comite-de-seguridad)           | Delegados, mandatos, reuniones, actas y acuerdos.                                        |
+| [Contratas (CAE)](/es/docs/contratas-cae)                     | Empresas externas, sus trabajadores, sus documentos y los permisos de trabajo.           |
+| [Portería y accesos](/es/docs/porteria-y-accesos)             | Saber en la entrada si alguien puede pasar, con su QR, y registrar entradas y salidas.   |
+| [Portal de contratas](/es/docs/portal-de-contratas)           | Que cada contrata suba sus documentos con un enlace y un código, sin cuenta.             |
 
 ## Activarlo
 
-El propietario lo activa en **Administración** › **Seguridad** › **General**, en **Seguridad y salud
-laboral** ([Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)). Ahí elige también los
-**Términos**: **España: PRL y EPI** o **Latinoamérica: SST y EPP**. La app usa esos nombres en el menú, las
-pantallas, los avisos y la constancia.
+El área viene apagada. El propietario la enciende en **Administración** › **Seguridad** › **General**, en
+**Seguridad y salud laboral** (ver [Seguridad y verificación en dos pasos](/es/docs/seguridad-y-2fa)):
 
-Con el módulo activo aparece **Prevención** (o **Seguridad y salud**) en el menú lateral. Desactivarlo lo
-oculta, junto con sus avisos, sin borrar nada.
+1. Marca **Seguridad y salud laboral**.
+2. Elige los **Términos**: **España: PRL y EPI** o **Latinoamérica: SST y EPP**. La app usa esos nombres en el
+   menú, las pantallas, los avisos y las constancias.
+3. Si quieres, marca **Cargar ejemplos del sector alimentario** (ver [más abajo](#ejemplos-del-sector-alimentario)).
+4. Guarda.
+
+Al activarla se crean el espacio del área, los tipos de documento **Evaluación de riesgos** (EVR) y **Plan de
+emergencia** (PEM) y el formulario **Accidente o incidente**. Nunca pisa lo que ya tengas con el mismo nombre.
+
+Las **contratas (CAE)** y el **registro de entradas y salidas** tienen su propio interruptor debajo, porque no
+todas las empresas los necesitan (ver [Contratas](/es/docs/contratas-cae#activarla)).
+
+Desactivar el área la oculta, junto con sus avisos, sin borrar nada.
 
 ## Cómo se organiza
 
-Quien gestiona el módulo entra a **Prevención** por el **Resumen**: tarjetas con lo que hay que atender
-(personas a las que les faltan EPIs, EPIs por reponer, formación vencida o por vencer y, con **Datos de salud**,
-aptitudes por vencer, medidas abiertas y casos abiertos), cada una con **Ver la lista**. Las secciones están
-en el menú del área **Prevención** (PRL en la barra de áreas; ver [El Inicio](/es/docs/inicio#moverte-por-la-app-las-áreas)):
-**Resumen**, **Personas**, **EPIs**, **Catálogo**, **Formación**, **Accidentes**, **Planificación**,
-**Indicadores**, **Emergencias**, **Comité** y **Contratas**, y debajo, **Lo mío** (**Mi ficha**, **Mis
-medidas**, **Comunicar un accidente**) y los **Documentos del área**. Los jefes ven **Personas**, **EPIs** y
-**Formación** de su área, y los miembros del comité ven **Comité**. Dentro de Contratas, Emergencias y Comité
-hay pestañas propias.
+Con el área activa aparece **Prevención** (o **Seguridad y salud**) en la **barra de áreas**, a la izquierda
+(ver [El Inicio](/es/docs/inicio#moverte-por-la-app-las-áreas)). Al entrar, el menú del área tiene:
 
-En el menú lateral, **Prevención** lleva un número con lo pendiente: para quien gestiona, el total del
-Resumen; para el resto, los EPIs que le faltan, su formación pendiente y sus medidas.
+- **Resumen**, **Personas**, **EPIs**, **Catálogo**, **Formación**, **Accidentes**, **Planificación**,
+  **Indicadores**, **Emergencias**, **Comité** y **Contratas**;
+- **Lo mío**: **Mi ficha**, **Mis medidas** y **Comunicar un accidente**;
+- los **Documentos del área**.
+
+Cada persona ve solo las secciones que le tocan, y la barra de áreas lleva un número con lo pendiente: para
+quien gestiona, el total del Resumen; para el resto, sus EPIs que faltan, su formación pendiente y sus medidas.
+
+Quien gestiona el área entra por el **Resumen**: tarjetas con lo que hay que atender (personas a las que les
+faltan EPIs, EPIs por reponer, formación vencida o por vencer y, con **Datos de salud**, aptitudes por vencer,
+medidas abiertas y casos abiertos), cada una con **Ver la lista**.
 
 <Shot name="resumen" alt="El Resumen de Prevención con las tarjetas de lo que hay que atender" />
 
-Quien no gestiona entra directo a su ficha. Si le falta un EPI o tiene formación pendiente, lo ve también en
-[Inicio](/es/docs/inicio).
+Quien no gestiona el área entra directo a su ficha. Si le falta un EPI o tiene formación pendiente, lo ve
+también en [Inicio](/es/docs/inicio).
 
 ## Quién ve qué
 
-| Quién                                       | Qué ve                                                           |
-| ------------------------------------------- | ---------------------------------------------------------------- |
-| Con **Gestionar seguridad y salud laboral** | Todas las entregas, el catálogo; registra y anula entregas.      |
-| Jefes y subjefes                            | Las entregas y los EPIs de las personas de su área (y subáreas). |
-| Todos los demás                             | Sus propias entregas y sus EPIs.                                 |
-
-La capacidad se da en [Roles y permisos](/es/docs/roles-y-permisos); el rol Administrador ya la tiene.
-
-## El catálogo
-
-En **Entregas** › **Catálogo** están los equipos de tu empresa. Pulsa **Nuevo equipo** y completa:
-
-- **Nombre** («Guantes anticorte») y, si quieres, una **Categoría** («Manos»).
-- **Se entrega por talla**: al entregarlo se pide la talla.
-- **Vida útil en meses**: se repone a los N meses de cada entrega, y se avisa (ver más abajo). Sin vida útil,
-  no hay reposición.
-- **Puestos que lo necesitan**: a quien tenga uno de esos puestos y no lo haya recibido, se le ve en
-  **Le falta**.
-
-Un equipo que ya no se usa se **Archiva**: deja de ofrecerse en las entregas y las anteriores se conservan.
-**Ver archivados** los muestra y desde cada uno puedes pulsar **Recuperar**.
-
-<Shot
-  name="epis-catalogo"
-  alt="El catálogo de EPIs, con la vida útil y los puestos de cada equipo"
-/>
-
-## Registrar una entrega
-
-1. En **Entregas**, pulsa **Nueva entrega**.
-2. En **Quién recibe**, elige a la persona. Si a su puesto le falta algo, lo verás arriba («Le falta: …»).
-3. Agrega los **Equipos** con su **Cantidad** y, si van por talla, la **Talla**.
-4. La persona lee el texto de conformidad y **firma en el recuadro** con el dedo (en una tablet o un celular)
-   o con el mouse.
-5. Pulsa **Registrar entrega**.
-
-La entrega queda con quién la recibió, quién la entregó, la fecha y la hora de la empresa, y la firma. No se
-cambia ni se borra.
-
-<Shot name="epis-nueva" alt="Nueva entrega: la persona, lo que le falta, los equipos y la firma" />
-
-## Ver una entrega y la constancia
-
-Al abrir una entrega ves los equipos, la talla, el día de **Reponer el** y la firma. **Constancia en PDF**
-descarga la constancia firmada para archivar o imprimir; necesita [Gotenberg](/es/docs/gotenberg). Descargarla
-queda en la auditoría.
-
-Si se cargó mal (otra persona, otro equipo), quien gestiona el módulo puede **Anular** con un **Motivo**. Se
-sigue viendo, marcada como anulada, y deja de contar para la reposición.
-
-<Shot name="epis" alt="La lista de entregas de EPIs con sus filtros" />
-
-## La ficha de cada persona
-
-Cada persona tiene su **ficha de prevención**. Se abre:
-
-- desde **Personas**, en el menú de Prevención (quien gestiona el módulo ve a todas; los jefes, a su área), con
-  buscador, filtros por **Puesto** y **Departamento** y una columna de **Avisos**: EPIs que le faltan, cursos
-  vencidos o pendientes y aptitud por vencer;
-- desde **Administración** › **Miembros**, en el menú de cada persona: **Ficha de prevención**;
-- la propia, desde **Mi perfil** (quien no gestiona el módulo entra a ella directamente desde Prevención).
-
-En la ficha de otra persona están solo las acciones sobre ella: **Entregar EPIs a…** y, con **Datos de salud**,
-**Registrar aptitud**. **Mis medidas** y **Comunicar un incidente** están en la ficha propia y en el
-Resumen.
-
-En la ficha se ven:
-
-- **Le falta**: lo que pide su puesto y no tiene, o tiene vencido.
-- **EPIs que tiene**: el último de cada equipo, con su día de reposición y su estado (**Vigente**, **Por
-  vencer** o **Vencido**).
-- **Entregas**: todas las que recibió.
-
-Cada persona ve la suya entrando a **Prevención** en el menú.
-
-**Descargar la ficha (PDF)** arma la ficha en un PDF: sus EPIs, lo que le falta y su formación. Para quien tiene
-**Datos de salud: accidentes y aptitud** también lleva su aptitud y sus accidentes e incidentes, con un aviso de
-que es confidencial; cada persona puede descargar la suya (con su aptitud). Necesita
-[Gotenberg](/es/docs/gotenberg) y queda en la auditoría.
-
-## Avisos de reposición
-
-Cuando un equipo con vida útil se acerca a su día de reposición, la persona y quien se lo entregó reciben un
-aviso en la campana y por email: a los 30 días, a los 7 y el mismo día, a las 8:00 de la zona horaria de la
-empresa. Una entrega nueva del mismo equipo a la misma persona reemplaza a la anterior, y anular una entrega
-quita su aviso.
-
-## Accidentes e incidentes
-
-Cualquier persona puede **comunicar** un accidente, un incidente o un casi accidente con **Comunicar un
-incidente** (en su ficha o en el Resumen) o escaneando el QR del formulario. Se abre dentro de Prevención, con
-la fecha de hoy y la hora actual ya puestas, y al enviar vuelve a donde estaba. Se llena el formulario **Accidente o
-incidente**, que el módulo crea en su espacio: fecha y hora, lugar, persona afectada, tipo, gravedad, qué
-pasó, causas, fotos y testigos. No escribas datos médicos ni diagnósticos.
-
-Los campos fijos de ese formulario no se pueden quitar ni cambiar de tipo u opciones (en el editor llevan
-**Campo fijo**); sí se les puede cambiar el texto y agregar campos propios.
-
-Es **dato de salud**: los casos los ve solo quien tiene **Datos de salud: accidentes y aptitud** (por defecto,
-solo el propietario; ver [Roles y permisos](/es/docs/roles-y-permisos)). Quien comunicó un caso ve lo que
-comunicó. Cada caso nuevo avisa a quienes tienen esa capacidad en la campana y por email; el email no dice qué
-pasó ni a quién, solo quién lo comunicó y el enlace al caso.
-
-En **Accidentes** se filtran por fechas, tipo y estado, y se exportan a CSV. Al abrir un caso:
-
-- **Ver lo que se comunicó** abre el registro del formulario.
-- **Agregar medida**: una medida correctiva con **Responsable** y fecha (**Para el**). El responsable recibe un
-  aviso 7 días antes, el día anterior y el mismo día, y la ve en **Mis medidas**, donde la marca como hecha (sin
-  ver los datos del caso).
-- **Pasar a investigación** mientras se analizan las causas: el caso queda **En investigación** (sigue entre los
-  abiertos y se puede filtrar aparte); **Volver a abierto** lo deshace.
-- **Cerrar el caso** cuando todas las medidas están hechas; se puede **Reabrir**.
-
-<Shot name="accidentes" alt="La lista de accidentes e incidentes con sus filtros" />
-
-## Planificación de la actividad preventiva
-
-La sección **Planificación** (para quien gestiona el módulo) reúne todas las medidas preventivas y
-correctivas de la empresa, como pide el artículo 16 de la Ley 31/1995: las que salen de las **evaluaciones de
-riesgos**, de las **inspecciones**, de los **accidentes e incidentes** y las demás. Cada una tiene su
-responsable, su fecha límite, una **prioridad** (alta, media o baja) y, si quieres, un **coste estimado**.
-
-- Se filtra por estado (pendientes, vencidas, hechas o todas), origen, prioridad, responsable y fechas; los
-  filtros quedan en la dirección. **Exportar CSV** descarga lo que se ve.
-- **Nueva medida** crea una medida suelta. Desde un documento controlado de tipo **Evaluación de riesgos**
-  (EVR), **Nueva medida preventiva** en su ventana de documento controlado la crea ligada a esa evaluación;
-  desde un registro de un formulario con respuestas **no conformes** (por ejemplo, la inspección mensual),
-  **Crear medida preventiva** la liga a ese registro.
-- Al responsable se le avisa 7 días antes, el día anterior y el mismo día, y la ve en **Mis medidas**, donde la
-  marca como hecha. Quien gestiona el módulo también puede editarla o marcarla hecha desde la planificación.
-- Las medidas de un accidente se siguen creando desde su caso, y son datos de salud: quien ve la
-  planificación sin **Datos de salud: accidentes y aptitud** solo lee «Accidente o incidente», sin saber cuál, y
-  no puede cambiarlas.
-
-<Shot
-  name="planificacion"
-  alt="La planificación de la actividad preventiva con sus filtros, orígenes y prioridades"
-/>
-
-## Indicadores de siniestralidad
-
-La sección **Indicadores** (para quien gestiona el módulo o tiene **Datos de salud: accidentes y aptitud**)
-calcula los índices de siniestralidad con las definiciones del INSST:
-
-- **Índice de frecuencia** = accidentes con baja × 1 000 000 / horas trabajadas.
-- **Índice de gravedad** = días de baja × 1 000 / horas trabajadas.
-- **Índice de incidencia** = accidentes con baja × 100 000 / plantilla media.
-
-En Latinoamérica cada país puede definirlos de otra forma: la pantalla lo recuerda. Se ven el año hasta la
-fecha y los últimos 12 meses, y un gráfico por mes con el índice de frecuencia y los accidentes con baja.
-**Exportar CSV** descarga los meses del año y los dos periodos.
-
-- **Horas y plantilla de cada mes**: quien gestiona el módulo carga las horas trabajadas y la plantilla media
-  de cada mes, de toda la empresa o de un departamento. Sin ellas no hay índice: si faltan meses, la pantalla
-  lo avisa.
-- **Accidentes con baja**: son los casos de tipo «Accidente con baja». En cada uno, quien tiene los datos de
-  salud anota los **Días de baja** (solo el número, sin datos médicos); cuentan para el índice de gravedad.
-- **Por departamento**: solo para quien tiene los datos de salud, porque con pocos accidentes un departamento
-  puede señalar a una persona. Los demás ven solo los números de la empresa, que no dicen nada de ningún
-  caso.
-
-<Shot
-  name="indicadores"
-  alt="Los indicadores de siniestralidad: índices del año y de los últimos 12 meses, el gráfico por mes y las horas de cada mes"
-/>
-
-## Emergencias y simulacros
-
-La sección **Emergencias** (para quien gestiona el módulo) tiene dos partes: **Equipo de emergencia** y
-**Simulacros**.
-
-- **Plan de emergencia**: al activar el módulo se crea el tipo de documento controlado **PEM** («Plan de
-  emergencia» en España, «Plan de emergencias» en Latinoamérica), con revisión anual. Convierte tu plan en
-  documento controlado de ese tipo y la pantalla lo enlaza. En una empresa que ya tenía el módulo activo, el
-  tipo se crea la primera vez que alguien que lo gestiona abre **Emergencias** o guarda los ajustes.
-- **Equipo de emergencia**: roles con las personas de cada uno. De entrada están Jefe de emergencia, Jefe de
-  intervención, Equipo de primera intervención, Equipo de segunda intervención, Primeros auxilios y Evacuación
-  (en Latinoamérica, coordinador y brigadas); se renombran, se archivan y se agregan otros con **Nuevo rol**.
-  Cada persona puede llevar un centro o turno.
-- **Formación exigida**: un rol puede exigir un curso de **Formación**. Junto a cada persona se ve si la tiene
-  al día, por vencer, vencida o si le falta, y un aviso arriba cuenta a quienes no la tienen.
-- **Mi rol en emergencias**: cada persona ve en su ficha el rol que tiene en el equipo.
-
-<Shot
-  name="emergencias"
-  alt="El equipo de emergencia: el plan, el último simulacro, los roles con sus personas y quién no tiene la formación"
-/>
-
-En **Simulacros**, **Registrar simulacro** anota la fecha, el escenario (incendio, evacuación, derrame
-químico, fuga de amoníaco u otra emergencia), la zona, si se avisó antes, cuántas personas participaron, el
-tiempo de evacuación, las incidencias y los observadores. La lista se filtra por escenario y fechas (los
-filtros quedan en la dirección).
-
-<Shot
-  name="simulacros"
-  alt="La lista de simulacros con su escenario, zona, tiempo de evacuación y medidas"
-/>
-
-Desde un simulacro, **Nueva medida** crea una medida de la planificación ligada a él (origen «Simulacro»), con
-su responsable y su fecha. Al año del último simulacro, quienes gestionan el módulo reciben el aviso de que
-toca otro (en **Vencimientos**, y también el departamento dueño del plan de emergencia).
-
-<Shot
-  name="simulacro"
-  alt="Un simulacro de fuga de amoníaco con sus incidencias y la medida que salió de él"
-/>
-
-## Consulta y participación: el comité
-
-La sección **Comité** reúne a los **delegados de prevención** y al **Comité de seguridad y salud** (en
-Latinoamérica, el **Comité paritario**, con los representantes de los trabajadores y del empleador), como
-piden los artículos 35 a 38 de la Ley 31/1995.
-
-- **Miembros**: quien gestiona el módulo agrega a cada persona con su función (delegado de prevención,
-  representante de la empresa, técnico de prevención como asesor o secretario) y las fechas de su
-  **mandato**. Antes de que termine el mandato de un delegado (dos meses, un mes, una semana y el mismo día),
-  quienes gestionan el módulo reciben el aviso. **Sacar del comité** guarda a la persona en el historial;
-  **Ver miembros anteriores** la muestra.
-- **Reuniones**: **Registrar reunión** anota la fecha, si es ordinaria o extraordinaria, quiénes asistieron
-  y el orden del día (un punto por línea). El comité se reúne al menos una vez por trimestre: tres meses
-  después de la última reunión ordinaria, quienes gestionan el módulo reciben el aviso (en
-  **Vencimientos**). La lista se filtra por tipo y fechas.
-- **Acta**: en la reunión, **Crear el acta desde la plantilla** crea una página en el espacio de Prevención
-  con la fecha, el tipo, los asistentes y el orden del día ya escritos, para completarla ahí. También se
-  puede elegir una página o un archivo que ya esté en ese espacio, al registrar o editar la reunión.
-- **Acuerdos**: **Nuevo acuerdo** crea una medida de la planificación ligada a la reunión (origen
-  «Comité»), con su responsable y su fecha.
-
-<Shot
-  name="comite"
-  alt="El comité de seguridad y salud: sus miembros con su función y su mandato"
-/>
-
-<Shot name="reuniones" alt="Las reuniones del comité con su tipo, asistentes, acta y acuerdos" />
-
-<Shot
-  name="reunion"
-  alt="Una reunión ordinaria con sus asistentes, el orden del día, el acta y los acuerdos"
-/>
-
-**Los miembros del comité** ven la sección **Comité** en el menú de Prevención aunque no gestionen Prevención: los miembros, las
-reuniones, las actas y los acuerdos, solo para leer, sin ningún otro dato del módulo. El acta se abre con
-los permisos del espacio de Prevención (que, como lo crea el módulo, ve toda la empresa salvo que se cambie).
-
-<Shot
-  name="comite-miembro"
-  alt="Lo que ve un delegado de prevención: en Prevención solo Comité, con la reunión y sus acuerdos"
-/>
-
-## Formación
-
-Un **curso** es un [documento controlado](/es/docs/documentos-controlados) (el procedimiento de la sierra, el
-plan de emergencia): en **Formación**, quien gestiona el módulo pulsa **Nuevo curso**, elige el documento y,
-si quiere, la **Validez en meses**.
-
-- Quiénes deben hacerlo salen de sus [lecturas obligatorias](/es/docs/lecturas-obligatorias): departamentos,
-  **puestos** o personas.
-- El **«Leí y comprendo»** de la versión vigente es la **constancia**, con su fecha. Con validez, vence: avisa
-  a la persona a los 30 días, a los 7 y el mismo día, y en el curso aparece **Confirmar que lo hice de
-  nuevo**.
-- **Registrar formación presencial**: quien gestiona el módulo elige a los **Asistentes** y la **Fecha**, y
-  cada asistente firma en su recuadro con el dedo (por ejemplo, pasándose la tablet). **Constancia de
-  asistencia en PDF** descarga la hoja de ese día con todas las firmas; necesita [Gotenberg](/es/docs/gotenberg).
-- **Que firmen desde su celular**: con los asistentes y la fecha elegidos, en lugar de pasarse la tablet. Se
-  muestra un **QR** (y **Copiar el enlace**) de esa firma. Cada asistente lo escanea, entra con su usuario (o
-  con **Entrar con PIN**), ve el curso, la fecha y quién la dio, y firma con el dedo. Solo pueden firmar las
-  personas de la lista, cada una por sí misma y una sola vez. Quien la dio ve en vivo quién firmó y quién
-  falta, y puede **Cerrar la firma** cuando quiera; si no, se cierra sola a las 24 horas. **Ver el QR** la
-  vuelve a mostrar mientras está abierta. Las firmas entran en la misma **Constancia de asistencia en PDF** del
-  día, firmen donde firmen.
-- En cada curso se ve cada persona con su estado (**Al día**, **Por vencer**, **Vencida**, **Pendiente**), y
-  en la ficha de cada persona, su formación.
-
-<Shot
-  name="formacion"
-  alt="Un curso: cada persona con su estado y el registro de formación presencial"
-/>
-
-## Evaluaciones de riesgos
-
-Al activar el módulo se crea el tipo de documento **Evaluación de riesgos** (EVR, revisión cada 12 meses).
-Cuando se publica una EVR, su fecha de revisión avisa a los jefes y subjefes de su departamento responsable
-(o a quien la creó, si no tiene) a los 30 días, a los 7 y el mismo día.
-
-## Aptitud
-
-En la ficha de cada persona, quien tiene **Datos de salud: accidentes y aptitud** registra su **Aptitud**:
-**Apto**, **Apto con restricciones** (con las tareas que no puede hacer, nunca las causas) o **No apto**, y
-hasta cuándo vale. Nunca datos médicos. Cada persona ve la suya. Antes de vencer avisa a la persona y a quien
-la registró; la anterior queda en el historial.
-
-En la ficha también se ven, con esa capacidad, los **Accidentes e incidentes** de la persona.
-
-<Shot
-  name="epis-ficha"
-  alt="La ficha de una persona: lo que le falta, sus EPIs, su formación, su aptitud y sus accidentes"
-/>
-
-## Contratas (CAE)
-
-La **coordinación de actividades empresariales** (CAE: Ley 31/1995, art. 24, y Real Decreto 171/2004 en
-España; en Latinoamérica, la obligación equivalente de cada país) sirve para saber qué empresas externas
-trabajan en el centro, si su documentación y la de cada trabajador está al día y si pueden entrar hoy. Va
-dentro del módulo, en la sección **Contratas (CAE)** del menú (**Contratistas** con los términos de Latinoamérica).
-
-**Activarla.** El propietario la enciende en **Administración** › **Seguridad** › **General**, debajo del
-módulo, en **Coordinación de actividades empresariales (CAE)**. Necesita el módulo activado; apagar el
-módulo la oculta también. La primera vez se crean la carpeta **Contratas** (o **Contratistas**) en el espacio
-del módulo y el **catálogo de documentos exigidos** de tu país. Nunca pisa lo que ya tengas con el mismo
-nombre. Desactivarla oculta la sección y no borra nada.
-
-**Quién ve qué.** Dos capacidades nuevas en [Roles y permisos](/es/docs/roles-y-permisos):
-
-- **Gestionar contratas (CAE)**: da de alta y cambia empresas, trabajadores y el catálogo; bloquea y
-  archiva. Por defecto la tienen el propietario y el Administrador.
-- **Consultar si una contrata puede entrar**: solo ve si una empresa o un trabajador está autorizado y por
-  qué, sin los datos de contacto ni los documentos; del documento de identidad de cada trabajador, solo los 3
-  últimos caracteres. Pensada para portería y jefes de equipo. Nadie la tiene por defecto salvo quien
-  gestiona las contratas.
-
-El **responsable interno** de cada empresa (una persona de tu empresa) ve su ficha completa aunque no tenga
-esas capacidades.
-
-**Empresas.** La lista muestra cada empresa con su tipo, su responsable interno, cuántos trabajadores tiene y
-su estado: **Autorizada** (verde), **Incompleta** (ámbar, con el primer motivo), **Bloqueada** (rojo) o
-**Archivada**. Se busca por nombre o identificación fiscal y se filtra por tipo y estado. **Nueva empresa**
-pide el nombre, el tipo (**Contrata**, **Subcontrata**, que depende de una contrata, o **Empresa
-concurrente**, que comparte el centro sin contrato con tu empresa), qué hace en el centro, el responsable
-interno, el contacto y, si trabaja por un tiempo, las fechas de inicio y fin. Cada empresa tiene su propia
-carpeta dentro de **Contratas**, con su nombre; si cambias el nombre de la empresa, cambia el de la carpeta.
-
-<Shot
-  name="cae-empresas"
-  alt="La lista de contratas con su estado: autorizada, incompleta o bloqueada"
-/>
-
-**La ficha de la empresa** dice en verde si puede trabajar en el centro o, en rojo, todos los motivos por los
-que no («Falta: …», «Empresa bloqueada: …», «Terminó de trabajar el …»). Debajo están sus datos, el enlace a
-su carpeta, los documentos que le pide el catálogo según su tipo y sus trabajadores. **Bloquear** pide un
-motivo; **Archivar** la saca de las listas sin borrar nada (sus trabajadores y documentos se conservan). Una
-subcontrata solo está autorizada si su contrata también lo está.
-
-<Shot
-  name="cae-empresa"
-  alt="La ficha de una contrata autorizada: datos, documentos, información del centro y trabajadores"
-/>
-
-**Trabajadores.** En la ficha de la empresa, **Agregar trabajador** pide el nombre, el documento de identidad
-(opcional) y el puesto o tarea. Los trabajadores de las contratas no son miembros de tu empresa: no tienen
-cuenta ni ocupan plaza. No guardes datos de salud: de la aptitud médica solo se registra que el certificado se
-presentó. La ficha de cada trabajador dice si puede entrar y por qué, y se puede editar, bloquear o archivar.
-
-<Shot name="cae-trabajador" alt="La ficha de un trabajador de una contrata con sus documentos" />
-
-**Documentos exigidos.** El catálogo (pestaña **Documentos exigidos** dentro de Contratas) tiene los
-documentos de la empresa y los de cada trabajador, en su orden (flechas para subir o bajar). Cada uno dice
-cuánto vale (para proponer el vencimiento), a qué empresas se pide y si es obligatorio: uno obligatorio que
-falta impide trabajar en el centro. Se editan, se agregan y se archivan.
-
-<Shot
-  name="cae-catalogo"
-  alt="El catálogo de documentos exigidos y la información para contratas"
-/>
-
-**Subir y revisar documentos.** En la ficha de la empresa (o del trabajador), cada documento exigido muestra
-su estado: **Al día**, **Por vencer** (vence en 30 días o menos), **Vencido**, **Por revisar**, **Rechazado**
-o **Falta**. **Subir** pide el archivo y la fecha de vencimiento (propuesta según la validez del documento)
-y lo sube a la carpeta de la empresa; los de un trabajador van a una carpeta con su nombre dentro de la de la
-empresa, que se crea con su primer documento. Para subir hace falta poder editar en el espacio del módulo.
-Si ya lo revisaste, marca **Aceptarlo ya**; si no, queda **Por revisar**.
-
-- **Aceptar** lo convierte en el vigente (se puede corregir el vencimiento); el anterior queda en el
-  **Historial**. Con fecha de vencimiento, el responsable interno recibe los avisos 30 días antes, 7 días
-  antes y el día que vence, como cualquier otro [vencimiento](/es/docs/vencimientos).
-- **Rechazar** pide un motivo, que se muestra junto al documento.
-- El nombre del archivo lo abre en otra pestaña; para verlo hace falta acceso a la carpeta, como cualquier
-  archivo.
-
-<Shot
-  name="cae-empresa-incompleta"
-  alt="Una contrata incompleta: un documento vencido, uno rechazado, uno por revisar y los que faltan"
-/>
-
-Un documento obligatorio cuenta solo si está aceptado y no venció. La pestaña **Por revisar** reúne los
-documentos sin revisar de todas las empresas, el más antiguo primero, y su número aparece en la pestaña
-**Contratas (CAE)**; la lista de empresas muestra cuántos tiene cada una.
-
-<Shot
-  name="cae-revisar"
-  alt="La bandeja Por revisar con los documentos sin revisar de todas las contratas"
-/>
-
-**Portal de contratas.** Cada empresa externa puede tener un acceso propio para subir sus documentos sin
-cuenta en SpiderFolio. En su ficha, quien gestiona las contratas usa **Acceso al portal** › **Dar acceso**:
-elige cuántos días dura (hasta 180) y se generan un **enlace** y un **código**. El código se muestra una sola
-vez: cópialo y dáselo a la persona de la contrata por un canal distinto del enlace (por ejemplo, el enlace por
-email y el código por teléfono). La tarjeta muestra quién lo dio, cuándo vence y cuándo se usó por última vez;
-**Revocar** lo corta en el momento y **Dar un código nuevo** revoca el anterior. Tras varios códigos
-incorrectos seguidos el acceso se bloquea y hay que dar uno nuevo. Lo que la contrata sube llega **Por
-revisar** con la marca «Subido por la contrata», y su responsable interno recibe un aviso en la campana.
-
-Con el enlace y el código, la persona de la contrata ve **solo su empresa**: si puede trabajar en el centro y
-por qué no, los documentos que se le piden (con el motivo si se rechazó alguno) y un botón **Subir** en cada
-uno (PDF, JPG o PNG, hasta 20 MB); sus trabajadores, que puede agregar, cambiar o dar de baja, con sus
-documentos; la **información del centro** que tiene que leer, y sus **permisos de trabajo**, en solo lectura.
-Nunca ve otras empresas, ni los archivos ni los datos de tu empresa, más allá del nombre de su responsable
-interno. Su sesión dura unas horas y se cierra con **Salir**. Si el acceso se revoca o vence, la empresa se
-archiva o se apaga la CAE, deja de funcionar al momento. Cada entrada, intento fallido y cambio queda en el
-registro de auditoría como «Portal de contratas».
-
-**Portería.** La pestaña **Portería** (dentro de Contratas) es para quien tiene **Consultar si una contrata
-puede entrar** (también la ve quien gestiona las contratas), y funciona en el teléfono o la tablet de la
-entrada. Se escribe el nombre, los últimos caracteres del documento o el nombre de la empresa, se toca a la
-persona y la respuesta sale grande: en verde **Puede entrar** o en rojo **No puede entrar**, con todos los
-motivos. Solo muestra el nombre, la empresa, el puesto y los 3 últimos caracteres del documento: nunca los
-documentos. Quien solo tiene esa capacidad entra al módulo directo a la portería y no ve EPIs, formación ni
-accidentes. Las consultas con resultado negativo quedan en el registro de auditoría; las positivas, no.
-
-<Shot name="cae-porteria-ok" alt="Portería en el teléfono: Puede entrar, en verde" />
-
-<Shot
-  name="cae-porteria-no"
-  alt="Portería en el teléfono: No puede entrar, en rojo con los motivos"
-/>
-
-**QR del trabajador.** En la ficha de cada trabajador, **Tarjeta con QR** muestra su tarjeta (nombre, empresa
-y QR) para imprimirla. El QR abre la portería con esa persona elegida; para verlo hace falta entrar a
-SpiderFolio con permiso para consultar contratas, así que el código no sirve fuera de la empresa.
-
-<Shot name="cae-tarjeta" alt="La tarjeta del trabajador con su QR, lista para imprimir" />
-
-**Registro de entradas y salidas** (opcional). El propietario lo activa en **Administración** › **Seguridad**
-› **General**, debajo de la CAE, con **Registrar entradas y salidas en portería**. Con el registro activado,
-la respuesta de portería tiene **Registrar entrada** y **Registrar salida**; a quien no está autorizado no se
-le puede registrar la entrada. La pestaña **Accesos** muestra las entradas y salidas de un día (hoy, si no
-eliges otro) y se puede filtrar por empresa; la ficha de cada empresa muestra sus **Accesos de hoy**.
-
-<Shot name="cae-accesos" alt="Los accesos del día registrados en portería" />
-
-**Autorizados hoy (PDF).** En la ficha de la empresa, **Autorizados hoy (PDF)** descarga un PDF con la
-empresa, el día, su estado y cada trabajador con si puede entrar y por qué no. Hace falta que la instalación
-genere PDF ([Gotenberg](/es/docs/gotenberg)).
-
-**Información para contratas.** La empresa titular del centro tiene que informar a cada empresa externa de
-los riesgos del centro, las medidas de emergencia y sus instrucciones (Real Decreto 171/2004, artículos 7 a
-9). En **Documentos exigidos**, la tarjeta **Información para contratas** elige qué documentos controlados
-vigentes son esa información. Con **Exigirla para autorizar** marcado (lo está por defecto), una empresa que
-no recibió la versión vigente de cada uno no está autorizada, con el motivo «Falta entregar la información
-del centro: …». Si publicas una versión nueva de un documento, hay que volver a entregarla.
-
-En la ficha de cada empresa, **Información del centro** muestra qué recibió y qué le falta. **Registrar
-entrega** pide qué documentos se entregan, quién los recibe por la empresa externa, la fecha y, si se puede,
-su firma en la pantalla. Cada entrega queda en la lista con su **Constancia (PDF)**, que lleva los documentos
-con su versión, la declaración de quien recibe y su firma.
-
-**Permisos de trabajo.** La pestaña **Permisos** reúne los permisos de trabajos con riesgos especiales:
-**Trabajos en caliente**, **Trabajos en altura**, **Espacios confinados**, **Trabajos eléctricos** u
-**Otro**. Valen para los trabajadores de una contrata y también para el personal propio. **Nuevo permiso**
-pide el tipo, la empresa externa (vacía si lo hace solo personal propio), el lugar, el trabajo, desde y hasta
-cuándo vale (unos pocos días como máximo: para más, se emite otro), las personas y las **medidas de
-prevención**, que se proponen según el tipo y se pueden editar. Solo se pueden agregar trabajadores
-autorizados. El permiso nace como **Borrador**; **Aprobar y activar** pide marcar cada medida como
-comprobada y tu firma. Aprobado, vale entre sus fechas (**Programado**, **Activo**, **Vencido**). Se
-**cierra** al terminar el trabajo, con observaciones, o se **anula** con un motivo. Cada permiso se descarga
-en PDF con la firma de quien lo aprobó, y en portería se ven los permisos activos de cada trabajador. Los
-emite quien gestiona las contratas; quien consulta contratas los ve.
-
-<Shot name="cae-permisos" alt="La lista de permisos de trabajo con sus filtros" />
-
-<Shot
-  name="cae-permiso"
-  alt="Un permiso de trabajo en caliente activo, con sus personas y medidas"
-/>
+Los accesos salen de capacidades que se dan en [Roles y permisos](/es/docs/roles-y-permisos), de los jefes de
+cada departamento y de quién es miembro del comité:
+
+| Quién                                      | Qué ve                                                                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Gestionar seguridad y salud laboral**    | Todo el área salvo los datos de salud. El rol Administrador ya la tiene.                                                  |
+| **Datos de salud: accidentes y aptitud**   | Los casos de accidentes, la aptitud de cada persona y los indicadores por departamento. Por defecto, solo el propietario. |
+| **Gestionar contratas (CAE)**              | Las contratas, sus trabajadores, documentos y permisos de trabajo.                                                        |
+| **Consultar si una contrata puede entrar** | Solo la portería: si alguien puede entrar y por qué, sin documentos.                                                      |
+| Jefes y subjefes                           | **Personas**, **EPIs** y **Formación** de su área (y subáreas).                                                           |
+| Miembros del comité                        | **Comité**, solo para leer.                                                                                               |
+| Todos                                      | Su ficha, sus EPIs, su formación, sus medidas y **Comunicar un accidente**.                                               |
+
+Los datos de salud nunca se ven por tener solo **Gestionar seguridad y salud laboral**: quien los necesita
+recibe la capacidad aparte.
 
 ## Ejemplos del sector alimentario
 
-Si al activar el módulo marcas **Cargar ejemplos del sector alimentario**, se agregan puestos de ejemplo, un
-catálogo de EPIs (guantes anticorte, calzado de seguridad, chaqueta para cámara frigorífica, protección
-auditiva, gafas, delantal de malla) y el formulario **Inspección de seguridad mensual**. Nunca pisa lo que ya
-tengas con el mismo nombre.
+Si al activar el área marcas **Cargar ejemplos del sector alimentario**, se agregan:
+
+- puestos de ejemplo: operario de producción, de cámaras frigoríficas y de expedición, técnico de
+  mantenimiento y encargado de turno;
+- un catálogo de EPIs: guantes anticorte, calzado de seguridad, chaqueta para cámara frigorífica, protección
+  auditiva, gafas y delantal de malla;
+- el formulario **Inspección de seguridad mensual**.
+
+Si marcas la misma opción al activar la **CAE**, el catálogo de documentos exigidos suma los del sector:
+el certificado de la empresa de control de plagas y, para cada trabajador, la formación en manipulación de
+alimentos y las normas de higiene del centro.
+
+Nunca pisa lo que ya tengas con el mismo nombre, y se puede editar o archivar todo.
 
 ## Relacionado
 
 - [Departamentos y puestos](/es/docs/departamentos)
 - [Roles y permisos](/es/docs/roles-y-permisos)
-- [Formularios y registros](/es/docs/formularios)
+- [Vencimientos](/es/docs/vencimientos)
+- [Salas de auditoría](/es/docs/salas-de-auditoria): compartir constancias y entregas con un auditor
