@@ -460,6 +460,73 @@ Simplificaciones:
 - Auditoría: `quality.supplier.create|update|archive`, `quality.supplier.doc`, `quality.supplier.review`.
 
 
+## Fase 5: reclamaciones y retirada
+
+IFS 8 (5.9 y 5.10) y BRCGS 9 (3.10 y 3.11) piden registrar y responder cada reclamación en plazo, analizar
+sus tendencias, tener un procedimiento de gestión de incidentes y retirada con su equipo y sus contactos, y
+probarlo al menos una vez al año.
+
+### Reclamaciones
+
+- `QualityComplaint` `{ id, workspaceId, source (CUSTOMER | CONSUMER | AUTHORITY), from (quién reclama:
+  cliente o persona, hasta 160), contact? (hasta 300: el teléfono o el email; dato personal de un
+  consumidor), product (1 a 160), lot? (hasta 120), category (FOREIGN_BODY | ALLERGEN | MICROBIOLOGICAL |
+  QUALITY | LABELLING | PACKAGING | OTHER), description (1 a 4000), receivedOn (DATE), respondBy (DATE),
+  respondedOn? (DATE), response? (hasta 4000), justified? (bool), status (OPEN | ANSWERED | CLOSED), ownerId
+  (membership), ncId?, createdById, createdAt, updatedAt }`. Se cierra, no se borra.
+- `respondBy` = `receivedOn` + `settings.quality.responseDays` (por defecto 10, editable en los ajustes del
+  módulo y en cada reclamación). Vencimiento `quality.complaint` al responsable (7, 1 y 0 días); lo resuelve
+  la respuesta.
+- **Responder** pide la respuesta y si la reclamación era **justificada**; **Cerrar** la da por terminada.
+  **Abrir no conformidad** la crea con origen `COMPLAINT`, la gravedad elegida y el producto y el lote en la
+  descripción; la reclamación y la NC se enlazan.
+- Los datos de contacto de un consumidor solo los ven quality.manage y el responsable.
+
+### Indicador de reclamaciones
+
+- `QualityMonthUnits` `{ workspaceId, month (DATE, día 1), units (entero) }`: las unidades vendidas de cada
+  mes, que carga quality.manage.
+- **Reclamaciones por millón de unidades** de los últimos 12 meses y del año, por mes, con el reparto por
+  categoría; sin unidades cargadas se muestra solo el número de reclamaciones.
+
+### Gestión de crisis y retirada
+
+- **Equipo de crisis**: `QualityCrisisMember` `{ id, workspaceId, membershipId, role (hasta 120: «Coordinador»,
+  «Comunicación»…), position }`.
+- **Contactos de crisis**: `QualityCrisisContact` `{ id, workspaceId, kind (AUTHORITY | CUSTOMER | INSURER |
+  LAB | SUPPLIER | OTHER), name (1 a 160), organization?, phone?, email?, notes?, position, archivedAt? }`.
+- **Pruebas de retirada**: `QualityRecallTest` `{ id, workspaceId, kind (DRILL | REAL), date (DATE), product,
+  lot, direction (BACKWARD | FORWARD | BOTH), minutes (cuánto tardó la trazabilidad), recoveredPercent? (0 a
+  100), result (hasta 2000), ncId?, createdById, createdAt }`. Al año de la última prueba, quality.manage
+  recibe el aviso (`quality.recall_test`, como los simulacros de emergencia).
+- Las plantillas de comunicación (a la autoridad, a clientes) son documentos controlados del espacio Calidad:
+  la pantalla enlaza a ese espacio.
+
+### Permisos
+
+- quality.manage gestiona todo; quality.view lee (sin el contacto de los consumidores).
+- El responsable de una reclamación la ve y la responde aunque no tenga capacidades.
+- Cualquiera de la empresa puede **registrar** una reclamación recibida (el comercial que la atiende): queda a
+  cargo del propietario o del primer quality.manage, como una NC comunicada.
+
+### Pantallas
+
+- **Reclamaciones** (`/calidad/reclamaciones`): lista con filtros por estado, categoría, origen y fechas,
+  vencidas en rojo; ficha con la respuesta, la NC y el plazo.
+- **Indicadores de reclamaciones** dentro de la lista (pestaña) con las unidades de cada mes.
+- **Crisis y retirada** (`/calidad/crisis`): el equipo, los contactos y las pruebas de retirada.
+
+### API (fase 5)
+
+- `GET/POST /quality/complaints`, `GET/PATCH /quality/complaints/:id`, `POST /quality/complaints/:id/answer`
+  `{ response, justified, respondedOn }`, `POST /quality/complaints/:id/close`, `POST /quality/complaints/:id/nc`
+  `{ severity, ownerId? }`, `GET /quality/complaints/indicators?year`, `PUT /quality/units` `{ month, units }`.
+- `GET /quality/crisis`, `POST /quality/crisis/members`, `DELETE /quality/crisis/members/:id`,
+  `POST /quality/crisis/contacts`, `PATCH /quality/crisis/contacts/:id`, `POST /quality/crisis/contacts/:id/archive`,
+  `GET/POST /quality/recall-tests`.
+- `settings.quality.responseDays` (1 a 90) en `PUT /admin/quality`.
+
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
@@ -472,8 +539,8 @@ Simplificaciones:
    su sala de auditoría, hallazgos por cláusula que abren su NC.
 4. **Proveedores** (bloque 8, detalle arriba): registro con riesgo y fraude, documentos con vencimiento,
    evaluación anual y sus NC.
-5. **Reclamaciones y retirada** (bloques 6 y 7): registro con plazo de respuesta y NC; indicador por millón
-   de unidades; equipo de crisis, contactos, plantillas y simulacros de retirada.
+5. **Reclamaciones y retirada** (bloques 6 y 7, detalle arriba): reclamaciones con plazo, respuesta y NC;
+   indicador por millón de unidades; equipo y contactos de crisis y pruebas de retirada.
 6. **Panel de indicadores** (bloque 14) y el resto (bloques 3, 9, 10, 12 y 13): prerrequisitos,
    especificaciones y etiquetado, plan analítico, cultura de seguridad alimentaria y gestión de cambios.
 7. **Trazabilidad** (bloque 4): al final, con el conector de SAP y ADA MES (plugin).

@@ -89,3 +89,30 @@ registerExpiryKind(SUPPLIER_REVIEW_EXPIRY, {
   },
   paused,
 });
+
+export const COMPLAINT_EXPIRY = "quality.complaint";
+export const RECALL_TEST_EXPIRY = "quality.recall_test";
+
+registerExpiryKind(COMPLAINT_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const complaint = await db.qualityComplaint.findFirst({
+      where: { id: expiry.subjectId, status: "OPEN" },
+      select: { id: true, from: true, product: true },
+    });
+    if (complaint === null) return null;
+    return {
+      what: qualityTexts.complaintWhat(complaint.from, complaint.product),
+      path: `/app/${workspace.slug}/calidad/reclamaciones/${complaint.id}`,
+    };
+  },
+  paused,
+});
+
+registerExpiryKind(RECALL_TEST_EXPIRY, {
+  describe: (_db, _expiry, workspace) =>
+    Promise.resolve({
+      what: qualityTexts.recallWhat,
+      path: `/app/${workspace.slug}/calidad/crisis`,
+    }),
+  paused,
+});

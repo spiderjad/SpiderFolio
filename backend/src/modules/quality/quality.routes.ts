@@ -72,6 +72,39 @@ import {
   UpdateAuditSchema,
 } from "./audits.schemas.ts";
 import {
+  AnswerSchema,
+  ComplaintNcSchema,
+  ComplaintSchema,
+  ComplaintsQuerySchema,
+  CrisisContactSchema,
+  CrisisMemberSchema,
+  RecallTestSchema,
+  UnitsSchema,
+  UpdateComplaintSchema,
+  UpdateCrisisContactSchema,
+  YearQuerySchema,
+} from "./complaints.schemas.ts";
+import {
+  answerComplaint,
+  closeComplaint,
+  complaintIndicators,
+  complaintNc,
+  createComplaint,
+  getComplaint,
+  listComplaints,
+  setMonthUnits,
+  updateComplaint,
+} from "./complaints.service.ts";
+import {
+  addCrisisContact,
+  addCrisisMember,
+  addRecallTest,
+  archiveCrisisContact,
+  getCrisis,
+  removeCrisisMember,
+  updateCrisisContact,
+} from "./crisis.service.ts";
+import {
   ReviewSchema,
   SupplierDocSchema,
   SupplierSchema,
@@ -594,6 +627,153 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         const { id } = IdParams.parse(req.params);
         res.status(201).json({
           supplier: await reviewSupplier(adminContextOf(req), id, ReviewSchema.parse(req.body)),
+        });
+      },
+    },
+    // Phase 5: complaints, units sold, the crisis team and recall tests.
+    {
+      method: "get",
+      path: "/quality/complaints",
+      handler: async (req, res) => {
+        res.json(await listComplaints(adminContextOf(req), ComplaintsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/complaints",
+      handler: async (req, res) => {
+        res.status(201).json({
+          complaint: await createComplaint(adminContextOf(req), ComplaintSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/complaints/indicators",
+      handler: async (req, res) => {
+        const { year } = YearQuerySchema.parse(req.query);
+        res.json(await complaintIndicators(adminContextOf(req), year));
+      },
+    },
+    {
+      method: "put",
+      path: "/quality/units",
+      handler: async (req, res) => {
+        await setMonthUnits(adminContextOf(req), UnitsSchema.parse(req.body));
+        res.status(204).end();
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/complaints/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ complaint: await getComplaint(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/complaints/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          complaint: await updateComplaint(
+            adminContextOf(req),
+            id,
+            UpdateComplaintSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/complaints/:id/answer",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          complaint: await answerComplaint(adminContextOf(req), id, AnswerSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/complaints/:id/close",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ complaint: await closeComplaint(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/complaints/:id/nc",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          complaint: await complaintNc(adminContextOf(req), id, ComplaintNcSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/crisis",
+      handler: async (req, res) => {
+        res.json({ crisis: await getCrisis(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/crisis/members",
+      handler: async (req, res) => {
+        res.status(201).json({
+          crisis: await addCrisisMember(adminContextOf(req), CrisisMemberSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "delete",
+      path: "/quality/crisis/members/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ crisis: await removeCrisisMember(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/crisis/contacts",
+      handler: async (req, res) => {
+        res.status(201).json({
+          crisis: await addCrisisContact(adminContextOf(req), CrisisContactSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/crisis/contacts/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          crisis: await updateCrisisContact(
+            adminContextOf(req),
+            id,
+            UpdateCrisisContactSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/crisis/contacts/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ crisis: await archiveCrisisContact(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/recall-tests",
+      handler: async (req, res) => {
+        res.status(201).json({
+          crisis: await addRecallTest(adminContextOf(req), RecallTestSchema.parse(req.body)),
         });
       },
     },

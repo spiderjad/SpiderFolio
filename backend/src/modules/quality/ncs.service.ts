@@ -266,7 +266,7 @@ export async function notifyNc(
 }
 
 /** Whoever has quality.manage, active. */
-async function managers(db: TenantDb): Promise<string[]> {
+export async function managers(db: TenantDb): Promise<string[]> {
   const rows = await db.membership.findMany({
     where: { status: "ACTIVE", role: { capabilities: { has: "quality.manage" } } },
     select: { id: true, role: { select: { base: true } } },

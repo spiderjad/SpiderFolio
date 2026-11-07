@@ -62,4 +62,8 @@ export const qualityLimits = {
   actionsPerNc: 50,
   /** Rows in a CSV export. */
   csvMax: 10_000,
+  /** Days to answer a complaint (phase 5). */
+  responseDaysDefault: 10,
+  responseDaysMin: 1,
+  responseDaysMax: 90,
 } as const;

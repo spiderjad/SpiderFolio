@@ -1657,6 +1657,26 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
     supplierNeedsOrigin: "Only a nonconformity with origin “Supplier” is linked to a supplier.",
     scoresInvalid: "Each score goes from 1 to 5.",
   },
+  complaintCategories: {
+    FOREIGN_BODY: "Foreign body",
+    ALLERGEN: "Allergen",
+    MICROBIOLOGICAL: "Microbiological",
+    QUALITY: "Product quality",
+    LABELLING: "Labelling",
+    PACKAGING: "Packaging",
+    OTHER: "Other",
+  },
+  complaintNcTitle: (category: string, product: string) => `Complaint · ${category}: ${product}`,
+  complaintNcDescription: (from: string, product: string, lot: string, text: string) =>
+    `Complaint from ${from} about ${product}${lot === "" ? "" : ` (lot ${lot})`}: ${text}`,
+  complaintWhat: (from: string, product: string) =>
+    `Answer the complaint from ${from} (${product})`,
+  recallWhat: "Do the yearly recall test",
+  complaintMessages: {
+    closed: "The complaint is closed.",
+    hasNc: "The complaint already has its nonconformity.",
+    alreadyMember: "The person is already on the crisis team.",
+  },
   csv: {
     fileName: "nonconformities.csv",
     code: "Code",

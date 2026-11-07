@@ -12,6 +12,7 @@ export interface QualityView {
   enabled: boolean;
   standards: QualitySettings["standards"];
   verifyDays: number;
+  responseDays: number;
   /** The module's space, while it exists. */
   space: { id: string; name: string } | null;
 }
@@ -20,6 +21,7 @@ export interface UpdateQualityInput {
   enabled?: boolean | undefined;
   standards?: QualitySettings["standards"] | undefined;
   verifyDays?: number | undefined;
+  responseDays?: number | undefined;
 }
 
 async function workspaceOf(ctx: AdminContext) {
@@ -42,6 +44,7 @@ async function viewOf(ctx: AdminContext, settings: QualitySettings): Promise<Qua
     enabled: settings.enabled,
     standards: settings.standards,
     verifyDays: settings.verifyDays,
+    responseDays: settings.responseDays,
     space: await spaceOf(ctx, settings.spaceId),
   };
 }
@@ -88,6 +91,7 @@ export async function updateQualitySettings(
     enabled: input.enabled ?? before.enabled,
     standards: input.standards ?? before.standards,
     verifyDays: input.verifyDays ?? before.verifyDays,
+    responseDays: input.responseDays ?? before.responseDays,
     ...(before.spaceId === undefined ? {} : { spaceId: before.spaceId }),
   };
   if (after.enabled) {
@@ -111,6 +115,7 @@ export async function updateQualitySettings(
     });
   } else if (
     after.verifyDays !== before.verifyDays ||
+    after.responseDays !== before.responseDays ||
     after.standards.join() !== before.standards.join()
   ) {
     await auditAdmin(ctx, {
@@ -118,8 +123,16 @@ export async function updateQualitySettings(
       entityType: "Workspace",
       entityId: workspace.id,
       metadata: {
-        before: { standards: before.standards, verifyDays: before.verifyDays },
-        after: { standards: after.standards, verifyDays: after.verifyDays },
+        before: {
+          standards: before.standards,
+          verifyDays: before.verifyDays,
+          responseDays: before.responseDays,
+        },
+        after: {
+          standards: after.standards,
+          verifyDays: after.verifyDays,
+          responseDays: after.responseDays,
+        },
       },
     });
   }

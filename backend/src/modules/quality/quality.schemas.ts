@@ -51,12 +51,19 @@ export const UpdateQualitySchema = z
       .min(qualityLimits.verifyDaysMin)
       .max(qualityLimits.verifyDaysMax)
       .optional(),
+    responseDays: z
+      .number()
+      .int()
+      .min(qualityLimits.responseDaysMin)
+      .max(qualityLimits.responseDaysMax)
+      .optional(),
   })
   .refine(
     (value) =>
       value.enabled !== undefined ||
       value.standards !== undefined ||
-      value.verifyDays !== undefined,
+      value.verifyDays !== undefined ||
+      value.responseDays !== undefined,
     { error: () => validationMessages.noChanges },
   );
 

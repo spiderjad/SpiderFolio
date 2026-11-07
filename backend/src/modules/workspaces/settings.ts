@@ -131,6 +131,13 @@ export const QualitySettingsSchema = z.object({
     .min(qualityLimits.verifyDaysMin)
     .max(qualityLimits.verifyDaysMax)
     .default(qualityLimits.verifyDaysDefault),
+  /** Days to answer a complaint (phase 5). */
+  responseDays: z
+    .number()
+    .int()
+    .min(qualityLimits.responseDaysMin)
+    .max(qualityLimits.responseDaysMax)
+    .default(qualityLimits.responseDaysDefault),
 });
 
 export type QualitySettings = z.infer<typeof QualitySettingsSchema>;
@@ -141,7 +148,12 @@ export function readQualitySettings(settings: unknown): QualitySettings {
   const parsed = QualitySettingsSchema.safeParse(raw ?? {});
   return parsed.success
     ? parsed.data
-    : { enabled: false, standards: [], verifyDays: qualityLimits.verifyDaysDefault };
+    : {
+        enabled: false,
+        standards: [],
+        verifyDays: qualityLimits.verifyDaysDefault,
+        responseDays: qualityLimits.responseDaysDefault,
+      };
 }
 
 export const WorkspaceSettingsSchema = z.object({

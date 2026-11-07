@@ -287,6 +287,11 @@ model Workspace {
   qualitySuppliers       QualitySupplier[]
   qualitySupplierDocs    QualitySupplierDoc[]
   qualitySupplierReviews QualitySupplierReview[]
+  qualityComplaints      QualityComplaint[]
+  qualityMonthUnits      QualityMonthUnits[]
+  qualityCrisisMembers   QualityCrisisMember[]
+  qualityCrisisContacts  QualityCrisisContact[]
+  qualityRecallTests     QualityRecallTest[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -2898,4 +2903,143 @@ model QualitySupplierReview {
   supplier  QualitySupplier @relation(fields: [supplierId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, supplierId, reviewedOn])
+}
+
+enum QualityComplaintSource {
+  CUSTOMER
+  CONSUMER
+  AUTHORITY
+}
+
+enum QualityComplaintCategory {
+  FOREIGN_BODY
+  ALLERGEN
+  MICROBIOLOGICAL
+  QUALITY
+  LABELLING
+  PACKAGING
+  OTHER
+}
+
+enum QualityComplaintStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
+enum QualityCrisisContactKind {
+  AUTHORITY
+  CUSTOMER
+  INSURER
+  LAB
+  SUPPLIER
+  OTHER
+}
+
+enum QualityRecallKind {
+  DRILL
+  REAL
+}
+
+enum QualityTraceDirection {
+  BACKWARD
+  FORWARD
+  BOTH
+}
+
+/// A customer's, consumer's or authority's complaint (docs/spec/calidad.md, «Fase 5»). Closed, never
+/// deleted.
+model QualityComplaint {
+  id          String                   @id @default(cuid())
+  workspaceId String
+  source      QualityComplaintSource
+  from        String
+  /// A consumer's phone or email: personal data (only quality.manage and the owner see it).
+  contact     String?
+  product     String
+  lot         String?
+  category    QualityComplaintCategory
+  description String
+  receivedOn  DateTime                 @db.Date
+  respondBy   DateTime                 @db.Date
+  respondedOn DateTime?                @db.Date
+  response    String?
+  justified   Boolean?
+  status      QualityComplaintStatus   @default(OPEN)
+  /// Membership in charge; no FK.
+  ownerId     String
+  /// The nonconformity it opened (no FK: NCs are never deleted).
+  ncId        String?
+  createdById String
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, receivedOn, id])
+  @@index([workspaceId, status, respondBy])
+}
+
+/// The units sold in a month, for the complaints per million units.
+model QualityMonthUnits {
+  workspaceId String
+  month       DateTime @db.Date
+  units       Int
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, month])
+}
+
+/// A member of the crisis team (configuration: added and removed).
+model QualityCrisisMember {
+  id           String @id @default(cuid())
+  workspaceId  String
+  membershipId String
+  role         String
+  position     Int
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, membershipId])
+}
+
+/// An outside contact for a crisis or recall. Archived, never deleted.
+model QualityCrisisContact {
+  id           String                   @id @default(cuid())
+  workspaceId  String
+  kind         QualityCrisisContactKind
+  name         String
+  organization String?
+  phone        String?
+  email        String?
+  notes        String?
+  position     Int
+  archivedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, position])
+}
+
+/// A recall drill (or a real recall): how long the traceability took and how much was recovered. Only
+/// added.
+model QualityRecallTest {
+  id               String                @id @default(cuid())
+  workspaceId      String
+  kind             QualityRecallKind
+  date             DateTime              @db.Date
+  product          String
+  lot              String
+  direction        QualityTraceDirection
+  minutes          Int
+  recoveredPercent Int?
+  result           String
+  ncId             String?
+  createdById      String
+  createdAt        DateTime              @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, date, id])
 }

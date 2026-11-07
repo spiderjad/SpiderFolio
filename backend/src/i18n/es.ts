@@ -1660,6 +1660,27 @@ export const qualityTexts = {
     supplierNeedsOrigin: "Solo una no conformidad de origen «Proveedor» se liga a un proveedor.",
     scoresInvalid: "Cada puntuación va de 1 a 5.",
   },
+  /** Phase 5 (docs/spec/calidad.md, «Fase 5»): complaints and recall. */
+  complaintCategories: {
+    FOREIGN_BODY: "Cuerpo extraño",
+    ALLERGEN: "Alérgeno",
+    MICROBIOLOGICAL: "Microbiológica",
+    QUALITY: "Calidad del producto",
+    LABELLING: "Etiquetado",
+    PACKAGING: "Envase",
+    OTHER: "Otra",
+  },
+  complaintNcTitle: (category: string, product: string) => `Reclamación · ${category}: ${product}`,
+  complaintNcDescription: (from: string, product: string, lot: string, text: string) =>
+    `Reclamación de ${from} sobre ${product}${lot === "" ? "" : ` (lote ${lot})`}: ${text}`,
+  complaintWhat: (from: string, product: string) =>
+    `Responder la reclamación de ${from} (${product})`,
+  recallWhat: "Hacer la prueba anual de retirada",
+  complaintMessages: {
+    closed: "La reclamación está cerrada.",
+    hasNc: "La reclamación ya tiene su no conformidad.",
+    alreadyMember: "La persona ya está en el equipo de crisis.",
+  },
   csv: {
     fileName: "no-conformidades.csv",
     code: "Código",

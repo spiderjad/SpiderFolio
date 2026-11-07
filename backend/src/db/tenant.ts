@@ -250,6 +250,25 @@ export interface TenantDb {
     PrismaClient["qualitySupplierReview"],
     "findFirst" | "findMany" | "count" | "create"
   >;
+  // Complaints are closed, never deleted; recall tests are only added; the crisis team and the units
+  // sold are configuration.
+  qualityComplaint: TenantDelegate<
+    PrismaClient["qualityComplaint"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update"
+  >;
+  qualityMonthUnits: TenantDelegate<PrismaClient["qualityMonthUnits"], "findMany" | "upsert">;
+  qualityCrisisMember: TenantDelegate<
+    PrismaClient["qualityCrisisMember"],
+    "findFirst" | "findMany" | "count" | "create" | "deleteMany"
+  >;
+  qualityCrisisContact: TenantDelegate<
+    PrismaClient["qualityCrisisContact"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityRecallTest: TenantDelegate<
+    PrismaClient["qualityRecallTest"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -465,6 +484,23 @@ const delegates = {
   },
   qualitySupplierReview: {
     model: "QualitySupplierReview",
+    ops: ["findFirst", "findMany", "count", "create"],
+  },
+  qualityComplaint: {
+    model: "QualityComplaint",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update"],
+  },
+  qualityMonthUnits: { model: "QualityMonthUnits", ops: ["findMany", "upsert"] },
+  qualityCrisisMember: {
+    model: "QualityCrisisMember",
+    ops: ["findFirst", "findMany", "count", "create", "deleteMany"],
+  },
+  qualityCrisisContact: {
+    model: "QualityCrisisContact",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityRecallTest: {
+    model: "QualityRecallTest",
     ops: ["findFirst", "findMany", "count", "create"],
   },
   qualityHold: {
