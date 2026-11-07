@@ -77,6 +77,8 @@ export const CreateNcSchema = ReportNcSchema.extend({
   severity: z.enum(severities),
   ownerId: Id,
   departmentId: Id.nullable().default(null),
+  /** With origin SUPPLIER: the supplier it's about (phase 4). */
+  supplierId: Id.nullable().default(null),
 });
 
 const Whys = z.strictObject({

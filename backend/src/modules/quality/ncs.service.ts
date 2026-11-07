@@ -34,6 +34,7 @@ import {
 import { ACTION_EXPIRY, VERIFICATION_EXPIRY } from "./quality-expiry.ts";
 import { holdsOfNc, type HoldView } from "./holds.service.ts";
 import { auditOfNc } from "./audits.service.ts";
+import { assertSupplier, supplierOfNc } from "./suppliers.service.ts";
 import {
   analysisOf,
   type ActionInput,
@@ -112,6 +113,8 @@ export interface NcDetail extends NcSummary {
   holds: HoldView[];
   /** The audit whose finding opened it (phase 3). */
   audit: { id: string; title: string; clause: string } | null;
+  /** The supplier it's about (phase 4). */
+  supplier: { id: string; name: string } | null;
   /** manage: everything; edit: the owner (not the closing); read: only reading. */
   access: Access;
 }
@@ -207,6 +210,7 @@ const ncSelect = {
   verifyOn: true,
   cancelReason: true,
   folderId: true,
+  supplierId: true,
   reportedById: true,
   createdAt: true,
   closedAt: true,
@@ -460,6 +464,7 @@ async function detailOf(ctx: AdminContext, row: NcRow, access: Access): Promise<
     })),
     holds: await holdsOfNc(ctx, row.id),
     audit: await auditOfNc(ctx, row.id),
+    supplier: await supplierOfNc(ctx, row.supplierId),
     access,
   };
 }
@@ -486,6 +491,7 @@ export interface NewNc {
   productNote?: string | null | undefined;
   correction?: string | null | undefined;
   reportedById: string;
+  supplierId?: string | null;
 }
 
 /** Saves a new NC with its consecutive number of the company's year, and its first event. */
@@ -519,6 +525,7 @@ export async function insertNc(
         correction: input.correction ?? null,
         ownerId: input.ownerId,
         reportedById: input.reportedById,
+        supplierId: input.supplierId ?? null,
       },
       select: { id: true },
     });
@@ -550,6 +557,14 @@ export async function createNc(ctx: AdminContext, input: CreateNcInput): Promise
   if (!canManageQuality(ctx)) throw forbidden();
   await assertMember(ctx.db, input.ownerId);
   await assertDepartment(ctx.db, input.departmentId);
+  if (input.supplierId !== null) {
+    if (input.origin !== "SUPPLIER") {
+      throw new AppError("BAD_REQUEST", {
+        message: qualityTexts.supplierMessages.supplierNeedsOrigin,
+      });
+    }
+    await assertSupplier(ctx, input.supplierId);
+  }
   const id = await insertNc(ctx, { ...input, reportedById: ctx.tenant.membershipId });
   await notifyNc(ctx.db, id, [input.ownerId], ctx.tenant.membershipId);
   return await getNc(ctx, id);

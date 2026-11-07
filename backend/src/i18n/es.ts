@@ -1649,6 +1649,17 @@ export const qualityTexts = {
     chapterInvalid: "Hay capítulos que no son de las normas de la empresa.",
     hasNc: "El hallazgo ya tiene su no conformidad.",
   },
+  /** Phase 4 (docs/spec/calidad.md, «Fase 4»): suppliers. */
+  suppliersFolder: "Proveedores",
+  supplierDocWhat: (supplier: string, doc: string) => `${supplier}: ${doc}`,
+  supplierReviewWhat: (supplier: string) => `Evaluar al proveedor ${supplier}`,
+  supplierMessages: {
+    nameTaken: "Ya hay un proveedor con ese nombre.",
+    archived: "El proveedor está archivado.",
+    fileNotInFolder: "El archivo tiene que estar en la carpeta del proveedor.",
+    supplierNeedsOrigin: "Solo una no conformidad de origen «Proveedor» se liga a un proveedor.",
+    scoresInvalid: "Cada puntuación va de 1 a 5.",
+  },
   csv: {
     fileName: "no-conformidades.csv",
     code: "Código",

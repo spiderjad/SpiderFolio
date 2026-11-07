@@ -237,6 +237,19 @@ export interface TenantDb {
     PrismaClient["qualityFinding"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update"
   >;
+  // Suppliers and their documents are archived, never deleted; reviews are only added.
+  qualitySupplier: TenantDelegate<
+    PrismaClient["qualitySupplier"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualitySupplierDoc: TenantDelegate<
+    PrismaClient["qualitySupplierDoc"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualitySupplierReview: TenantDelegate<
+    PrismaClient["qualitySupplierReview"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -441,6 +454,18 @@ const delegates = {
   qualityFinding: {
     model: "QualityFinding",
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update"],
+  },
+  qualitySupplier: {
+    model: "QualitySupplier",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualitySupplierDoc: {
+    model: "QualitySupplierDoc",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualitySupplierReview: {
+    model: "QualitySupplierReview",
+    ops: ["findFirst", "findMany", "count", "create"],
   },
   qualityHold: {
     model: "QualityHold",

@@ -101,6 +101,9 @@ export const modelMetadata = {
       qualityHolds: "QualityHold",
       qualityAudits: "QualityAudit",
       qualityFindings: "QualityFinding",
+      qualitySuppliers: "QualitySupplier",
+      qualitySupplierDocs: "QualitySupplierDoc",
+      qualitySupplierReviews: "QualitySupplierReview",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -435,7 +438,25 @@ export const modelMetadata = {
       events: "QualityNcEvent",
       holds: "QualityHold",
       findings: "QualityFinding",
+      supplier: "QualitySupplier",
     },
+  },
+  QualitySupplier: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      docs: "QualitySupplierDoc",
+      reviews: "QualitySupplierReview",
+      ncs: "QualityNc",
+    },
+  },
+  QualitySupplierDoc: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", supplier: "QualitySupplier" },
+  },
+  QualitySupplierReview: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", supplier: "QualitySupplier" },
   },
   QualityAudit: { scope: "tenant", relations: { workspace: "Workspace", findings: "QualityFinding" } },
   QualityFinding: {

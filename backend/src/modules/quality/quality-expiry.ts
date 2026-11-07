@@ -56,3 +56,36 @@ registerExpiryKind(AUDIT_EXPIRY, {
   },
   paused,
 });
+
+export const SUPPLIER_DOC_EXPIRY = "quality.supplier_doc";
+export const SUPPLIER_REVIEW_EXPIRY = "quality.supplier_review";
+
+registerExpiryKind(SUPPLIER_DOC_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const doc = await db.qualitySupplierDoc.findFirst({
+      where: { id: expiry.subjectId, archivedAt: null, supplier: { archivedAt: null } },
+      select: { name: true, supplier: { select: { id: true, name: true } } },
+    });
+    if (doc === null) return null;
+    return {
+      what: qualityTexts.supplierDocWhat(doc.supplier.name, doc.name),
+      path: `/app/${workspace.slug}/calidad/proveedores/${doc.supplier.id}`,
+    };
+  },
+  paused,
+});
+
+registerExpiryKind(SUPPLIER_REVIEW_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const supplier = await db.qualitySupplier.findFirst({
+      where: { id: expiry.subjectId, archivedAt: null },
+      select: { id: true, name: true },
+    });
+    if (supplier === null) return null;
+    return {
+      what: qualityTexts.supplierReviewWhat(supplier.name),
+      path: `/app/${workspace.slug}/calidad/proveedores/${supplier.id}`,
+    };
+  },
+  paused,
+});

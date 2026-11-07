@@ -1647,6 +1647,16 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
     chapterInvalid: "Some chapters aren't from the company's standards.",
     hasNc: "The finding already has its nonconformity.",
   },
+  suppliersFolder: "Suppliers",
+  supplierDocWhat: (supplier: string, doc: string) => `${supplier}: ${doc}`,
+  supplierReviewWhat: (supplier: string) => `Review the supplier ${supplier}`,
+  supplierMessages: {
+    nameTaken: "There's already a supplier with that name.",
+    archived: "The supplier is archived.",
+    fileNotInFolder: "The file has to be in the supplier's folder.",
+    supplierNeedsOrigin: "Only a nonconformity with origin “Supplier” is linked to a supplier.",
+    scoresInvalid: "Each score goes from 1 to 5.",
+  },
   csv: {
     fileName: "nonconformities.csv",
     code: "Code",

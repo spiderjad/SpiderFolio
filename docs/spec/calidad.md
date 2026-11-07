@@ -375,6 +375,73 @@ Simplificaciones:
 - Auditoría: `quality.audit.create|update|done|cancel`, `quality.finding.create`, y la NC como siempre.
 
 
+## Fase 4: proveedores
+
+IFS 8 (4.4 y 4.5) y BRCGS 9 (3.5) piden homologar a los proveedores según el riesgo de lo que suministran,
+tener sus certificados y fichas técnicas vigentes, evaluarlos cada año y valorar la vulnerabilidad al fraude
+de cada materia prima (IFS 4.21; BRCGS 5.4). La fase 4 los reúne en un registro con sus documentos y
+vencimientos, su evaluación anual y sus no conformidades.
+
+### Proveedores
+
+- `QualitySupplier` `{ id, workspaceId, name (1 a 160, único sin distinguir mayúsculas), nameKey, taxId?
+  (hasta 20), category (RAW_MATERIAL | PACKAGING | INGREDIENT | SERVICE | OTHER), supplies (qué suministra,
+  hasta 500), risk (LOW | MEDIUM | HIGH: el riesgo de lo que suministra), fraudRisk (LOW | MEDIUM | HIGH) y
+  fraudNote? (la valoración de vulnerabilidad al fraude), contact? (hasta 300), ownerId? (membership, quien
+  lo sigue), status (PENDING | APPROVED | CONDITIONAL | BLOCKED), nextReviewOn? (DATE), folderId?,
+  archivedAt?, createdById, createdAt, updatedAt }`. Se archiva, no se borra.
+- Un proveedor nuevo queda **Pendiente** hasta su primera evaluación.
+- Cada uno tiene su carpeta «Proveedores/<nombre>» en el espacio Calidad, creada por el sistema la primera
+  vez que se abre (como las de las NC).
+
+### Documentos y vencimientos
+
+- `QualitySupplierDoc` `{ id, workspaceId, supplierId, kind (CERT_IFS | CERT_BRCGS | CERT_OTHER | SPEC_SHEET |
+  QUESTIONNAIRE | ANALYSIS | OTHER), name (1 a 160), nodeId? (un archivo de su carpeta), validUntil? (DATE),
+  createdById, createdAt, archivedAt? }`. Se archivan, no se borran.
+- Con `validUntil`, vencimiento `quality.supplier_doc` a quien sigue al proveedor (o a quien lo cargó): 30
+  días antes, 7 y el mismo día. Archivar el documento lo resuelve.
+- Estado de cada documento (calculado): **Vigente**, **Por vencer** (30 días o menos), **Vencido** o **Sin
+  vencimiento**. La lista muestra el peor estado de los certificados de cada proveedor.
+
+### Evaluación anual
+
+- `QualitySupplierReview` `{ id, workspaceId, supplierId, reviewedOn (DATE), scores (JSON: calidad, servicio,
+  documentación e incidencias, de 1 a 5), result (APPROVED | CONDITIONAL | BLOCKED), note (hasta 1000),
+  reviewedById, createdAt }`. Solo se agregan.
+- Registrar una evaluación pone el estado del proveedor y su **próxima evaluación** a los 12 meses (6 si es
+  condicional); vencimiento `quality.supplier_review`.
+- La ficha muestra las NC abiertas del proveedor del último año como dato para evaluar.
+
+### No conformidades del proveedor
+
+- `QualityNc.supplierId?`: una NC con origen `SUPPLIER` puede ligarse a un proveedor (desde su ficha,
+  **Abrir no conformidad**). La ficha del proveedor lista las suyas y la de la NC enlaza al proveedor.
+
+### Permisos
+
+- quality.manage da de alta, edita, archiva, evalúa y carga documentos; quality.view lo lee.
+- Quien sigue a un proveedor (ownerId) lo ve y carga sus documentos aunque no tenga capacidades; no lo
+  evalúa.
+
+### Pantallas
+
+- **Proveedores** (`/calidad/proveedores`): buscador, filtros por estado, categoría y riesgo; columnas
+  nombre, categoría, riesgo, estado, certificados (peor estado) y próxima evaluación.
+- Ficha (`/calidad/proveedores/:id`): datos, riesgo y fraude, documentos con su estado y vencimiento,
+  evaluaciones, NC, **Abrir la carpeta**.
+
+### API (fase 4)
+
+- `GET /quality/suppliers` (cursor, `q`, `status`, `category`, `risk`), `POST /quality/suppliers`,
+  `GET/PATCH /quality/suppliers/:id`, `POST /quality/suppliers/:id/archive`, `POST /quality/suppliers/:id/folder`,
+  `GET /quality/suppliers/:id/files` (los archivos de su carpeta, para elegir).
+- `POST /quality/suppliers/:id/docs`, `POST /quality/supplier-docs/:id/archive`.
+- `POST /quality/suppliers/:id/reviews`.
+- `POST /quality/ncs` acepta `supplierId` con origen `SUPPLIER`.
+- Auditoría: `quality.supplier.create|update|archive`, `quality.supplier.doc`, `quality.supplier.review`.
+
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
@@ -385,8 +452,8 @@ Simplificaciones:
    firmada.
 3. **Auditorías** (bloque 11, detalle arriba): programa anual con su cobertura por capítulo, externas con
    su sala de auditoría, hallazgos por cláusula que abren su NC.
-4. **Proveedores** (bloque 8): homologación, fichas técnicas, certificados IFS/BRCGS con vencimiento,
-   evaluación anual, materias de riesgo, vulnerabilidad al fraude y food defense.
+4. **Proveedores** (bloque 8, detalle arriba): registro con riesgo y fraude, documentos con vencimiento,
+   evaluación anual y sus NC.
 5. **Reclamaciones y retirada** (bloques 6 y 7): registro con plazo de respuesta y NC; indicador por millón
    de unidades; equipo de crisis, contactos, plantillas y simulacros de retirada.
 6. **Panel de indicadores** (bloque 14) y el resto (bloques 3, 9, 10, 12 y 13): prerrequisitos,

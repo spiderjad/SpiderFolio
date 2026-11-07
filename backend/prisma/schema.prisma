@@ -284,6 +284,9 @@ model Workspace {
   qualityHolds           QualityHold[]
   qualityAudits          QualityAudit[]
   qualityFindings        QualityFinding[]
+  qualitySuppliers       QualitySupplier[]
+  qualitySupplierDocs    QualitySupplierDoc[]
+  qualitySupplierReviews QualitySupplierReview[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -2564,6 +2567,8 @@ model QualityNc {
   cancelReason    String?
   /// Its evidence folder in the module's space, once created.
   folderId        String?
+  /// With origin SUPPLIER: the supplier it's about (phase 4).
+  supplierId      String?
   reportedById    String
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -2576,6 +2581,7 @@ model QualityNc {
   events        QualityNcEvent[]
   holds         QualityHold[]
   findings      QualityFinding[]
+  supplier      QualitySupplier?      @relation(fields: [supplierId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, year, number])
@@ -2789,4 +2795,107 @@ model QualityFinding {
 
   @@index([workspaceId, auditId])
   @@index([workspaceId, ncId])
+}
+
+enum QualitySupplierCategory {
+  RAW_MATERIAL
+  INGREDIENT
+  PACKAGING
+  SERVICE
+  OTHER
+}
+
+enum QualityRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum QualitySupplierStatus {
+  PENDING
+  APPROVED
+  CONDITIONAL
+  BLOCKED
+}
+
+enum QualitySupplierDocKind {
+  CERT_IFS
+  CERT_BRCGS
+  CERT_OTHER
+  SPEC_SHEET
+  QUESTIONNAIRE
+  ANALYSIS
+  OTHER
+}
+
+/// A supplier (docs/spec/calidad.md, «Fase 4»): what it supplies, its risk and fraud vulnerability, its
+/// approval and next review. Archived, never deleted.
+model QualitySupplier {
+  id           String                  @id @default(cuid())
+  workspaceId  String
+  name         String
+  nameKey      String
+  taxId        String?
+  category     QualitySupplierCategory
+  supplies     String
+  risk         QualityRisk
+  fraudRisk    QualityRisk             @default(LOW)
+  fraudNote    String?
+  contact      String?
+  /// Membership that follows it; no FK.
+  ownerId      String?
+  status       QualitySupplierStatus   @default(PENDING)
+  nextReviewOn DateTime?               @db.Date
+  folderId     String?
+  archivedAt   DateTime?
+  createdById  String
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  workspace Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  docs      QualitySupplierDoc[]
+  reviews   QualitySupplierReview[]
+  ncs       QualityNc[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, nameKey])
+  @@index([workspaceId, status])
+}
+
+/// A supplier's certificate, technical sheet or other document, with its expiry. Archived, never deleted.
+model QualitySupplierDoc {
+  id          String                 @id @default(cuid())
+  workspaceId String
+  supplierId  String
+  kind        QualitySupplierDocKind
+  name        String
+  /// A file of the supplier's folder (node; no FK).
+  nodeId      String?
+  validUntil  DateTime?              @db.Date
+  archivedAt  DateTime?
+  createdById String
+  createdAt   DateTime               @default(now())
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  supplier  QualitySupplier @relation(fields: [supplierId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, supplierId])
+}
+
+/// A supplier's yearly evaluation: only added.
+model QualitySupplierReview {
+  id           String                @id @default(cuid())
+  workspaceId  String
+  supplierId   String
+  reviewedOn   DateTime              @db.Date
+  scores       Json
+  result       QualitySupplierStatus
+  note         String
+  reviewedById String
+  createdAt    DateTime              @default(now())
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  supplier  QualitySupplier @relation(fields: [supplierId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, supplierId, reviewedOn])
 }

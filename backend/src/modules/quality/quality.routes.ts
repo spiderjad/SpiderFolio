@@ -72,6 +72,25 @@ import {
   UpdateAuditSchema,
 } from "./audits.schemas.ts";
 import {
+  ReviewSchema,
+  SupplierDocSchema,
+  SupplierSchema,
+  SuppliersQuerySchema,
+  UpdateSupplierSchema,
+} from "./suppliers.schemas.ts";
+import {
+  addSupplierDoc,
+  archiveSupplierDoc,
+  createSupplier,
+  getSupplier,
+  listSuppliers,
+  reviewSupplier,
+  setSupplierArchived,
+  supplierFiles,
+  supplierFolder,
+  updateSupplier,
+} from "./suppliers.service.ts";
+import {
   addFinding,
   auditCoverage,
   cancelAudit,
@@ -480,6 +499,102 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         const { id } = IdParams.parse(req.params);
         const { ownerId } = FindingNcSchema.parse(req.body);
         res.json({ audit: await findingNc(adminContextOf(req), id, ownerId) });
+      },
+    },
+    // Phase 4: suppliers, their documents and reviews.
+    {
+      method: "get",
+      path: "/quality/suppliers",
+      handler: async (req, res) => {
+        res.json(await listSuppliers(adminContextOf(req), SuppliersQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/suppliers",
+      handler: async (req, res) => {
+        res.status(201).json({
+          supplier: await createSupplier(adminContextOf(req), SupplierSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/suppliers/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ supplier: await getSupplier(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/suppliers/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          supplier: await updateSupplier(
+            adminContextOf(req),
+            id,
+            UpdateSupplierSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/suppliers/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { archived } = ArchiveSchema.parse(req.body);
+        res.json({ supplier: await setSupplierArchived(adminContextOf(req), id, archived) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/suppliers/:id/folder",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ folder: await supplierFolder(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/suppliers/:id/files",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ items: await supplierFiles(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/suppliers/:id/docs",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.status(201).json({
+          supplier: await addSupplierDoc(
+            adminContextOf(req),
+            id,
+            SupplierDocSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/supplier-docs/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ supplier: await archiveSupplierDoc(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/suppliers/:id/reviews",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.status(201).json({
+          supplier: await reviewSupplier(adminContextOf(req), id, ReviewSchema.parse(req.body)),
+        });
       },
     },
   ];
