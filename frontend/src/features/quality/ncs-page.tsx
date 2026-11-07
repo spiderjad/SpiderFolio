@@ -247,7 +247,7 @@ export function NcsPage({ reportedOnly = false }: { reportedOnly?: boolean }) {
           )}
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Input
           type="search"
           aria-label={t.search}
@@ -305,24 +305,30 @@ export function NcsPage({ reportedOnly = false }: { reportedOnly?: boolean }) {
             }}
           />
         )}
-        <div className="grid grid-cols-2 gap-2">
+        <label className="grid gap-1 text-xs text-muted-foreground">
+          {t.from}
           <Input
             type="date"
-            aria-label={t.from}
+            className="h-9"
             value={filters.from ?? ""}
+            max={filters.to}
             onChange={(event) => {
               patch({ desde: event.target.value });
             }}
           />
+        </label>
+        <label className="grid gap-1 text-xs text-muted-foreground">
+          {t.to}
           <Input
             type="date"
-            aria-label={t.to}
+            className="h-9"
             value={filters.to ?? ""}
+            min={filters.from}
             onChange={(event) => {
               patch({ hasta: event.target.value });
             }}
           />
-        </div>
+        </label>
       </div>
       {!list.query.isPending && list.items.length === 0 ? (
         <Card>
