@@ -181,8 +181,49 @@ import {
   updateAudit,
 } from "./audits.service.ts";
 import { FormQualitySchema, getFormQuality, saveFormQuality } from "./quality-forms.ts";
+import {
+  archiveCultureActivity,
+  answerSurvey,
+  closeSurvey,
+  createCultureActivity,
+  createSurvey,
+  cultureOverview,
+  getSurvey,
+  pendingSurveys,
+  saveCulturePlan,
+  setCultureActivityDone,
+  surveyResults,
+  surveyToAnswer,
+  updateCultureActivity,
+  updateSurvey,
+} from "./culture.service.ts";
+import {
+  cancelChange,
+  decideChange,
+  getChange,
+  implementChange,
+  listChanges,
+  proposeChange,
+  updateChange,
+} from "./changes.service.ts";
+import {
+  ChangeDecisionSchema,
+  ChangeImplementedSchema,
+  ChangeSchema,
+  ChangesQuerySchema,
+  CultureActivitySchema,
+  CultureDoneSchema,
+  CulturePlanSchema,
+  CultureYearQuerySchema,
+  SurveyAnswerSchema,
+  SurveySchema,
+  UpdateChangeSchema,
+  UpdateCultureActivitySchema,
+  UpdateSurveySchema,
+} from "./culture.schemas.ts";
 
 const IdParams = z.object({ id: z.string().min(1).max(64) });
+const YearParams = z.object({ year: z.coerce.number().int().min(2000).max(2100) });
 const HOUR = 3_600_000;
 const FormOptionsQuery = z.object({ q: z.string().trim().max(100).default("") });
 
@@ -1079,6 +1120,197 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         res.status(201).json({
           point: await addLabResult(adminContextOf(req), id, LabResultSchema.parse(req.body)),
         });
+      },
+    },
+    // ─── Phase 6c: food safety culture ───
+    {
+      method: "get",
+      path: "/quality/culture",
+      handler: async (req, res) => {
+        res.json(await cultureOverview(adminContextOf(req), CultureYearQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "put",
+      path: "/quality/culture/plans/:year",
+      handler: async (req, res) => {
+        const { year } = YearParams.parse(req.params);
+        res.json({
+          plan: await saveCulturePlan(adminContextOf(req), year, CulturePlanSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/culture/activities",
+      handler: async (req, res) => {
+        res.status(201).json({
+          activity: await createCultureActivity(
+            adminContextOf(req),
+            CultureActivitySchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/culture/activities/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          activity: await updateCultureActivity(
+            adminContextOf(req),
+            id,
+            UpdateCultureActivitySchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/culture/activities/:id/done",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { doneOn } = CultureDoneSchema.parse(req.body);
+        res.json({ activity: await setCultureActivityDone(adminContextOf(req), id, doneOn) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/culture/activities/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json(await archiveCultureActivity(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/culture/surveys/pending",
+      handler: async (req, res) => {
+        res.json({ items: await pendingSurveys(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/culture/surveys",
+      handler: async (req, res) => {
+        res.status(201).json({
+          survey: await createSurvey(adminContextOf(req), SurveySchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/culture/surveys/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ survey: await getSurvey(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/culture/surveys/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          survey: await updateSurvey(adminContextOf(req), id, UpdateSurveySchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/culture/surveys/:id/close",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ survey: await closeSurvey(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/culture/surveys/:id/results",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json(await surveyResults(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/culture/surveys/:id/answer",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ survey: await surveyToAnswer(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/culture/surveys/:id/answer",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res
+          .status(201)
+          .json(await answerSurvey(adminContextOf(req), id, SurveyAnswerSchema.parse(req.body)));
+      },
+    },
+    // ─── Phase 6c: change management ───
+    {
+      method: "get",
+      path: "/quality/changes",
+      handler: async (req, res) => {
+        res.json(await listChanges(adminContextOf(req), ChangesQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/changes",
+      handler: async (req, res) => {
+        res.status(201).json({
+          change: await proposeChange(adminContextOf(req), ChangeSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/changes/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ change: await getChange(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/changes/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          change: await updateChange(adminContextOf(req), id, UpdateChangeSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/changes/:id/decision",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          change: await decideChange(adminContextOf(req), id, ChangeDecisionSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/changes/:id/implemented",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { implementedOn } = ChangeImplementedSchema.parse(req.body);
+        res.json({ change: await implementChange(adminContextOf(req), id, implementedOn) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/changes/:id/cancel",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ change: await cancelChange(adminContextOf(req), id) });
       },
     },
   ];

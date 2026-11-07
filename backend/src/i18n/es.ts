@@ -1697,6 +1697,39 @@ export const qualityTexts = {
     reasonRequired: "Indica el motivo del rechazo.",
   },
   studyClosed: "El estudio ya tiene resultado.",
+  /** Phase 6c (docs/spec/calidad.md, «Fase 6c»): food safety culture and change management. */
+  changeCode: (year: number, number: number) =>
+    `CAM-${String(year)}-${String(number).padStart(4, "0")}`,
+  cultureWhat: (title: string) => `Actividad del plan de cultura: ${title}`,
+  changeWhat: (code: string, title: string) => `Implantar el cambio ${code}: ${title}`,
+  surveyTitle: (year: number) => `Encuesta de cultura de seguridad alimentaria ${String(year)}`,
+  /** The default statements of a culture survey, answered from 1 (strongly disagree) to 5. */
+  surveyQuestions: [
+    "La dirección da prioridad a la seguridad alimentaria, aunque haya presión por producir.",
+    "Sé qué peligros de seguridad alimentaria hay en mi puesto y cómo controlarlos.",
+    "Recibí la formación que necesito para trabajar de forma segura con los alimentos.",
+    "Los procedimientos e instrucciones de mi puesto son claros y están a mano.",
+    "Me informan de los cambios que afectan a la seguridad alimentaria de mi trabajo.",
+    "Puedo comunicar un problema de seguridad alimentaria sin miedo a represalias.",
+    "Cuando comunico un problema, se resuelve y me dicen qué se hizo.",
+    "Mis compañeros cumplen las normas de higiene y seguridad alimentaria.",
+    "Tengo los medios (tiempo, equipos, productos) para cumplir las normas.",
+    "Me siento responsable de la seguridad de los alimentos que fabricamos.",
+  ],
+  culture: {
+    surveyClosed: "La encuesta no está abierta.",
+    alreadyAnswered: "Ya respondiste esta encuesta.",
+    scoresCount: "Responde todas las afirmaciones.",
+    hasAnswers: "La encuesta ya tiene respuestas: solo se puede cerrar.",
+    datesOrder: "La fecha de cierre tiene que ser igual o posterior a la de apertura.",
+  },
+  changes: {
+    notProposed: "El cambio ya está decidido.",
+    notApproved: "El cambio no está aprobado.",
+    haccpPending: "Para aprobar, responde la revisión del APPCC.",
+    reviewPending: "Quedan puntos de la revisión pendientes.",
+    reasonRequired: "Indica el motivo del rechazo.",
+  },
   csv: {
     fileName: "no-conformidades.csv",
     code: "Código",

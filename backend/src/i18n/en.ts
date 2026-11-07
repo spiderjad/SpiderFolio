@@ -1692,6 +1692,39 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
     reasonRequired: "Give the reason for rejecting it.",
   },
   studyClosed: "The study already has its result.",
+  /** Phase 6c (docs/spec/calidad.md, «Fase 6c»): food safety culture and change management. */
+  changeCode: (year: number, number: number) =>
+    `CAM-${String(year)}-${String(number).padStart(4, "0")}`,
+  cultureWhat: (title: string) => `Culture plan activity: ${title}`,
+  changeWhat: (code: string, title: string) => `Implement change ${code}: ${title}`,
+  surveyTitle: (year: number) => `Food safety culture survey ${String(year)}`,
+  /** The default statements of a culture survey, answered from 1 (strongly disagree) to 5. */
+  surveyQuestions: [
+    "Management puts food safety first, even under pressure to produce.",
+    "I know the food safety hazards in my job and how to control them.",
+    "I have had the training I need to handle food safely.",
+    "The procedures and instructions for my job are clear and at hand.",
+    "I am told about changes that affect the food safety of my work.",
+    "I can report a food safety problem without fear of reprisal.",
+    "When I report a problem, it gets solved and I am told what was done.",
+    "My colleagues follow the hygiene and food safety rules.",
+    "I have the means (time, equipment, supplies) to follow the rules.",
+    "I feel responsible for the safety of the food we make.",
+  ],
+  culture: {
+    surveyClosed: "The survey isn't open.",
+    alreadyAnswered: "You have already answered this survey.",
+    scoresCount: "Answer every statement.",
+    hasAnswers: "The survey already has answers: it can only be closed.",
+    datesOrder: "The closing date has to be on or after the opening date.",
+  },
+  changes: {
+    notProposed: "The change has already been decided.",
+    notApproved: "The change isn't approved.",
+    haccpPending: "To approve, answer the HACCP review.",
+    reviewPending: "Some review points are still pending.",
+    reasonRequired: "Give the reason for rejecting it.",
+  },
   csv: {
     fileName: "nonconformities.csv",
     code: "Code",

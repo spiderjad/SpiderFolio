@@ -66,4 +66,9 @@ export const qualityLimits = {
   responseDaysDefault: 10,
   responseDaysMin: 1,
   responseDaysMax: 90,
+  /** Phase 6c: a culture survey's results only show from this many answers (anonymity). */
+  surveyMinAnswers: 5,
+  surveyQuestionsMax: 20,
+  surveyQuestionMax: 200,
+  objectivesMax: 4000,
 } as const;

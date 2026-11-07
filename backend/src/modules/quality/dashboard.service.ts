@@ -8,6 +8,8 @@ import { auditCoverage } from "./audits.service.ts";
 import { companyToday } from "./prps.service.ts";
 import { productFigures } from "./products.service.ts";
 import { samplingFigures } from "./sampling.service.ts";
+import { cultureFigures } from "./culture.service.ts";
+import { changeFigures } from "./changes.service.ts";
 
 const SOON_DAYS = 30;
 const AUDIT_DAYS = 60;
@@ -41,6 +43,8 @@ export interface QualityDashboard {
   prps: { overdue: number; dueSoon: number; nonConforming: number };
   sampling: { overdue: number; nonConforming: number };
   products: { labelsOutdated: number; labelsInReview: number; withoutStudy: number };
+  culture: Awaited<ReturnType<typeof cultureFigures>>;
+  changes: { proposed: number; overdue: number };
 }
 
 export async function qualityDashboard(ctx: AdminContext): Promise<QualityDashboard> {
@@ -137,10 +141,12 @@ export async function qualityDashboard(ctx: AdminContext): Promise<QualityDashbo
   const closeDays = closed
     .filter((row) => row.closedAt !== null)
     .map((row) => ((row.closedAt?.getTime() ?? 0) - row.createdAt.getTime()) / 86_400_000);
-  const [perMillion, sampling, products] = await Promise.all([
+  const [perMillion, sampling, products, culture, changes] = await Promise.all([
     yearPerMillion(ctx, year),
     samplingFigures(ctx, today, sinceDay),
     productFigures(ctx),
+    cultureFigures(ctx, today),
+    changeFigures(ctx, today),
   ]);
   return {
     ncs: {
@@ -175,6 +181,8 @@ export async function qualityDashboard(ctx: AdminContext): Promise<QualityDashbo
     prps: { overdue: prpsOverdue, dueSoon: prpsDueSoon, nonConforming: prpsNonConforming },
     sampling,
     products,
+    culture,
+    changes,
   };
 }
 

@@ -300,6 +300,30 @@ export interface TenantDb {
     PrismaClient["qualityLabResult"],
     "findFirst" | "findMany" | "count" | "create"
   >;
+  // Culture: activities archived, surveys closed, never deleted. Answers and voters are only added,
+  // and an answer is never read one by one (no findFirst): only aggregated.
+  qualityCulturePlan: TenantDelegate<PrismaClient["qualityCulturePlan"], "findFirst" | "upsert">;
+  qualityCultureActivity: TenantDelegate<
+    PrismaClient["qualityCultureActivity"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityCultureSurvey: TenantDelegate<
+    PrismaClient["qualityCultureSurvey"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityCultureAnswer: TenantDelegate<
+    PrismaClient["qualityCultureAnswer"],
+    "findMany" | "count" | "create"
+  >;
+  qualityCultureVoter: TenantDelegate<
+    PrismaClient["qualityCultureVoter"],
+    "findMany" | "count" | "create"
+  >;
+  qualityChange: TenantDelegate<
+    PrismaClient["qualityChange"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityChangeCounter: TenantDelegate<PrismaClient["qualityChangeCounter"], "upsert">;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -556,6 +580,22 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
   qualityLabResult: { model: "QualityLabResult", ops: ["findFirst", "findMany", "count", "create"] },
+  qualityCulturePlan: { model: "QualityCulturePlan", ops: ["findFirst", "upsert"] },
+  qualityCultureActivity: {
+    model: "QualityCultureActivity",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityCultureSurvey: {
+    model: "QualityCultureSurvey",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityCultureAnswer: { model: "QualityCultureAnswer", ops: ["findMany", "count", "create"] },
+  qualityCultureVoter: { model: "QualityCultureVoter", ops: ["findMany", "count", "create"] },
+  qualityChange: {
+    model: "QualityChange",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityChangeCounter: { model: "QualityChangeCounter", ops: ["upsert"] },
   qualityHold: {
     model: "QualityHold",
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],

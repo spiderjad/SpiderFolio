@@ -150,3 +150,37 @@ registerExpiryKind(SAMPLING_EXPIRY, {
   },
   paused,
 });
+
+export const CULTURE_EXPIRY = "quality.culture";
+
+registerExpiryKind(CULTURE_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const activity = await db.qualityCultureActivity.findFirst({
+      where: { id: expiry.subjectId, archivedAt: null, doneOn: null },
+      select: { title: true, year: true },
+    });
+    if (activity === null) return null;
+    return {
+      what: qualityTexts.cultureWhat(activity.title),
+      path: `/app/${workspace.slug}/calidad/cultura?anio=${String(activity.year)}`,
+    };
+  },
+  paused,
+});
+
+export const CHANGE_EXPIRY = "quality.change";
+
+registerExpiryKind(CHANGE_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const change = await db.qualityChange.findFirst({
+      where: { id: expiry.subjectId, status: "APPROVED" },
+      select: { id: true, year: true, number: true, title: true },
+    });
+    if (change === null) return null;
+    return {
+      what: qualityTexts.changeWhat(qualityTexts.changeCode(change.year, change.number), change.title),
+      path: `/app/${workspace.slug}/calidad/cambios/${change.id}`,
+    };
+  },
+  paused,
+});

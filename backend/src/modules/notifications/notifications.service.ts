@@ -63,6 +63,9 @@ export const NOTIFICATION_KINDS = [
   /** A label sent to review, approved or rejected (docs/spec/calidad.md, «Fase 6b»; `detail` = the
    * product's id). */
   "quality_label",
+  /** A change proposed, assigned, approved or rejected (docs/spec/calidad.md, «Fase 6c»; `detail` = the
+   * change's id). */
+  "quality_change",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

@@ -224,110 +224,117 @@ model Workspace {
   createdAt        DateTime  @default(now())
   deletedAt        DateTime?
 
-  roles                   Role[]
-  memberships             Membership[]
-  departments             Department[]
-  departmentMembers       DepartmentMember[]
-  invitations             Invitation[]
-  auditLogs               AuditLog[]
-  pinLogins               PinLogin[]
-  spaces                  Space[]
-  nodes                   Node[]
-  permissions             Permission[]
-  fileVersions            FileVersion[]
-  uploadReservations      UploadReservation[]
-  importJobs              ImportJob[]
-  spaceStates             SpaceUserState[]
-  downloadTokens          DownloadToken[]
-  zipExports              ZipExport[]
-  pageContents            PageContent[]
-  formVersions            FormVersion[]
-  formRecords             FormRecord[]
-  formFiles               FormFile[]
-  formSettings            FormSettings[]
-  positions               Position[]
-  expiries                Expiry[]
-  safetyItems             SafetyItem[]
-  safetyDeliveries        SafetyDelivery[]
-  safetyDeliveryLines     SafetyDeliveryLine[]
-  safetyIncidents         SafetyIncident[]
-  safetyActions           SafetyAction[]
-  safetyCourses           SafetyCourse[]
-  safetyTrainings         SafetyTraining[]
-  safetySignSessions      SafetySignSession[]
-  auditRooms              AuditRoom[]
-  auditRoomItems          AuditRoomItem[]
-  auditRoomCodes          AuditRoomCode[]
-  auditRoomSessions       AuditRoomSession[]
-  auditRoomAccesses       AuditRoomAccess[]
-  safetyFitness           SafetyFitness[]
-  caeCompanies            CaeCompany[]
-  caeWorkers              CaeWorker[]
-  caeRequirements         CaeRequirement[]
-  caeDocuments            CaeDocument[]
-  caeAccesses             CaeAccess[]
-  caeInfoDeliveries       CaeInfoDelivery[]
-  caeWorkPermits          CaeWorkPermit[]
-  caePortalAccesses       CaePortalAccess[]
-  safetyMonthStats        SafetyMonthStat[]
-  safetyEmergencyRoles    SafetyEmergencyRole[]
-  safetyEmergencyMembers  SafetyEmergencyMember[]
-  safetyDrills            SafetyDrill[]
-  safetyCommitteeMembers  SafetyCommitteeMember[]
-  safetyMeetings          SafetyMeeting[]
-  qualityNcs              QualityNc[]
-  qualityActions          QualityAction[]
-  qualityVerifications    QualityVerification[]
-  qualityNcEvents         QualityNcEvent[]
-  qualityNcCounters       QualityNcCounter[]
-  qualityCcps             QualityCcp[]
-  qualityHolds            QualityHold[]
-  qualityAudits           QualityAudit[]
-  qualityFindings         QualityFinding[]
-  qualitySuppliers        QualitySupplier[]
-  qualitySupplierDocs     QualitySupplierDoc[]
-  qualitySupplierReviews  QualitySupplierReview[]
-  qualityComplaints       QualityComplaint[]
-  qualityMonthUnits       QualityMonthUnits[]
-  qualityCrisisMembers    QualityCrisisMember[]
-  qualityCrisisContacts   QualityCrisisContact[]
-  qualityRecallTests      QualityRecallTest[]
-  qualityPrps             QualityPrp[]
-  qualityPrpChecks        QualityPrpCheck[]
-  qualityProducts         QualityProduct[]
-  qualityShelfLifeStudies QualityShelfLifeStudy[]
-  qualityLabels           QualityLabel[]
-  qualitySamplingPoints   QualitySamplingPoint[]
-  qualityLabResults       QualityLabResult[]
-  caePortalSessions       CaePortalSession[]
-  caePortalUploads        CaePortalUpload[]
-  pageImages              PageImage[]
-  commentThreads          CommentThread[]
-  comments                Comment[]
-  mentions                Mention[]
-  sharedSeen              SharedSeen[]
-  notifications           Notification[]
-  documentTypes           DocumentType[]
-  controlledDocuments     ControlledDocument[]
-  documentVersions        DocumentVersion[]
-  approvals               Approval[]
-  readRequirements        ReadRequirement[]
-  documentVisits          DocumentVisit[]
-  qrCodes                 QrCode[]
-  emailSettings           WorkspaceEmail?
-  contentChunks           ContentChunk[]
-  usageCounters           UsageCounter[]
-  usageCounterMembers     UsageCounterMember[]
-  bianLimits              BianLimit[]
-  bianFeedback            BianFeedback[]
-  fileTexts               FileText[]
-  readAcknowledgments     ReadAcknowledgment[]
-  license                 WorkspaceLicense?
-  pluginSettings          PluginSetting[]
-  pluginSecrets           PluginSecret[]
-  externalIdentities      ExternalIdentity[]
-  ssoFlows                SsoFlow[]
-  oauthGrants             OAuthGrant[]
+  roles                    Role[]
+  memberships              Membership[]
+  departments              Department[]
+  departmentMembers        DepartmentMember[]
+  invitations              Invitation[]
+  auditLogs                AuditLog[]
+  pinLogins                PinLogin[]
+  spaces                   Space[]
+  nodes                    Node[]
+  permissions              Permission[]
+  fileVersions             FileVersion[]
+  uploadReservations       UploadReservation[]
+  importJobs               ImportJob[]
+  spaceStates              SpaceUserState[]
+  downloadTokens           DownloadToken[]
+  zipExports               ZipExport[]
+  pageContents             PageContent[]
+  formVersions             FormVersion[]
+  formRecords              FormRecord[]
+  formFiles                FormFile[]
+  formSettings             FormSettings[]
+  positions                Position[]
+  expiries                 Expiry[]
+  safetyItems              SafetyItem[]
+  safetyDeliveries         SafetyDelivery[]
+  safetyDeliveryLines      SafetyDeliveryLine[]
+  safetyIncidents          SafetyIncident[]
+  safetyActions            SafetyAction[]
+  safetyCourses            SafetyCourse[]
+  safetyTrainings          SafetyTraining[]
+  safetySignSessions       SafetySignSession[]
+  auditRooms               AuditRoom[]
+  auditRoomItems           AuditRoomItem[]
+  auditRoomCodes           AuditRoomCode[]
+  auditRoomSessions        AuditRoomSession[]
+  auditRoomAccesses        AuditRoomAccess[]
+  safetyFitness            SafetyFitness[]
+  caeCompanies             CaeCompany[]
+  caeWorkers               CaeWorker[]
+  caeRequirements          CaeRequirement[]
+  caeDocuments             CaeDocument[]
+  caeAccesses              CaeAccess[]
+  caeInfoDeliveries        CaeInfoDelivery[]
+  caeWorkPermits           CaeWorkPermit[]
+  caePortalAccesses        CaePortalAccess[]
+  safetyMonthStats         SafetyMonthStat[]
+  safetyEmergencyRoles     SafetyEmergencyRole[]
+  safetyEmergencyMembers   SafetyEmergencyMember[]
+  safetyDrills             SafetyDrill[]
+  safetyCommitteeMembers   SafetyCommitteeMember[]
+  safetyMeetings           SafetyMeeting[]
+  qualityNcs               QualityNc[]
+  qualityActions           QualityAction[]
+  qualityVerifications     QualityVerification[]
+  qualityNcEvents          QualityNcEvent[]
+  qualityNcCounters        QualityNcCounter[]
+  qualityCcps              QualityCcp[]
+  qualityHolds             QualityHold[]
+  qualityAudits            QualityAudit[]
+  qualityFindings          QualityFinding[]
+  qualitySuppliers         QualitySupplier[]
+  qualitySupplierDocs      QualitySupplierDoc[]
+  qualitySupplierReviews   QualitySupplierReview[]
+  qualityComplaints        QualityComplaint[]
+  qualityMonthUnits        QualityMonthUnits[]
+  qualityCrisisMembers     QualityCrisisMember[]
+  qualityCrisisContacts    QualityCrisisContact[]
+  qualityRecallTests       QualityRecallTest[]
+  qualityPrps              QualityPrp[]
+  qualityPrpChecks         QualityPrpCheck[]
+  qualityProducts          QualityProduct[]
+  qualityShelfLifeStudies  QualityShelfLifeStudy[]
+  qualityLabels            QualityLabel[]
+  qualitySamplingPoints    QualitySamplingPoint[]
+  qualityLabResults        QualityLabResult[]
+  qualityCulturePlans      QualityCulturePlan[]
+  qualityCultureActivities QualityCultureActivity[]
+  qualityCultureSurveys    QualityCultureSurvey[]
+  qualityCultureAnswers    QualityCultureAnswer[]
+  qualityCultureVoters     QualityCultureVoter[]
+  qualityChanges           QualityChange[]
+  qualityChangeCounters    QualityChangeCounter[]
+  caePortalSessions        CaePortalSession[]
+  caePortalUploads         CaePortalUpload[]
+  pageImages               PageImage[]
+  commentThreads           CommentThread[]
+  comments                 Comment[]
+  mentions                 Mention[]
+  sharedSeen               SharedSeen[]
+  notifications            Notification[]
+  documentTypes            DocumentType[]
+  controlledDocuments      ControlledDocument[]
+  documentVersions         DocumentVersion[]
+  approvals                Approval[]
+  readRequirements         ReadRequirement[]
+  documentVisits           DocumentVisit[]
+  qrCodes                  QrCode[]
+  emailSettings            WorkspaceEmail?
+  contentChunks            ContentChunk[]
+  usageCounters            UsageCounter[]
+  usageCounterMembers      UsageCounterMember[]
+  bianLimits               BianLimit[]
+  bianFeedback             BianFeedback[]
+  fileTexts                FileText[]
+  readAcknowledgments      ReadAcknowledgment[]
+  license                  WorkspaceLicense?
+  pluginSettings           PluginSetting[]
+  pluginSecrets            PluginSecret[]
+  externalIdentities       ExternalIdentity[]
+  ssoFlows                 SsoFlow[]
+  oauthGrants              OAuthGrant[]
 }
 
 model Role {
@@ -3281,4 +3288,162 @@ model QualityLabResult {
 
   @@index([workspaceId, pointId, sampledOn])
   @@index([workspaceId, sampledOn])
+}
+
+// ─── Food quality, phase 6c: food safety culture and change management (docs/spec/calidad.md) ──
+
+enum QualityCultureKind {
+  TRAINING
+  COMMUNICATION
+  SURVEY
+  MEETING
+  OTHER
+}
+
+/// The year's culture plan: its objectives (one per year).
+model QualityCulturePlan {
+  workspaceId String
+  year        Int
+  objectives  String
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, year])
+}
+
+model QualityCultureActivity {
+  id            String             @id @default(cuid())
+  workspaceId   String
+  year          Int
+  title         String
+  kind          QualityCultureKind
+  plannedOn     DateTime           @db.Date
+  doneOn        DateTime?          @db.Date
+  /// Membership; no FK.
+  responsibleId String?
+  note          String?
+  archivedAt    DateTime?
+  createdById   String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, year, plannedOn])
+}
+
+model QualityCultureSurvey {
+  id          String    @id @default(cuid())
+  workspaceId String
+  title       String
+  questions   String[]
+  opensOn     DateTime  @db.Date
+  closesOn    DateTime  @db.Date
+  closedAt    DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  answers   QualityCultureAnswer[]
+  voters    QualityCultureVoter[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, opensOn])
+}
+
+/// An anonymous answer: no person and no time (a random id, not a time-ordered one). Who answered is
+/// in QualityCultureVoter, with nothing linking the two.
+model QualityCultureAnswer {
+  id          String  @id @default(uuid())
+  workspaceId String
+  surveyId    String
+  scores      Int[]
+  comment     String?
+
+  workspace Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  survey    QualityCultureSurvey @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, surveyId])
+}
+
+/// Who already answered a survey (so nobody answers twice), without what or when.
+model QualityCultureVoter {
+  workspaceId  String
+  surveyId     String
+  /// Membership; no FK.
+  membershipId String
+
+  workspace Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  survey    QualityCultureSurvey @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@id([surveyId, membershipId])
+  @@index([workspaceId, membershipId])
+}
+
+enum QualityChangeKind {
+  RECIPE
+  PRODUCT
+  LINE
+  EQUIPMENT
+  SUPPLIER
+  PROCESS
+  OTHER
+}
+
+enum QualityChangeStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+  IMPLEMENTED
+  CANCELLED
+}
+
+enum QualityChangeImpact {
+  NONE
+  LOW
+  HIGH
+}
+
+model QualityChange {
+  id            String               @id @default(cuid())
+  workspaceId   String
+  year          Int
+  number        Int
+  title         String
+  kind          QualityChangeKind
+  description   String
+  /// A product (no FK).
+  productId     String?
+  plannedOn     DateTime?            @db.Date
+  status        QualityChangeStatus  @default(PROPOSED)
+  /// haccp, allergens, label, training, validation: { state: pending | not_applicable | done, note }.
+  review        Json
+  impact        QualityChangeImpact?
+  /// Membership in charge of implementing it; no FK.
+  ownerId       String?
+  proposedById  String
+  decidedById   String?
+  decidedAt     DateTime?
+  decisionNote  String?
+  implementedOn DateTime?            @db.Date
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, year, number])
+  @@index([workspaceId, createdAt, id])
+  @@index([workspaceId, status])
+}
+
+model QualityChangeCounter {
+  workspaceId String
+  year        Int
+  last        Int
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, year])
 }
