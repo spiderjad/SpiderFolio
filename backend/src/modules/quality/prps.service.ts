@@ -80,6 +80,12 @@ function accessOf(ctx: AdminContext, row: { responsibleId: string | null }): Prp
   return "read";
 }
 
+/** The module on and never for guests (they can't be in charge of a control either). */
+async function requirePrps(ctx: AdminContext): Promise<void> {
+  await requireQuality(ctx);
+  if (ctx.tenant.role.base === "GUEST") throw forbidden();
+}
+
 /** Beyond quality.view, only the controls the person is responsible for. */
 function visibleWhere(ctx: AdminContext): Prisma.QualityPrpWhereInput {
   return canViewQuality(ctx) ? {} : { responsibleId: ctx.tenant.membershipId };
@@ -134,7 +140,7 @@ export async function listPrps(
   ctx: AdminContext,
   query: { kind?: (typeof prpKinds)[number] | undefined; archived?: "1" | undefined },
 ): Promise<PrpView[]> {
-  await requireQuality(ctx);
+  await requirePrps(ctx);
   const rows = await ctx.db.qualityPrp.findMany({
     where: {
       AND: [
@@ -151,7 +157,7 @@ export async function listPrps(
 }
 
 async function load(ctx: AdminContext, id: string): Promise<Row> {
-  await requireQuality(ctx);
+  await requirePrps(ctx);
   const row = await ctx.db.qualityPrp.findFirst({
     where: { AND: [{ id }, visibleWhere(ctx)] },
     select,
@@ -168,7 +174,9 @@ async function oneView(ctx: AdminContext, id: string): Promise<PrpView> {
 
 async function assertMember(db: TenantDb, id: string | null | undefined): Promise<void> {
   if (id === null || id === undefined) return;
-  const found = await db.membership.count({ where: { id, status: "ACTIVE" } });
+  const found = await db.membership.count({
+    where: { id, status: "ACTIVE", role: { base: { not: "GUEST" } } },
+  });
   if (found === 0) throw notFound();
 }
 
@@ -192,7 +200,7 @@ async function setDue(
 }
 
 export async function createPrp(ctx: AdminContext, input: PrpInput): Promise<PrpView> {
-  await requireQuality(ctx);
+  await requirePrps(ctx);
   if (!canManageQuality(ctx)) throw forbidden();
   await assertMember(ctx.db, input.responsibleId);
   await assertForm(ctx.db, input.formId);

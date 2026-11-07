@@ -86,7 +86,7 @@ function PrpDialog({ prp, onClose }: { prp?: Prp; onClose: () => void }) {
     PRP_KINDS.map((id) => ({ id, label: t.kinds[id] })),
   );
   const [state, setState] = useState({
-    kind: prp?.kind ?? ("CLEANING"),
+    kind: prp?.kind ?? "CLEANING",
     name: prp?.name ?? "",
     location: prp?.location ?? "",
     everyDays: String(prp?.everyDays ?? 7),
@@ -467,7 +467,7 @@ function PrpRow({
             .join(" · ")}
         </p>
       </div>
-      <dl className="flex gap-4 text-xs">
+      <dl className="grid w-52 shrink-0 grid-cols-2 gap-4 text-xs">
         <div>
           <dt className="text-muted-foreground">{t.last}</dt>
           <dd className="tabular-nums">
@@ -479,11 +479,13 @@ function PrpRow({
           <dd className="whitespace-nowrap tabular-nums">{formatUtcDate(prp.nextDueOn)}</dd>
         </div>
       </dl>
-      {prp.archived ? (
-        <Badge tone="neutral">{t.archived}</Badge>
-      ) : (
-        <PrpStateBadge state={prp.state} />
-      )}
+      <div className="w-24 shrink-0">
+        {prp.archived ? (
+          <Badge tone="neutral">{t.archived}</Badge>
+        ) : (
+          <PrpStateBadge state={prp.state} />
+        )}
+      </div>
       <div className="flex items-center gap-1">
         {!prp.archived && prp.access !== "read" && (
           <Button
