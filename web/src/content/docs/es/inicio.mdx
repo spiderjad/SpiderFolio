@@ -12,7 +12,11 @@ import Shot from "../../../components/Shot.astro";
 
 El **Inicio** es la primera pantalla al entrar a tu empresa. Te saluda («Hola, Ana. Esto es lo que pasa en …») y junta en un solo lugar lo que te toca hacer y lo que pasa a tu alrededor. Todo sale de datos reales y filtrados por lo que tú puedes ver.
 
-<Shot name="inicio" alt="El Inicio con los indicadores de la empresa, la actividad y los pendientes" eager />
+<Shot
+  name="inicio"
+  alt="El Inicio con los indicadores de la empresa, la actividad y los pendientes"
+  eager
+/>
 
 Mientras no haya contenido, cada tarjeta muestra cero y te explica qué va a aparecer y qué hacer para empezar.
 
@@ -54,9 +58,30 @@ Quien tiene plaza de lector no ve el Inicio: entra directo a [Mis documentos](/e
 
 Si todavía no confirmaste tu email, verás un aviso con el botón **Reenviar email**. Hasta confirmarlo no puedes invitar a tu equipo ni publicar documentos.
 
-## El menú lateral y la barra de arriba
+## Moverte por la app: las áreas
 
-- El menú lateral tiene **Inicio**, **Mis documentos**, **Archivos** y **Compartidos**; **Aprobaciones** si puedes aprobar documentos, y el grupo **Gestión** con lo que puedes administrar. Lo que no puedes usar no aparece.
-- El menú **Crear** ofrece **Nueva página**, **Subir archivos** y **Nuevo espacio**, según tus permisos.
-- Arriba están **Buscar** (también con Ctrl+K, ver [Búsqueda](/es/docs/busqueda)), **Pregúntale a Bian** y **Avisos** (la campana), con lo que te compartieron, las lecturas pedidas y las aprobaciones.
-- En el celular, el menú se abre con el botón de menú arriba a la izquierda. En pantallas grandes puedes contraerlo para ver solo los íconos.
+La app se organiza en **áreas**, cada una con su menú. A la izquierda, una barra angosta muestra las áreas que tienes; al lado, el menú del área en la que estás. Lo que no puedes usar no aparece, y un área sin nada para ti tampoco.
+
+| Área                                       | Qué tiene                                                                                                                                                                           |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Inicio**                                 | El **Panel** (esta pantalla), **Mis pendientes** y tus documentos recientes.                                                                                                        |
+| **Documentación** (Docs)                   | **Mis lecturas**, **Aprobaciones**, **Vencimientos**, **Documentos controlados**, **Salas de auditoría** y los espacios de Documentación (por ejemplo, Procedimientos).             |
+| **Wiki**                                   | Los **Espacios** de cada departamento, **Compartidos** y tus favoritos.                                                                                                             |
+| **Prevención** (PRL; SST en Latinoamérica) | El módulo de [Seguridad y salud laboral](/es/docs/seguridad-y-salud-laboral) entero, con sus contratas, tu ficha, tus medidas y los documentos del área. Solo con el módulo activo. |
+| **Administración**                         | Abajo de la barra, solo si puedes administrar algo: miembros, departamentos, roles, accesos, seguridad, Bian, límites, licencia, auditoría.                                         |
+
+- Cada espacio pertenece a un área: por defecto la **Wiki**; el espacio de Prevención, a **Prevención**. Quien gestiona los espacios puede cambiarlo en la configuración del espacio (**Área de la app**). Sus formularios aparecen en el área del espacio.
+- **Mis pendientes** junta, de todas las áreas, lo que te toca hacer: lecturas y aprobaciones, formularios de hoy, vencimientos y medidas de prevención. Lo abres desde su ícono en la barra de arriba (con el número de pendientes) o desde **Inicio**.
+- **Dónde se abre la app**: al entrar, la app se abre en tu **área de entrada**. La empresa la elige por departamento (en **Departamentos**, al editar uno) y tú puedes cambiarla en **Mi perfil**. Por defecto es **Inicio**. Si abres un enlace a una pantalla concreta, la app va directo ahí.
+- Arriba están **Mis pendientes**, **Pregúntale a Bian**, **Buscar** (también con Ctrl+K, ver [Búsqueda](/es/docs/busqueda)) y **Avisos** (la campana).
+- El menú **Crear** (el **+** junto al buscador del menú) ofrece **Nueva página**, **Subir archivos** y **Nuevo espacio**, según tus permisos. En pantallas grandes puedes contraer el menú del área para ver solo los íconos (Ctrl+B).
+- Si solo tienes un área, la barra de áreas no aparece y todo queda en el menú.
+
+<Shot
+  name="navegacion-movil"
+  alt="La app en el celular: las áreas en la barra de abajo y el título que abre el menú del área"
+/>
+
+En el celular, las áreas pasan a la **barra de abajo** (hasta cuatro, y **Más** con el resto y Administración), y el menú del área se abre tocando el título de arriba.
+
+<Shot name="navegacion-menu-movil" alt="El menú del área abierto en el celular desde el título" />

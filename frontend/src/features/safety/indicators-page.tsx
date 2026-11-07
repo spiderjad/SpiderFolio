@@ -35,7 +35,7 @@ import {
   type RatePeriod,
 } from "./safety-api";
 import { NotFoundPage } from "@/features/home/not-found-page";
-import { PpeTabs, useSafety } from "./safety-common";
+import { useSafety } from "./safety-common";
 
 const t = texts.safety.indicators;
 
@@ -164,7 +164,6 @@ export function IndicatorsPage() {
           </Button>
         </div>
       </div>
-      <PpeTabs />
       {data === undefined ? (
         <Skeleton className="h-64 w-full" />
       ) : (

@@ -913,6 +913,10 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       noParent: "None (top level)",
       head: "Head",
       noHead: "No head",
+      homeArea: "Home area",
+      homeAreaHint:
+        "Where the app opens for the department's people. Each person can change it in their profile.",
+      homeAreaDefault: "Home (default)",
     },
     confirmDelete: {
       title: (name: string) => `Delete the ${name} department?`,

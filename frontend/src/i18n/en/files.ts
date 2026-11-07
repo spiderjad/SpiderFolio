@@ -214,6 +214,9 @@ export const filesTexts: Catalog<typeof EsFiles> = {
         CONFIDENTIAL: "Not even admins, unless you add them.",
       },
       includeSubareas: "Include subareas",
+      area: "App area",
+      areaHint:
+        "Where it's listed in the menu: the Wiki (by default), Documentation or Health & safety. It only changes where it's listed, not who gets in.",
       includeSubareasHint:
         "People in subdepartments also get in. Heads of parent areas always manage it.",
     },

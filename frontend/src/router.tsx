@@ -129,6 +129,11 @@ export const routes = [
                 lazy: page(() => import("@/features/home/dashboard-page"), "DashboardPage"),
               },
               {
+                // «Mis pendientes» (docs/spec/diseno.md 10.4.1): what the person has to do, from every area.
+                path: "pendientes",
+                lazy: page(() => import("@/features/home/pending-page"), "PendingPage"),
+              },
+              {
                 // File and page expiries (docs/spec/vencimientos.md): only what the person sees.
                 path: "vencimientos",
                 lazy: page(() => import("@/features/expiries/expiries-page"), "ExpiriesPage"),

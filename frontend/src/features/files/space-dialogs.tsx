@@ -16,7 +16,11 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { useMembership } from "@/features/home/workspace-layout";
 import { departmentColors } from "@/features/admin/departments/departments-page";
+import type { SpaceArea } from "@/auth/types";
 import { filesApi, filesKeys, type SpaceView } from "./api";
+
+/** The areas a space can be moved to (Quality, once its module exists). */
+const AREAS = ["WIKI", "DOCUMENTS", "PREVENTION"] as const satisfies readonly SpaceArea[];
 import { texts } from "@/i18n";
 
 // ─── Crear y editar ──────────────────────────────────────────────────────────────────────
@@ -107,10 +111,24 @@ function SpaceForm({
     space === null ? "NORMAL" : visibilityOf(space),
   );
   const [includeSubareas, setIncludeSubareas] = useState(space?.includeSubareas ?? false);
+  // The app area (docs/spec/diseno.md 10.4.1): the company decides it (spaces.manage).
+  const [area, setArea] = useState<SpaceArea>(space?.area ?? "WIKI");
+  const membership = useMembership();
+  const canMoveArea = space !== null && membership.capabilities.includes("spaces.manage");
+  const areaSource = useStaticSource(
+    "space-area",
+    AREAS.map((id) => ({
+      id,
+      label:
+        id === "PREVENTION"
+          ? texts.safety.terms[membership.workspace.safety.terms].module
+          : texts.shell.areas.names[id],
+    })),
+  );
   const [error, setError] = useState<string | null>(null);
   // Quien tiene spaces.create elige cualquier departamento (o ninguno); un jefe, solo los suyos y
   // siempre uno. El servidor lo vuelve a validar.
-  const canPickAny = useMembership().capabilities.includes("spaces.create");
+  const canPickAny = membership.capabilities.includes("spaces.create");
   const departmentSource = useSpaceDepartmentSource(workspaceSlug);
   const levelSource = useStaticSource(
     "space-department-level",
@@ -158,6 +176,7 @@ function SpaceForm({
               : { departmentId: departmentId === "" ? null : departmentId }),
             ...(hasDepartment ? { departmentLevel, includeSubareas } : {}),
             description: trimmed === "" ? null : trimmed,
+            ...(canMoveArea && area !== space.area ? { area } : {}),
           });
     },
     onSuccess: async () => {
@@ -321,6 +340,25 @@ function SpaceForm({
             />
             <p className="pl-6 text-xs text-muted-foreground">{t.form.includeSubareasHint}</p>
           </div>
+        )}
+        {canMoveArea && (
+          <FormField label={t.form.area} hint={t.form.areaHint}>
+            {(control) => (
+              <Combobox
+                id={control.id}
+                aria-describedby={control["aria-describedby"]}
+                searchable={false}
+                label={t.form.area}
+                placeholder={t.form.area}
+                source={areaSource}
+                value={area}
+                onChange={(option) => {
+                  const next = AREAS.find((id) => id === option?.id);
+                  if (next !== undefined) setArea(next);
+                }}
+              />
+            )}
+          </FormField>
         )}
         <FormField label={t.form.visibility} hint={t.form.visibilityHints[visibility]}>
           {(control) => (

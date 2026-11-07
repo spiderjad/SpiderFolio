@@ -23,11 +23,15 @@ import type {
   UpdateDepartmentInput,
 } from "./departments.schemas.ts";
 
+type HomeAreaValue = "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN";
+
 export interface DepartmentView {
   id: string;
   name: string;
   description: string | null;
   color: string | null;
+  /** The area the app opens in for its members; null = Inicio. */
+  homeArea: HomeAreaValue | null;
   parentId: string | null;
   parentName: string | null;
   /** Subdepartamentos directos. */
@@ -126,6 +130,7 @@ export const departmentSelect = {
   name: true,
   description: true,
   color: true,
+  homeArea: true,
   parentId: true,
 } as const;
 
@@ -136,6 +141,7 @@ export async function toViews(
     name: string;
     description: string | null;
     color: string | null;
+    homeArea: HomeAreaValue | null;
     parentId: string | null;
   }[],
 ): Promise<DepartmentView[]> {
@@ -190,6 +196,7 @@ export async function toViews(
     name: row.name,
     description: row.description,
     color: row.color,
+    homeArea: row.homeArea,
     parentId: row.parentId,
     parentName: row.parentId === null ? null : (parentName.get(row.parentId) ?? null),
     childCount: childCount.get(row.id) ?? 0,
@@ -600,6 +607,7 @@ export async function updateDepartment(
         ...(input.name === undefined ? {} : { name: input.name }),
         ...(input.description === undefined ? {} : { description: input.description }),
         ...(input.color === undefined ? {} : { color: input.color }),
+        ...(input.homeArea === undefined ? {} : { homeArea: input.homeArea }),
         ...(input.parentId === undefined ? {} : { parentId: input.parentId }),
       },
       select: departmentSelect,
@@ -624,6 +632,7 @@ export async function updateDepartment(
       before: { name: current.name, parentId: current.parentId },
       after: { name: row.name, parentId: row.parentId },
       ...(input.headId === undefined ? {} : { headId: input.headId }),
+      ...(input.homeArea === undefined ? {} : { homeArea: input.homeArea }),
     },
   });
   const [view] = await toViews(ctx, [row]);

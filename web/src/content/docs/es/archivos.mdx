@@ -12,13 +12,17 @@ import Shot from "../../../components/Shot.astro";
 
 Todo el contenido vive en **espacios**: cada uno es la raíz de un árbol de carpetas, páginas y archivos. Están en **Archivos**, en el menú lateral.
 
-<Shot name="espacios" alt="La lista de espacios con favoritos, recientes y el motivo del acceso de cada uno" />
+<Shot
+  name="espacios"
+  alt="La lista de espacios con favoritos, recientes y el motivo del acceso de cada uno"
+/>
 
 - Un espacio puede ser **de la empresa** o **de un departamento**. En el de un departamento, su jefe y subjefes lo gestionan y las personas del departamento entran con el nivel que se elija: **Pueden editar** o **Solo pueden ver**.
 - La lista tiene **Favoritos** (la estrella), **Recientes**, filtros (**Todos**, **Mis departamentos**, **Favoritos**, **Privados**), orden por nombre, departamento o fecha, y vista de **Tarjetas** o **Lista**. Carga más al llegar al final.
 - Cada tarjeta cuenta lo que tiene el espacio («2 páginas · 1 archivo», sin contar carpetas ni la papelera) y cuándo se modificó.
 - Cada espacio te dice **por qué tienes acceso**: «Jefe de Finanzas», «Subjefe de Finanzas (área superior)», «Miembro de Contabilidad · incluye subáreas», «Administrador», «Acceso dado a ti».
 - **Nuevo espacio** (si tienes permiso) pide nombre, descripción, emoji, color, departamento y visibilidad.
+- **Archivos** está en el área **Wiki** y lista los espacios de la Wiki. Cada espacio pertenece a un área de la app: quien gestiona los espacios la cambia al editarlo (**Área de la app**: Wiki, Documentación o Prevención), y entonces el espacio aparece en el menú de esa área. Buscar o el filtro **Favoritos** siguen mostrando todos los espacios que ves. Ver [El Inicio](/es/docs/inicio#moverte-por-la-app-las-áreas).
 
 ## Quién ve cada espacio
 
@@ -36,7 +40,10 @@ En un espacio de departamento, **Incluir subáreas** (desactivada por defecto) e
 
 Al abrir un espacio ves el explorador: el árbol de carpetas a un lado y el contenido de la carpeta al otro, con la ruta (migas de pan) arriba y **Tu acceso** con el motivo.
 
-<Shot name="explorador" alt="El explorador de un espacio con el árbol de carpetas, la lista de archivos y el menú Nuevo" />
+<Shot
+  name="explorador"
+  alt="El explorador de un espacio con el árbol de carpetas, la lista de archivos y el menú Nuevo"
+/>
 
 - **Nuevo** crea una **Nueva carpeta** o una **Nueva página** (ver [Páginas](/es/docs/paginas)), y permite **Subir archivos**, **Subir carpeta** o **Importar ZIP**. También puedes **arrastrar archivos y carpetas** desde tu equipo. Los archivos grandes se suben en partes y se reanudan.
 - Se comprueba el tipo real del archivo, no solo la extensión. No se admiten ejecutables ni HTML o SVG.

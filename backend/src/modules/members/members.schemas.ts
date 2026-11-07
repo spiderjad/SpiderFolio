@@ -78,6 +78,11 @@ export const UpdateProfileJobSchema = z.strictObject({
   jobTitle: z.string().trim().max(80).nullable(),
 });
 
+/** The area the app opens in for the person (docs/spec/diseno.md 10.4.1); null = their department's. */
+export const UpdateHomeAreaSchema = z.strictObject({
+  homeArea: z.enum(["HOME", "DOCUMENTS", "WIKI", "PREVENTION", "QUALITY", "ADMIN"]).nullable(),
+});
+
 export const RemoveMemberSchema = z.strictObject({
   /** Quién se queda con lo que creó la persona (se aplica cuando haya contenido). */
   transferToMembershipId: Id.optional(),

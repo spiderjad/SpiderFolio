@@ -23,7 +23,6 @@ import {
 } from "./cae-api";
 import { CaeNav, CaeStateBadge, useCae } from "./cae-common";
 import { CompanyForm } from "./cae-company-form";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.companies;
@@ -136,7 +135,6 @@ export function CaeCompaniesPage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       <CaeNav />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_220px_200px]">
         <SearchField

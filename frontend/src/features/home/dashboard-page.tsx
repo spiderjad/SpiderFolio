@@ -243,7 +243,7 @@ function StandardDashboard() {
 // ─── Todos ───────────────────────────────────────────────────────────────────────────────
 
 /** «Mis pendientes»: lo que me falta leer y aprobar, con la acción a un clic. */
-function PendingCard({
+export function PendingCard({
   home,
   slug,
   loading,

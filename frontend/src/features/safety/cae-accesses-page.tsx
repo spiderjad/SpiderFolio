@@ -15,7 +15,6 @@ import { NotFoundPage } from "@/features/home/not-found-page";
 import { formatDateTime } from "@/lib/utils";
 import { caeApi, caeKeys, type CaeAccess, type CaeAccessFilters } from "./cae-api";
 import { CaeNav, useCae } from "./cae-common";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.accesses;
@@ -139,7 +138,6 @@ export function CaeAccessesPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
         <p className="mt-1 max-w-2xl text-xs text-muted-foreground">{t.subtitle}</p>
       </div>
-      <PpeTabs />
       <CaeNav />
       <div className="grid gap-3 sm:grid-cols-[200px_260px]">
         <FormField label={t.day}>

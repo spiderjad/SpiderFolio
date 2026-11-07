@@ -13,7 +13,7 @@ import { useInfiniteList } from "@/components/ui/infinite";
 import { useListParams, useSearchParam } from "@/features/admin/list-params";
 import { useDepartmentSource, usePositionSource } from "@/features/admin/sources";
 import { peopleApi, safetyKeys, type PeopleFilters, type SafetyPersonRow } from "./safety-api";
-import { PpeTabs, useSafety } from "./safety-common";
+import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.people;
@@ -104,7 +104,6 @@ export function PeoplePage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
         <p className="mt-1 max-w-2xl text-xs text-muted-foreground">{t.subtitle}</p>
       </div>
-      <PpeTabs />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_200px_200px_220px]">
         <SearchField
           placeholder={t.search}

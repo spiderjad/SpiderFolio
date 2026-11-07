@@ -594,6 +594,23 @@ export async function updateOwnJobTitle(ctx: AdminContext, jobTitle: string | nu
   });
 }
 
+/** Each person picks the area the app opens in (only their own membership). */
+export async function updateOwnHomeArea(
+  ctx: AdminContext,
+  homeArea: "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN" | null,
+): Promise<void> {
+  await ctx.db.membership.update({
+    where: { id: ctx.tenant.membershipId },
+    data: { homeArea },
+  });
+  await auditAdmin(ctx, {
+    action: "member.profile_update",
+    entityType: "Membership",
+    entityId: ctx.tenant.membershipId,
+    metadata: { homeArea },
+  });
+}
+
 export async function suspendMember(ctx: AdminContext, id: string): Promise<MemberView> {
   await assertGlobalManager(ctx);
   const target = await loadTarget(ctx, id);

@@ -31,6 +31,8 @@ export const UpdateDepartmentSchema = z
     color: Color,
     parentId: Id.nullable(),
     headId: Id.nullable(),
+    /** The area the app opens in for its members (docs/spec/diseno.md 10.4.1); null = Inicio. */
+    homeArea: z.enum(["HOME", "DOCUMENTS", "WIKI", "PREVENTION", "QUALITY", "ADMIN"]).nullable(),
   })
   .partial()
   .refine((value) => Object.keys(value).length > 0, "Nada que cambiar");

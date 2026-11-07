@@ -26,6 +26,7 @@ import {
   RemoveMemberSchema,
   UpdateMemberSchema,
   UpdateProfileJobSchema,
+  UpdateHomeAreaSchema,
 } from "./members.schemas.ts";
 import {
   exportMembers,
@@ -40,6 +41,7 @@ import {
   suspendMember,
   updateMember,
   updateOwnJobTitle,
+  updateOwnHomeArea,
 } from "./members.service.ts";
 
 const HOUR = 3_600_000;
@@ -183,6 +185,16 @@ export function memberRoutes(deps: AppDeps): TenantRoute[] {
       handler: async (req, res) => {
         const { jobTitle } = UpdateProfileJobSchema.parse(req.body);
         await updateOwnJobTitle(adminContextOf(req), jobTitle === "" ? null : jobTitle);
+        res.status(204).end();
+      },
+    },
+    {
+      // Each person picks the area the app opens in (docs/spec/diseno.md 10.4.1).
+      method: "patch",
+      path: "/profile/home-area",
+      handler: async (req, res) => {
+        const { homeArea } = UpdateHomeAreaSchema.parse(req.body);
+        await updateOwnHomeArea(adminContextOf(req), homeArea);
         res.status(204).end();
       },
     },

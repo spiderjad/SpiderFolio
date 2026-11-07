@@ -221,6 +221,45 @@ export const es = {
     admin: "Administración",
     adminBack: "Volver a la app",
     adminPlugins: "Plugins",
+    /** Navigation by areas (docs/spec/diseno.md 10.4.1). */
+    areas: {
+      label: "Áreas",
+      more: "Más",
+      moreTitle: "Más áreas",
+      openAreaMenu: (area: string) => `Abrir el menú de ${area}`,
+      names: {
+        HOME: "Inicio",
+        DOCUMENTS: "Documentación",
+        WIKI: "Wiki",
+        PREVENTION: "Prevención",
+        QUALITY: "Calidad",
+        ADMIN: "Administración",
+      },
+      short: {
+        HOME: "Inicio",
+        DOCUMENTS: "Docs",
+        WIKI: "Wiki",
+        PREVENTION: "PRL",
+        QUALITY: "Calidad",
+        ADMIN: "Admin",
+      },
+      /** Prevention's short name in the rail, by the company's terms. */
+      shortPrevention: { es: "PRL", latam: "SST" },
+      panel: "Panel",
+      pending: "Mis pendientes",
+      pendingHint:
+        "Todo lo que te toca hacer, de todas las áreas: lecturas, aprobaciones, formularios de hoy, vencimientos y medidas.",
+      pendingCount: (count: number) =>
+        count === 1 ? "1 cosa pendiente" : `${String(count)} cosas pendientes`,
+      spaces: "Espacios",
+      areaSpaces: "Documentos del área",
+      controlled: "Documentos controlados",
+      readings: "Mis lecturas",
+      mine: "Lo mío",
+      mySheet: "Mi ficha",
+      myActions: "Mis medidas",
+      report: "Comunicar un accidente",
+    },
     company: {
       label: "Empresa",
       settings: "Configuración de la empresa",

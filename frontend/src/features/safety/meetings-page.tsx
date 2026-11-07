@@ -27,7 +27,7 @@ import {
   type MeetingKind,
 } from "./safety-api";
 import { CommitteeNav, useCommitteeTerms } from "./committee-page";
-import { PpeTabs, useSafety } from "./safety-common";
+import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.meetings;
@@ -134,7 +134,6 @@ export function MeetingsPage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       <CommitteeNav />
       <Card className="grid gap-3 p-0">
         <div className="grid grid-cols-1 gap-3 px-4 pt-4 sm:grid-cols-3 sm:items-end">

@@ -41,15 +41,16 @@ Etiquetas de grupo text-xs font-medium uppercase tracking-[0.18em] text-muted-fo
 Números de KPI text-4xl font-semibold tracking-tight tabular-nums
 Docs y editor prose (17 px, interlineado 1.75 y colores de los tokens, definidos en el preset; no hace falta prose-invert)
 10.4 Layout de la app (referencia: captura del panel)
-Sidebar blanca de 260 px con borde derecho:
-Arriba: logo del workspace + nombre, botón para colapsar (<).
-Ítems principales sin título de grupo (Inicio, Archivos, Páginas, Aprobaciones, Lecturas) y luego grupos con etiqueta en mayúsculas (CONTENIDO, GESTIÓN, CONFIGURACIÓN).
+Desde el 07/11/2026 la navegación es por áreas (10.4.1): a la izquierda, la barra de áreas de 64 px y, al lado, el menú del área (la sidebar de abajo, que ahora muestra solo las secciones del área activa).
+Sidebar blanca de 260 px con borde derecho (el menú del área):
+Arriba: logo del workspace + nombre, botón para colapsar (<), el buscador y el «+» de crear, y el título del área.
+Las secciones del área, con grupos de etiqueta en mayúsculas cuando hacen falta (Inicio: Panel, Mis pendientes y Recientes; Wiki: Espacios, Compartidos y Favoritos; Prevención: sus secciones, «Lo mío» y «Documentos del área»; Documentación: lo controlado y sus espacios).
 Ítem: ícono + texto, h-10 px-3 rounded-lg; activo con bg-primary-soft text-primary-soft-foreground font-medium; contadores a la derecha como pastillas pequeñas (neutras o danger-soft si urgen).
 Abajo, separado por borde: nombre del workspace en gris, avatar con iniciales sobre fondo primario, nombre, insignia de rol (ADMIN en primary-soft) y botón de cerrar sesión con ícono.
-Colapsada: solo íconos con tooltip. En móvil: Sheet desde la izquierda.
-Barra superior fina con el título de la sección a la izquierda, fecha en gris y el botón primario contextual a la derecha (+ Nuevo documento).
+Colapsada: solo íconos con tooltip (Ctrl+B). Por debajo de 1024 px: Sheet que se abre desde el título de la barra superior.
+Barra superior fina con el título de la sección a la izquierda, fecha en gris y, a la derecha, lo transversal: Mis pendientes (con su número), Pregúntale a Bian, el buscador y la campana.
 Contenido sobre bg-surface, max-w-[1400px], padding px-4 sm:px-6 lg:px-8 py-6: título grande + fecha o subtítulo en gris, y luego bloques.
-10.4.1 Navegación por áreas (decidida el 07/11/2026, opción B de docs/plans/navegacion/propuesta.html)
+10.4.1 Navegación por áreas (decidida el 07/11/2026, opción B de docs/plans/navegacion/propuesta.html) (hecha)
 Problema: el menú plano (Inicio, Mis documentos, Archivos, Compartido, Aprobaciones, Vencimientos, Prevención, 12 de Administración y los espacios) ya no escala con Prevención, la CAE y Calidad.
 
 Estructura: **barra de áreas + menú del área**.
@@ -75,6 +76,16 @@ Decisiones:
 - **Área de entrada**: la elige la empresa por departamento (`Department.homeArea`) y cada persona puede cambiarla en su perfil (`Membership.homeArea`, gana sobre la del departamento). Por defecto, Inicio.
 - Las rutas no cambian (`/app/:slug/seguridad`, `/files`…); el área activa se deduce de la ruta, así los enlaces y QR existentes siguen sirviendo.
 - Un área sin nada que mostrarle a la persona no aparece en su barra.
+
+Implementación (07/11/2026):
+- Datos (migración `navigation_areas`): `Space.area` (`SpaceArea`: `WIKI` por defecto, `DOCUMENTS`, `PREVENTION`, `QUALITY`); el espacio del módulo de Prevención pasa a `PREVENTION` al crearse y, para los que ya existían, con un UPDATE de datos en la misma migración (por `settings.safety.spaceId`). `Department.homeArea?` y `Membership.homeArea?` (`HomeArea`: `HOME`, `DOCUMENTS`, `WIKI`, `PREVENTION`, `QUALITY`, `ADMIN`). La cuenta (`/auth/me`) devuelve por membresía `homeArea` y `departmentHomeArea` (el del primer departamento por nombre que tenga uno).
+- Quién cambia qué: el área de un espacio, quien tiene `spaces.manage` (en la configuración del espacio, «Área de la app»; el resto recibe 403 si lo intenta); el área de entrada de un departamento, quien puede editarlo («Área de entrada»); la propia, cada persona en Mi perfil (`PATCH /w/:slug/profile/home-area`). `GET /spaces?area=` filtra por una o varias áreas (separadas por comas).
+- Frontend: `frontend/src/components/nav-areas.ts` arma las áreas y sus secciones con las capacidades de hoy (`canSee`, las de Prevención y la CAE) y deduce el área activa de la ruta (la entrada más profunda que contiene la dirección; las pantallas de un espacio, por el área del espacio). `app-shell.tsx`: barra de áreas (≥ 768 px), menú del área (≥ 1024 px; por debajo, Sheet desde el título), barra inferior en el celular (< 768 px: hasta 4 áreas y «Más» con el resto y Administración). Accesibilidad: `nav` con `aria-label` («Áreas»), `aria-current="page"` en el área y la entrada activas, foco visible, tooltips con el nombre completo.
+- Áreas y secciones: Inicio (Panel, Mis pendientes, los plugins con pantalla propia y Recientes); Documentación (Mis lecturas, Aprobaciones, Vencimientos, Documentos controlados, Salas de auditoría y sus espacios); Wiki (Espacios, Compartidos, Departamentos en solo lectura para quien no los gestiona, y Favoritos); Prevención (Resumen, Personas, EPIs, Catálogo, Formación, Accidentes, Planificación, Indicadores, Emergencias, Comité, Contratas, según los permisos de cada sección; «Lo mío»: Mi ficha, Mis medidas, Comunicar un accidente; y los espacios del área); Administración (el resto de las secciones del panel). Nombre corto de Prevención en la barra: «PRL» (es) / «SST» (latam). Calidad está definida pero no se muestra hasta que exista su módulo.
+- La barra de pestañas de Prevención (`PpeTabs`) se quitó: sus secciones están en el menú del área; quedan las pestañas internas de la CAE, Emergencias y el Comité.
+- Mis pendientes: `/app/:slug/pendientes` junta lo que ya había (lecturas y aprobaciones del resumen del Inicio, formularios por llenar, vencimientos propios, medidas de Prevención sin hacer y el aviso de EPI y formación). El número de la barra superior suma lecturas, aprobaciones, formularios, vencimientos y, para quien no gestiona Prevención, su número del módulo. El Inicio de siempre queda como «Panel».
+- Entrada: al abrir `/app/:slug` (al iniciar sesión o desde un marcador) la app va al área de entrada (`Membership.homeArea` ?? `departmentHomeArea` ?? Inicio) solo la primera vez en esa carga de la página; una dirección más profunda no se toca, y «Panel» sigue llevando al Inicio.
+- Simplificaciones: la lista de Archivos (área Wiki) muestra solo los espacios `WIKI` salvo al buscar o con el filtro Favoritos, que siguen mostrando todos; las áreas no Wiki listan entre todas hasta 40 espacios en su menú (un solo pedido); Calidad nunca aparece (ni en la barra ni como opción de área de entrada o de espacio) hasta que exista el módulo; el área de entrada de un departamento se elige al editarlo (no al crearlo); la barra se oculta con una sola área de trabajo (Administración queda entonces en el menú).
 10.5 Componentes clave (todos en frontend/src/components/ui)
 Banner de aviso: bg-warning-soft con borde ámbar, ícono de advertencia, texto con el número en negrita y botón ámbar a la derecha ("Tienes 4 documentos pendientes de aprobar · Ver lista").
 Tarjeta KPI: blanca, rounded-2xl border p-4 sm:p-5, etiqueta en mayúsculas espaciada y número grande debajo. En grilla de 4 columnas (2 en tablet, 1 en móvil).

@@ -172,6 +172,13 @@ export const profileTexts: Catalog<typeof EsProfile> = {
     title: "Theme",
     description: "Choose how the app looks in this browser.",
   },
+  homeArea: {
+    title: "Where the app opens",
+    description: "The area the app starts in when you sign in.",
+    label: "Home area",
+    department: (area: string) => `Your department's (${area})`,
+    saved: "Saved. Next time you sign in, the app opens there.",
+  },
   language: {
     title: "Language",
     description: "The language of the app, your emails and Bian.",

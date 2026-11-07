@@ -168,6 +168,13 @@ export const profileTexts = {
     title: "Tema",
     description: "Elige cómo se ve la aplicación en este navegador.",
   },
+  homeArea: {
+    title: "Dónde se abre la app",
+    description: "El área con la que empieza la app cuando entras.",
+    label: "Área de entrada",
+    department: (area: string) => `La de tu departamento (${area})`,
+    saved: "Guardado. La próxima vez que entres, la app se abre ahí.",
+  },
   language: {
     title: "Idioma",
     description: "El idioma de la aplicación, de tus emails y de Bian.",

@@ -1,8 +1,11 @@
-// Marco de la app (10.4): sidebar de 260 px que se contrae a 72 px (solo íconos), barra superior
-// fina y contenido sobre bg-surface. En móvil, el sidebar es un panel lateral (Sheet).
-// Los ítems de módulos que todavía no existen no se muestran.
+// The app's frame (docs/spec/diseno.md 10.4 and 10.4.1, navigation by areas): a 64 px rail of areas,
+// the active area's menu (260 px, collapsible to 72 px icons), a thin top bar with what's transversal
+// (search, Mis pendientes, Bian, notifications) and the content on bg-surface. Below 1024 px the
+// area's menu is a Sheet opened from the title; below 768 px the areas move to a bottom bar.
 import { expiriesApi, expiriesKeys } from "@/features/expiries/expiries-api";
-import { peopleApi } from "@/features/safety/safety-api";
+import { committeeApi, committeeKeys, peopleApi } from "@/features/safety/safety-api";
+import { caeApi, caeKeys } from "@/features/safety/cae-api";
+import { formsApi, formsKeys } from "@/features/forms/forms-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -13,8 +16,10 @@ import {
   CircleHelp,
   FilePlus,
   Layers,
+  ListTodo,
   LogOut,
   Menu,
+  MoreHorizontal,
   Moon,
   Plus,
   Search,
@@ -41,7 +46,15 @@ import {
   closeAllTooltips,
 } from "@/components/ui/overlay";
 import { Button } from "@/components/ui/button";
-import { adminNavItems, canSee, mainNavItems } from "@/components/nav-items";
+import { canSee } from "@/components/nav-items";
+import {
+  activeAreaOf,
+  activeItemOf,
+  areasOf,
+  homeAreaOf,
+  landingOf,
+  type Area,
+} from "@/components/nav-areas";
 import type { Icon } from "@spiderfolio/plugin-sdk/frontend";
 import { useActivePlugins } from "@/plugins/registry";
 import { documentsApi, documentsKeys, type RecentItem } from "@/features/documents/documents-api";
@@ -684,46 +697,54 @@ function HelpLink({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function SidebarContent({
-  account,
-  membership,
-  collapsed,
-  onLogout,
-  onSearch,
-  onNewPage,
-  className,
-}: {
-  account: Account;
-  membership: Membership;
-  collapsed: boolean;
-  onLogout: () => void;
-  onSearch: () => void;
-  onNewPage: () => void;
-  className?: string;
-}) {
+/** What the rail and the menus need: the person's areas, the active one and the counts. */
+function useAreaNav(membership: Membership) {
   const { pathname } = useLocation();
   const slug = membership.workspace.slug;
   const plugins = useActivePlugins(slug);
-  const adminItems = adminNavItems(slug, membership, plugins);
-  const canAdminister = adminItems.length > 0;
-  // Dentro del panel de administración el menú es el suyo; fuera, el principal.
-  const inAdmin = canAdminister && pathname.startsWith(`/app/${slug}/admin`);
-  const items = mainNavItems(slug, membership, plugins);
   const role = membership.role.base;
-  const favorites = useQuery({
-    queryKey: [...filesKeys.favoriteSpaces(slug), "nav"],
-    queryFn: () =>
-      filesApi.spaces(slug, { filter: "favorites", sort: "favorite", pageSize: FAVORITES_SHOWN }),
+  const caps = membership.capabilities;
+  const safety = membership.workspace.safety;
+  const safetyOn = safety.enabled && role !== "GUEST";
+  const managesSafety = caps.includes("safety.manage");
+  // The committee's members see its tab without managing the module (docs/spec/seguridad-salud.md).
+  const committee = useQuery({
+    queryKey: committeeKeys.access(slug),
+    queryFn: () => committeeApi.access(slug),
+    enabled: safetyOn && !managesSafety,
     staleTime: 60_000,
-    enabled: !inAdmin,
   });
-  const recents = useQuery({
-    queryKey: [...documentsKeys.recent(slug), "nav"],
-    queryFn: () => documentsApi.recent(slug, 5),
+  // The spaces listed outside the Wiki: a few per area, in its menu.
+  // One request for both areas (a few spaces each; the rest are in Archivos).
+  const areaSpaces = useQuery({
+    queryKey: [...filesKeys.spaces(slug), "areas"],
+    queryFn: () =>
+      filesApi.spaces(slug, { area: ["DOCUMENTS", "PREVENTION"], pageSize: AREA_SPACES_SHOWN }),
     select: (page) => page.items,
     staleTime: 60_000,
-    enabled: !inAdmin,
   });
+  const documentSpaces = useMemo(
+    () => areaSpaces.data?.filter((space) => space.area === "DOCUMENTS"),
+    [areaSpaces.data],
+  );
+  const preventionSpaces = useMemo(
+    () => (safetyOn ? areaSpaces.data?.filter((space) => space.area === "PREVENTION") : []),
+    [areaSpaces.data, safetyOn],
+  );
+  const areas = useMemo(
+    () =>
+      areasOf(slug, membership, plugins, {
+        committee: managesSafety || committee.data?.member === true,
+        spaces: {
+          ...(documentSpaces === undefined ? {} : { DOCUMENTS: documentSpaces }),
+          ...(preventionSpaces === undefined ? {} : { PREVENTION: preventionSpaces }),
+        },
+      }),
+    [slug, membership, plugins, managesSafety, committee.data, documentSpaces, preventionSpaces],
+  );
+  const active = activeAreaOf(pathname, slug, areas);
+
+  // Counts: shown next to their entries, as a dot on their area and summed in «Mis pendientes».
   const sharedSummary = useQuery({
     queryKey: [...filesKeys.all(slug), "shared", "summary"],
     queryFn: () => filesApi.sharedSummary(slug),
@@ -732,9 +753,8 @@ function SidebarContent({
   const readingCount = useReadingCount(slug);
   const approvalCount = useApprovalCount(
     slug,
-    items.some((item) => item.to === `/app/${slug}/aprobaciones`),
+    caps.includes("documents.approve") || membership.leadsDepartments,
   );
-  const safetyOn = membership.workspace.safety.enabled && role !== "GUEST";
   const safetyCount = useQuery({
     queryKey: ["w", slug, "safety", "my-count"],
     queryFn: () => peopleApi.myCount(slug),
@@ -746,11 +766,25 @@ function SidebarContent({
     queryKey: expiriesKeys.myCount(slug),
     queryFn: () => expiriesApi.myCount(slug),
     staleTime: 60_000,
-    enabled: role !== "GUEST" && !inAdmin,
+    enabled: role !== "GUEST",
+  });
+  const formsPending = useQuery({
+    queryKey: formsKeys.pending(slug),
+    queryFn: () => formsApi.pending(slug),
+    select: (data) => data.items.length,
+    staleTime: 60_000,
+  });
+  const caeReview = caps.includes("cae.manage") && safety.cae;
+  const caePending = useQuery({
+    queryKey: caeKeys.documents(slug, { status: "pending" }),
+    queryFn: () => caeApi.documents(slug, { status: "pending" }, undefined, undefined, 1),
+    select: (page) => page.total,
+    enabled: caeReview,
   });
   const unseenShared = sharedSummary.data?.unseen ?? 0;
+  const base = `/app/${slug}`;
   const indicatorOf = (to: string): Indicator | undefined => {
-    if (to === `/app/${slug}/mis-documentos` && readingCount > 0) {
+    if (to === `${base}/mis-documentos` && readingCount > 0) {
       return {
         kind: "count",
         count: readingCount,
@@ -758,7 +792,7 @@ function SidebarContent({
         label: texts.shell.pendingReadings(readingCount),
       };
     }
-    if (to === `/app/${slug}/aprobaciones` && approvalCount > 0) {
+    if (to === `${base}/aprobaciones` && approvalCount > 0) {
       return {
         kind: "count",
         count: approvalCount,
@@ -766,7 +800,11 @@ function SidebarContent({
         label: texts.shell.pendingApprovals(approvalCount),
       };
     }
-    if (to === `/app/${slug}/seguridad` && (safetyCount.data ?? 0) > 0) {
+    // For whoever manages the module, the Summary's total; for the rest, their own.
+    const safetyTo = managesSafety
+      ? `${base}/seguridad/resumen`
+      : `${base}/seguridad/personas/${membership.id}`;
+    if (to === safetyTo && (safetyCount.data ?? 0) > 0) {
       const count = safetyCount.data ?? 0;
       return {
         kind: "count",
@@ -775,7 +813,11 @@ function SidebarContent({
         label: texts.safety.people.pendingCount(count),
       };
     }
-    if (to === `/app/${slug}/vencimientos` && (expiryCount.data?.count ?? 0) > 0) {
+    if (to === `${base}/seguridad/cae` && (caePending.data ?? 0) > 0) {
+      const count = caePending.data ?? 0;
+      return { kind: "count", count, tone: "primary", label: texts.cae.review.tab(count) };
+    }
+    if (to === `${base}/vencimientos` && (expiryCount.data?.count ?? 0) > 0) {
       const { count, expired } = expiryCount.data ?? { count: 0, expired: 0 };
       // Red if any has expired; amber if they're only due soon.
       return {
@@ -786,11 +828,237 @@ function SidebarContent({
         detail: texts.expiries.countDetail(expired, count - expired),
       };
     }
-    if (to === `/app/${slug}/files/shared` && unseenShared > 0) {
+    if (to === `${base}/files/shared` && unseenShared > 0) {
       return { kind: "dot", tone: "primary", label: texts.shell.newShared };
     }
     return undefined;
   };
+  // «Mis pendientes»: what the person has to do themselves (a manager's Summary isn't theirs).
+  const pending =
+    readingCount +
+    approvalCount +
+    (formsPending.data ?? 0) +
+    (expiryCount.data?.count ?? 0) +
+    (managesSafety || caps.includes("safety.health") ? 0 : (safetyCount.data ?? 0));
+  const newsIn = (area: Area): boolean =>
+    area.items.some((item) => indicatorOf(item.to) !== undefined);
+  const work = areas.filter((area) => area.id !== "ADMIN");
+  return {
+    slug,
+    areas,
+    work,
+    admin: areas.find((area) => area.id === "ADMIN"),
+    active: areas.find((area) => area.id === active) ?? areas[0],
+    indicatorOf,
+    newsIn,
+    pending,
+    /** With a single work area there's no rail: everything is in the menu. */
+    showRail: work.length > 1,
+  };
+}
+
+type AreaNav = ReturnType<typeof useAreaNav>;
+
+/** How many spaces of the non-Wiki areas the menus list (the rest, in Archivos). */
+const AREA_SPACES_SHOWN = 40;
+
+/** An area in the rail: icon and short name, the active one in primary-soft. */
+function RailItem({ area, active, news }: { area: Area; active: boolean; news: boolean }) {
+  const Icon = area.icon;
+  const to = landingOf(area);
+  if (to === undefined) return null;
+  return (
+    <Tooltip side="right" content={area.label}>
+      <Link
+        to={to}
+        viewTransition
+        aria-current={active ? "page" : undefined}
+        aria-label={area.label}
+        className={cn(
+          "relative flex w-[52px] flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] leading-tight text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+          active &&
+            "bg-primary-soft font-medium text-primary-soft-foreground ring-1 ring-inset ring-primary/15 hover:bg-primary-soft hover:text-primary-soft-foreground",
+        )}
+      >
+        <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
+        <span className="w-full truncate px-0.5 text-center">{area.short}</span>
+        {news && (
+          <span
+            aria-hidden="true"
+            className="absolute right-2 top-1 size-2 rounded-full bg-primary"
+          />
+        )}
+      </Link>
+    </Tooltip>
+  );
+}
+
+/** The rail of areas (desktop and tablet): work areas on top, Administración at the bottom. */
+function AreaRail({ nav }: { nav: AreaNav }) {
+  return (
+    <nav
+      aria-label={texts.shell.areas.label}
+      className="flex h-full w-16 flex-col items-center gap-1 border-r border-border bg-surface pb-3 pt-4"
+    >
+      {nav.work.map((area) => (
+        <RailItem
+          key={area.id}
+          area={area}
+          active={nav.active?.id === area.id}
+          news={nav.newsIn(area)}
+        />
+      ))}
+      {nav.admin !== undefined && (
+        <div className="mt-auto border-t border-border pt-2">
+          <RailItem area={nav.admin} active={nav.active?.id === "ADMIN"} news={false} />
+        </div>
+      )}
+    </nav>
+  );
+}
+
+/** On the phone (< 768 px): up to four areas at the bottom and «Más» with the rest. */
+function BottomBar({ nav }: { nav: AreaNav }) {
+  const shown = nav.work.slice(0, 4);
+  const rest = [...nav.work.slice(4), ...(nav.admin === undefined ? [] : [nav.admin])];
+  const item =
+    "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] leading-tight text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
+  return (
+    <nav
+      aria-label={texts.shell.areas.label}
+      className="fixed inset-x-0 bottom-0 z-40 flex h-16 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden print:hidden"
+    >
+      {shown.map((area) => {
+        const to = landingOf(area);
+        if (to === undefined) return null;
+        const Icon = area.icon;
+        const active = nav.active?.id === area.id;
+        return (
+          <Link
+            key={area.id}
+            to={to}
+            viewTransition
+            aria-current={active ? "page" : undefined}
+            className={cn(item, active && "font-semibold text-primary-soft-foreground")}
+          >
+            <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
+            <span className="max-w-full truncate px-1">{area.short}</span>
+            {nav.newsIn(area) && (
+              <span
+                aria-hidden="true"
+                className="absolute right-[calc(50%-18px)] top-2 size-2 rounded-full bg-primary"
+              />
+            )}
+          </Link>
+        );
+      })}
+      {rest.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={texts.shell.areas.moreTitle}
+              className={cn(
+                item,
+                rest.some((area) => area.id === nav.active?.id) &&
+                  "font-semibold text-primary-soft-foreground",
+              )}
+            >
+              <MoreHorizontal className="size-5" strokeWidth={1.75} aria-hidden="true" />
+              <span>{texts.shell.areas.more}</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="end" className="w-56">
+            {rest.map((area) => {
+              const to = landingOf(area);
+              if (to === undefined) return null;
+              const Icon = area.icon;
+              return (
+                <DropdownMenuItem key={area.id} asChild>
+                  <Link to={to} aria-current={nav.active?.id === area.id ? "page" : undefined}>
+                    <Icon strokeWidth={1.75} aria-hidden="true" />
+                    {area.label}
+                  </Link>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </nav>
+  );
+}
+
+/** One area's entries, grouped by their label, with the current one marked. */
+function AreaItems({ nav, area, collapsed }: { nav: AreaNav; area: Area; collapsed: boolean }) {
+  const { pathname } = useLocation();
+  const current = activeItemOf(pathname, area.items);
+  let group: string | undefined;
+  return (
+    <>
+      {area.items.map((item) => {
+        const header = item.group !== undefined && item.group !== group;
+        group = item.group;
+        const indicator = nav.indicatorOf(item.to);
+        return (
+          <div key={item.to}>
+            {header && <SectionLabel collapsed={collapsed}>{item.group}</SectionLabel>}
+            <NavItem
+              to={item.to}
+              label={item.label}
+              icon={item.icon}
+              collapsed={collapsed}
+              active={current === item.to}
+              {...(item.space === undefined
+                ? {}
+                : { mark: <SpaceMark space={item.space} size={collapsed ? "sm" : "xs"} /> })}
+              {...(indicator === undefined ? {} : { indicator })}
+              {...(item.end === true ? { end: true } : {})}
+            />
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function SidebarContent({
+  account,
+  membership,
+  nav,
+  collapsed,
+  onLogout,
+  onSearch,
+  onNewPage,
+  className,
+}: {
+  account: Account;
+  membership: Membership;
+  nav: AreaNav;
+  collapsed: boolean;
+  onLogout: () => void;
+  onSearch: () => void;
+  onNewPage: () => void;
+  className?: string;
+}) {
+  const slug = membership.workspace.slug;
+  const area = nav.active;
+  const role = membership.role.base;
+  const canAdminister = nav.admin !== undefined;
+  const favorites = useQuery({
+    queryKey: [...filesKeys.favoriteSpaces(slug), "nav"],
+    queryFn: () =>
+      filesApi.spaces(slug, { filter: "favorites", sort: "favorite", pageSize: FAVORITES_SHOWN }),
+    staleTime: 60_000,
+    enabled: area?.id === "WIKI",
+  });
+  const recents = useQuery({
+    queryKey: [...documentsKeys.recent(slug), "nav"],
+    queryFn: () => documentsApi.recent(slug, 5),
+    select: (page) => page.items,
+    staleTime: 60_000,
+    enabled: area?.id === "HOME",
+  });
   const dark = isDarkTheme();
   const favoriteSpaces = favorites.data?.items ?? [];
   const recentItems = recents.data ?? [];
@@ -810,99 +1078,77 @@ function SidebarContent({
       />
       <nav
         className="scroll-thin min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-2"
-        aria-label={membership.workspace.name}
+        aria-label={area?.label ?? membership.workspace.name}
       >
         <div className="space-y-0.5">
-          {inAdmin ? (
+          {area !== undefined && (
             <>
-              <NavItem
-                to={`/app/${slug}`}
-                label={texts.shell.adminBack}
-                icon={ArrowLeft}
-                collapsed={collapsed}
-                active={false}
-              />
-              <SectionLabel collapsed={collapsed}>{texts.shell.admin}</SectionLabel>
-              {adminItems
-                .filter((item) => item.plugins !== true)
-                .map(({ to, label, icon }) => (
-                  <NavItem key={to} to={to} label={label} icon={icon} collapsed={collapsed} />
-                ))}
-              {adminItems.some((item) => item.plugins === true) && (
-                <>
-                  <SectionLabel collapsed={collapsed}>{texts.shell.adminPlugins}</SectionLabel>
-                  {adminItems
-                    .filter((item) => item.plugins === true)
-                    .map(({ to, label, icon }) => (
-                      <NavItem key={to} to={to} label={label} icon={icon} collapsed={collapsed} />
-                    ))}
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {items.map(({ to, label, icon, end }) => {
-                const indicator = indicatorOf(to);
-                return (
-                  <NavItem
-                    key={to}
-                    to={to}
-                    label={label}
-                    icon={icon}
-                    collapsed={collapsed}
-                    {...(indicator === undefined ? {} : { indicator })}
-                    {...(end === true ? { end: true } : {})}
-                  />
-                );
-              })}
-              {(favoriteSpaces.length > 0 || !collapsed) && (
-                <div className="space-y-2 pt-4">
-                  <CollapsibleSection
-                    id="favorites"
-                    label={texts.shell.favorites}
-                    collapsed={collapsed}
-                    {...((favorites.data?.total ?? 0) > FAVORITES_SHOWN
-                      ? {
-                          viewAll: {
-                            to: `/app/${slug}/files?filtro=favoritos`,
-                            label: texts.shell.favoritesAll(favorites.data?.total ?? 0),
-                          },
-                        }
-                      : {})}
-                  >
-                    {favoriteSpaces.length === 0 && !favorites.isPending && (
-                      <p className="ml-2 px-2.5 py-1 text-xs text-muted-foreground">
-                        {texts.shell.favoritesEmpty}
-                      </p>
-                    )}
-                    <FavoriteRows slug={slug} spaces={favoriteSpaces} collapsed={collapsed} />
-                  </CollapsibleSection>
-                  {recentItems.length > 0 && !collapsed && (
-                    <CollapsibleSection
-                      id="recents"
-                      label={texts.shell.recents}
-                      collapsed={collapsed}
-                    >
-                      {recentItems.map((item) => (
-                        <RecentRow key={item.node.id} slug={slug} item={item} />
-                      ))}
-                    </CollapsibleSection>
-                  )}
-                </div>
-              )}
-              <div className="my-2 h-px bg-border" role="separator" />
-              {canAdminister && (
+              <p
+                className={cn(
+                  "truncate px-2.5 pb-1 text-sm font-semibold tracking-tight",
+                  fade(collapsed),
+                  collapsed && "sr-only",
+                )}
+              >
+                {area.label}
+              </p>
+              {area.id === "ADMIN" && !nav.showRail && (
                 <NavItem
-                  to={`/app/${slug}/admin`}
-                  label={texts.shell.admin}
-                  icon={Settings}
+                  to={`/app/${slug}`}
+                  label={texts.shell.adminBack}
+                  icon={ArrowLeft}
                   collapsed={collapsed}
                   active={false}
                 />
               )}
-              <HelpLink collapsed={collapsed} />
+              <AreaItems nav={nav} area={area} collapsed={collapsed} />
             </>
           )}
+          {area?.id === "WIKI" && (favoriteSpaces.length > 0 || !collapsed) && (
+            <div className="pt-4">
+              <CollapsibleSection
+                id="favorites"
+                label={texts.shell.favorites}
+                collapsed={collapsed}
+                {...((favorites.data?.total ?? 0) > FAVORITES_SHOWN
+                  ? {
+                      viewAll: {
+                        to: `/app/${slug}/files?filtro=favoritos`,
+                        label: texts.shell.favoritesAll(favorites.data?.total ?? 0),
+                      },
+                    }
+                  : {})}
+              >
+                {favoriteSpaces.length === 0 && !favorites.isPending && (
+                  <p className="ml-2 px-2.5 py-1 text-xs text-muted-foreground">
+                    {texts.shell.favoritesEmpty}
+                  </p>
+                )}
+                <FavoriteRows slug={slug} spaces={favoriteSpaces} collapsed={collapsed} />
+              </CollapsibleSection>
+            </div>
+          )}
+          {area?.id === "HOME" && recentItems.length > 0 && !collapsed && (
+            <div className="pt-4">
+              <CollapsibleSection id="recents" label={texts.shell.recents} collapsed={collapsed}>
+                {recentItems.map((item) => (
+                  <RecentRow key={item.node.id} slug={slug} item={item} />
+                ))}
+              </CollapsibleSection>
+            </div>
+          )}
+          <div className="my-2 h-px bg-border" role="separator" />
+          {/* Without the rail (a single work area), Administración stays in the menu. */}
+          {!nav.showRail && canAdminister && area?.id !== "ADMIN" && (
+            <NavItem
+              to={`/app/${slug}/admin`}
+              label={texts.shell.admin}
+              icon={Settings}
+              collapsed={collapsed}
+              active={false}
+            />
+          )}
+          <HelpLink collapsed={collapsed} />
         </div>
       </nav>
       <div className="shrink-0 border-t border-border px-3 py-2">
@@ -971,6 +1217,28 @@ function SidebarContent({
   );
 }
 
+/** Workspaces whose landing already ran in this page load (the dashboard stays reachable). */
+const landed = new Set<string>();
+
+/**
+ * Opening /app/:slug (after signing in, or from a bookmark) goes to the person's home area
+ * (docs/spec/diseno.md 10.4.1); a deeper address is left alone, and only the first time.
+ */
+function useHomeAreaLanding(membership: Membership, nav: AreaNav) {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const slug = membership.workspace.slug;
+  useEffect(() => {
+    if (landed.has(slug)) return;
+    landed.add(slug);
+    if (pathname.replace(/\/$/u, "") !== `/app/${slug}`) return;
+    const home = homeAreaOf(membership, nav.areas);
+    if (home === undefined || home.id === "HOME") return;
+    const to = landingOf(home);
+    if (to !== undefined) void navigate(to, { replace: true });
+  }, [slug, pathname, membership, nav.areas, navigate]);
+}
+
 export function AppShell({
   account,
   membership,
@@ -988,6 +1256,8 @@ export function AppShell({
 }) {
   // Before the screens render: their dates and times are in the company's zone.
   setAppTimeZone(membership.workspace.timeZone);
+  const nav = useAreaNav(membership);
+  useHomeAreaLanding(membership, nav);
   const [collapsed, setCollapsed] = useState(readSidebarCollapsed);
   const toggle = useCallback(() => {
     // Al iniciar la transición no puede quedar ningún globo abierto (se quedaría pegado).
@@ -1044,10 +1314,31 @@ export function AppShell({
     };
   }, [toggle]);
   const { pathname } = useLocation();
+  // Below 1024 px the area's menu is a Sheet opened from the title; it closes on navigating.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
   useSharedToast(membership.workspace.slug);
   const today = formatToday();
+  const slug = membership.workspace.slug;
+  const openSearch = () => {
+    setPickingSpace(false);
+    setSearching(true);
+  };
+  const openNewPage = () => {
+    setPickingSpace(true);
+    setSearching(true);
+  };
+  const pendingLabel =
+    nav.pending > 0 ? texts.shell.areas.pendingCount(nav.pending) : texts.shell.areas.pending;
   return (
     <div className="flex min-h-dvh w-full min-w-0 max-w-full bg-surface">
+      {nav.showRail && (
+        <div className="sticky top-0 z-40 hidden h-dvh shrink-0 md:block print:hidden">
+          <AreaRail nav={nav} />
+        </div>
+      )}
       <div
         className={cn(
           "sticky top-0 z-40 hidden h-dvh shrink-0 transition-[width] will-change-[width] lg:block print:hidden",
@@ -1059,16 +1350,11 @@ export function AppShell({
           <SidebarContent
             account={account}
             membership={membership}
+            nav={nav}
             collapsed={collapsed}
             onLogout={onLogout}
-            onSearch={() => {
-              setPickingSpace(false);
-              setSearching(true);
-            }}
-            onNewPage={() => {
-              setPickingSpace(true);
-              setSearching(true);
-            }}
+            onSearch={openSearch}
+            onNewPage={openNewPage}
             // El contenido sigue el ancho del panel: con un ancho fijo de 260 px, las filas centradas
             // del modo contraído quedarían fuera de los 72 px visibles (íconos invisibles).
             className={cn(
@@ -1086,40 +1372,59 @@ export function AppShell({
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 print:hidden flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur sm:px-6">
-          <Sheet>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                aria-label={texts.shell.openMenu}
+              <button
+                type="button"
+                aria-label={texts.shell.areas.openAreaMenu(nav.active?.label ?? title)}
+                className="-ml-2 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1 font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
               >
-                <Menu strokeWidth={1.75} />
-              </Button>
+                <Menu
+                  className="size-4 shrink-0 text-muted-foreground"
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                />
+                <span className="truncate">{title}</span>
+                <ChevronDown
+                  className="size-4 shrink-0 text-muted-foreground"
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                />
+              </button>
             </SheetTrigger>
-            <SheetContent title={texts.shell.openMenu}>
+            <SheetContent title={nav.active?.label ?? texts.shell.openMenu}>
               <SidebarContent
                 account={account}
                 membership={membership}
+                nav={nav}
                 collapsed={false}
                 onLogout={onLogout}
-                onSearch={() => {
-                  setPickingSpace(false);
-                  setSearching(true);
-                }}
-                onNewPage={() => {
-                  setPickingSpace(true);
-                  setSearching(true);
-                }}
+                onSearch={openSearch}
+                onNewPage={openNewPage}
               />
             </SheetContent>
           </Sheet>
-          <p className="font-medium">{title}</p>
+          <p className="hidden truncate font-medium lg:block">{title}</p>
           <p className="hidden text-xs text-muted-foreground first-letter:uppercase md:block">
             {today}
           </p>
           <div className="ml-auto flex items-center gap-2">
             {actions}
+            <Tooltip content={pendingLabel}>
+              <Button asChild variant="ghost" size="icon" className="relative">
+                <Link to={`/app/${slug}/pendientes`} aria-label={pendingLabel}>
+                  <ListTodo strokeWidth={1.75} aria-hidden="true" />
+                  {nav.pending > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground"
+                    >
+                      {nav.pending > 99 ? "99+" : nav.pending}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            </Tooltip>
             <Button
               variant="outline"
               size="sm"
@@ -1137,21 +1442,18 @@ export function AppShell({
               size="icon"
               aria-label={texts.search.buttonHint}
               title={texts.search.buttonHint}
-              onClick={() => {
-                setPickingSpace(false);
-                setSearching(true);
-              }}
+              onClick={openSearch}
             >
               <Search strokeWidth={1.75} />
             </Button>
-            <NotificationBell slug={membership.workspace.slug} />
+            <NotificationBell slug={slug} />
           </div>
         </header>
         <CommandPalette
           open={searching}
           onOpenChange={setSearching}
           startPicking={pickingSpace}
-          slug={membership.workspace.slug}
+          slug={slug}
           membership={membership}
           onAskBian={(question) => {
             setSearching(false);
@@ -1161,14 +1463,19 @@ export function AppShell({
         <BianPanel
           open={bianOpen}
           onOpenChange={setBianOpen}
-          slug={membership.workspace.slug}
+          slug={slug}
           canManage={canSee(membership, "bian")}
           request={bianRequest}
           onRequestTaken={() => {
             setBianRequest(null);
           }}
         />
-        <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main
+          className={cn(
+            "mx-auto w-full min-w-0 max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8",
+            nav.showRail && "pb-24 md:pb-6",
+          )}
+        >
           <RestartBanner />
           {/* key: cada pantalla entra con su animación, no solo la primera. */}
           <div key={pathname} className="page-enter">
@@ -1176,6 +1483,7 @@ export function AppShell({
           </div>
         </main>
       </div>
+      {nav.showRail && <BottomBar nav={nav} />}
     </div>
   );
 }

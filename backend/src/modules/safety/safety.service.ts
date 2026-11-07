@@ -135,6 +135,12 @@ async function setUp(
       includeSubareas: false,
     });
     spaceId = space.id;
+    // The module's space is listed in the Prevention area (docs/spec/diseno.md 10.4.1).
+    await ctx.db.space.update({
+      where: { id: spaceId },
+      data: { area: "PREVENTION" },
+      select: { id: true },
+    });
   }
   // The default types first: they're only created while the company has none.
   await ensureTypes(ctx);

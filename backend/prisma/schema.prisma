@@ -334,6 +334,9 @@ model Membership {
   jobTitle    String?
   /// The company's job position (Position; no FK, like Mention): one per person.
   positionId  String?
+  /// The area the app opens in for this person (docs/spec/diseno.md 10.4.1); null = their
+  /// department's, or Inicio.
+  homeArea    HomeArea?
   createdAt   DateTime     @default(now())
   lastSeenAt  DateTime?
 
@@ -384,13 +387,15 @@ model PinLogin {
 }
 
 model Department {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   workspaceId String
   name        String
   description String?
   color       String?
   parentId    String? // subdepartamentos opcionales
-  createdAt   DateTime @default(now())
+  /// The area the app opens in for its members (docs/spec/diseno.md 10.4.1); null = Inicio.
+  homeArea    HomeArea?
+  createdAt   DateTime  @default(now())
 
   workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   // NoAction (no SetNull): SetNull también anularía workspaceId, que es parte de la clave.
@@ -984,6 +989,9 @@ model Space {
   /// Extiende el acceso de miembros a los subdepartamentos (los jefes de áreas superiores gestionan
   /// el espacio igual).
   includeSubareas Boolean     @default(false)
+  /// The app area it's listed in (docs/spec/diseno.md 10.4.1): the Wiki by default; the Prevention
+  /// module's space is PREVENTION.
+  area            SpaceArea   @default(WIKI)
 
   workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   // NoAction (no SetNull): SetNull también anularía workspaceId. Al borrar un departamento, el
@@ -2449,4 +2457,22 @@ model SafetyMeeting {
   @@unique([id, workspaceId])
   @@index([workspaceId, date, id])
   @@index([workspaceId, kind, date])
+}
+
+/// The app areas a space can belong to (docs/spec/diseno.md 10.4.1, navigation by areas).
+enum SpaceArea {
+  WIKI
+  DOCUMENTS
+  PREVENTION
+  QUALITY
+}
+
+/// The area the app opens in (docs/spec/diseno.md 10.4.1).
+enum HomeArea {
+  HOME
+  DOCUMENTS
+  WIKI
+  PREVENTION
+  QUALITY
+  ADMIN
 }

@@ -13,7 +13,7 @@ import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { peopleApi, safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
 import { FitnessDialog, PersonFitness, PersonIncidents } from "./person-health";
 import { PersonEmergencyCard } from "./emergencies-page";
-import { PpeStateBadge, PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
+import { PpeStateBadge, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.person;
@@ -62,7 +62,6 @@ export function PersonPage() {
 
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4">
-      <PpeTabs />
       {!own && (
         <Link
           to={`${base}/personas`}

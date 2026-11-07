@@ -1,5 +1,5 @@
-// Ítems del menú lateral según las capacidades de la persona (10.4). Solo se muestra lo que
-// existe y lo que puede usar; un ítem sin permiso no aparece, ni deshabilitado.
+// Menu entries by the person's capabilities (10.4); the areas that group them are in nav-areas.ts
+// (10.4.1). Only what exists and what the person can use is shown; nothing appears disabled.
 import {
   BookOpen,
   CalendarClock,
@@ -237,15 +237,6 @@ export function navItems(
   return items;
 }
 
-/** El menú principal: lo de todos los días (lo que no es del panel de administración). */
-export function mainNavItems(
-  slug: string,
-  person: Person,
-  plugins: readonly FrontendPlugin[] = [],
-): NavItem[] {
-  return navItems(slug, person, plugins).filter((item) => item.group === undefined);
-}
-
 /** Las secciones del panel de administración que la persona puede usar. */
 export function adminNavItems(
   slug: string,
@@ -278,6 +269,7 @@ export function sectionTitle(
   if (pathname.includes("/admin/members")) return texts.admin.nav.members;
   if (pathname.includes("/admin/documents")) return texts.documents.admin.title;
   if (pathname.includes("/search")) return texts.search.page.title;
+  if (pathname.endsWith("/pendientes")) return texts.shell.areas.pending;
   if (pathname.includes("/mis-documentos")) return texts.documents.mine.title;
   if (pathname.includes("/aprobaciones")) return texts.documents.nav;
   if (pathname.includes("/files/shared")) return texts.files.shared.title;

@@ -193,8 +193,9 @@ export async function addCommitteeMember(
 ): Promise<void> {
   await requireManager(ctx);
   assertTermOrder(input.termStart, input.termEnd);
+  // The company's own people: an external guest can't sit on the committee.
   const person = await ctx.db.membership.count({
-    where: { id: input.membershipId, status: "ACTIVE" },
+    where: { id: input.membershipId, status: "ACTIVE", role: { base: { not: "GUEST" } } },
   });
   if (person === 0) throw notFound();
   const current = await ctx.db.safetyCommitteeMember.count({

@@ -14,7 +14,6 @@ import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { caeApi, caeKeys, type CaeDocument } from "./cae-api";
 import { CaeNav, useCae } from "./cae-common";
 import { AcceptDocumentDialog, openCaeFile, RejectDocumentDialog } from "./cae-documents";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.review;
@@ -146,7 +145,6 @@ export function CaeReviewPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
         <p className="mt-1 max-w-2xl text-xs text-muted-foreground">{t.subtitle}</p>
       </div>
-      <PpeTabs />
       <CaeNav />
       {!list.query.isPending && list.items.length === 0 ? (
         <Card>

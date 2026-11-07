@@ -21,7 +21,13 @@ Hay que analizar y decidir con él, sin código todavía:
 - **Propuesta lista** (07/11/2026): `docs/plans/navegacion/propuesta.html` (abrir en el navegador desde el
   repo; usa spider-ui del paquete instalado). Tres opciones (A selector, B barra de áreas, C portada por
   departamento) × cinco perfiles, escritorio y celular. **Elegida: B** (07/11/2026), con Wiki y Documentación separadas, formularios en su área y
-  Administración como área de la barra. Spec en docs/spec/diseno.md, 10.4.1. Falta implementarla.
+  Administración como área de la barra. Spec en docs/spec/diseno.md, 10.4.1. **Implementada** (07/11/2026).
+- [ ] **Capturas con el marco nuevo que faltan** (navegación por áreas): las de plugins, que necesitan los
+      plugins compilados (`CAPTURAS_PLUGINS_DIR`) y las licencias (`CAPTURAS_LICENCIAS`): `plugin-microsoft`,
+      `plugin-claude`, `aplicaciones-conectadas`, `conector-seguridad`, `autorizar-app`, `plugin-asistente`,
+      `plugin-directorio` y `licencia`. `sala-auditor` (vista del auditor externo, sin el marco) no cambia.
+- [ ] **Calidad en la barra de áreas**: el área `QUALITY` (y `Space.area = QUALITY`) existe pero no se
+      muestra hasta que exista el módulo; al hacerlo, sumar sus secciones en `frontend/src/components/nav-areas.ts`.
 
 ## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 
@@ -38,8 +44,7 @@ Hay que analizar y decidir con él, sin código todavía:
         tamaño mayor que el límite, completar una reserva ajena o de otro acceso); fijación y rotación de
         sesión (un token previo al código no sirve, rotación cada 15 min, logout termina la sesión,
         cookie con path del acceso); la información del centro solo sirve los documentos elegidos.
-- [ ] **Lo que le falte a Prevención**: relevarlo y sumarlo como fases nuevas en
-      docs/spec/seguridad-salud.md (pedido del 07/11/2026).
+- [x] **Lo que le falte a Prevención**: fases 6 a 9 hechas (07/11/2026), en docs/spec/seguridad-salud.md.
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
       [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, **módulo aparte en el menú**,
       activable por empresa como Prevención. Primero el spec `docs/spec/calidad.md`.

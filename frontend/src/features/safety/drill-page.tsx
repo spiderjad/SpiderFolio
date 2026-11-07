@@ -25,7 +25,6 @@ import {
   type PlanningFilters,
   type SafetyAction,
 } from "./safety-api";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.drills;
@@ -87,7 +86,6 @@ export function DrillPage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       <EmergencyNav />
       {drill === undefined ? (
         <Skeleton className="h-48 w-full" />

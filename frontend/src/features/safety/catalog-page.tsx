@@ -19,7 +19,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { useListParams, useSearchParam } from "@/features/admin/list-params";
 import { usePositionSource } from "@/features/admin/sources";
 import { safetyApi, safetyKeys, type SafetyItem } from "./safety-api";
-import { PpeTabs, useSafety } from "./safety-common";
+import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.catalog;
@@ -120,7 +120,6 @@ export function CatalogPage() {
           {t.create}
         </Button>
       </div>
-      <PpeTabs />
       <div className="flex flex-wrap items-center gap-4">
         <div className="min-w-0 flex-1">
           <SearchField

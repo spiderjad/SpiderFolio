@@ -5,7 +5,10 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
+import { Combobox, useStaticSource } from "@/components/ui/combobox";
+import type { HomeArea } from "@/auth/types";
+import { homeAreaChoices } from "@/components/nav-areas";
+import { useMembership } from "@/features/home/workspace-layout";
 import { FormField, FormGrid, Input, Textarea } from "@/components/ui/form";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminApi, adminKeys, type DepartmentView } from "../api";
@@ -96,6 +99,10 @@ function DepartmentForm({
   const [headId, setHeadId] = useState(department?.head?.membershipId ?? "");
   const [headLabel, setHeadLabel] = useState(department?.head?.name);
   const [error, setError] = useState<string | null>(null);
+  // Where the app opens for its people (docs/spec/diseno.md 10.4.1); editing only.
+  const [homeArea, setHomeArea] = useState<HomeArea | null>(department?.homeArea ?? null);
+  const homeAreas = homeAreaChoices(useMembership());
+  const homeAreaSource = useStaticSource("department-home-area", homeAreas);
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -108,7 +115,10 @@ function DepartmentForm({
       };
       return department === null
         ? adminApi.createDepartment(workspaceSlug, body)
-        : adminApi.updateDepartment(workspaceSlug, department.id, body);
+        : adminApi.updateDepartment(workspaceSlug, department.id, {
+            ...body,
+            ...(homeArea === department.homeArea ? {} : { homeArea }),
+          });
     },
     onSuccess: async () => {
       toast.success(
@@ -215,6 +225,25 @@ function DepartmentForm({
             />
           )}
         </FormField>
+        {department !== null && (
+          <FormField label={t.homeArea} hint={t.homeAreaHint}>
+            {(control) => (
+              <Combobox
+                id={control.id}
+                aria-describedby={control["aria-describedby"]}
+                clearable
+                searchable={false}
+                label={t.homeArea}
+                placeholder={t.homeAreaDefault}
+                source={homeAreaSource}
+                value={homeArea}
+                onChange={(option) => {
+                  setHomeArea(homeAreas.find((choice) => choice.id === option?.id)?.id ?? null);
+                }}
+              />
+            )}
+          </FormField>
+        )}
         {canPickHead && (
           <FormField label={t.head}>
             {(control) => (

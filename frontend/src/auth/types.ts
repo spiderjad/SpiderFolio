@@ -34,7 +34,16 @@ export interface Membership {
   leadsDepartments: boolean;
   /** La política del workspace le exige verificación en dos pasos. */
   mfaRequired: boolean;
+  /** The area the app opens in, chosen by the person (docs/spec/diseno.md 10.4.1). */
+  homeArea: HomeArea | null;
+  /** Their departments' choice, used when they didn't pick one. */
+  departmentHomeArea: HomeArea | null;
 }
+
+/** The app's areas (docs/spec/diseno.md 10.4.1): where the app opens and what the rail shows. */
+export type HomeArea = "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN";
+/** The areas a space can be listed in. */
+export type SpaceArea = "WIKI" | "DOCUMENTS" | "PREVENTION" | "QUALITY";
 
 export interface Account {
   user: {

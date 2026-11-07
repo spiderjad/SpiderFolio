@@ -1,6 +1,6 @@
 // Tipos y llamadas de la API del panel (/api/v1/w/:slug/admin, CLAUDE.md sección 9.4). Los tipos
 // reflejan las respuestas del backend; las claves de consulta incluyen siempre el workspace.
-import type { SystemRole } from "@/auth/types";
+import type { HomeArea, SystemRole } from "@/auth/types";
 import { api } from "@/lib/api";
 import type { Locale } from "@/i18n";
 
@@ -139,6 +139,8 @@ export interface DepartmentView {
   name: string;
   description: string | null;
   color: string | null;
+  /** The area the app opens in for its members (docs/spec/diseno.md 10.4.1); null = Inicio. */
+  homeArea: HomeArea | null;
   parentId: string | null;
   parentName: string | null;
   /** Subdepartamentos directos. */
@@ -767,6 +769,7 @@ export const adminApi = {
       color?: string | null;
       parentId?: string | null;
       headId?: string | null;
+      homeArea?: HomeArea | null;
     },
   ) =>
     api<{ department: DepartmentView; needsFullSeat: boolean }>(admin(slug, `/departments/${id}`), {

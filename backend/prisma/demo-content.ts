@@ -17,7 +17,7 @@ import { acknowledge, addRequirement } from "../src/modules/documents/readings.s
 import { createFolder } from "../src/modules/nodes/nodes.service.ts";
 import { createPage, savePage } from "../src/modules/nodes/pages.service.ts";
 import { createQr } from "../src/modules/qr/qr.service.ts";
-import { createSpace } from "../src/modules/spaces/spaces.service.ts";
+import { createSpace, updateSpace } from "../src/modules/spaces/spaces.service.ts";
 
 export type DemoLocale = "es" | "en";
 
@@ -524,6 +524,8 @@ export async function seedDemoContent(
     isConfidential: false,
     includeSubareas: false,
   });
+  // The plant procedures are controlled documents: listed in Documentación (docs/spec/diseno.md 10.4.1).
+  await updateSpace(owner, procedures.id, { area: "DOCUMENTS" });
   const peopleSpace = await createSpace(owner, {
     name: t.spaces.people.name,
     description: t.spaces.people.description,

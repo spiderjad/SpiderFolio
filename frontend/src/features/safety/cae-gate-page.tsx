@@ -16,7 +16,6 @@ import { cn, formatDateTime } from "@/lib/utils";
 import { caeApi, caeKeys, type CaeGateResult } from "./cae-api";
 import { CaeNav } from "./cae-common";
 import { permitName } from "./cae-permits-page";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.gate;
@@ -39,7 +38,6 @@ export function CaeGatePage() {
 
   return (
     <div className="mx-auto grid w-full max-w-2xl grid-cols-1 gap-4">
-      <PpeTabs />
       <CaeNav />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>

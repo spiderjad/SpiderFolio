@@ -15,7 +15,6 @@ import { AuthorizationCard, UnblockButton } from "./cae-company-page";
 import { DocumentRequirementsCard } from "./cae-documents";
 import { WorkerCard } from "./cae-worker-card";
 import { WorkerForm } from "./cae-worker-form";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.worker;
@@ -50,7 +49,6 @@ export function CaeWorkerPage() {
 
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4">
-      <PpeTabs />
       <Link
         to={`${cae.base}/empresas/${data.company.id}`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

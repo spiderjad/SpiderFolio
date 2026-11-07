@@ -211,6 +211,9 @@ export const filesTexts = {
         CONFIDENTIAL: "Ni siquiera los administradores, salvo que los agregues.",
       },
       includeSubareas: "Incluir subáreas",
+      area: "Área de la app",
+      areaHint:
+        "Dónde aparece en el menú: la Wiki (por defecto), Documentación o Prevención. Solo cambia dónde se lista, no quién entra.",
       includeSubareasHint:
         "Las personas de los subdepartamentos también entran. Los jefes de áreas superiores lo gestionan siempre.",
     },

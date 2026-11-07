@@ -914,6 +914,10 @@ export const adminTexts = {
       noParent: "Ninguno (nivel principal)",
       head: "Jefe",
       noHead: "Sin jefe",
+      homeArea: "Área de entrada",
+      homeAreaHint:
+        "Dónde se abre la app para las personas del departamento. Cada una puede cambiarla en su perfil.",
+      homeAreaDefault: "Inicio (por defecto)",
     },
     confirmDelete: {
       title: (name: string) => `¿Eliminar el departamento ${name}?`,

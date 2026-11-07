@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { peopleApi, safetyKeys } from "./safety-api";
-import { PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
+import { ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.summary;
@@ -73,7 +73,6 @@ export function SummaryPage() {
           <ReportIncidentButton />
         </div>
       </div>
-      <PpeTabs />
       {query.isError ? (
         <Card>
           <EmptyState icon={ServerCrash} title={texts.admin.common.loadError}>

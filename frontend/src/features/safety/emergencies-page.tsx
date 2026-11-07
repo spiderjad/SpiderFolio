@@ -22,7 +22,7 @@ import {
   type EmergencyTeam,
   type TrainingStatus,
 } from "./safety-api";
-import { PpeTabs, usePeopleSource } from "./safety-common";
+import { usePeopleSource } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.emergencies;
@@ -141,7 +141,6 @@ export function EmergenciesPage() {
           {t.addRole}
         </Button>
       </div>
-      <PpeTabs />
       <EmergencyNav />
       {data === undefined ? (
         <Skeleton className="h-64 w-full" />

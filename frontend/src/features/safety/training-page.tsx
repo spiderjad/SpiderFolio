@@ -14,7 +14,7 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { documentsApi } from "@/features/documents/documents-api";
 import { trainingApi, trainingKeys, type Course } from "./safety-api";
-import { PpeTabs, useSafety } from "./safety-common";
+import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.training;
@@ -47,7 +47,6 @@ export function TrainingPage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       {list.query.isPending ? (
         <Skeleton className="h-40 w-full" />
       ) : list.items.length === 0 ? (

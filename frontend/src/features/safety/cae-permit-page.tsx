@@ -17,7 +17,6 @@ import { caeApi, caeKeys, type CaePermit, type CaePrecaution } from "./cae-api";
 import { dataUrlOf, useCae } from "./cae-common";
 import { PermitForm, PrecautionsList } from "./cae-permit-form";
 import { permitName, PermitStateBadge } from "./cae-permits-page";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.permits;
@@ -61,7 +60,6 @@ export function CaePermitPage() {
 
   return (
     <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4">
-      <PpeTabs />
       <Link
         to={`${cae.base}/permisos`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

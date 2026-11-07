@@ -61,6 +61,8 @@ export const LOCK_MS = 15 * 60 * 1000;
 /** Sin una sesión con el mismo user agent en este lapso, el login avisa por email. */
 const NEW_DEVICE_WINDOW_MS = 30 * 24 * 3600 * 1000;
 
+type HomeAreaValue = "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN";
+
 export interface AuthContext {
   userId: string;
   sessionId: string;
@@ -117,6 +119,10 @@ export interface Account {
     leadsDepartments: boolean;
     /** La política del workspace le exige verificación en dos pasos (la tenga o no). */
     mfaRequired: boolean;
+    /** The area the app opens in, chosen by the person (docs/spec/diseno.md 10.4.1). */
+    homeArea: HomeAreaValue | null;
+    /** Their departments' choice (the first one, by name, that has one); used without their own. */
+    departmentHomeArea: HomeAreaValue | null;
   }[];
 }
 
@@ -193,6 +199,7 @@ export function createAuthService(deps: AppDeps) {
             id: true,
             seatType: true,
             jobTitle: true,
+            homeArea: true,
             workspace: {
               select: {
                 id: true,
@@ -205,7 +212,11 @@ export function createAuthService(deps: AppDeps) {
             },
             role: { select: { id: true, name: true, base: true, capabilities: true } },
             departments: {
-              select: { position: true, department: { select: { id: true, name: true } } },
+              orderBy: { department: { name: "asc" } },
+              select: {
+                position: true,
+                department: { select: { id: true, name: true, homeArea: true } },
+              },
             },
           },
         },
@@ -265,7 +276,14 @@ export function createAuthService(deps: AppDeps) {
             ...m.role.capabilities.filter(isCapability),
             ...(m.role.base === "OWNER" ? registeredPluginCapabilities() : []),
           ],
-          departments: m.departments.map((d) => ({ ...d.department, position: d.position })),
+          departments: m.departments.map((d) => ({
+            id: d.department.id,
+            name: d.department.name,
+            position: d.position,
+          })),
+          homeArea: m.homeArea,
+          departmentHomeArea:
+            m.departments.find((d) => d.department.homeArea !== null)?.department.homeArea ?? null,
           leadsDepartments:
             m.seatType === "FULL" &&
             m.role.base !== "GUEST" &&

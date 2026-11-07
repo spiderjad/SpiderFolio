@@ -44,7 +44,6 @@ import { CompanyInfoCard } from "./cae-info";
 import { PortalCard } from "./cae-portal-card";
 import { DocumentRequirementsCard } from "./cae-documents";
 import { WorkerForm } from "./cae-worker-form";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.company;
@@ -82,7 +81,6 @@ export function CaeCompanyPage() {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4">
-      <PpeTabs />
       <Link
         to={cae.base}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

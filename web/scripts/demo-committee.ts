@@ -154,16 +154,15 @@ export async function demoCommittee(target: DemoCommitteeTarget): Promise<Record
   const existing = await call<{ items: unknown[] }>("GET", "/safety/meetings?pageSize=1");
   if (existing.items.length > 0) return counts;
 
-  const members = await call<{ items: { id: string; email: string | null }[] }>(
-    "GET",
-    "/admin/members?pageSize=100",
-  );
+  const members = await call<{
+    items: { id: string; email: string | null; roleBase: string }[];
+  }>("GET", "/admin/members?pageSize=100");
   const named = target.peopleEmails
     .map((email) => members.items.find((item) => item.email === email)?.id)
     .filter((id): id is string => id !== undefined);
   if (named.length === 0) throw new Error("No people for the committee demo");
   const others = members.items
-    .filter((item) => item.email !== null && !named.includes(item.id))
+    .filter((item) => item.email !== null && item.roleBase !== "GUEST" && !named.includes(item.id))
     .slice(0, 2)
     .map((item) => item.id);
   const roles: { role: Role; termStart: string; termEnd: string | null }[] = [

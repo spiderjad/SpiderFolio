@@ -120,8 +120,20 @@ export function SpacesPage() {
   const [rooming, setRooming] = useState<SpaceView | null>(null);
   const [archiving, setArchiving] = useState<SpaceView | null>(null);
 
+  // The Wiki lists its own spaces (docs/spec/diseno.md 10.4.1); the rest are in their area's menu.
+  // Searching and the favorites filter still reach every space the person sees.
+  const wikiOnly = q === "" && filter !== "favorites";
   const list = useInfiniteList<SpaceView>({
-    queryKey: [...filesKeys.spaces(workspaceSlug), "list", q, archived, filter, sortParam, dir],
+    queryKey: [
+      ...filesKeys.spaces(workspaceSlug),
+      "list",
+      q,
+      archived,
+      filter,
+      sortParam,
+      dir,
+      wikiOnly,
+    ],
     fetchPage: (cursor, signal) =>
       filesApi.spaces(
         workspaceSlug,
@@ -131,6 +143,7 @@ export function SpacesPage() {
           filter,
           sort: SORTS[sortParam],
           dir,
+          ...(wikiOnly ? { area: "WIKI" as const } : {}),
           ...(cursor === undefined ? {} : { cursor }),
         },
         signal,

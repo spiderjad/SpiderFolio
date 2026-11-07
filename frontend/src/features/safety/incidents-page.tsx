@@ -16,7 +16,7 @@ import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { readChoice, useListParams } from "@/features/admin/list-params";
 import { formatUtcDate } from "@/lib/utils";
 import { incidentsApi, incidentsKeys, type Incident, type IncidentFilters } from "./safety-api";
-import { IncidentStatusBadge, PpeTabs } from "./safety-common";
+import { IncidentStatusBadge } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.incidents;
@@ -137,7 +137,6 @@ export function IncidentsPage() {
           </Button>
         </div>
       </div>
-      <PpeTabs />
       <Card className="grid gap-3 p-0">
         <div className="grid grid-cols-2 gap-3 px-4 pt-4 lg:grid-cols-4 lg:items-end">
           <LabeledField label={f.from}>

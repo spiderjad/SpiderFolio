@@ -762,6 +762,25 @@ const SEARCH: Record<Locale, string> = { es: "limpieza", en: "cleaning" };
 
 const CAPTURES: Capture[] = [
   { name: "inicio", who: "owner", path: (i) => `/app/${i.slug}` },
+  // Navigation by areas on a phone (docs/spec/diseno.md 10.4.1): the bottom bar and the area's menu.
+  {
+    name: "navegacion-movil",
+    who: "owner",
+    viewport: { width: 375, height: 812 },
+    path: (i) => `/app/${i.slug}/seguridad/resumen`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    name: "navegacion-menu-movil",
+    who: "owner",
+    viewport: { width: 375, height: 812 },
+    path: (i) => `/app/${i.slug}/seguridad/resumen`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+    then: async (page) => {
+      await page.getByRole("button", { name: /^(Abrir el menú de|Open the )/u }).click();
+      await page.getByRole("dialog").waitFor();
+    },
+  },
   { name: "espacios", who: "owner", path: (i) => `/app/${i.slug}/files` },
   {
     name: "explorador",
@@ -1317,6 +1336,11 @@ await db.query(
   `INSERT INTO "SystemEmailHealth" ("id", "lastSuccessAt", "updatedAt") VALUES ('system', now(), now())
    ON CONFLICT ("id") DO UPDATE
    SET "lastSuccessAt" = now(), "lastErrorAt" = NULL, "lastErrorCode" = NULL, "updatedAt" = now()`,
+);
+// Navigation by areas (docs/spec/diseno.md 10.4.1): the plant procedures are listed in Documentación,
+// as a fresh seed does (only in this database).
+await db.query(
+  `UPDATE "Space" SET "area" = 'DOCUMENTS' WHERE "name" IN ('Procedimientos', 'Procedures') AND "area" = 'WIKI'`,
 );
 // Free plugins are turned on by the owner: on in both demo companies (only in this database).
 await db.query(

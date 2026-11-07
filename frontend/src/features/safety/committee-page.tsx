@@ -21,7 +21,7 @@ import {
   type CommitteeMember,
   type CommitteeRole,
 } from "./safety-api";
-import { PpeTabs, usePeopleSource, useSafety } from "./safety-common";
+import { usePeopleSource, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.committee;
@@ -88,7 +88,6 @@ export function CommitteePage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       <CommitteeNav />
       {data === undefined ? (
         <Skeleton className="h-64 w-full" />

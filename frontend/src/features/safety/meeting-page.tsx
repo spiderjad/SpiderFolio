@@ -23,7 +23,7 @@ import {
   type Meeting,
   type SafetyAction,
 } from "./safety-api";
-import { PpeTabs, useSafety } from "./safety-common";
+import { useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.meetings;
@@ -109,7 +109,6 @@ export function MeetingPage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       <CommitteeNav />
       {meeting === undefined ? (
         <Skeleton className="h-48 w-full" />

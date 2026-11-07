@@ -30,7 +30,6 @@ import {
 } from "./cae-api";
 import { CaeNav, useCae } from "./cae-common";
 import { PermitForm } from "./cae-permit-form";
-import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.cae.permits;
@@ -169,7 +168,6 @@ export function CaePermitsPage() {
           </Button>
         )}
       </div>
-      <PpeTabs />
       <CaeNav />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[200px_200px_1fr_180px]">
         <Combobox

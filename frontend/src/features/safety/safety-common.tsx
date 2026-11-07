@@ -1,10 +1,10 @@
 // What every screen of the occupational health and safety module shares (docs/spec/seguridad-salud.md):
-// the company's terms (EPI or EPP), who manages it, the guard that hides it while it's off and the
-// header with its tabs.
+// the company's terms (EPI or EPP), who manages it and the guards that hide its screens. Its sections
+// are listed in the Prevention area's menu (docs/spec/diseno.md 10.4.1), not in tabs.
 import { useQuery } from "@tanstack/react-query";
 import { Siren } from "lucide-react";
 import { useMemo } from "react";
-import { Navigate, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import type { ComboboxSource } from "@/components/ui/combobox";
 import { COMBO_PAGE_SIZE } from "@/components/ui/combobox";
@@ -12,8 +12,7 @@ import { Badge } from "@/components/ui/display";
 import { adminApi } from "@/features/admin/api";
 import { NotFoundPage } from "@/features/home/not-found-page";
 import { useMembership } from "@/features/home/workspace-layout";
-import { cn } from "@/lib/utils";
-import { useCae, usePendingCount } from "./cae-common";
+import { useCae } from "./cae-common";
 import {
   committeeApi,
   committeeKeys,
@@ -132,91 +131,6 @@ export function ReportIncidentButton() {
 export function RequireSafetyManager() {
   const { canManage } = useSafety();
   return canManage ? <Outlet /> : <NotFoundPage />;
-}
-
-export function PpeTabs() {
-  const { slug, canManage, health, leads } = useSafety();
-  const cae = useCae();
-  const caePending = usePendingCount();
-  const committee = useCommitteeAccess();
-  // Only for whoever manages the module (or its health data), the heads and whoever checks
-  // contractors (CAE): the rest go to their sheet.
-  if (!canManage && !health && !leads && !cae.visible && !committee.visible) return null;
-  // Whoever only checks contractors sees only CAE: their own sheet stays at «Mi ficha» in their profile.
-  const safetyTabs = canManage || health || leads;
-  const t = texts.safety.tabs;
-  const tab = ({ isActive }: { isActive: boolean }) =>
-    cn(
-      "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
-      isActive
-        ? "border-primary font-medium text-foreground"
-        : "border-transparent text-muted-foreground hover:text-foreground",
-    );
-  const base = `/app/${slug}/seguridad`;
-  return (
-    <nav className="flex flex-wrap gap-1 border-b border-border">
-      {(canManage || health) && (
-        <NavLink end to={`${base}/resumen`} className={tab}>
-          {texts.safety.summary.tab}
-        </NavLink>
-      )}
-      {safetyTabs && (
-        <>
-          <NavLink end to={`${base}/personas`} className={tab}>
-            {texts.safety.people.tab}
-          </NavLink>
-          <NavLink end to={`${base}/epis`} className={tab}>
-            {t.deliveries}
-          </NavLink>
-        </>
-      )}
-      {canManage && (
-        <NavLink to={`${base}/epis/catalogo`} className={tab}>
-          {t.catalog}
-        </NavLink>
-      )}
-      {safetyTabs && (
-        <NavLink to={`${base}/formacion`} className={tab}>
-          {texts.safety.training.tab}
-        </NavLink>
-      )}
-      {canManage && (
-        <NavLink to={`${base}/planificacion`} className={tab}>
-          {texts.safety.planning.tab}
-        </NavLink>
-      )}
-      {canManage && (
-        <NavLink to={`${base}/emergencias`} className={tab}>
-          {texts.safety.emergencies.tab}
-        </NavLink>
-      )}
-      {committee.visible && (
-        <NavLink to={`${base}/comite`} className={tab}>
-          {texts.safety.committee.tab}
-        </NavLink>
-      )}
-      {(canManage || health) && (
-        <NavLink to={`${base}/indicadores`} className={tab}>
-          {texts.safety.indicators.tab}
-        </NavLink>
-      )}
-      {health && (
-        <NavLink to={`${base}/incidentes`} className={tab}>
-          {texts.safety.incidents.tab}
-        </NavLink>
-      )}
-      {cae.visible && (
-        <NavLink to={cae.base} className={tab}>
-          {cae.terms.tab}
-          {caePending > 0 && (
-            <Badge tone="primary" className="ml-1.5" aria-label={texts.cae.review.tab(caePending)}>
-              {caePending}
-            </Badge>
-          )}
-        </NavLink>
-      )}
-    </nav>
-  );
 }
 
 const stateTone = { valid: "success", due_soon: "warning", expired: "danger" } as const;

@@ -17,6 +17,8 @@ import { formatDateTime } from "@/lib/utils";
 import { ProfileCard } from "./profile-card";
 import { ConfirmCodeDialog, TwoFactorSection } from "./two-factor-section";
 import { Combobox, useStaticSource } from "@/components/ui/combobox";
+import type { HomeArea, Membership } from "@/auth/types";
+import { homeAreaChoices } from "@/components/nav-areas";
 import { isLocale, LOCALE_NAMES, LOCALES, switchLocale, texts } from "@/i18n";
 
 interface SessionView {
@@ -68,6 +70,7 @@ export function ProfilePage() {
           <ProfileCard account={account} membership={membership} />
           <ThemeSection />
           <LanguageSection companyName={membership.workspace.name} />
+          {!isPin && <HomeAreaSection membership={membership} />}
         </div>
         <div className="grid min-w-0 gap-4">
           <DetailsSection
@@ -475,6 +478,52 @@ function ThemeSection() {
           </button>
         ))}
       </div>
+    </Section>
+  );
+}
+
+/** Their department's (none of their own) or one of the areas (docs/spec/diseno.md 10.4.1). */
+const DEPARTMENT_AREA = "department";
+
+function HomeAreaSection({ membership }: { membership: Membership }) {
+  const t = texts.profile.homeArea;
+  const { reloadAccount } = useAuth();
+  const choices = homeAreaChoices(membership);
+  const fallback = membership.departmentHomeArea ?? "HOME";
+  const fallbackLabel =
+    choices.find((choice) => choice.id === fallback)?.label ?? texts.shell.areas.names.HOME;
+  const source = useStaticSource("profile-home-area", [
+    { id: DEPARTMENT_AREA, label: t.department(fallbackLabel) },
+    ...choices,
+  ]);
+  const save = useMutation({
+    mutationFn: (homeArea: HomeArea | null) =>
+      api(`/w/${membership.workspace.slug}/profile/home-area`, {
+        method: "PATCH",
+        body: { homeArea },
+      }),
+    onSuccess: async () => {
+      toast.success(t.saved);
+      await reloadAccount();
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  return (
+    <Section title={t.title} description={t.description}>
+      <Combobox
+        label={t.label}
+        placeholder={t.label}
+        searchable={false}
+        disabled={save.isPending}
+        source={source}
+        value={membership.homeArea ?? DEPARTMENT_AREA}
+        onChange={(option) => {
+          if (option === null) return;
+          save.mutate(choices.find((choice) => choice.id === option.id)?.id ?? null);
+        }}
+      />
     </Section>
   );
 }

@@ -16,6 +16,18 @@ export const ListSpacesQuerySchema = z.object({
     .transform((value) => value === "true"),
   /** Filtros rápidos: todos, los de mis departamentos, favoritos o privados. */
   filter: z.enum(["all", "mine", "favorites", "private"]).default("all"),
+  /** Only the spaces of these app areas, comma-separated (docs/spec/diseno.md 10.4.1). */
+  area: z
+    .string()
+    .max(60)
+    .transform((value) => value.split(","))
+    .pipe(
+      z
+        .array(z.enum(["WIKI", "DOCUMENTS", "PREVENTION", "QUALITY"]))
+        .min(1)
+        .max(4),
+    )
+    .optional(),
   /** "department" agrupa por área: primero los de la empresa y luego cada departamento por nombre. */
   ...pageShape(["name", "department", "createdAt", "favorite"], "name"),
 });
@@ -63,6 +75,8 @@ export const UpdateSpaceSchema = z.strictObject({
   departmentId: Id.nullable().optional(),
   departmentLevel: DepartmentLevelSchema.optional(),
   includeSubareas: z.boolean().optional(),
+  /** The app area it's listed in (only with spaces.manage). */
+  area: z.enum(["WIKI", "DOCUMENTS", "PREVENTION", "QUALITY"]).optional(),
 });
 
 export const AccessLevelSchema = z.enum(["MANAGE", "EDIT", "COMMENT", "VIEW"]);

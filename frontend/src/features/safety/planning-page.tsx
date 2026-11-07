@@ -30,7 +30,7 @@ import {
   type PlanningFilters,
   type SafetyAction,
 } from "./safety-api";
-import { PpeTabs, usePeopleSource } from "./safety-common";
+import { usePeopleSource } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.planning;
@@ -261,7 +261,6 @@ export function PlanningPage() {
           </Button>
         </div>
       </div>
-      <PpeTabs />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Combobox
           compact

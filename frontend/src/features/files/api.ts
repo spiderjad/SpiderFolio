@@ -1,6 +1,7 @@
 // Cliente de espacios, carpetas y archivos (docs/spec/archivos.md). Los datos del servidor van
 // siempre por TanStack Query con estas claves (por workspace).
 import type { SharingSummary } from "@/features/sharing/shared-mark";
+import type { SpaceArea } from "@/auth/types";
 import { api } from "@/lib/api";
 
 export type AccessLevel = "MANAGE" | "EDIT" | "COMMENT" | "VIEW";
@@ -32,6 +33,8 @@ export interface SpaceView {
   departmentLevel: "EDIT" | "VIEW";
   /** El acceso de miembros llega también a los subdepartamentos. */
   includeSubareas: boolean;
+  /** The app area it's listed in (docs/spec/diseno.md 10.4.1). */
+  area: SpaceArea;
   /** Por qué la persona tiene ese nivel. */
   reason: SpaceReason | null;
   /** Marcado como favorito por quien mira. */
@@ -216,6 +219,8 @@ export const filesApi = {
       dir?: "asc" | "desc";
       cursor?: string;
       pageSize?: number;
+      /** Only the spaces of these app areas. */
+      area?: SpaceArea | readonly SpaceArea[];
     },
     signal?: AbortSignal,
   ) =>
@@ -230,6 +235,7 @@ export const filesApi = {
           dir: q.dir,
           cursor: q.cursor,
           pageSize: q.pageSize ?? 50,
+          area: typeof q.area === "string" ? q.area : q.area?.join(","),
         })}`,
       ),
       signal ? { signal } : {},
@@ -279,6 +285,7 @@ export const filesApi = {
       includeSubareas?: boolean;
       departmentId?: string | null;
       departmentLevel?: "EDIT" | "VIEW";
+      area?: SpaceArea;
     },
   ) => api<{ space: SpaceView }>(w(slug, `/spaces/${id}`), { method: "PATCH", body }),
   archiveSpace: (slug: string, id: string) =>

@@ -48,6 +48,8 @@ export interface SpaceView {
   departmentLevel: "EDIT" | "VIEW";
   /** El acceso de miembros llega también a los subdepartamentos. */
   includeSubareas: boolean;
+  /** The app area it's listed in (docs/spec/diseno.md 10.4.1). */
+  area: "WIKI" | "DOCUMENTS" | "PREVENTION" | "QUALITY";
   /** Por qué la persona tiene ese nivel ("Jefe de Finanzas", "Administrador"…). */
   reason: SpaceReasonView | null;
   /** Marcado como favorito por quien pide. */
@@ -86,6 +88,7 @@ const spaceSelect = {
   departmentId: true,
   departmentLevel: true,
   includeSubareas: true,
+  area: true,
   department: { select: { id: true, name: true, color: true } },
 } as const;
 
@@ -195,6 +198,7 @@ async function viewsOf(
         department: row.department,
         departmentLevel: row.departmentLevel === "VIEW" ? ("VIEW" as const) : ("EDIT" as const),
         includeSubareas: row.includeSubareas,
+        area: row.area,
         reason: view,
         favorite: favorites.has(row.id),
         sharing: sharing.get(row.id) ?? null,
@@ -269,6 +273,7 @@ export async function listSpaces(
       visibleSpacesWhere(ctx, now),
       archived ? { archivedAt: { not: null } } : { archivedAt: null },
       filters[query.filter],
+      query.area === undefined ? {} : { area: { in: query.area } },
       query.q === undefined || query.q === "" ? {} : { nameKey: { contains: nameKeyOf(query.q) } },
     ],
   };
@@ -602,6 +607,11 @@ export async function updateSpace(
   } else if (input.includeSubareas !== undefined) {
     data.includeSubareas = input.includeSubareas;
   }
+  if (input.area !== undefined && input.area !== row.area) {
+    // Moving a space to another area of the app is the company's decision.
+    if (!ctx.actor.capabilities.includes("spaces.manage")) throw forbidden();
+    data.area = input.area;
+  }
   if (Object.keys(data).length === 0) {
     throw new AppError("BAD_REQUEST", { message: contentMessages.noChanges });
   }
@@ -622,6 +632,7 @@ export async function updateSpace(
           ...(input.departmentLevel === undefined
             ? {}
             : { departmentLevel: input.departmentLevel }),
+          ...(data.area === undefined ? {} : { area: data.area }),
         },
       },
     );
