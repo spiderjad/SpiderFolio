@@ -178,6 +178,14 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/holds-page"), "HoldsPage"),
                   },
                   {
+                    path: "auditorias",
+                    lazy: page(() => import("@/features/quality/audits-page"), "AuditsPage"),
+                  },
+                  {
+                    path: "auditorias/:auditId",
+                    lazy: page(() => import("@/features/quality/audit-page"), "AuditPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),

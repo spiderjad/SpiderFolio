@@ -91,6 +91,7 @@ export interface NcDetail extends NcSummary {
   actionItems: QualityAction[];
   verifications: { id: string; effective: boolean; note: string; by: Person; at: string }[];
   holds: Hold[];
+  audit: { id: string; title: string; clause: string } | null;
   access: "manage" | "edit" | "read";
 }
 
@@ -380,4 +381,103 @@ export const haccpApi = {
     id: string,
     body: { status: (typeof HOLD_DECISIONS)[number]; note: string; signature: string },
   ) => api<{ hold: Hold }>(w(slug, `/quality/holds/${id}/decision`), { method: "POST", body }),
+};
+
+// ─── Phase 3: audits ─────────────────────────────────────────────────────────────────────
+
+export const AUDIT_SCHEMES = ["INTERNAL", "IFS8", "BRCGS9", "CLIENT", "OFFICIAL", "OTHER"] as const;
+export type AuditScheme = (typeof AUDIT_SCHEMES)[number];
+export type Standard = "IFS8" | "BRCGS9";
+
+export interface Finding {
+  id: string;
+  clause: string;
+  description: string;
+  severity: Severity;
+  nc: { id: string; code: string; status: NcStatus } | null;
+  createdAt: string;
+}
+
+export interface Audit {
+  id: string;
+  scheme: AuditScheme;
+  title: string;
+  scope: string | null;
+  plannedOn: string;
+  doneOn: string | null;
+  auditor: string | null;
+  lead: Person | null;
+  chapters: string[];
+  status: "PLANNED" | "DONE" | "CANCELLED";
+  result: string | null;
+  room: { id: string; name: string } | null;
+  cancelReason: string | null;
+  findings: { total: number; openNcs: number };
+  access: "manage" | "lead" | "read";
+}
+
+export interface AuditDetail extends Audit {
+  findingItems: Finding[];
+}
+
+export interface AuditInput {
+  scheme: AuditScheme;
+  title: string;
+  scope: string | null;
+  plannedOn: string;
+  auditor: string | null;
+  leadId: string | null;
+  chapters: string[];
+  auditRoomId: string | null;
+}
+
+export interface Coverage {
+  standard: Standard;
+  chapters: { number: number; audits: string[] }[];
+}
+
+export const auditKeys = {
+  list: (slug: string, year: number) => ["w", slug, "quality", "audits", year] as const,
+  coverage: (slug: string, year: number) =>
+    ["w", slug, "quality", "audits", "coverage", year] as const,
+  one: (slug: string, id: string) => ["w", slug, "quality", "audit", id] as const,
+};
+
+export const auditsApi = {
+  list: (slug: string, year: number) =>
+    api<{ items: Audit[] }>(w(slug, `/quality/audits?year=${String(year)}`)),
+  coverage: (slug: string, year: number) =>
+    api<{ standards: Coverage[] }>(w(slug, `/quality/audits/coverage?year=${String(year)}`)),
+  get: (slug: string, id: string) => api<{ audit: AuditDetail }>(w(slug, `/quality/audits/${id}`)),
+  create: (slug: string, body: AuditInput) =>
+    api<{ audit: AuditDetail }>(w(slug, "/quality/audits"), { method: "POST", body }),
+  update: (slug: string, id: string, body: Partial<AuditInput>) =>
+    api<{ audit: AuditDetail }>(w(slug, `/quality/audits/${id}`), { method: "PATCH", body }),
+  close: (slug: string, id: string, body: { doneOn: string; result: string | null }) =>
+    api<{ audit: AuditDetail }>(w(slug, `/quality/audits/${id}/done`), { method: "POST", body }),
+  cancel: (slug: string, id: string, reason: string) =>
+    api<{ audit: AuditDetail }>(w(slug, `/quality/audits/${id}/cancel`), {
+      method: "POST",
+      body: { reason },
+    }),
+  addFinding: (
+    slug: string,
+    id: string,
+    body: {
+      clause: string;
+      description: string;
+      severity: Severity;
+      openNc: boolean;
+      ownerId: string | null;
+    },
+  ) =>
+    api<{ audit: AuditDetail }>(w(slug, `/quality/audits/${id}/findings`), {
+      method: "POST",
+      body,
+    }),
+  findingNc: (slug: string, findingId: string) =>
+    api<{ audit: AuditDetail }>(w(slug, `/quality/findings/${findingId}/nc`), {
+      method: "POST",
+      body: { ownerId: null },
+    }),
 };

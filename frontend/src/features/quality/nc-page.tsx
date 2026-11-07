@@ -900,6 +900,16 @@ export function NcPage() {
           <Row label={t.location}>{nc.location ?? t.none}</Row>
           <Row label={t.owner}>{nc.owner.name}</Row>
           <Row label={t.department}>{nc.department?.name ?? t.none}</Row>
+          {nc.audit !== null && (
+            <Row label={t.audit}>
+              <Link
+                to={`/app/${workspaceSlug}/calidad/auditorias/${nc.audit.id}`}
+                className="underline-offset-4 hover:underline"
+              >
+                {texts.quality.audits.fromAudit(nc.audit.title, nc.audit.clause)}
+              </Link>
+            </Row>
+          )}
           {nc.record !== null && (
             <Row label={t.record}>
               <Link
