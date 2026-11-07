@@ -29,6 +29,8 @@ import {
   type Decision,
   type DocStatus,
 } from "./documents-api";
+import { ActionDialog } from "@/features/safety/action-dialog";
+import { useMembership } from "@/features/home/workspace-layout";
 import { texts } from "@/i18n";
 
 export const STATUS_TONE: Record<
@@ -114,12 +116,30 @@ function ControlBody({ target }: { target: ControlTarget }) {
   const typeSource = useStaticSource(`document-types-${target.id}`, typeOptions);
   const selectedType = data?.types.find((type) => type.code === docType);
   const controlled = data?.controlled ?? null;
+  // A risk assessment (EVR) gets preventive measures from here, when the safety module is on.
+  const membership = useMembership();
+  const [planning, setPlanning] = useState(false);
+  const canPlan =
+    controlled?.docType === "EVR" &&
+    membership.workspace.safety.enabled &&
+    membership.capabilities.includes("safety.manage");
   return (
     <DialogContent
       title={t.dialog.title(target.name)}
       description={controlled === null ? t.dialog.convertText : t.dialog.controlledText}
       footer={
         <>
+          {canPlan && (
+            <Button
+              variant="outline"
+              className="mr-auto"
+              onClick={() => {
+                setPlanning(true);
+              }}
+            >
+              {texts.safety.planning.fromDocument}
+            </Button>
+          )}
           <DialogClose asChild>
             <Button variant="outline">{t.dialog.close}</Button>
           </DialogClose>
@@ -182,6 +202,20 @@ function ControlBody({ target }: { target: ControlTarget }) {
       ) : (
         <ControlledPanel nodeId={target.id} controlled={controlled} onChanged={refresh} />
       )}
+      <Dialog open={planning} onOpenChange={setPlanning}>
+        {planning && controlled !== null && (
+          <ActionDialog
+            from={{
+              origin: "RISK_ASSESSMENT",
+              nodeId: target.id,
+              label: `${controlled.code} · ${target.name}`,
+            }}
+            onClose={() => {
+              setPlanning(false);
+            }}
+          />
+        )}
+      </Dialog>
       <LimitReachedDialog
         limit={limit}
         onClose={() => {

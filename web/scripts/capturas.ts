@@ -38,6 +38,7 @@ import {
 } from "./demo-app.ts";
 import { BIAN_TEXT, BIAN_USAGE, bianRecording, fakeBian, fakeBianUsage } from "./bian-recording.ts";
 import { demoCae, demoCaeNames } from "./demo-cae.ts";
+import { demoPlanning } from "./demo-planning.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
 const BASE = `http://localhost:${String(PORT)}`;
@@ -413,6 +414,24 @@ async function demoCaeOf(locale: Locale, slug: string): Promise<void> {
   });
 }
 
+/** The planning's measures (web/scripts/demo-planning.ts), after CAE and the demo form (its record). */
+const demoPlanningDone = new Set<Locale>();
+
+async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
+  if (demoPlanningDone.has(locale)) return;
+  await demoCaeOf(locale, slug);
+  await demoForm(locale, slug);
+  await demoPlanning({
+    base: BASE,
+    token: await ownerToken(locale),
+    slug,
+    locale,
+    db,
+    responsibleEmails: [PEOPLE[locale].admin, PEOPLE[locale].reader],
+  });
+  demoPlanningDone.add(locale);
+}
+
 const caeIdsOf = (locale: Locale) => {
   const ids = demoCaeIds.get(locale);
   if (ids === undefined) throw new Error("demoCaeOf todavía no corrió");
@@ -708,44 +727,51 @@ const CAPTURES: Capture[] = [
     name: "epis",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/epis`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "epis-catalogo",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/epis/catalogo`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "epis-nueva",
     who: "owner",
     path: (i, locale) =>
       `/app/${i.slug}/seguridad/epis/nueva?persona=${safetyPeopleOf(locale).next}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "resumen",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/resumen`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "accidentes",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/incidentes`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "formacion",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/formacion/${safetyPeopleOf(locale).course}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "epis-ficha",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/personas/${safetyPeopleOf(locale).sheet}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    // The planning of the preventive activity (docs/spec/seguridad-salud.md).
+    name: "planificacion",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/planificacion?estado=all`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   // CAE, coordination of business activities (docs/spec/cae.md), with web/scripts/demo-cae.ts.
   {
@@ -1214,14 +1240,15 @@ const only = process.env.CAPTURAS_SOLO ? new Set(process.env.CAPTURAS_SOLO.split
 const onlyLocale = process.env.CAPTURAS_IDIOMA;
 // The CAE demo makes a few hundred API calls: done before anyone signs in, then a minute's pause, so
 // the API's per-minute limit never logs the browser out mid-run.
-const caeNeeded = CAPTURES.some(
+const demoNeeded = CAPTURES.some(
   (capture) =>
-    (only === null || only.has(capture.name)) && capture.before?.toString().includes("demoCaeOf"),
+    (only === null || only.has(capture.name)) &&
+    /demoCaeOf|demoPlanningOf/u.test(capture.before?.toString() ?? ""),
 );
-if (caeNeeded) {
+if (demoNeeded) {
   for (const locale of ["es", "en"] as const) {
     if (onlyLocale !== undefined && onlyLocale !== locale) continue;
-    await demoCaeOf(locale, (await idsOf(db, locale)).slug);
+    await demoPlanningOf(locale, (await idsOf(db, locale)).slug);
   }
   await sleep(61_000);
 }

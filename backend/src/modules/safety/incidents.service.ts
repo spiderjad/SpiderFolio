@@ -10,25 +10,20 @@ import { safetyTexts } from "../../i18n/index.ts";
 import { dayIn, zoneOf } from "../../lib/time-zone.ts";
 import type { Prisma } from "../../generated/prisma/client.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
-import { dayOf, resolveExpiry, setExpiry } from "../expiries/expiries.service.ts";
+import { dayOf } from "../expiries/expiries.service.ts";
 import type { Answers } from "../forms/answers.ts";
 import { toCsv } from "../members/members.csv.ts";
-import { ACTION_EXPIRY } from "./action-expiry.ts";
+import { actionsOf, type ActionView } from "./actions.service.ts";
 import { INCIDENT_FIELDS, INCIDENT_SEVERITIES, INCIDENT_TYPES } from "./incident-form.ts";
 import { requireSafety, safetySettingsOf } from "./safety-access.ts";
-import type {
-  ActionInput,
-  IncidentFilters,
-  ListIncidentsQuery,
-  UpdateActionInput,
-} from "./incidents.schemas.ts";
+import type { IncidentFilters, ListIncidentsQuery } from "./incidents.schemas.ts";
 
 export const CSV_MAX = 10_000;
 
-const canSeeHealth = (ctx: Pick<AdminContext, "tenant">) =>
+export const canSeeHealth = (ctx: Pick<AdminContext, "tenant">) =>
   ctx.tenant.capabilities.includes("safety.health");
 
-async function requireHealth(ctx: AdminContext): Promise<void> {
+export async function requireHealth(ctx: AdminContext): Promise<void> {
   await requireSafety(ctx);
   if (!canSeeHealth(ctx)) throw forbidden();
 }
@@ -111,14 +106,6 @@ export async function recordIncident(
 }
 
 // ─── Cases ───────────────────────────────────────────────────────────────────────────────
-
-export interface ActionView {
-  id: string;
-  description: string;
-  responsible: { id: string; name: string };
-  dueOn: string;
-  done: { at: Date; by: { id: string; name: string } | null; note: string | null } | null;
-}
 
 /** Open (just reported), under investigation, or closed (every measure done). */
 export type IncidentStatus = "OPEN" | "INVESTIGATING" | "CLOSED";
@@ -245,41 +232,11 @@ export async function listIncidents(
   return pageOf(await incidentViews(ctx, rows), total, query);
 }
 
-async function loadIncident(ctx: AdminContext, id: string): Promise<IncidentRow> {
+export async function loadIncident(ctx: AdminContext, id: string): Promise<IncidentRow> {
   await requireHealth(ctx);
   const row = await ctx.db.safetyIncident.findFirst({ where: { id }, select: incidentSelect });
   if (row === null) throw notFound();
   return row;
-}
-
-async function actionsOf(ctx: AdminContext, where: Prisma.SafetyActionWhereInput) {
-  const rows = await ctx.db.safetyAction.findMany({
-    where,
-    orderBy: [{ dueOn: "asc" }, { id: "asc" }],
-    take: 200,
-  });
-  const people = await names(
-    ctx,
-    rows.flatMap((row) => [row.responsibleId, row.doneById]),
-  );
-  return rows.map((row): ActionView & { incidentId: string } => ({
-    id: row.id,
-    incidentId: row.incidentId,
-    description: row.description,
-    responsible: { id: row.responsibleId, name: people.get(row.responsibleId) ?? "" },
-    dueOn: dayOf(row.dueOn),
-    done:
-      row.doneAt === null
-        ? null
-        : {
-            at: row.doneAt,
-            by:
-              row.doneById === null
-                ? null
-                : { id: row.doneById, name: people.get(row.doneById) ?? "" },
-            note: row.note,
-          },
-  }));
 }
 
 export async function getIncident(
@@ -400,140 +357,6 @@ export async function exportIncidentsCsv(
     metadata: { rows: views.length, filters: { ...filters } },
   });
   return { fileName: c.fileName, body };
-}
-
-// ─── Corrective measures ─────────────────────────────────────────────────────────────────
-
-async function assertMember(ctx: AdminContext, membershipId: string): Promise<void> {
-  const found = await ctx.db.membership.count({ where: { id: membershipId, status: "ACTIVE" } });
-  if (found === 0) throw notFound();
-}
-
-export async function createAction(
-  ctx: AdminContext,
-  incidentId: string,
-  input: ActionInput,
-): Promise<ActionView> {
-  await loadIncident(ctx, incidentId);
-  await assertMember(ctx, input.responsibleId);
-  const action = await ctx.db.$transaction(async (tx) => {
-    const created = await tx.safetyAction.create({
-      data: {
-        incidentId,
-        description: input.description,
-        responsibleId: input.responsibleId,
-        dueOn: new Date(`${input.dueOn}T00:00:00Z`),
-        createdById: ctx.tenant.membershipId,
-      },
-      select: { id: true },
-    });
-    await setExpiry(tx, {
-      kind: ACTION_EXPIRY,
-      subjectId: created.id,
-      dueOn: input.dueOn,
-      responsibleId: input.responsibleId,
-      noticeDays: [7, 1, 0],
-    });
-    // A new measure reopens nothing by itself, but a closed case gets one more open.
-    await tx.safetyIncident.updateMany({
-      where: { id: incidentId, status: "CLOSED" },
-      data: { status: "OPEN", closedAt: null, closedById: null },
-    });
-    return created;
-  });
-  await auditAdmin(ctx, {
-    action: "safety.action.create",
-    entityType: "SafetyIncident",
-    entityId: incidentId,
-    metadata: { actionId: action.id, responsibleId: input.responsibleId, dueOn: input.dueOn },
-  });
-  const [view] = await actionsOf(ctx, { id: action.id });
-  if (view === undefined) throw notFound();
-  return view;
-}
-
-export async function updateAction(
-  ctx: AdminContext,
-  id: string,
-  input: UpdateActionInput,
-): Promise<ActionView> {
-  await requireHealth(ctx);
-  const current = await ctx.db.safetyAction.findFirst({ where: { id } });
-  if (current === null) throw notFound();
-  if (current.doneAt !== null) {
-    throw new AppError("CONFLICT", { message: safetyTexts.incidents.actionDone });
-  }
-  if (input.responsibleId !== undefined) await assertMember(ctx, input.responsibleId);
-  await ctx.db.$transaction(async (tx) => {
-    const updated = await tx.safetyAction.update({
-      where: { id },
-      data: {
-        ...(input.description === undefined ? {} : { description: input.description }),
-        ...(input.responsibleId === undefined ? {} : { responsibleId: input.responsibleId }),
-        ...(input.dueOn === undefined ? {} : { dueOn: new Date(`${input.dueOn}T00:00:00Z`) }),
-      },
-    });
-    await setExpiry(tx, {
-      kind: ACTION_EXPIRY,
-      subjectId: id,
-      dueOn: dayOf(updated.dueOn),
-      responsibleId: updated.responsibleId,
-      noticeDays: [7, 1, 0],
-    });
-  });
-  await auditAdmin(ctx, {
-    action: "safety.action.update",
-    entityType: "SafetyIncident",
-    entityId: current.incidentId,
-    metadata: { actionId: id, ...input },
-  });
-  const [view] = await actionsOf(ctx, { id });
-  if (view === undefined) throw notFound();
-  return view;
-}
-
-/** Done: by whoever has to do it, or by `safety.health`. */
-export async function completeAction(
-  ctx: AdminContext,
-  id: string,
-  note: string | null,
-): Promise<ActionView> {
-  await requireSafety(ctx);
-  const current = await ctx.db.safetyAction.findFirst({ where: { id } });
-  if (current === null) throw notFound();
-  if (current.responsibleId !== ctx.tenant.membershipId && !canSeeHealth(ctx)) throw notFound();
-  if (current.doneAt !== null) {
-    throw new AppError("CONFLICT", { message: safetyTexts.incidents.actionDone });
-  }
-  await ctx.db.$transaction(async (tx) => {
-    await tx.safetyAction.update({
-      where: { id },
-      data: { doneAt: new Date(), doneById: ctx.tenant.membershipId, note },
-    });
-    await resolveExpiry(tx, ACTION_EXPIRY, id);
-  });
-  await auditAdmin(ctx, {
-    action: "safety.action.done",
-    entityType: "SafetyIncident",
-    entityId: current.incidentId,
-    metadata: { actionId: id },
-  });
-  const [view] = await actionsOf(ctx, { id });
-  if (view === undefined) throw notFound();
-  return view;
-}
-
-/** The measures someone has to do (only the measure: never the incident's details). */
-export async function myActions(ctx: AdminContext): Promise<ActionView[]> {
-  await requireSafety(ctx);
-  const rows = await actionsOf(ctx, { responsibleId: ctx.tenant.membershipId });
-  return rows.map((row) => ({
-    id: row.id,
-    description: row.description,
-    responsible: row.responsible,
-    dueOn: row.dueOn,
-    done: row.done,
-  }));
 }
 
 /** Where to report one: the base form, for everyone with the module on. */

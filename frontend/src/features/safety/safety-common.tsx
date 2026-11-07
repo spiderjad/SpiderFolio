@@ -152,6 +152,11 @@ export function PpeTabs() {
           {texts.safety.training.tab}
         </NavLink>
       )}
+      {canManage && (
+        <NavLink to={`${base}/planificacion`} className={tab}>
+          {texts.safety.planning.tab}
+        </NavLink>
+      )}
       {health && (
         <NavLink to={`${base}/incidentes`} className={tab}>
           {texts.safety.incidents.tab}

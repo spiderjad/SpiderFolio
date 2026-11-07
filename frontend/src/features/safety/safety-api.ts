@@ -160,13 +160,88 @@ export interface Incident {
 /** Open (just reported), under investigation, or closed. */
 export type IncidentStatus = "OPEN" | "INVESTIGATING" | "CLOSED";
 
+export type ActionOrigin = "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "OTHER";
+export type ActionPriority = "LOW" | "MEDIUM" | "HIGH";
+
+export const ACTION_ORIGINS: readonly ActionOrigin[] = [
+  "INCIDENT",
+  "RISK_ASSESSMENT",
+  "INSPECTION",
+  "OTHER",
+];
+export const ACTION_PRIORITIES: readonly ActionPriority[] = ["HIGH", "MEDIUM", "LOW"];
+
+/** What a measure comes from, as much as the viewer may see (an accident: no details without health). */
+export type ActionReference =
+  | { kind: "incident"; id: string | null; label: string }
+  | {
+      kind: "document";
+      id: string;
+      spaceId: string | null;
+      page: boolean;
+      parentId: string | null;
+      label: string;
+    }
+  | { kind: "record"; id: string; formId: string | null; spaceId: string | null; label: string }
+  | null;
+
 export interface SafetyAction {
   id: string;
+  origin: ActionOrigin;
+  reference: ActionReference;
   description: string;
+  priority: ActionPriority;
+  /** Cents of the company's currency. */
+  estimatedCost: number | null;
   responsible: { id: string; name: string };
   dueOn: string;
+  overdue: boolean;
   done: { at: string; by: { id: string; name: string } | null; note: string | null } | null;
+  canEdit: boolean;
 }
+
+export interface ActionInput {
+  description: string;
+  responsibleId: string;
+  dueOn: string;
+  priority: ActionPriority;
+  estimatedCost: number | null;
+}
+
+export type PlannedActionInput = ActionInput &
+  (
+    | { origin: "RISK_ASSESSMENT"; nodeId: string }
+    | { origin: "INSPECTION"; recordId: string }
+    | { origin: "OTHER" }
+  );
+
+export interface PlanningFilters {
+  origin?: ActionOrigin | undefined;
+  status?: "open" | "overdue" | "done" | "all" | undefined;
+  responsible?: string | undefined;
+  priority?: ActionPriority | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
+}
+
+export const planningKeys = {
+  list: (slug: string, filters: PlanningFilters) =>
+    ["w", slug, "safety", "incidents", "planning", filters] as const,
+};
+
+export const planningApi = {
+  list: (slug: string, filters: PlanningFilters, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<SafetyAction>>(
+      w(slug, `/safety/planning?${listQuery({ ...filters, cursor })}`),
+      { signal },
+    ),
+  create: (slug: string, body: PlannedActionInput) =>
+    api<{ action: SafetyAction }>(w(slug, "/safety/planning"), { method: "POST", body }),
+  update: (slug: string, id: string, body: Partial<ActionInput>) =>
+    api<{ action: SafetyAction }>(w(slug, `/safety/actions/${id}`), { method: "PATCH", body }),
+  csv: (slug: string, filters: PlanningFilters) =>
+    apiBlob(w(slug, `/safety/planning/csv?${listQuery({ ...filters })}`)),
+};
 
 export interface IncidentFilters {
   from?: string | undefined;

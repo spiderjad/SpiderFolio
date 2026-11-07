@@ -158,6 +158,11 @@ export const routes = [
                     ),
                     children: [
                       {
+                        // The planning of the preventive activity (docs/spec/seguridad-salud.md).
+                        path: "planificacion",
+                        lazy: page(() => import("@/features/safety/planning-page"), "PlanningPage"),
+                      },
+                      {
                         path: "epis/catalogo",
                         lazy: page(() => import("@/features/safety/catalog-page"), "CatalogPage"),
                       },

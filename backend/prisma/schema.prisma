@@ -555,26 +555,56 @@ model SafetyIncident {
 }
 
 /// A corrective measure of an incident: who does it and by when (an Expiry «safety.action»).
+/// Where a preventive measure comes from (docs/spec/seguridad-salud.md, «Planificación de la actividad
+/// preventiva»).
+enum SafetyActionOrigin {
+  INCIDENT
+  RISK_ASSESSMENT
+  INSPECTION
+  OTHER
+}
+
+enum SafetyActionPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// A preventive or corrective measure: the planning of the preventive activity (Ley 31/1995, art. 16).
+/// From an accident or incident (health data: only `safety.health` sees which), a risk assessment (the
+/// EVR controlled document), an inspection (a non-conforming form record) or anything else.
 model SafetyAction {
-  id            String    @id @default(cuid())
+  id            String               @id @default(cuid())
   workspaceId   String
-  incidentId    String
+  origin        SafetyActionOrigin   @default(INCIDENT)
+  /// With origin INCIDENT.
+  incidentId    String?
+  /// With origin RISK_ASSESSMENT: the EVR document (node; no FK).
+  nodeId        String?
+  /// With origin INSPECTION: the non-conforming form record (no FK: records are never deleted).
+  recordId      String?
   description   String
+  priority      SafetyActionPriority @default(MEDIUM)
+  /// Estimated cost in cents of the company's currency, optional.
+  estimatedCost Int?
   /// Membership; no FK.
   responsibleId String
-  dueOn         DateTime  @db.Date
+  dueOn         DateTime             @db.Date
   doneAt        DateTime?
   doneById      String?
   note          String?
   createdById   String
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime             @default(now())
 
-  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  incident  SafetyIncident @relation(fields: [incidentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  incident  SafetyIncident? @relation(fields: [incidentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, incidentId])
   @@index([workspaceId, responsibleId, doneAt])
+  @@index([workspaceId, dueOn, id])
+  @@index([workspaceId, origin, dueOn])
 }
+
 
 /// A course (docs/spec/seguridad-salud.md, «Formación»): a controlled document whose reading counts as
 /// training, valid for some months. Who has to do it comes from the document's required readings.

@@ -197,11 +197,26 @@ es/en de las pantallas que cambian.
 Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después de la CAE
 (docs/spec/cae.md, que va dentro de este módulo):
 
-6. **Planificación de la actividad preventiva** (Ley 31/1995, art. 16): las medidas dejan de ser solo de
+6. **Planificación de la actividad preventiva** (Ley 31/1995, art. 16) (hecha): las medidas dejan de ser solo de
    los accidentes. `SafetyAction` suma un origen (`INCIDENT | RISK_ASSESSMENT | INSPECTION | OTHER`) y la
    referencia (`incidentId?`, `nodeId?` del documento EVR, `recordId?` de una inspección), prioridad y
    coste estimado opcional. Pantalla «Planificación» con todas las medidas, filtros y CSV; desde una EVR o
    un registro de inspección no conforme se crean medidas. Mismos vencimientos `safety.action`.
+   Migración `safety_action_planning`: enums `SafetyActionOrigin` y `SafetyActionPriority`, columnas
+   `origin` (por defecto `INCIDENT`: las existentes siguen igual), `nodeId`, `recordId`, `priority`
+   (por defecto `MEDIUM`) y `estimatedCost` (céntimos de la moneda de la empresa, sin moneda), y
+   `incidentId` opcional con un CHECK: origen `INCIDENT` ⇔ tiene incidente. Lógica en
+   `actions.service.ts` (sale de `incidents.service.ts`). Permisos: la planificación
+   (`GET/POST /safety/planning`, `GET /safety/planning/csv`) es de `safety.manage`; las medidas de un
+   accidente las crea, cambia y cierra `safety.health` (desde el caso), las demás `safety.manage`; el
+   responsable marca las suyas. Sin `safety.health`, una medida de accidente se ve como «Accidente o
+   incidente» sin enlace ni fecha (también en el CSV y en «Mis medidas»). Desde una EVR: botón en la
+   ventana de documento controlado (tipo `EVR`, módulo activo, `safety.manage`); desde un registro no
+   conforme de cualquier formulario no anulado. La tarjeta «Medidas abiertas» del Resumen ahora es de
+   `safety.manage` o `safety.health` y lleva a la planificación. Simplificaciones: «Nueva medida» en la
+   planificación crea origen «Otra» (las de EVR e inspección se crean desde su documento o registro);
+   `DRILL` y `COMMITTEE` llegan con sus fases (fases 8 y 9); la pestaña va dentro del módulo, sin
+   entrada nueva en el menú lateral.
 7. **Indicadores de siniestralidad**: horas trabajadas y plantilla media por mes (las carga quien
    gestiona el módulo), e índices de frecuencia, gravedad e incidencia calculados con los accidentes con
    baja (días de baja: campo nuevo, opcional, del caso, sin datos médicos). Panel en Resumen y CSV. Sin

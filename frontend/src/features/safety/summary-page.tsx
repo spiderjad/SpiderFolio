@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { peopleApi, safetyKeys } from "./safety-api";
-import { PpeTabs, ReportIncidentButton } from "./safety-common";
+import { PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
 const t = texts.safety.summary;
@@ -51,6 +51,7 @@ function SummaryCard({
 
 export function SummaryPage() {
   const { workspaceSlug = "" } = useParams();
+  const { canManage } = useSafety();
   const query = useQuery({
     queryKey: [...safetyKeys.all(workspaceSlug), "summary"],
     queryFn: () => peopleApi.summary(workspaceSlug),
@@ -120,7 +121,11 @@ export function SummaryPage() {
               extra={
                 query.data.actions.overdue > 0 ? t.overdue(query.data.actions.overdue) : undefined
               }
-              to={`${base}/incidentes?estado=open`}
+              to={
+                canManage
+                  ? `${base}/planificacion${query.data.actions.overdue > 0 ? "?estado=overdue" : ""}`
+                  : `${base}/incidentes?estado=open`
+              }
             />
           )}
           {query.data.incidents !== null && (

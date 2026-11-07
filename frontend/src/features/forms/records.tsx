@@ -8,6 +8,7 @@ import {
   Ban,
   ClipboardCheck,
   Download,
+  ListChecks,
   QrCode,
   ServerCrash,
   X,
@@ -27,6 +28,7 @@ import { Badge, Banner, Card, EmptyState, Skeleton } from "@/components/ui/displ
 import { Checkbox, FormField as LabeledField, Input, Textarea } from "@/components/ui/form";
 import { LoadMore, useInfiniteList } from "@/components/ui/infinite";
 import {
+  Dialog,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -46,6 +48,8 @@ import {
   type FormField,
   type RecordFilters,
 } from "./forms-api";
+import { useMembership } from "@/features/home/workspace-layout";
+import { ActionDialog } from "@/features/safety/action-dialog";
 import { locale, texts } from "@/i18n";
 
 const t = texts.forms;
@@ -403,6 +407,11 @@ export function RecordPage() {
   const queryClient = useQueryClient();
   const [voiding, setVoiding] = useState(false);
   const [reason, setReason] = useState("");
+  // A non-conforming inspection gets preventive measures from here (safety module on, safety.manage).
+  const membership = useMembership();
+  const [planning, setPlanning] = useState(false);
+  const canPlan =
+    membership.workspace.safety.enabled && membership.capabilities.includes("safety.manage");
   const form = useQuery({
     queryKey: formsKeys.form(workspaceSlug, formId),
     queryFn: () => formsApi.get(workspaceSlug, formId),
@@ -448,6 +457,18 @@ export function RecordPage() {
           <h1 className="min-w-0 flex-1 break-words text-xl font-semibold tracking-tight">
             {t.record.title(name)}
           </h1>
+          {canPlan && record.voided === null && record.nonConforming.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPlanning(true);
+              }}
+            >
+              <ListChecks className="size-4" aria-hidden="true" />
+              {texts.safety.planning.fromRecord}
+            </Button>
+          )}
           {canVoid && (
             <Button
               variant="outline"
@@ -496,6 +517,20 @@ export function RecordPage() {
         ))}
       </Card>
       <p className="text-xs text-muted-foreground">{t.record.immutable}</p>
+      <Dialog open={planning} onOpenChange={setPlanning}>
+        {planning && (
+          <ActionDialog
+            from={{
+              origin: "INSPECTION",
+              recordId,
+              label: `${name} · ${formatDateTime(record.submittedAt)}`,
+            }}
+            onClose={() => {
+              setPlanning(false);
+            }}
+          />
+        )}
+      </Dialog>
       <ConfirmDialog
         open={voiding}
         onOpenChange={setVoiding}

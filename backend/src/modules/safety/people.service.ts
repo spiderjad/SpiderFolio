@@ -199,17 +199,22 @@ export async function safetySummary(ctx: AdminContext): Promise<SafetySummary> {
     if (alerts.trainingSoon > 0) summary.trainingSoon += 1;
     if (summary.fitness !== null && alerts.fitness !== null) summary.fitness += 1;
   }
-  if (health(ctx)) {
+  // The planning's measures (every origin: only counts, nothing about an accident).
+  if (canManageSafety(ctx) || health(ctx)) {
     const dayDate = new Date(`${day}T00:00:00Z`);
-    const [open, overdue, openIncidents, recent] = await Promise.all([
+    const [open, overdue] = await Promise.all([
       ctx.db.safetyAction.count({ where: { doneAt: null } }),
       ctx.db.safetyAction.count({ where: { doneAt: null, dueOn: { lt: dayDate } } }),
+    ]);
+    summary.actions = { open, overdue };
+  }
+  if (health(ctx)) {
+    const [openIncidents, recent] = await Promise.all([
       ctx.db.safetyIncident.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } }),
       ctx.db.safetyIncident.count({
         where: { createdAt: { gte: new Date(Date.now() - 7 * 86_400_000) } },
       }),
     ]);
-    summary.actions = { open, overdue };
     summary.incidents = { open: openIncidents, recent };
   }
   return summary;

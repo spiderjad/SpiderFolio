@@ -75,6 +75,9 @@ export function MyActionsPage() {
                     {action.description}
                   </p>
                   <p className="text-xs text-muted-foreground">
+                    {action.reference?.label ?? t.planning.origins[action.origin]}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
                     {t.incidents.due(formatUtcDate(action.dueOn))}
                     {action.done !== null &&
                       ` · ${t.incidents.doneBy(action.done.by?.name ?? "", formatDateTime(action.done.at))}`}

@@ -41,22 +41,30 @@ import {
   updateCourse,
 } from "./training.service.ts";
 import {
+  ActionFiltersSchema,
   ActionSchema,
   CompleteActionSchema,
   IncidentFiltersSchema,
+  ListActionsQuerySchema,
   ListIncidentsQuerySchema,
+  PlannedActionSchema,
   UpdateActionSchema,
 } from "./incidents.schemas.ts";
 import {
   completeAction,
   createAction,
+  createPlannedAction,
+  exportPlanningCsv,
+  listPlanning,
+  myActions,
+  updateAction,
+} from "./actions.service.ts";
+import {
   exportIncidentsCsv,
   getIncident,
   incidentFormOf,
   listIncidents,
-  myActions,
   setIncidentStatus,
-  updateAction,
 } from "./incidents.service.ts";
 import {
   CreateDeliverySchema,
@@ -328,6 +336,45 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         const { id } = IdParamsSchema.parse(req.params);
         const action = await createAction(adminContextOf(req), id, ActionSchema.parse(req.body));
         res.status(201).json({ action });
+      },
+    },
+    // The planning of the preventive activity (safety.manage; the service checks).
+    {
+      method: "get",
+      path: "/safety/planning",
+      handler: async (req, res) => {
+        res.json(await listPlanning(adminContextOf(req), ListActionsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/planning",
+      handler: async (req, res) => {
+        const action = await createPlannedAction(
+          adminContextOf(req),
+          PlannedActionSchema.parse(req.body),
+        );
+        res.status(201).json({ action });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/planning/csv",
+      guards: [
+        sensitiveRateLimit(deps, { name: "safety-csv", windowMs: HOUR, limit: 30, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const file = await exportPlanningCsv(
+          adminContextOf(req),
+          ActionFiltersSchema.parse(req.query),
+        );
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="planificacion.csv"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(file.body);
       },
     },
     {
