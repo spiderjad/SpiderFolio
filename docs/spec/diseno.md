@@ -49,6 +49,32 @@ Abajo, separado por borde: nombre del workspace en gris, avatar con iniciales so
 Colapsada: solo íconos con tooltip. En móvil: Sheet desde la izquierda.
 Barra superior fina con el título de la sección a la izquierda, fecha en gris y el botón primario contextual a la derecha (+ Nuevo documento).
 Contenido sobre bg-surface, max-w-[1400px], padding px-4 sm:px-6 lg:px-8 py-6: título grande + fecha o subtítulo en gris, y luego bloques.
+10.4.1 Navegación por áreas (decidida el 07/11/2026, opción B de docs/plans/navegacion/propuesta.html)
+Problema: el menú plano (Inicio, Mis documentos, Archivos, Compartido, Aprobaciones, Vencimientos, Prevención, 12 de Administración y los espacios) ya no escala con Prevención, la CAE y Calidad.
+
+Estructura: **barra de áreas + menú del área**.
+- Barra de áreas: columna fija de 64 px a la izquierda, con un ícono y un nombre corto por área; el área activa en primary-soft. Abajo de todo, separada, Administración (engranaje). Si la persona ve una sola área de trabajo, la barra se oculta y queda solo el menú.
+- Menú del área: la columna actual (260 px), con el título del área arriba y solo sus secciones. Las pestañas internas de cada módulo (Prevención: Resumen, Personas, EPI, Formación, Accidentes, Planificación, Indicadores, Contratas…) se mantienen dentro de su pantalla.
+- Celular (< 768 px): las áreas pasan a una barra inferior (hasta 4 áreas + «Más»); el menú del área se abre como Sheet desde el título.
+
+Áreas:
+| Área | Contenido | Quién la ve |
+|---|---|---|
+| Inicio | Panel, Mis pendientes (lecturas, aprobaciones, formularios de hoy, medidas, vencimientos), notificaciones | Todos |
+| Documentación | Documentos controlados, Mis lecturas, Aprobaciones, Vencimientos, Salas de auditoría, y los formularios de los espacios de Documentación | Todos (cada uno lo suyo) |
+| Wiki | Espacios y páginas de los departamentos, Archivos, Compartido conmigo | Todos, según el acceso de cada espacio |
+| Prevención | El módulo de Seguridad y salud entero, CAE incluida | Con el módulo activo: safety.manage, safety.health, jefes (su área), cae.check (solo la CAE) y cada persona para su ficha |
+| Calidad | El módulo de Calidad (docs/plans/2026-11-07-modulo-calidad.md) | Con el módulo activo, por sus capacidades |
+| Administración | Miembros, Departamentos, Puestos, Roles, Accesos, Seguridad, Bian, Límites, Licencia y plugins, Auditoría | Según canSee de hoy |
+
+Decisiones:
+- **Wiki y Documentación separadas**: la Wiki es el día a día de cada departamento; Documentación es lo controlado y auditable.
+- **Formularios en su área**: cada espacio pertenece a un área (`Space.area`: `wiki` por defecto; el espacio de Prevención es `prl`; el de Calidad, `quality`; un admin puede cambiarlo). Un formulario aparece en el área de su espacio; Mis pendientes los junta todos para quien tiene que llenarlos.
+- **Administración es un área de la barra**, abajo, solo para quien puede administrar algo.
+- **Lo transversal** queda fuera de las áreas, siempre visible en la barra superior: buscador (⌘K), Mis pendientes, notificaciones y Bian.
+- **Área de entrada**: la elige la empresa por departamento (`Department.homeArea`) y cada persona puede cambiarla en su perfil (`Membership.homeArea`, gana sobre la del departamento). Por defecto, Inicio.
+- Las rutas no cambian (`/app/:slug/seguridad`, `/files`…); el área activa se deduce de la ruta, así los enlaces y QR existentes siguen sirviendo.
+- Un área sin nada que mostrarle a la persona no aparece en su barra.
 10.5 Componentes clave (todos en frontend/src/components/ui)
 Banner de aviso: bg-warning-soft con borde ámbar, ícono de advertencia, texto con el número en negrita y botón ámbar a la derecha ("Tienes 4 documentos pendientes de aprobar · Ver lista").
 Tarjeta KPI: blanca, rounded-2xl border p-4 sm:p-5, etiqueta en mayúsculas espaciada y número grande debajo. En grilla de 4 columnas (2 en tablet, 1 en móvil).

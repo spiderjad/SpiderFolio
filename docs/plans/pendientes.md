@@ -20,7 +20,8 @@ Hay que analizar y decidir con él, sin código todavía:
   jefe de producción, técnico de PRL, calidad, admin) para elegir, y después el spec en docs/spec/diseno.md.
 - **Propuesta lista** (07/11/2026): `docs/plans/navegacion/propuesta.html` (abrir en el navegador desde el
   repo; usa spider-ui del paquete instalado). Tres opciones (A selector, B barra de áreas, C portada por
-  departamento) × cinco perfiles, escritorio y celular. Recomendada: B. Falta que el mantenedor elija.
+  departamento) × cinco perfiles, escritorio y celular. **Elegida: B** (07/11/2026), con Wiki y Documentación separadas, formularios en su área y
+  Administración como área de la barra. Spec en docs/spec/diseno.md, 10.4.1. Falta implementarla.
 
 ## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 

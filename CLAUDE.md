@@ -101,7 +101,7 @@ Backend: sin lógica de negocio en las rutas. Frontend: datos del servidor con T
 
 ## Pendientes (leer al empezar una sesión)
 Lista viva en `docs/plans/pendientes.md`. Lo principal:
-- **Primero, analizar la app por áreas** (Prevención, Calidad, Documentación, Wiki), con menú propio por área y cada departamento entrando a lo suyo: el menú plano ya confunde. Ver «Arquitectura» en la lista. No sumar más secciones al menú sin decidir esto.
+- **Navegación por áreas decidida** (opción B: barra de áreas + menú del área; Inicio, Documentación, Wiki, Prevención, Calidad, Administración): docs/spec/diseno.md, 10.4.1. Implementarla antes de sumar más secciones al menú.
 - Módulos del núcleo que faltan, apagados por defecto y activables por empresa como Seguridad y salud: **CAE** (PRL, dentro de Prevención con interruptor propio, docs/spec/cae.md) y **Calidad alimentaria** (módulo aparte en el menú) (IFS 8 / BRCGS 9; notas y orden en `docs/plans/2026-11-07-modulo-calidad.md`). Primero su spec, no código.
 - Migración a spider-ui, etapas 2 a 5 (`docs/plans/2026-11-07-spider-ui.md`).
 - «Licencia y plugins» solo lo ve la dueña en el menú: decidir si el admin lo ve.
