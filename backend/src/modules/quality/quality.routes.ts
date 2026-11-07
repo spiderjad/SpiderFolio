@@ -5,6 +5,16 @@ import { z } from "zod";
 import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
+import { qualityDashboard } from "./dashboard.service.ts";
+import {
+  addPrpCheck,
+  createPrp,
+  listPrps,
+  prpChecks,
+  setPrpArchived,
+  updatePrp,
+} from "./prps.service.ts";
+import { PrpCheckSchema, PrpSchema, PrpsQuerySchema, UpdatePrpSchema } from "./prps.schemas.ts";
 import {
   addAction,
   cancelNc,
@@ -775,6 +785,75 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         res.status(201).json({
           crisis: await addRecallTest(adminContextOf(req), RecallTestSchema.parse(req.body)),
         });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/dashboard",
+      handler: async (req, res) => {
+        res.json(await qualityDashboard(adminContextOf(req)));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/prps",
+      handler: async (req, res) => {
+        res.json({ prps: await listPrps(adminContextOf(req), PrpsQuerySchema.parse(req.query)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/prps",
+      handler: async (req, res) => {
+        res
+          .status(201)
+          .json({ prp: await createPrp(adminContextOf(req), PrpSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/prps/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          prp: await updatePrp(adminContextOf(req), id, UpdatePrpSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/prps/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ prp: await setPrpArchived(adminContextOf(req), id, true) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/prps/:id/restore",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ prp: await setPrpArchived(adminContextOf(req), id, false) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/prps/:id/checks",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ checks: await prpChecks(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/prps/:id/checks",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res
+          .status(201)
+          .json({
+            prp: await addPrpCheck(adminContextOf(req), id, PrpCheckSchema.parse(req.body)),
+          });
       },
     },
   ];

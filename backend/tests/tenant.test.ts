@@ -424,6 +424,8 @@ describe("forTenant: transacciones", () => {
           "qualityNc",
           "qualityNcCounter",
           "qualityNcEvent",
+          "qualityPrp",
+          "qualityPrpCheck",
           "qualityRecallTest",
           "qualitySupplier",
           "qualitySupplierDoc",

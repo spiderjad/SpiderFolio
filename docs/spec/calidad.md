@@ -544,6 +544,48 @@ Simplificaciones:
 - `settings.quality.responseDays` (1 a 90) en `PUT /admin/quality`.
 
 
+## Fase 6a: panel y prerrequisitos
+
+### Panel de indicadores
+
+El **Resumen** del área pasa a ser el panel de calidad (para `quality.view`): en una pantalla, lo que pide
+atención y cómo va el año.
+
+- **No conformidades**: abiertas por gravedad, por origen, vencidas (alguna acción vencida), en verificación
+  hoy y el tiempo medio de cierre de las cerradas en el año.
+- **PCC**: registros de los últimos 30 días de los formularios del plan APPCC y cuántos fuera de límite, y el
+  producto retenido sin decidir.
+- **Proveedores**: certificados vencidos o por vencer y evaluaciones vencidas.
+- **Reclamaciones**: abiertas, vencidas y por millón de unidades del año.
+- **Auditorías**: las próximas 60 días y la cobertura del programa interno.
+- **Prerrequisitos**: controles vencidos o por vencer y los no conformes de los últimos 30 días.
+- Cada número lleva a su lista. `GET /quality/dashboard` lo calcula en una sola llamada.
+
+### Prerrequisitos
+
+Los programas de prerrequisitos (limpieza y desinfección, plagas, agua, mantenimiento y calibración, vidrio
+y plástico duro, residuos y SANDACH) son controles periódicos con su responsable y su evidencia.
+
+- `QualityPrp` `{ id, workspaceId, kind (CLEANING | PEST | WATER | CALIBRATION | GLASS | WASTE | OTHER), name
+  (1 a 160: «Termómetro sonda T-03»), location? (hasta 120), everyDays (cada cuántos días, 1 a 730),
+  responsibleId? (membership), formId? (un formulario donde se registra; sin FK), lastDoneOn? (DATE),
+  nextDueOn (DATE), notes? (hasta 1000), archivedAt?, createdById, createdAt, updatedAt }`. Se archiva.
+- `QualityPrpCheck` `{ id, workspaceId, prpId, doneOn (DATE), conforming (bool), note? (hasta 1000), ncId?,
+  doneById, createdAt }`: solo se agregan.
+- Registrar un control pone `lastDoneOn` y `nextDueOn = doneOn + everyDays`. No conforme: **Abrir no
+  conformidad** (origen `INTERNAL`) en el mismo paso, con el nombre del control en el título.
+- Vencimiento `quality.prp` con `nextDueOn` al responsable (o a quien lo creó): 7 días antes, el día anterior
+  y el mismo día.
+- Estado calculado: **Al día**, **Por vencer** (7 días o menos), **Vencido**.
+- Pantalla **Prerrequisitos** (`/calidad/prerrequisitos`): por programa, cada control con su estado, último y
+  próximo; **Nuevo control**, **Registrar** y el historial de cada uno.
+- Permisos: quality.manage crea, edita y archiva; quien es responsable de un control y quality.manage
+  registran; quality.view lee.
+- API: `GET/POST /quality/prps`, `PATCH /quality/prps/:id`, `POST /quality/prps/:id/archive`,
+  `GET /quality/prps/:id/checks`, `POST /quality/prps/:id/checks` `{ doneOn, conforming, note?, openNc,
+  severity? }`, `GET /quality/dashboard`.
+
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,

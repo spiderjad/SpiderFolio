@@ -269,6 +269,15 @@ export interface TenantDb {
     PrismaClient["qualityRecallTest"],
     "findFirst" | "findMany" | "count" | "create"
   >;
+  // Prerequisite controls are archived, never deleted; their checks are only added.
+  qualityPrp: TenantDelegate<
+    PrismaClient["qualityPrp"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update"
+  >;
+  qualityPrpCheck: TenantDelegate<
+    PrismaClient["qualityPrpCheck"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -503,6 +512,11 @@ const delegates = {
     model: "QualityRecallTest",
     ops: ["findFirst", "findMany", "count", "create"],
   },
+  qualityPrp: {
+    model: "QualityPrp",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update"],
+  },
+  qualityPrpCheck: { model: "QualityPrpCheck", ops: ["findFirst", "findMany", "count", "create"] },
   qualityHold: {
     model: "QualityHold",
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],

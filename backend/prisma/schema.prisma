@@ -292,6 +292,8 @@ model Workspace {
   qualityCrisisMembers   QualityCrisisMember[]
   qualityCrisisContacts  QualityCrisisContact[]
   qualityRecallTests     QualityRecallTest[]
+  qualityPrps            QualityPrp[]
+  qualityPrpChecks       QualityPrpCheck[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -3042,4 +3044,61 @@ model QualityRecallTest {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, date, id])
+}
+
+enum QualityPrpKind {
+  CLEANING
+  PEST
+  WATER
+  CALIBRATION
+  GLASS
+  WASTE
+  OTHER
+}
+
+/// A prerequisite programme control (docs/spec/calidad.md, «Fase 6a»): done every N days by its
+/// responsible person. Archived, never deleted.
+model QualityPrp {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  kind          QualityPrpKind
+  name          String
+  location      String?
+  everyDays     Int
+  /// Membership; no FK.
+  responsibleId String?
+  /// A form where it's recorded (node; no FK).
+  formId        String?
+  lastDoneOn    DateTime?      @db.Date
+  nextDueOn     DateTime       @db.Date
+  notes         String?
+  archivedAt    DateTime?
+  createdById   String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  checks    QualityPrpCheck[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, kind, nextDueOn])
+}
+
+/// One time a prerequisite control was done: only added.
+model QualityPrpCheck {
+  id          String   @id @default(cuid())
+  workspaceId String
+  prpId       String
+  doneOn      DateTime @db.Date
+  conforming  Boolean
+  note        String?
+  ncId        String?
+  doneById    String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  prp       QualityPrp @relation(fields: [prpId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, prpId, doneOn])
+  @@index([workspaceId, doneOn])
 }

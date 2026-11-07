@@ -116,3 +116,20 @@ registerExpiryKind(RECALL_TEST_EXPIRY, {
     }),
   paused,
 });
+
+export const PRP_EXPIRY = "quality.prp";
+
+registerExpiryKind(PRP_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const prp = await db.qualityPrp.findFirst({
+      where: { id: expiry.subjectId, archivedAt: null },
+      select: { name: true },
+    });
+    if (prp === null) return null;
+    return {
+      what: qualityTexts.prpWhat(prp.name),
+      path: `/app/${workspace.slug}/calidad/prerrequisitos`,
+    };
+  },
+  paused,
+});

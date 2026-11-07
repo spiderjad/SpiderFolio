@@ -1681,6 +1681,9 @@ export const qualityTexts = {
     hasNc: "La reclamación ya tiene su no conformidad.",
     alreadyMember: "La persona ya está en el equipo de crisis.",
   },
+  /** Phase 6a (docs/spec/calidad.md, «Fase 6a»): prerequisites. */
+  prpNcTitle: (name: string) => `Control no conforme: ${name}`,
+  prpWhat: (name: string) => `Control de prerrequisitos: ${name}`,
   csv: {
     fileName: "no-conformidades.csv",
     code: "Código",

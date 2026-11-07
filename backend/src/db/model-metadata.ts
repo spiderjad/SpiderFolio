@@ -109,6 +109,8 @@ export const modelMetadata = {
       qualityCrisisMembers: "QualityCrisisMember",
       qualityCrisisContacts: "QualityCrisisContact",
       qualityRecallTests: "QualityRecallTest",
+      qualityPrps: "QualityPrp",
+      qualityPrpChecks: "QualityPrpCheck",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -460,6 +462,8 @@ export const modelMetadata = {
   QualityCrisisMember: { scope: "tenant", relations: { workspace: "Workspace" } },
   QualityCrisisContact: { scope: "tenant", relations: { workspace: "Workspace" } },
   QualityRecallTest: { scope: "tenant", relations: { workspace: "Workspace" } },
+  QualityPrp: { scope: "tenant", relations: { workspace: "Workspace", checks: "QualityPrpCheck" } },
+  QualityPrpCheck: { scope: "tenant", relations: { workspace: "Workspace", prp: "QualityPrp" } },
   QualitySupplierDoc: {
     scope: "tenant",
     relations: { workspace: "Workspace", supplier: "QualitySupplier" },

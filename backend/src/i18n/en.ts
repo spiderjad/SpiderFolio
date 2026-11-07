@@ -1677,6 +1677,8 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
     hasNc: "The complaint already has its nonconformity.",
     alreadyMember: "The person is already on the crisis team.",
   },
+  prpNcTitle: (name: string) => `Non-conforming check: ${name}`,
+  prpWhat: (name: string) => `Prerequisite check: ${name}`,
   csv: {
     fileName: "nonconformities.csv",
     code: "Code",
