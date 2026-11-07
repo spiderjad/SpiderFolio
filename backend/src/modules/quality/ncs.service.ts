@@ -33,6 +33,7 @@ import {
 } from "./quality-access.ts";
 import { ACTION_EXPIRY, VERIFICATION_EXPIRY } from "./quality-expiry.ts";
 import { holdsOfNc, type HoldView } from "./holds.service.ts";
+import { auditOfNc } from "./audits.service.ts";
 import {
   analysisOf,
   type ActionInput,
@@ -109,6 +110,8 @@ export interface NcDetail extends NcSummary {
   verifications: { id: string; effective: boolean; note: string; by: Person; at: Date }[];
   /** Product put on hold for it (phase 2). */
   holds: HoldView[];
+  /** The audit whose finding opened it (phase 3). */
+  audit: { id: string; title: string; clause: string } | null;
   /** manage: everything; edit: the owner (not the closing); read: only reading. */
   access: Access;
 }
@@ -243,7 +246,7 @@ async function addEvent(
   await db.qualityNcEvent.create({ data: { ncId, kind, actorId, data } });
 }
 
-async function notifyNc(
+export async function notifyNc(
   db: TenantDb,
   ncId: string,
   recipients: readonly string[],
@@ -456,6 +459,7 @@ async function detailOf(ctx: AdminContext, row: NcRow, access: Access): Promise<
       at: v.verifiedAt,
     })),
     holds: await holdsOfNc(ctx, row.id),
+    audit: await auditOfNc(ctx, row.id),
     access,
   };
 }
@@ -467,7 +471,7 @@ export async function getNc(ctx: AdminContext, id: string): Promise<NcDetail> {
 
 // ─── Creating ────────────────────────────────────────────────────────────────────────────
 
-interface NewNc {
+export interface NewNc {
   title: string;
   description: string;
   origin: CreateNcInput["origin"];
@@ -485,7 +489,10 @@ interface NewNc {
 }
 
 /** Saves a new NC with its consecutive number of the company's year, and its first event. */
-async function insertNc(ctx: Pick<AdminContext, "db" | "info">, input: NewNc): Promise<string> {
+export async function insertNc(
+  ctx: Pick<AdminContext, "db" | "info">,
+  input: NewNc,
+): Promise<string> {
   const year = Number((await today(ctx.db)).slice(0, 4));
   return await ctx.db.$transaction(async (tx) => {
     const counter = await tx.qualityNcCounter.upsert({

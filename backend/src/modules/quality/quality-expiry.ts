@@ -39,3 +39,20 @@ registerExpiryKind(VERIFICATION_EXPIRY, {
   },
   paused,
 });
+
+export const AUDIT_EXPIRY = "quality.audit";
+
+registerExpiryKind(AUDIT_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const audit = await db.qualityAudit.findFirst({
+      where: { id: expiry.subjectId, status: "PLANNED" },
+      select: { id: true, title: true },
+    });
+    if (audit === null) return null;
+    return {
+      what: qualityTexts.auditWhat(audit.title),
+      path: `/app/${workspace.slug}/calidad/auditorias/${audit.id}`,
+    };
+  },
+  paused,
+});

@@ -299,6 +299,65 @@ Simplificaciones:
   `quality.hold.decide`.
 
 
+## Fase 3: auditorías
+
+IFS 8 y BRCGS 9 piden un **programa anual de auditorías internas** que cubra toda la norma, y que cada
+hallazgo (interno o externo) tenga su corrección y su acción correctiva con evidencia. La fase 3 junta las
+auditorías en un programa, sus hallazgos por cláusula y la NC de cada uno.
+
+### Auditorías
+
+- `QualityAudit` `{ id, workspaceId, scheme (INTERNAL | IFS8 | BRCGS9 | CLIENT | OFFICIAL | OTHER), title (1
+  a 160), scope (hasta 2000), plannedOn (DATE), doneOn? (DATE), auditor (texto: quién audita, hasta 160),
+  leadId? (membership: quien la lleva en la empresa), chapters[] (los capítulos de la norma que cubre una
+  interna), status (PLANNED | DONE | CANCELLED), result? (hasta 300: «Nivel superior, 96,3 %»), auditRoomId?
+  (una sala de auditoría para el auditor externo; sin FK), cancelReason?, createdById, createdAt,
+  updatedAt }`. Se anula, no se borra.
+- `INTERNAL` es interna; las demás, externas (IFS, BRCGS, de un cliente, la inspección oficial u otra).
+- Vencimiento `quality.audit` con `plannedOn` a quien la lleva (o a quien la creó): 7 días antes, el día
+  anterior y el mismo día; lo resuelve el cierre o la anulación.
+- **Cerrar** (DONE) pide la fecha en que se hizo y, si quiere, el resultado.
+
+### Hallazgos
+
+- `QualityFinding` `{ id, workspaceId, auditId, clause (hasta 40: «4.12.1»), description (1 a 2000), severity
+  (MINOR | MAJOR | CRITICAL; el KO de IFS va como crítico), ncId?, createdById, createdAt }`. Solo se agregan
+  y se les puede abrir la NC; no se borran.
+- **Abrir no conformidad** al registrarlo (marcado por defecto) o después: la NC lleva origen
+  `AUDIT_INTERNAL` o `AUDIT_EXTERNAL` según la auditoría, la gravedad del hallazgo, el título «Cláusula
+  4.12.1: …», la fecha de la auditoría y el responsable que se elija (por defecto, quien lleva la auditoría).
+  La ficha de la NC enlaza su auditoría.
+
+### Programa y cobertura
+
+- Pantalla **Auditorías** (`/calidad/auditorias`): el año elegido, sus auditorías por fecha con su tipo,
+  estado, hallazgos y NC abiertas; **Nueva auditoría**.
+- **Cobertura del programa interno**: por cada norma que la empresa audita (`settings.quality.standards`),
+  sus capítulos y si alguna auditoría interna **hecha** del año los cubrió. IFS Food 8: 1 Gobernanza y
+  compromiso, 2 Sistema de gestión, 3 Gestión de recursos, 4 Planificación y producción, 5 Mediciones,
+  análisis y mejoras, 6 Food defense. BRCGS 9: 1 Compromiso de la dirección, 2 Plan APPCC, 3 Sistema de
+  gestión, 4 Normas del establecimiento, 5 Control del producto, 6 Control de procesos, 7 Personal, 8 Zonas
+  de producción de riesgo, 9 Productos comercializados. Sin normas elegidas, no se muestra.
+- Ficha de la auditoría (`/calidad/auditorias/:id`): datos, la sala de auditoría enlazada, los hallazgos con
+  su cláusula, gravedad y NC (con su estado) y **Agregar hallazgo**.
+
+### Permisos
+
+- quality.manage crea, edita, cierra y anula auditorías y registra hallazgos; quality.view lo lee.
+- Quien **lleva** una auditoría (leadId) la ve aunque no tenga capacidades, registra sus hallazgos y la
+  cierra.
+- Enlazar una sala exige verla (la creó o es el propietario, como en las salas).
+
+### API (fase 3)
+
+- `GET /quality/audits?year&status`, `POST /quality/audits`, `GET /quality/audits/:id`,
+  `PATCH /quality/audits/:id`, `POST /quality/audits/:id/done` `{ doneOn, result? }`,
+  `POST /quality/audits/:id/cancel` `{ reason }`, `GET /quality/audits/coverage?year`.
+- `POST /quality/audits/:id/findings` `{ clause, description, severity, openNc, ownerId? }`,
+  `POST /quality/findings/:id/nc` `{ ownerId? }`.
+- Auditoría: `quality.audit.create|update|done|cancel`, `quality.finding.create`, y la NC como siempre.
+
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
@@ -307,8 +366,8 @@ Simplificaciones:
 2. **APPCC y registros de PCC** (bloques 1 y 2, detalle arriba): plan APPCC como documento controlado,
    cuadro de PCC enlazado con sus formularios, plantilla cárnica y producto retenido con su decisión
    firmada.
-3. **Auditorías** (bloque 11): programa anual de internas por cláusula de la norma, externas, hallazgos que
-   abren NC con su cláusula; el auditor externo ve sus evidencias en una sala de auditoría.
+3. **Auditorías** (bloque 11, detalle arriba): programa anual con su cobertura por capítulo, externas con
+   su sala de auditoría, hallazgos por cláusula que abren su NC.
 4. **Proveedores** (bloque 8): homologación, fichas técnicas, certificados IFS/BRCGS con vencimiento,
    evaluación anual, materias de riesgo, vulnerabilidad al fraude y food defense.
 5. **Reclamaciones y retirada** (bloques 6 y 7): registro con plazo de respuesta y NC; indicador por millón

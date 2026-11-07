@@ -282,6 +282,8 @@ model Workspace {
   qualityNcCounters      QualityNcCounter[]
   qualityCcps            QualityCcp[]
   qualityHolds           QualityHold[]
+  qualityAudits          QualityAudit[]
+  qualityFindings        QualityFinding[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -2573,6 +2575,7 @@ model QualityNc {
   verifications QualityVerification[]
   events        QualityNcEvent[]
   holds         QualityHold[]
+  findings      QualityFinding[]
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, year, number])
@@ -2719,5 +2722,71 @@ model QualityHold {
   nc        QualityNc? @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([workspaceId, status, createdAt])
+  @@index([workspaceId, ncId])
+}
+
+enum QualityAuditScheme {
+  INTERNAL
+  IFS8
+  BRCGS9
+  CLIENT
+  OFFICIAL
+  OTHER
+}
+
+enum QualityAuditStatus {
+  PLANNED
+  DONE
+  CANCELLED
+}
+
+/// An internal or external audit of the annual programme (docs/spec/calidad.md, «Fase 3»). Cancelled,
+/// never deleted.
+model QualityAudit {
+  id           String             @id @default(cuid())
+  workspaceId  String
+  scheme       QualityAuditScheme
+  title        String
+  scope        String?
+  plannedOn    DateTime           @db.Date
+  doneOn       DateTime?          @db.Date
+  auditor      String?
+  /// Membership in charge of it in the company; no FK.
+  leadId       String?
+  /// The standard's chapters an internal audit covers («IFS8:4», «BRCGS9:2»).
+  chapters     String[]
+  status       QualityAuditStatus @default(PLANNED)
+  result       String?
+  /// An audit room for the external auditor (no FK: rooms are revoked, not deleted).
+  auditRoomId  String?
+  cancelReason String?
+  createdById  String
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  findings  QualityFinding[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, plannedOn, id])
+}
+
+/// A finding of an audit, by clause, with the nonconformity it opened. Only added.
+model QualityFinding {
+  id          String          @id @default(cuid())
+  workspaceId String
+  auditId     String
+  clause      String
+  description String
+  severity    QualitySeverity
+  ncId        String?
+  createdById String
+  createdAt   DateTime        @default(now())
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  audit     QualityAudit @relation(fields: [auditId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  nc        QualityNc?   @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([workspaceId, auditId])
   @@index([workspaceId, ncId])
 }

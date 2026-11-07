@@ -228,6 +228,15 @@ export interface TenantDb {
     PrismaClient["qualityCcp"],
     "findFirst" | "findMany" | "count" | "create" | "createMany" | "update"
   >;
+  // Audits are cancelled, never deleted; findings are only added (and given their NC).
+  qualityAudit: TenantDelegate<
+    PrismaClient["qualityAudit"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityFinding: TenantDelegate<
+    PrismaClient["qualityFinding"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update"
+  >;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -424,6 +433,14 @@ const delegates = {
   qualityCcp: {
     model: "QualityCcp",
     ops: ["findFirst", "findMany", "count", "create", "createMany", "update"],
+  },
+  qualityAudit: {
+    model: "QualityAudit",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityFinding: {
+    model: "QualityFinding",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update"],
   },
   qualityHold: {
     model: "QualityHold",

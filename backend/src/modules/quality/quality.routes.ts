@@ -62,6 +62,26 @@ import {
   updateCcp,
 } from "./haccp.service.ts";
 import { createHold, decideHold, getHold, listHolds } from "./holds.service.ts";
+import {
+  AuditSchema,
+  AuditsQuerySchema,
+  CoverageQuerySchema,
+  DoneSchema,
+  FindingNcSchema,
+  FindingSchema,
+  UpdateAuditSchema,
+} from "./audits.schemas.ts";
+import {
+  addFinding,
+  auditCoverage,
+  cancelAudit,
+  closeAudit,
+  createAudit,
+  findingNc,
+  getAudit,
+  listAudits,
+  updateAudit,
+} from "./audits.service.ts";
 import { FormQualitySchema, getFormQuality, saveFormQuality } from "./quality-forms.ts";
 
 const IdParams = z.object({ id: z.string().min(1).max(64) });
@@ -379,6 +399,87 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         res.json({
           hold: await decideHold(adminContextOf(req), id, DecisionSchema.parse(req.body)),
         });
+      },
+    },
+    // Phase 3: audits and their findings.
+    {
+      method: "get",
+      path: "/quality/audits",
+      handler: async (req, res) => {
+        res.json({
+          items: await listAudits(adminContextOf(req), AuditsQuerySchema.parse(req.query)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/audits/coverage",
+      handler: async (req, res) => {
+        const { year } = CoverageQuerySchema.parse(req.query);
+        res.json({ standards: await auditCoverage(adminContextOf(req), year) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/audits",
+      handler: async (req, res) => {
+        res
+          .status(201)
+          .json({ audit: await createAudit(adminContextOf(req), AuditSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/audits/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ audit: await getAudit(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/audits/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          audit: await updateAudit(adminContextOf(req), id, UpdateAuditSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/audits/:id/done",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ audit: await closeAudit(adminContextOf(req), id, DoneSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/audits/:id/cancel",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { reason } = ReasonSchema.parse(req.body);
+        res.json({ audit: await cancelAudit(adminContextOf(req), id, reason) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/audits/:id/findings",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.status(201).json({
+          audit: await addFinding(adminContextOf(req), id, FindingSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/findings/:id/nc",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { ownerId } = FindingNcSchema.parse(req.body);
+        res.json({ audit: await findingNc(adminContextOf(req), id, ownerId) });
       },
     },
   ];
