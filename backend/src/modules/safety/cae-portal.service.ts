@@ -30,7 +30,8 @@ import { loadTenantContext } from "../../middleware/tenant.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
 import { audit } from "../audit/audit.service.ts";
 import { downloadControlledPdf } from "../documents/pdf.service.ts";
-import { completeUpload, startUpload } from "../files/files.service.ts";
+import { completeUpload, startUpload, type DestinationCheck } from "../files/files.service.ts";
+import { assertSpaceWritable } from "../spaces/spaces.service.ts";
 import { companyUploadTarget, giveDocument, workerUploadTarget } from "./cae-documents.service.ts";
 import { currentInfoDocuments, infoKey, missingInfo } from "./cae-info-docs.ts";
 import { permitState } from "./cae-permits.service.ts";
@@ -550,6 +551,31 @@ export async function portalInfoFile(
 // ─── Uploads ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The portal writes as the system into the company's (or worker's) CAE folder, like cae-folders.ts
+ * creates the folders: it doesn't need the issuer to edit the module's space, and it can't go anywhere
+ * else. Only that exact folder, alive, in a space that takes changes; the rest of the upload (size,
+ * quota and limits, the real type by its bytes) is the normal one.
+ */
+const intoCaeFolder =
+  (folderId: string): DestinationCheck =>
+  async (ctx, spaceId, parentId) => {
+    await assertSpaceWritable(ctx, spaceId);
+    if (parentId !== folderId) throw notFound();
+    const folder = await ctx.db.node.findFirst({
+      where: { id: folderId, spaceId, type: "FOLDER", trashedAt: null },
+      select: { id: true },
+    });
+    if (folder === null) throw notFound();
+  };
+
+/** Where an upload of the session's company goes: its folder, or the worker's inside it. */
+async function uploadTarget(s: PortalSession, workerId: string | null) {
+  return workerId === null
+    ? await companyUploadTarget(s.ctx, s.companyId)
+    : await workerUploadTarget(s.ctx, workerId);
+}
+
+/**
  * Starts an upload for one of its requirements (the company's or one of its workers'): the file goes to
  * its folder with the normal flow (presigned PUT, then the same checks on completion: real type by its
  * bytes, size and the company's limits). Only PDF, JPG or PNG, up to caeLimits.portalMaxFileMb.
@@ -590,16 +616,19 @@ export async function portalStartUpload(
       throw new AppError("CONFLICT", { message: caeTexts.messages.workerArchived });
     }
   }
-  const target =
-    input.workerId === null
-      ? await companyUploadTarget(s.ctx, s.companyId)
-      : await workerUploadTarget(s.ctx, input.workerId);
-  const ticket = await startUpload(s.ctx, deps, target.spaceId, {
-    parentId: target.folderId,
-    name: input.name,
-    size: input.size,
-    onConflict: "keep_both",
-  });
+  const target = await uploadTarget(s, input.workerId);
+  const ticket = await startUpload(
+    s.ctx,
+    deps,
+    target.spaceId,
+    {
+      parentId: target.folderId,
+      name: input.name,
+      size: input.size,
+      onConflict: "keep_both",
+    },
+    intoCaeFolder(target.folderId),
+  );
   if (ticket.url === null)
     throw new AppError("BAD_REQUEST", { message: p.fileTooLarge(caeLimits.portalMaxFileMb) });
   // The upload belongs to this access and this requirement: nothing else can complete it.
@@ -627,7 +656,9 @@ export async function portalCompleteUpload(
     select: { id: true, requirementId: true, workerId: true },
   });
   if (pending === null) throw new AppError("BAD_REQUEST", { message: caeTexts.portal.uploadGone });
-  const uploaded = await completeUpload(s.ctx, deps, uploadId);
+  if (pending.workerId !== null) await ownWorker(s, pending.workerId);
+  const target = await uploadTarget(s, pending.workerId);
+  const uploaded = await completeUpload(s.ctx, deps, uploadId, intoCaeFolder(target.folderId));
   await s.db.caePortalUpload.updateMany({
     where: { id: uploadId, completedAt: null },
     data: { completedAt: new Date() },

@@ -35,7 +35,9 @@ Hay que analizar y decidir con él, sin código todavía:
       Prevención** como pestaña «Contratas (CAE)», con su propio interruptor en la configuración del
       módulo (apagado por defecto). Spec y fases en `docs/spec/cae.md`.
   - [x] Tests de seguridad del portal de contratas (hechos al cerrar el módulo, 07/11/2026:
-        `backend/tests/integration/cae-portal.test.ts` y `cae-security.test.ts`), con los de permisos y
+        `backend/tests/integration/cae-portal.test.ts` y `cae-security.test.ts`). Hallazgo corregido: las subidas del portal ya no dependen de que
+        quien dio el acceso pueda editar el espacio del módulo (escriben como el sistema en la carpeta de la
+        empresa), con los de permisos y
         aislamiento de la CAE): fuerza bruta del código (límites por acceso+IP y por IP, bloqueo a los 10
         fallos, error genérico igual para acceso inexistente, revocado, vencido o bloqueado); entre empresas
         (trabajadores, requisitos, subidas, permisos e información de otra contrata del mismo tenant dan

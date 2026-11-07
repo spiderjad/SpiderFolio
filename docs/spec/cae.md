@@ -245,7 +245,13 @@ seguridad del centro). La empresa los edita, agrega o archiva.
      tipo real por sus bytes y los límites de la empresa), más estrecho: solo PDF, JPG o PNG y hasta
      `portalMaxFileMb`. `CaePortalUpload` ata cada subida (su id es el de la reserva) al acceso y al
      requisito: nada más se puede completar desde el portal. Quedan PENDING en la carpeta de la empresa o
-     del trabajador.
+     del trabajador. El portal escribe como el sistema (igual que `cae-folders.ts` crea las carpetas): no
+     necesita que quien dio el acceso pueda editar el espacio del módulo, y no se da ningún permiso a
+     nadie. En lugar del permiso de edición, `startUpload`/`completeUpload` reciben una comprobación de
+     destino propia (`DestinationCheck`, solo para el portal, nunca desde una ruta): exactamente la carpeta
+     de esa empresa o de su trabajador, viva, en un espacio que acepta cambios; con la sesión y el acceso
+     válidos y quien lo dio activo con `cae.manage`. Nunca reemplaza un archivo (siempre «conservar los
+     dos»). Las subidas desde la app (`cae.manage`) siguen con los permisos normales.
    - Autoría: lo que crea el portal se audita sin actor (`actorId` nulo) con `via: cae-portal` y el
      nombre de la empresa (`cae.portal.login`, `.login.failure` sin el código, `.document.upload`,
      `.worker.create|update|archive`, `.info.view`, y `cae.portal.issue|revoke` del lado del anfitrión);

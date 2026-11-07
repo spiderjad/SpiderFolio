@@ -94,18 +94,7 @@ async function world(name: string): Promise<World> {
     },
   });
   const manager = await addMember(ctx, ws, { roleId: role.id, name: "Gestora CAE" });
-  // The issuer edits the module's space (the portal uploads go through their access to the folder).
-  const settings = await ctx.prisma.workspace.findUniqueOrThrow({ where: { id: ws.workspaceId } });
-  const spaceId = (settings.settings as { safety: { spaceId: string } }).safety.spaceId;
-  await ctx.prisma.permission.create({
-    data: {
-      workspaceId: ws.workspaceId,
-      spaceId,
-      membershipId: manager.membership.id,
-      level: "EDIT",
-      grantedById: ws.membershipId,
-    },
-  });
+  // The issuer has no access to edit the module's space: the portal doesn't need it.
   const responsible = await addMember(ctx, ws, { base: "MEMBER", name: "Responsable" });
   const m = api(ws.slug, manager.token);
   const companyReq = await m.post("/cae/requirements", { name: "Seguro RC", scope: "COMPANY" });
@@ -448,6 +437,45 @@ describe("portal: subidas", () => {
     const doc = await ctx.prisma.caeDocument.findFirstOrThrow({ where: { companyId: w.a.id } });
     expect(doc.status).toBe("PENDING");
     expect(doc.portalAccessId).toBe(w.a.accessId);
+    // It landed in the company's folder…
+    const company = await ctx.prisma.caeCompany.findFirstOrThrow({ where: { id: w.a.id } });
+    const file = await ctx.prisma.node.findFirstOrThrow({ where: { id: doc.nodeId } });
+    expect(file.parentId).toBe(company.folderId);
+    // …though neither the issuer nor anyone was given access to the space: a normal upload of theirs
+    // to that same folder is still refused.
+    expect(
+      await ctx.prisma.permission.count({
+        where: { workspaceId: w.ws.workspaceId, membershipId: w.manager.membership.id },
+      }),
+    ).toBe(0);
+    const normal = await api(w.ws.slug, w.manager.token).post(`/spaces/${file.spaceId}/uploads`, {
+      name: "directo.pdf",
+      size: PDF.length,
+      parentId: company.folderId,
+    });
+    expect(normal.status).toBe(403);
+    // A worker's document goes to the worker's folder, inside the company's.
+    const forWorker = await agent.post(`${base}/uploads`).send({
+      requirementId: w.workerReq,
+      workerId: w.a.workerId,
+      name: "formacion.pdf",
+      size: PDF.length,
+    });
+    expect(forWorker.status, JSON.stringify(forWorker.body)).toBe(201);
+    const workerTicket = (
+      forWorker.body as { upload: { id: string; url: string; contentType: string } }
+    ).upload;
+    expect((await put(workerTicket, PDF)).ok).toBe(true);
+    expect((await agent.post(`${base}/uploads/${workerTicket.id}/complete`).send({})).status).toBe(
+      200,
+    );
+    const worker = await ctx.prisma.caeWorker.findFirstOrThrow({ where: { id: w.a.workerId } });
+    const workerDoc = await ctx.prisma.caeDocument.findFirstOrThrow({
+      where: { workerId: w.a.workerId },
+    });
+    expect(
+      (await ctx.prisma.node.findFirstOrThrow({ where: { id: workerDoc.nodeId } })).parentId,
+    ).toBe(worker.folderId);
   });
 
   it("no se completa una subida que no empezó este acceso", async () => {

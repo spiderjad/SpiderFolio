@@ -71,11 +71,7 @@ export interface UploadTicket {
  * Tamaño de archivo y cuota de almacenamiento, si la empresa los fijó (docs/spec/limites.md): usado +
  * reservado + nuevo <= límite. Se llama dentro de la transacción que ya tomó el candado del workspace.
  */
-async function assertQuota(
-  ctx: AdminContext,
-  bytes: bigint,
-  now: Date,
-): Promise<void> {
+async function assertQuota(ctx: AdminContext, bytes: bigint, now: Date): Promise<void> {
   const limits = await workspaceLimits(ctx.db);
   await assertWithinLimit(ctx.db, "maxFileMb", { used: 0, requested: bytes }, limits);
   await assertStorageRoom(ctx.db, bytes, now, limits);
@@ -140,17 +136,31 @@ function typeError(reason: "mismatch" | "binary" | "markup"): AppError {
 
 // ─── Pedir permiso para subir ───────────────────────────────────────────────────────────
 
+/**
+ * Whether the upload may go there. By default, the person's EDIT access to the destination. A system
+ * writer (only the CAE contractor's portal, never a route) passes its own, narrower check instead; the
+ * rest of the upload (size, quota and limits, the real type by its bytes) doesn't change.
+ */
+export type DestinationCheck = (
+  ctx: AdminContext,
+  spaceId: string,
+  parentId: string | null,
+) => Promise<unknown>;
+
+const personDestination: DestinationCheck = assertDestination;
+
 export async function startUpload(
   ctx: AdminContext,
   deps: FileDeps,
   spaceId: string,
   input: StartUploadInput,
+  destination: DestinationCheck = personDestination,
 ): Promise<UploadTicket> {
   const parentId = input.parentId ?? null;
   const name = cleanName(input.name);
   const kind = kindOfFileName(name);
   if (kind === null) throw new AppError("BAD_REQUEST", { message: fileMessages.unsupportedType });
-  await assertDestination(ctx, spaceId, parentId);
+  await destination(ctx, spaceId, parentId);
 
   const now = new Date();
   const bytes = BigInt(input.size);
@@ -164,7 +174,12 @@ export async function startUpload(
   let version = 1;
   let finalName = name;
   if (sibling !== null) {
-    if (input.onConflict === "replace" && sibling.type === "FILE") {
+    // A new version needs edit access to that file: never through a system destination check.
+    if (
+      input.onConflict === "replace" &&
+      sibling.type === "FILE" &&
+      destination === personDestination
+    ) {
       // Una versión nueva del archivo que ya está: hace falta poder editarlo.
       requireLevel(await levelOfNode(ctx, sibling.id), "EDIT");
       nodeId = sibling.id;
@@ -399,12 +414,14 @@ export async function completeUpload(
   ctx: AdminContext,
   deps: FileDeps,
   id: string,
+  destination: DestinationCheck = personDestination,
 ): Promise<UploadResult> {
   const row = await ownReservation(ctx, id);
   const kind = kindOfFileName(row.name);
   if (kind === null) throw new AppError("BAD_REQUEST", { message: fileMessages.unsupportedType });
   // El permiso se vuelve a mirar: pudo cambiar mientras se subía.
-  if (row.isNewNode) await assertDestination(ctx, row.spaceId, row.parentId);
+  if (row.isNewNode) await destination(ctx, row.spaceId, row.parentId);
+  else if (destination !== personDestination) throw notFound();
   else requireLevel(await levelOfNode(ctx, row.nodeId), "EDIT");
 
   const fail = async (error: AppError): Promise<never> => {
