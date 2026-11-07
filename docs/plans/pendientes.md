@@ -2,6 +2,23 @@
 
 Lista viva. Al terminar algo, se marca o se borra de acá.
 
+## Arquitectura: la app por áreas (analizar ANTES de sumar más módulos)
+
+Pedido del mantenedor (07/11/2026): «la aplicación se va a descontrolar». Con Prevención (EPI, formación,
+accidentes, CAE, planificación…), Calidad, documentos controlados y la wiki, el menú lateral ya confunde.
+Hay que analizar y decidir con él, sin código todavía:
+
+- **Áreas de primer nivel**: Prevención (PRL), Calidad, Documentación (documentos controlados,
+  aprobaciones, lecturas, vencimientos) y Wiki (espacios y páginas), cada una con su propio menú interno,
+  en vez de un menú plano con todo.
+- **Cada departamento entra a su espacio**: que la portada y el menú de cada persona muestren primero lo
+  de su departamento y sus áreas, y lo demás quede a un clic (selector de área, como cambiar de app).
+- Qué áreas ve cada persona: según los módulos activos en la empresa, sus capacidades y su departamento;
+  quién elige el área por defecto (la empresa por departamento, o cada persona).
+- Cómo encajan lo transversal (buscador, Mis pendientes, notificaciones, Bian, Administración) y el móvil.
+- Entregable: una propuesta corta con 2 o 3 opciones de navegación (boceto de menú por rol: operario,
+  jefe de producción, técnico de PRL, calidad, admin) para elegir, y después el spec en docs/spec/diseno.md.
+
 ## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 
 - [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: fases 1 a 6 hechas (07/11/2026). Núcleo, **dentro de
