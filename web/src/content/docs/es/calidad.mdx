@@ -1,0 +1,74 @@
+---
+title: "Calidad: primeros pasos"
+description: "Qué trae el área de Calidad alimentaria (IFS Food 8, BRCGS Food Safety 9), cómo se activa, cómo se organiza el menú y quién ve qué."
+group: calidad
+order: 1
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+**Calidad** es el área de la app para la seguridad alimentaria de una industria: lo que piden **IFS Food
+versión 8**, **BRCGS Food Safety Issue 9** y la inspección sanitaria oficial. Se apoya en lo que ya usas en
+el resto de la app: los [documentos controlados](/es/docs/documentos-controlados), los
+[formularios y registros](/es/docs/formularios), los [vencimientos](/es/docs/vencimientos) y las
+[salas de auditoría](/es/docs/salas-de-auditoria).
+
+Hoy trae las **[no conformidades y su CAPA](/es/docs/no-conformidades)**: todo lo que sale mal, con su
+causa, sus acciones correctivas y preventivas y la verificación de que se resolvió. Es la base del resto del
+módulo: el APPCC con sus PCC, las auditorías, los proveedores y las reclamaciones irán llegando y terminan en
+una no conformidad.
+
+## Activarlo
+
+El área viene apagada. El propietario la enciende en **Administración** › **Seguridad** › **General**, en la
+tarjeta **Calidad alimentaria**:
+
+1. Activa **Activar el módulo de calidad**.
+2. Marca las **Normas que audita la empresa**: IFS Food 8, BRCGS Food Safety 9, las dos o ninguna. Hoy solo
+   sirven de referencia; más adelante ordenarán las cláusulas de las auditorías.
+3. Si quieres, cambia los **Días hasta verificar la eficacia** (30 por defecto): desde la última acción hecha
+   hasta la fecha propuesta para comprobar que el problema no volvió.
+
+Al activarla se crea el espacio **Calidad**, que aparece en el área, para los documentos, los registros y
+las evidencias. Desactivarla oculta el área y sus avisos, sin borrar nada.
+
+## Cómo se organiza
+
+Con el módulo activo aparece **Calidad** en la **barra de áreas** (ver
+[El Inicio](/es/docs/inicio#moverte-por-la-app-las-áreas)). El menú del área tiene:
+
+- **Resumen**, **No conformidades** y **Acciones**, para quien ve todas;
+- **Lo mío**: **Mis acciones**, **Comunicadas por mí** y **Comunicar una no conformidad**;
+- los espacios del área, como **Calidad**.
+
+El **Resumen** muestra las no conformidades abiertas por gravedad, las acciones vencidas, las verificaciones
+de hoy y las últimas abiertas. Cada número lleva a la lista ya filtrada.
+
+<Shot
+  name="calidad-resumen"
+  alt="El Resumen de Calidad: abiertas por gravedad, acciones vencidas y verificaciones de hoy"
+/>
+
+Las acciones que te tocan aparecen también en **Mis pendientes**, junto con lo demás que tienes que hacer.
+
+## Quién ve qué
+
+| Quién                        | Qué ve y qué hace                                                                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Gestionar calidad**        | Todo: crea, analiza, asigna, verifica, cierra, anula y reabre. Cambia los ajustes del formulario. El rol Administrador ya la tiene. |
+| **Ver calidad**              | Lee todas las no conformidades y sus acciones, y exporta el CSV. Pensada para dirección o una auditoría.                            |
+| El responsable de una NC     | La gestiona: datos, causa raíz, acciones y fecha de verificación. No la cierra.                                                     |
+| El responsable de una acción | Ve su no conformidad y marca su acción como hecha.                                                                                  |
+| Jefes y subjefes             | Leen las no conformidades asignadas a su departamento (y subdepartamentos).                                                         |
+| Todos                        | **Comunicar una no conformidad** y ver las que comunicaron.                                                                         |
+
+Las capacidades se dan en [Roles y permisos](/es/docs/roles-y-permisos).
+
+## Relacionado
+
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Formularios y registros](/es/docs/formularios)
+- [Salas de auditoría](/es/docs/salas-de-auditoria)

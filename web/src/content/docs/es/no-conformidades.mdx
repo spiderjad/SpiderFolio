@@ -1,0 +1,144 @@
+---
+title: "No conformidades y CAPA"
+description: "Registrar lo que salió mal, buscar la causa raíz con 5 porqués o Ishikawa, definir acciones correctivas y preventivas y verificar su eficacia antes de cerrar."
+group: calidad
+order: 2
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+Una **no conformidad** (NC) es algo que no cumplió lo que debía: una temperatura fuera de límite, una
+etiqueta mal, un hallazgo de auditoría, un proveedor sin certificado. La **CAPA** (acciones correctivas y
+preventivas) es lo que se hace para resolverla y que no vuelva a pasar. IFS Food 8 y BRCGS 9 piden las dos
+cosas con evidencia: qué pasó, por qué, qué se hizo y que funcionó.
+
+Cada NC tiene un código correlativo por año (**NC-2026-0001**) y pasa por estos pasos:
+
+1. **Abierta**: alguien la registra.
+2. **En análisis**: se busca la causa raíz.
+3. **Con acciones**: se definen las acciones, cada una con responsable y fecha.
+4. **En verificación**: con todas las acciones hechas, se comprueba que el problema no volvió.
+5. **Cerrada**: la verificación dice que fue eficaz.
+
+Se puede **anular** con un motivo antes de cerrarla; nunca se borra.
+
+<Shot
+  name="calidad-no-conformidades"
+  alt="La lista de no conformidades con su código, gravedad, estado, origen y acciones"
+/>
+
+## Registrar una no conformidad
+
+**Quien gestiona calidad**: en **No conformidades**, **Nueva no conformidad**. Además del título, qué pasó,
+cuándo y dónde, elige:
+
+- el **origen**: interna, PCC o registro fuera de límite, auditoría interna o externa, reclamación, proveedor
+  u otra;
+- la **gravedad**: menor, mayor o crítica (el KO de IFS se carga como crítica);
+- el **responsable**, que la gestiona, y si quieres, el **departamento**.
+
+**Cualquier persona**: **Comunicar una no conformidad**, en **Lo mío** del menú de Calidad. Solo pide qué
+pasó, cuándo y dónde. Queda como interna y mayor, a cargo del propietario hasta que alguien la asigne, y
+quienes gestionan calidad reciben el aviso en la campana. Quien la comunicó la ve en **Comunicadas por mí**.
+
+<Shot
+  name="calidad-comunicar"
+  alt="Comunicar una no conformidad: qué pasó, cuándo, dónde, el producto y la corrección"
+/>
+
+En las dos, si hay **producto afectado** se anotan los lotes y la cantidad, y la **corrección inmediata** es
+lo que se hizo en el momento (separar el producto, parar la línea).
+
+## La ficha
+
+La ficha de una NC muestra arriba sus pasos, con el actual resaltado, y debajo sus datos, la causa raíz, las
+acciones, la verificación, las evidencias y el historial.
+
+<Shot
+  name="calidad-nc"
+  alt="Una no conformidad de auditoría con sus pasos, sus datos y el análisis de 5 porqués"
+/>
+
+- **Editar datos** cambia lo que se registró; reasignarla a otro responsable es de quien gestiona calidad,
+  y el nuevo responsable recibe el aviso.
+- **Evidencias** › **Abrir la carpeta** crea (la primera vez) y abre la carpeta de esa NC dentro de
+  **No conformidades**, en el espacio Calidad, para subir fotos, informes y registros. Sus archivos los ve
+  quien tiene acceso a esa carpeta, como cualquier archivo.
+- **Historial** reúne cada paso: quién, cuándo y qué cambió. También queda en el registro de auditoría.
+
+## La causa raíz
+
+En **Causa raíz**, elige el **método**:
+
+- **5 porqués**: pregunta por qué pasó, y por qué pasó eso, hasta llegar al origen (hasta 7 líneas).
+- **Ishikawa (6M)**: anota las causas posibles en mano de obra, método, máquina, material, medición y medio
+  ambiente.
+- **Otro**: texto libre.
+
+Escribe la **conclusión** y pulsa **Guardar el análisis**. La NC pasa a **En análisis**. Busca por qué pasó,
+no quién: así la acción evita que se repita.
+
+## Las acciones
+
+En **Acciones**, **Agregar acción** pide el tipo, qué hay que hacer, el responsable y la fecha:
+
+- **Corrección**: arregla lo de ahora (cambiar la resistencia rota).
+- **Correctiva**: elimina la causa para que no se repita (sumarla al mantenimiento preventivo).
+- **Preventiva**: evita que pase en otro lado (revisar los equipos parecidos).
+
+Con la primera acción la NC pasa a **Con acciones**. El responsable recibe el aviso 7 días antes, el día
+anterior y el mismo día, la ve en **Mis acciones** y en **Mis pendientes**, y la marca como hecha. La lista
+**Acciones** reúne las de todas las NC, con filtros por estado y tipo.
+
+<Shot
+  name="calidad-acciones"
+  alt="Las acciones de todas las no conformidades con su tipo, responsable y fecha"
+/>
+
+## La verificación de eficacia
+
+Cuando todas las acciones están hechas, la NC pasa sola a **En verificación** y se propone la fecha: los
+días de verificación de la empresa después de hoy (30 por defecto). Ese día su responsable recibe el aviso.
+El responsable o quien gestiona calidad pueden cambiar la fecha.
+
+<Shot
+  name="calidad-verificacion"
+  alt="La verificación de eficacia: la fecha, qué se comprobó y los botones para cerrar o no"
+/>
+
+Quien gestiona calidad escribe **qué se comprobó** y elige:
+
+- **Fue eficaz: cerrar**: la NC queda **Cerrada**, y quien la comunicó recibe el aviso.
+- **No fue eficaz**: vuelve a **Con acciones** para sumar acciones nuevas; la verificación fallida queda en la
+  ficha.
+
+Una NC cerrada se puede **Reabrir** con un motivo: vuelve a **Con acciones**.
+
+## Desde un registro de formulario
+
+Un registro con respuestas **no conformes** (un valor fuera de su mínimo o máximo, una respuesta marcada como
+no conforme) puede abrir una NC con origen **PCC o registro fuera de límite**, enlazada al registro y con los
+campos que fallaron:
+
+- **A mano**: en el registro, **Abrir no conformidad** (quien gestiona calidad o el responsable del
+  formulario). Si el registro ya tiene una abierta, el botón lleva a ella.
+- **Sola**: en los ajustes del formulario, la tarjeta **Calidad** › **Abrir una no conformidad cuando un
+  registro no sea conforme**, con la gravedad y el responsable. Pensada para los registros de control:
+  cámaras, PCC, detector de metales.
+
+Convive con **Crear medida preventiva** de [Prevención](/es/docs/planificacion-preventiva): un mismo registro
+puede tener las dos.
+
+## Exportar
+
+**Exportar CSV** descarga las no conformidades filtradas, con su código, estado, responsable, acciones y
+causa raíz, para la revisión por la dirección o la auditoría. Lo pueden hacer quienes ven todas.
+
+## Relacionado
+
+- [Calidad: primeros pasos](/es/docs/calidad)
+- [Formularios y registros](/es/docs/formularios)
+- [Vencimientos](/es/docs/vencimientos)

@@ -60,6 +60,8 @@ export const DOC_KEYS = [
   "cae",
   "caeGatehouse",
   "caePortal",
+  "quality",
+  "qualityNcs",
   "search",
   "bian",
   "security2fa",

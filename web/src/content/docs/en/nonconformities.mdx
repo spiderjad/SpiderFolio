@@ -1,0 +1,144 @@
+---
+title: "Nonconformities and CAPA"
+description: "Record what went wrong, find the root cause with 5 whys or Ishikawa, set corrective and preventive actions and check they were effective before closing."
+group: calidad
+order: 2
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+A **nonconformity** (NC) is something that didn't meet what it should: a temperature out of limits, a wrong
+label, an audit finding, a supplier without a certificate. **CAPA** (corrective and preventive actions) is
+what's done to solve it and keep it from happening again. IFS Food 8 and BRCGS 9 ask for both with evidence:
+what happened, why, what was done and that it worked.
+
+Each NC has a consecutive code per year (**NC-2026-0001**) and goes through these steps:
+
+1. **Open**: someone records it.
+2. **Under analysis**: the root cause is looked for.
+3. **With actions**: the actions are set, each with a responsible person and a date.
+4. **Under verification**: with every action done, it's checked the problem didn't come back.
+5. **Closed**: the check says it was effective.
+
+It can be **cancelled** with a reason before closing; it's never deleted.
+
+<Shot
+  name="calidad-no-conformidades"
+  alt="The list of nonconformities with their code, severity, status, origin and actions"
+/>
+
+## Record a nonconformity
+
+**Whoever manages quality**: in **Nonconformities**, **New nonconformity**. Besides the title, what happened,
+when and where, choose:
+
+- the **origin**: internal, CCP or record out of limits, internal or external audit, complaint, supplier or
+  other;
+- the **severity**: minor, major or critical (an IFS KO is entered as critical);
+- the **owner**, who handles it, and if you like, the **department**.
+
+**Anyone**: **Report a nonconformity**, under **Mine** in the Quality menu. It only asks what happened, when
+and where. It's recorded as internal and major, in the company owner's hands until someone assigns it, and
+whoever manages quality gets a notice in the bell. Whoever reported it sees it under **Reported by me**.
+
+<Shot
+  name="calidad-comunicar"
+  alt="Report a nonconformity: what happened, when, where, the product and the correction"
+/>
+
+In both, if **product is affected** you note the lots and quantity, and the **immediate correction** is what
+was done at the moment (set the product aside, stop the line).
+
+## The record
+
+A NC's record shows its steps at the top, with the current one highlighted, and below its details, the root
+cause, the actions, the check, the evidence and the history.
+
+<Shot
+  name="calidad-nc"
+  alt="An audit nonconformity with its steps, its details and the 5 whys analysis"
+/>
+
+- **Edit details** changes what was recorded; reassigning it to another owner is for whoever manages quality,
+  and the new owner gets a notice.
+- **Evidence** › **Open the folder** creates (the first time) and opens that NC's folder inside
+  **Nonconformities**, in the Quality space, to upload photos, reports and records. Its files are seen by
+  whoever has access to that folder, like any file.
+- **History** gathers every step: who, when and what changed. It's also in the audit log.
+
+## The root cause
+
+In **Root cause**, choose the **method**:
+
+- **5 whys**: ask why it happened, and why that happened, until you reach the source (up to 7 lines).
+- **Ishikawa (6M)**: note the possible causes under people, method, machine, material, measurement and
+  environment.
+- **Other**: free text.
+
+Write the **conclusion** and click **Save the analysis**. The NC moves to **Under analysis**. Look for why it
+happened, not who: that way the action keeps it from happening again.
+
+## The actions
+
+In **Actions**, **Add action** asks for the type, what has to be done, the responsible person and the date:
+
+- **Correction**: fixes what's happening now (replace the broken heater).
+- **Corrective**: removes the cause so it doesn't happen again (add it to preventive maintenance).
+- **Preventive**: keeps it from happening elsewhere (check similar equipment).
+
+With the first action the NC moves to **With actions**. The responsible person is told 7 days before, the
+day before and on the day, sees it in **My actions** and in **My to-dos**, and marks it done. The **Actions**
+list gathers every NC's, filtered by status and type.
+
+<Shot
+  name="calidad-acciones"
+  alt="The actions of every nonconformity with their type, responsible person and date"
+/>
+
+## The effectiveness check
+
+When every action is done, the NC moves by itself to **Under verification** and the date is proposed: the
+company's verification days after today (30 by default). On that day its owner gets a notice. The owner or
+whoever manages quality can change the date.
+
+<Shot
+  name="calidad-verificacion"
+  alt="The effectiveness check: the date, what was checked and the buttons to close or not"
+/>
+
+Whoever manages quality writes **what was checked** and chooses:
+
+- **It was effective: close**: the NC is **Closed**, and whoever reported it gets a notice.
+- **It wasn't effective**: it goes back to **With actions** to add new ones; the failed check stays on the
+  record.
+
+A closed NC can be **Reopened** with a reason: it goes back to **With actions**.
+
+## From a form record
+
+A record with **non-conforming** answers (a value outside its minimum or maximum, an answer marked as
+non-conforming) can open a NC with origin **CCP or record out of limits**, linked to the record and with the
+fields that failed:
+
+- **By hand**: on the record, **Open nonconformity** (whoever manages quality or the form's person in
+  charge). If the record already has an open one, the button takes you to it.
+- **By itself**: in the form's settings, the **Quality** card › **Open a nonconformity when a record isn't
+  conforming**, with the severity and the owner. Meant for control records: cold rooms, CCPs, metal
+  detector.
+
+It works alongside **Create preventive measure** from [Health & safety](/en/docs/preventive-planning): the
+same record can have both.
+
+## Export
+
+**Export CSV** downloads the filtered nonconformities, with their code, status, owner, actions and root
+cause, for the management review or the audit. Whoever sees them all can do it.
+
+## Related
+
+- [Quality: getting started](/en/docs/quality)
+- [Forms and records](/en/docs/forms)
+- [Expiries](/en/docs/expiries)

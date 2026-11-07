@@ -42,6 +42,7 @@ import { demoCommittee } from "./demo-committee.ts";
 import { demoEmergencies } from "./demo-emergencies.ts";
 import { demoIndicators } from "./demo-indicators.ts";
 import { demoPlanning } from "./demo-planning.ts";
+import { demoQuality } from "./demo-quality.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
 const BASE = `http://localhost:${String(PORT)}`;
@@ -482,6 +483,50 @@ async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
   demoPlanningDone.add(locale);
 }
 
+/** Food quality (web/scripts/demo-quality.ts): the module on and nonconformities in every step. */
+const demoQualityNcs = new Map<Locale, Record<string, string>>();
+
+const loginTokens = new Map<string, string>();
+
+async function loginToken(email: string): Promise<string> {
+  const cached = loginTokens.get(email);
+  if (cached !== undefined) return cached;
+  const res = await fetch(`${BASE}/api/v1/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-requested-with": "spiderfolio" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) throw new Error(`Login de ${email}: ${String(res.status)}`);
+  const token = ((await res.json()) as { accessToken: string }).accessToken;
+  loginTokens.set(email, token);
+  return token;
+}
+
+async function demoQualityOf(locale: Locale, slug: string): Promise<void> {
+  if (demoQualityNcs.has(locale)) return;
+  await demoQuality({
+    base: BASE,
+    token: await ownerToken(locale),
+    memberToken: await loginToken(PEOPLE[locale].admin),
+    slug,
+    locale,
+    db,
+    peopleEmails: [PEOPLE[locale].owner, PEOPLE[locale].admin],
+  });
+  const rows = await db.query<{ id: string; status: string }>(
+    `SELECT n.id, n.status FROM "QualityNc" n JOIN "Workspace" w ON w.id = n."workspaceId"
+      WHERE w.slug = $1 ORDER BY n.number`,
+    [slug],
+  );
+  demoQualityNcs.set(locale, Object.fromEntries(rows.rows.map((row) => [row.status, row.id])));
+}
+
+const qualityNcOf = (locale: Locale, status: string) => {
+  const id = demoQualityNcs.get(locale)?.[status];
+  if (id === undefined) throw new Error(`demoQualityOf no dejó una no conformidad ${status}`);
+  return id;
+};
+
 /** The latest demo committee meeting of each language, for its capture. */
 const demoMeetingIds = new Map<Locale, string>();
 const meetingIdOf = (locale: Locale) => {
@@ -909,6 +954,51 @@ const CAPTURES: Capture[] = [
     who: "reader",
     path: (i, locale) => `/app/${i.slug}/seguridad/comite/reuniones/${meetingIdOf(locale)}`,
     before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  // Food quality (docs/spec/calidad.md), with web/scripts/demo-quality.ts.
+  {
+    name: "calidad-resumen",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/resumen`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-no-conformidades",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/no-conformidades?estado=all`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    // With its 5 whys and three actions, one overdue.
+    name: "calidad-nc",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/no-conformidades/${qualityNcOf(locale, "ACTIONS")}`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    // Every action done: the effectiveness check.
+    name: "calidad-verificacion",
+    who: "owner",
+    path: (i, locale) =>
+      `/app/${i.slug}/calidad/no-conformidades/${qualityNcOf(locale, "VERIFICATION")}`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+    then: async (page) => {
+      await page
+        .getByRole("heading", { name: /^(Verificación de eficacia|Effectiveness check)$/u })
+        .scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: "calidad-comunicar",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/comunicar`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-acciones",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/acciones`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
   },
   // CAE, coordination of business activities (docs/spec/cae.md), with web/scripts/demo-cae.ts.
   {

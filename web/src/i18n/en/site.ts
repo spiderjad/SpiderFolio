@@ -194,8 +194,8 @@ export const site: Catalog<typeof esSite> = {
         {
           icon: "check",
           title: "Quality",
-          text: "Food quality (IFS and BRCGS): non-conformities, corrective actions and audits.",
-          soon: true,
+          text: "Food quality (IFS 8 and BRCGS 9): nonconformities with their cause, corrective and preventive actions and the effectiveness check.",
+          soon: false,
         },
         {
           icon: "lock",
@@ -331,6 +331,7 @@ export const site: Catalog<typeof esSite> = {
       empezar: "Get started",
       "uso-diario": "For users",
       prevencion: "Health & safety",
+      calidad: "Quality",
       administracion: "Administration",
       seguridad: "Security",
       autoalojamiento: "Self-hosting",

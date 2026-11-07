@@ -53,6 +53,8 @@ export const routes: LocaleRoutes = {
     cae: "contratas-cae",
     caeGatehouse: "porteria-y-accesos",
     caePortal: "portal-de-contratas",
+    quality: "calidad",
+    qualityNcs: "no-conformidades",
     search: "busqueda",
     bian: "bian",
     security2fa: "seguridad-y-2fa",

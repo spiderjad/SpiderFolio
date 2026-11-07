@@ -11,7 +11,8 @@ con `min`/`max` y respuestas no conformes (`answers.ts`, aviso `form_nonconformi
 `registerExpiryKind`), QR, salas de auditoría, Mis pendientes y el patrón de Prevención (caso → medidas con
 responsable, fecha y cierre). Las integraciones con terceros (SAP, ADA MES) van como plugin.
 
-Estado: **spec en revisión**. No hay código todavía.
+Estado: **fase 1 hecha** (07/11/2026; spec aprobada por el mantenedor el mismo día). Detalle de lo hecho y
+sus simplificaciones al final de «Fase 1».
 
 ## Activación
 
@@ -165,6 +166,41 @@ Cada paso queda en el **historial** de la NC (quién, cuándo, qué cambió).
   inmediata, Causa raíz (5 porqués o Ishikawa), Acciones, Verificación, Evidencias e Historial.
 - **Acciones**: todas las acciones con su NC, filtrables; la propia en Mis pendientes.
 - **Comunicar**: formulario corto (título, qué pasó, dónde, cuándo, fotos), también por QR.
+
+### Hecho (fase 1)
+
+- Migración `quality_nonconformities`: `QualityNc`, `QualityNcCounter` (número por empresa y año con
+  `upsert`; el índice único `(workspaceId, year, number)` impide repetir), `QualityAction`,
+  `QualityVerification` y `QualityNcEvent` (los dos últimos solo se agregan), y en `FormSettings`
+  `qualityAutoNc`, `qualitySeverity` y `qualityOwnerId`. Suma `quality.manage` y `quality.view` a los roles
+  de sistema propietario y Administrador existentes.
+- Backend en `backend/src/modules/quality/` (acceso, ajustes, NC y CAPA, vencimientos `quality.action` y
+  `quality.verification`, ajustes de calidad del formulario, rutas). Aviso `quality_nc` en la campana.
+  `/auth/me` devuelve `workspace.quality.enabled`. Quien tiene `quality.manage` puede listar los
+  departamentos (`/admin/departments/options`) para asignar una NC.
+- App: área **Calidad** en la barra (`nav-areas.ts`), pantallas en `frontend/src/features/quality/`
+  (`/calidad/resumen`, `/no-conformidades`, `/no-conformidades/:id`, `/acciones`, `/mis-acciones`,
+  `/comunicadas`, `/comunicar`), tarjeta en Administración › Seguridad › General, tarjeta **Calidad** en los
+  ajustes de cada formulario, botón en el registro y tarjeta en **Mis pendientes**.
+- Demo y capturas: `web/scripts/demo-quality.ts` (un control de cámaras cuyo registro a 6,4 °C abre su NC
+  sola, NC en cada paso y una comunicada) y las capturas `calidad-*` en las guías **Calidad** y **No
+  conformidades y CAPA** (es y en).
+
+Simplificaciones respecto de lo de arriba:
+
+- `quality_nc` solo va a la campana (sin email); las acciones y la verificación sí avisan por email, como
+  todo vencimiento.
+- El responsable de una acción ve la NC entera en solo lectura (no solo el título): necesita el contexto.
+- La apertura automática corre después de guardar el registro, fuera de su transacción: si falla, el
+  registro queda y el fallo se anota en el log; se puede abrir a mano.
+- Los ajustes de calidad del formulario tienen su propio endpoint (`GET/PUT /quality/forms/:id`, con EDIT
+  sobre el formulario), no van dentro de `/forms/:id/settings`.
+- Una NC comunicada queda `INTERNAL` y `MAJOR`, a cargo del propietario (o del primer `quality.manage`)
+  hasta que alguien la asigne.
+- El **Resumen** responde a cualquiera con lo que ve; en el menú solo aparece para `quality.view`.
+- El texto de una NC abierta desde un registro se escribe en el idioma de la empresa.
+- Falta, para el cierre del módulo: las rutas `/quality/*` en el test de aislamiento entre empresas
+  (`tenant-isolation.test.ts`) y los tests de permisos.
 
 ### Fuera de la fase 1
 

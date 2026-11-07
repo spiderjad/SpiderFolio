@@ -6,6 +6,7 @@ export const docGroups = [
   "empezar",
   "uso-diario",
   "prevencion",
+  "calidad",
   "administracion",
   "seguridad",
   "autoalojamiento",

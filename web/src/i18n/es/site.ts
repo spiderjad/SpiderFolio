@@ -193,8 +193,8 @@ export const site = {
         {
           icon: "check",
           title: "Calidad",
-          text: "Calidad alimentaria (IFS y BRCGS): no conformidades, acciones correctivas y auditorías.",
-          soon: true,
+          text: "Calidad alimentaria (IFS 8 y BRCGS 9): no conformidades con su causa, acciones correctivas y preventivas y verificación de eficacia.",
+          soon: false,
         },
         {
           icon: "lock",
@@ -330,6 +330,7 @@ export const site = {
       empezar: "Empezar",
       "uso-diario": "Para usuarios",
       prevencion: "Prevención (PRL)",
+      calidad: "Calidad",
       administracion: "Administración",
       seguridad: "Seguridad",
       autoalojamiento: "Autoalojamiento",

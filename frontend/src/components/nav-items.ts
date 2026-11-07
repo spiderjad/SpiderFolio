@@ -279,6 +279,7 @@ export function sectionTitle(
   if (pathname.includes("/admin/positions")) return texts.admin.nav.positions;
   if (pathname.includes("/vencimientos")) return texts.expiries.nav;
   if (pathname.includes("/seguridad")) return texts.safety.terms[safetyTerms].module;
+  if (pathname.includes("/calidad")) return texts.quality.module;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;
   if (pathname.includes("/admin/security")) return texts.admin.nav.security;

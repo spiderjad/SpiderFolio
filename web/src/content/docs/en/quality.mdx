@@ -1,0 +1,73 @@
+---
+title: "Quality: getting started"
+description: "What the food Quality area (IFS Food 8, BRCGS Food Safety 9) brings, how to turn it on, how its menu is organized and who sees what."
+group: calidad
+order: 1
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+**Quality** is the app's area for a food business's food safety: what **IFS Food version 8**, **BRCGS Food
+Safety Issue 9** and the official health inspection ask for. It builds on what you already use in the rest
+of the app: [controlled documents](/en/docs/controlled-documents), [forms and records](/en/docs/forms),
+[expiries](/en/docs/expiries) and [audit rooms](/en/docs/audit-rooms).
+
+Today it brings **[nonconformities and their CAPA](/en/docs/nonconformities)**: everything that goes wrong,
+with its cause, its corrective and preventive actions and the check that it was solved. It's the base of the
+rest of the module: HACCP with its CCPs, audits, suppliers and complaints will come and end in a
+nonconformity.
+
+## Turn it on
+
+The area is off by default. The owner turns it on in **Administration** › **Security** › **General**, on the
+**Food quality** card:
+
+1. Switch on **Turn on the quality module**.
+2. Tick the **Standards the company is audited against**: IFS Food 8, BRCGS Food Safety 9, both or neither.
+   Today they're only a reference; later they'll order the audits' clauses.
+3. If you like, change the **Days until the effectiveness check** (30 by default): from the last action done
+   to the date proposed to check the problem didn't come back.
+
+Turning it on creates the **Quality** space, shown in the area, for documents, records and evidence. Turning
+it off hides the area and its notices, without deleting anything.
+
+## How it's organized
+
+With the module on, **Quality** shows in the **areas rail** (see
+[Home](/en/docs/home#getting-around-the-areas)). The area's menu has:
+
+- **Summary**, **Nonconformities** and **Actions**, for whoever sees them all;
+- **Mine**: **My actions**, **Reported by me** and **Report a nonconformity**;
+- the area's spaces, such as **Quality**.
+
+The **Summary** shows open nonconformities by severity, overdue actions, checks due today and the latest
+open ones. Each number opens the list already filtered.
+
+<Shot
+  name="calidad-resumen"
+  alt="The Quality summary: open by severity, overdue actions and checks due today"
+/>
+
+The actions that are yours also show in **My to-dos**, with everything else you have to do.
+
+## Who sees what
+
+| Who                     | What they see and do                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Manage quality**      | Everything: creates, analyses, assigns, checks, closes, cancels and reopens. Changes the form settings. The Admin role already has it. |
+| **View quality**        | Reads every nonconformity and its actions, and exports the CSV. Meant for management or an audit.                                      |
+| A nonconformity's owner | Handles it: details, root cause, actions and check date. Doesn't close it.                                                             |
+| An action's responsible | Sees its nonconformity and marks their action done.                                                                                    |
+| Heads and deputies      | Read the nonconformities assigned to their department (and sub-departments).                                                           |
+| Everyone                | **Report a nonconformity** and see the ones they reported.                                                                             |
+
+The capabilities are given in [Roles and permissions](/en/docs/roles-and-permissions).
+
+## Related
+
+- [Nonconformities and CAPA](/en/docs/nonconformities)
+- [Forms and records](/en/docs/forms)
+- [Audit rooms](/en/docs/audit-rooms)

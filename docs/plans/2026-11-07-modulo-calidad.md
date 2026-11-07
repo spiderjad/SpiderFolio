@@ -1,7 +1,6 @@
 # Módulo de Calidad alimentaria (núcleo) — notas
 
-Estado: spec escrita el 07/11/2026 en `docs/spec/calidad.md` (fase 1: no conformidades y CAPA), en
-revisión por quien mantiene el proyecto. No tocar código hasta que la apruebe.
+Estado: spec aprobada el 07/11/2026 (`docs/spec/calidad.md`); fase 1 (no conformidades y CAPA) hecha.
 
 ## Decisiones
 
