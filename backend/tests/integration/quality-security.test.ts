@@ -1422,3 +1422,291 @@ describe("calidad fase 6a: prerrequisitos y panel", () => {
     expect((theirBoard.body as { prps: { nonConforming: number } }).prps.nonConforming).toBe(0);
   });
 });
+
+const productInput = (extra: object = {}) => ({
+  name: "Chorizo curado",
+  ingredients: "Cerdo, sal, pimentón",
+  allergens: ["MILK"],
+  readyToEat: true,
+  ...extra,
+});
+
+interface ProductBody {
+  product: {
+    id: string;
+    specVersion: number;
+    labelState: string;
+    needsStudy: boolean;
+    labels: { id: string; status: string }[];
+    studies: { id: string; result: string; nc: { id: string } | null }[];
+  };
+}
+
+const allChecks = (extra: object = {}) => ({
+  ...Object.fromEntries(
+    [
+      "name",
+      "ingredients",
+      "allergens",
+      "netQuantity",
+      "date",
+      "storage",
+      "operator",
+      "lot",
+      "origin",
+      "nutrition",
+    ].map((check) => [check, "ok"]),
+  ),
+  ...extra,
+});
+
+interface PointBody {
+  point: { id: string; repeated: boolean; nextDueOn: string };
+}
+
+const pointInput = (extra: object = {}) => ({
+  kind: "ENVIRONMENT",
+  name: "Sumidero de loncheado",
+  parameter: "Listeria monocytogenes",
+  everyDays: 14,
+  nextDueOn: "2026-11-01",
+  ...extra,
+});
+
+describe("calidad fase 6b: productos, etiquetas y plan analítico", () => {
+  // A fresh app: the global limit (per minute, in memory) would count the requests of the blocks above.
+  beforeAll(() => {
+    app = createApp(ctx.deps);
+  });
+
+  it("productos: quality.view lee, solo quality.manage cambia; un miembro y un invitado no entran", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const viewer = api(w.ws.slug, w.viewer.token);
+    expect((await viewer.post("/quality/products", productInput())).status).toBe(403);
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/products")).status).toBe(403);
+    expect((await api(w.ws.slug, w.guest.token).get("/quality/products")).status).toBe(403);
+    const created = await manager.post("/quality/products", productInput());
+    expect(created.status).toBe(201);
+    const id = (created.body as ProductBody).product.id;
+    expect((await viewer.get(`/quality/products/${id}`)).status).toBe(200);
+    expect((await api(w.ws.slug, w.plain.token).get(`/quality/products/${id}`)).status).toBe(403);
+    expect((await viewer.patch(`/quality/products/${id}`, { name: "Otro" })).status).toBe(403);
+    expect((await viewer.post(`/quality/products/${id}/labels`, {})).status).toBe(403);
+    expect((await viewer.post(`/quality/products/${id}/folder`)).status).toBe(403);
+    // A file of another folder can't be linked as the sheet or a label.
+    expect((await manager.post(`/quality/products/${id}/labels`, { nodeId: "nope" })).status).toBe(
+      404,
+    );
+  });
+
+  it("etiqueta: aprobar exige las comprobaciones, rechazar el motivo; cambiar la ficha la desactualiza", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const created = await manager.post("/quality/products", productInput({ name: "Salami" }));
+    const id = (created.body as ProductBody).product.id;
+    const sent = await manager.post(`/quality/products/${id}/labels`, {});
+    expect(sent.status).toBe(201);
+    const labelId = (sent.body as ProductBody).product.labels[0]?.id ?? "";
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).post(`/quality/labels/${labelId}/review`, {
+          decision: "APPROVE",
+          checks: allChecks(),
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await manager.post(`/quality/labels/${labelId}/review`, {
+          decision: "APPROVE",
+          checks: allChecks({ lot: "missing" }),
+        })
+      ).status,
+    ).toBe(400);
+    // «No aplica» only where it may: not for the allergens.
+    expect(
+      (
+        await manager.post(`/quality/labels/${labelId}/review`, {
+          decision: "APPROVE",
+          checks: allChecks({ allergens: "na" }),
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await manager.post(`/quality/labels/${labelId}/review`, {
+          decision: "REJECT",
+          checks: allChecks(),
+        })
+      ).status,
+    ).toBe(400);
+    const approved = await manager.post(`/quality/labels/${labelId}/review`, {
+      decision: "APPROVE",
+      checks: allChecks({ origin: "na" }),
+    });
+    expect(approved.status).toBe(200);
+    expect((approved.body as ProductBody).product.labelState).toBe("approved");
+    expect(
+      (
+        await manager.post(`/quality/labels/${labelId}/review`, {
+          decision: "REJECT",
+          checks: allChecks(),
+          reviewNote: "Tarde",
+        })
+      ).status,
+    ).toBe(409);
+    const notSpec = await manager.patch(`/quality/products/${id}`, { storage: "0-4 °C" });
+    expect((notSpec.body as ProductBody).product.specVersion).toBe(1);
+    const changed = await manager.patch(`/quality/products/${id}`, {
+      allergens: ["MILK", "MUSTARD"],
+    });
+    expect((changed.body as ProductBody).product.specVersion).toBe(2);
+    expect((changed.body as ProductBody).product.labelState).toBe("outdated");
+  });
+
+  it("estudio de vida útil: un resultado; no superado abre su NC de origen Analítica", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const created = await manager.post("/quality/products", productInput({ name: "Cocido" }));
+    const id = (created.body as ProductBody).product.id;
+    expect((created.body as ProductBody).product.needsStudy).toBe(true);
+    const study = await manager.post(`/quality/products/${id}/studies`, {
+      startedOn: "2026-09-01",
+      targetDays: 45,
+      listeria: true,
+    });
+    const studyId = (study.body as ProductBody).product.studies[0]?.id ?? "";
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).post(`/quality/studies/${studyId}/result`, {
+          result: "PASSED",
+          resultOn: "2026-11-01",
+        })
+      ).status,
+    ).toBe(403);
+    const failed = await manager.post(`/quality/studies/${studyId}/result`, {
+      result: "FAILED",
+      resultOn: "2026-11-01",
+      openNc: true,
+    });
+    expect(failed.status).toBe(200);
+    const nc = (failed.body as ProductBody).product.studies[0]?.nc;
+    const row = await ctx.prisma.qualityNc.findFirst({ where: { id: nc?.id ?? "" } });
+    expect(row?.origin).toBe("LAB");
+    expect(
+      (
+        await manager.post(`/quality/studies/${studyId}/result`, {
+          result: "PASSED",
+          resultOn: "2026-11-02",
+        })
+      ).status,
+    ).toBe(409);
+  });
+
+  it("plan analítico: registra su responsable o quality.manage; dos no conformes seguidos marcan Repetido", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    expect(
+      (await api(w.ws.slug, w.viewer.token).post("/quality/sampling", pointInput())).status,
+    ).toBe(403);
+    expect((await api(w.ws.slug, w.guest.token).get("/quality/sampling")).status).toBe(403);
+    expect(
+      (
+        await manager.post(
+          "/quality/sampling",
+          pointInput({ responsibleId: w.guest.membership.id }),
+        )
+      ).status,
+    ).toBe(404);
+    const created = await manager.post(
+      "/quality/sampling",
+      pointInput({ responsibleId: w.responsible.membership.id }),
+    );
+    expect(created.status).toBe(201);
+    const id = (created.body as PointBody).point.id;
+    const other = await manager.post("/quality/sampling", pointInput({ name: "Agua" }));
+    const otherId = (other.body as PointBody).point.id;
+    const theirs = await api(w.ws.slug, w.responsible.token).get("/quality/sampling");
+    expect((theirs.body as { items: { id: string }[] }).items.map((p) => p.id)).toEqual([id]);
+    expect(
+      (await api(w.ws.slug, w.responsible.token).get(`/quality/sampling/${otherId}/results`))
+        .status,
+    ).toBe(404);
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).post(`/quality/sampling/${id}/results`, {
+          sampledOn: "2026-11-02",
+          conforming: true,
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (await api(w.ws.slug, w.responsible.token).patch(`/quality/sampling/${id}`, { everyDays: 1 }))
+        .status,
+    ).toBe(403);
+    const responsible = api(w.ws.slug, w.responsible.token);
+    await responsible.post(`/quality/sampling/${id}/results`, {
+      sampledOn: "2026-11-02",
+      detected: true,
+      conforming: false,
+    });
+    const second = await responsible.post(`/quality/sampling/${id}/results`, {
+      sampledOn: "2026-11-04",
+      detected: true,
+      conforming: false,
+      openNc: true,
+    });
+    expect(second.status).toBe(201);
+    expect((second.body as PointBody).point.repeated).toBe(true);
+    expect((second.body as PointBody).point.nextDueOn).toBe("2026-11-18");
+    const expiry = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.sampling", subjectId: id },
+    });
+    expect(expiry?.responsibleId).toBe(w.responsible.membership.id);
+    const nc = await ctx.prisma.qualityNc.findFirst({
+      where: { workspaceId: w.ws.workspaceId, origin: "LAB", ownerId: w.responsible.membership.id },
+    });
+    expect(nc).not.toBeNull();
+    // A report from outside the module's space is refused.
+    expect(
+      (
+        await responsible.post(`/quality/sampling/${id}/results`, {
+          sampledOn: "2026-11-05",
+          conforming: true,
+          reportNodeId: "nope",
+        })
+      ).status,
+    ).toBe(404);
+  });
+
+  it("otra empresa: sus productos y puntos son 404 y no cuentan en el panel", async () => {
+    const other = await world("Calidad productos ajenos");
+    const theirs = api(other.ws.slug, other.manager.token);
+    const product = await theirs.post("/quality/products", productInput());
+    const productId = (product.body as ProductBody).product.id;
+    const label = await theirs.post(`/quality/products/${productId}/labels`, {});
+    const labelId = (label.body as ProductBody).product.labels[0]?.id ?? "";
+    const point = await theirs.post("/quality/sampling", pointInput());
+    const pointId = (point.body as PointBody).point.id;
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await manager.get(`/quality/products/${productId}`)).status).toBe(404);
+    expect((await manager.patch(`/quality/products/${productId}`, { name: "x" })).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/labels/${labelId}/review`, {
+          decision: "APPROVE",
+          checks: allChecks({ origin: "na" }),
+        })
+      ).status,
+    ).toBe(404);
+    expect((await manager.get(`/quality/sampling/${pointId}/results`)).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/sampling/${pointId}/results`, {
+          sampledOn: "2026-11-01",
+          conforming: true,
+        })
+      ).status,
+    ).toBe(404);
+    expect((await manager.post("/quality/sampling", pointInput({ productId }))).status).toBe(404);
+    const board = await api(other.ws.slug, other.viewer.token).get("/quality/dashboard");
+    expect((board.body as { sampling: { nonConforming: number } }).sampling.nonConforming).toBe(0);
+  });
+});

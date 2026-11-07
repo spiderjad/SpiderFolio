@@ -706,6 +706,26 @@ Muestreo de producto, superficies, ambiente y agua, con su criterio y el informe
   `POST /quality/sampling/:id/restore`, `GET/POST /quality/sampling/:id/results`.
 
 
+### Hecho (fase 6b)
+
+Hecha el 07/11/2026. Migración `quality_products_sampling` (`QualityProduct`, `QualityShelfLifeStudy`,
+`QualityLabel`, `QualitySamplingPoint`, `QualityLabResult` y el origen `LAB`). Backend en
+`products.service.ts`, `sampling.service.ts`, `products.schemas.ts` y `quality-folders.ts` (la carpeta de un
+proveedor usa ahora el mismo ayudante); vencimiento `quality.sampling`; aviso `quality_label`. Pantallas
+**Productos**, la ficha de cada producto y **Plan analítico**; el panel suma sus cifras. Demo
+(`demoProducts`), capturas `calidad-productos`, `calidad-producto` y `calidad-plan-analitico`, guías
+**Productos y etiquetas** y **Plan analítico** (es y en) y tests de seguridad.
+
+Simplificaciones y añadidos:
+
+- Una etiqueta aprobada queda contra la versión de la ficha **al aprobarla** (no al enviarla): es la que ve
+  quien revisa.
+- El documento de la ficha (`specNodeId`) se elige entre los archivos y páginas de la carpeta del producto,
+  al editar la ficha.
+- Enviar una etiqueta avisa a quien gestiona calidad; aprobarla o rechazarla avisa a quien la envió.
+- La lista de productos pagina en el servidor; la de puntos, como la de prerrequisitos, trae hasta 500.
+- Los invitados no entran a productos ni al plan analítico (403) ni pueden ser responsables de un punto.
+
 ## Fase 6c: cultura de seguridad alimentaria y gestión de cambios
 
 Bloques 12 y 13. Se hace después de la 6b.
