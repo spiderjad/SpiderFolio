@@ -1245,7 +1245,7 @@ export async function demoComplaints(
     `SELECT c.id FROM "QualityComplaint" c JOIN "Workspace" w ON w.id = c."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoPrps(target, counts);
   const t = COMPLAINTS[target.locale];
   for (const item of t.items) {
     const { complaint } = await call<{ complaint: { id: string } }>("POST", "/quality/complaints", {
@@ -1303,5 +1303,203 @@ export async function demoComplaints(
     recoveredPercent: 100,
     result: t.test.result,
   });
+  return await demoPrps(target, counts);
+}
+
+type PrpKind = "CLEANING" | "PEST" | "WATER" | "CALIBRATION" | "GLASS" | "WASTE";
+
+interface DemoPrp {
+  kind: PrpKind;
+  name: string;
+  location: string;
+  everyDays: number;
+  /** Days ago of each check, oldest first; one with a note is not conforming. */
+  checks: { ago: number; note?: string }[];
+  /** The responsible person: an index of peopleEmails. */
+  person: number;
+}
+
+const PRPS: Record<"es" | "en", DemoPrp[]> = {
+  es: [
+    {
+      kind: "CLEANING",
+      name: "Limpieza y desinfección de la sala de despiece",
+      location: "Sala 2",
+      everyDays: 1,
+      person: 1,
+      checks: [
+        { ago: 3 },
+        { ago: 2, note: "Restos de grasa bajo la cinta transportadora; se repitió la limpieza." },
+        { ago: 1 },
+      ],
+    },
+    {
+      kind: "CLEANING",
+      name: "Verificación de limpieza con luminómetro (ATP)",
+      location: "Cámaras y salas",
+      everyDays: 7,
+      person: 0,
+      checks: [{ ago: 12 }, { ago: 5 }],
+    },
+    {
+      kind: "PEST",
+      name: "Revisión de cebos y trampas (empresa externa)",
+      location: "Perímetro y muelles",
+      everyDays: 30,
+      person: 0,
+      checks: [{ ago: 58 }, { ago: 28 }],
+    },
+    {
+      kind: "WATER",
+      name: "Control de cloro libre en el agua",
+      location: "Grifo de la sala 1",
+      everyDays: 1,
+      person: 1,
+      checks: [{ ago: 4 }, { ago: 3 }],
+    },
+    {
+      kind: "CALIBRATION",
+      name: "Verificación de termómetros de sonda",
+      location: "Laboratorio",
+      everyDays: 30,
+      person: 0,
+      checks: [{ ago: 25 }],
+    },
+    {
+      kind: "CALIBRATION",
+      name: "Calibración de la báscula de expedición",
+      location: "Expedición",
+      everyDays: 180,
+      person: 0,
+      checks: [{ ago: 120 }],
+    },
+    {
+      kind: "GLASS",
+      name: "Inventario de vidrio y plástico duro",
+      location: "Toda la planta",
+      everyDays: 30,
+      person: 1,
+      checks: [{ ago: 40 }],
+    },
+    {
+      kind: "WASTE",
+      name: "Retirada de subproductos SANDACH (categoría 3)",
+      location: "Contenedor exterior",
+      everyDays: 7,
+      person: 1,
+      checks: [{ ago: 9 }, { ago: 2 }],
+    },
+  ],
+  en: [
+    {
+      kind: "CLEANING",
+      name: "Cleaning and disinfection of the cutting room",
+      location: "Room 2",
+      everyDays: 1,
+      person: 1,
+      checks: [
+        { ago: 3 },
+        { ago: 2, note: "Grease left under the conveyor belt; cleaned again." },
+        { ago: 1 },
+      ],
+    },
+    {
+      kind: "CLEANING",
+      name: "Cleaning check with luminometer (ATP)",
+      location: "Cold rooms and halls",
+      everyDays: 7,
+      person: 0,
+      checks: [{ ago: 12 }, { ago: 5 }],
+    },
+    {
+      kind: "PEST",
+      name: "Bait and trap inspection (contractor)",
+      location: "Perimeter and docks",
+      everyDays: 30,
+      person: 0,
+      checks: [{ ago: 58 }, { ago: 28 }],
+    },
+    {
+      kind: "WATER",
+      name: "Free chlorine check of the water",
+      location: "Tap in room 1",
+      everyDays: 1,
+      person: 1,
+      checks: [{ ago: 4 }, { ago: 3 }],
+    },
+    {
+      kind: "CALIBRATION",
+      name: "Probe thermometer check",
+      location: "Laboratory",
+      everyDays: 30,
+      person: 0,
+      checks: [{ ago: 25 }],
+    },
+    {
+      kind: "CALIBRATION",
+      name: "Dispatch scale calibration",
+      location: "Dispatch",
+      everyDays: 180,
+      person: 0,
+      checks: [{ ago: 120 }],
+    },
+    {
+      kind: "GLASS",
+      name: "Glass and hard plastic register",
+      location: "Whole plant",
+      everyDays: 30,
+      person: 1,
+      checks: [{ ago: 40 }],
+    },
+    {
+      kind: "WASTE",
+      name: "Animal by-products collection (category 3)",
+      location: "Outside container",
+      everyDays: 7,
+      person: 1,
+      checks: [{ ago: 9 }, { ago: 2 }],
+    },
+  ],
+};
+
+/** Prerequisite programmes (phase 6a): eight controls with their checks, one of them not conforming. */
+export async function demoPrps(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT p.id FROM "QualityPrp" p JOIN "Workspace" w ON w.id = p."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const members = await call<{ items: { id: string; email: string | null }[] }>(
+    "GET",
+    "/admin/members?pageSize=100",
+  );
+  const idOf = (index: number) =>
+    members.items.find((item) => item.email === target.peopleEmails[index])?.id ?? null;
+  for (const item of PRPS[target.locale]) {
+    const first = item.checks[0]?.ago ?? 0;
+    const { prp } = await call<{ prp: { id: string } }>("POST", "/quality/prps", {
+      kind: item.kind,
+      name: item.name,
+      location: item.location,
+      everyDays: item.everyDays,
+      responsibleId: idOf(item.person),
+      formId: null,
+      nextDueOn: day(-first),
+    });
+    counts.prps = (counts.prps ?? 0) + 1;
+    for (const check of item.checks) {
+      await call("POST", `/quality/prps/${prp.id}/checks`, {
+        doneOn: day(-check.ago),
+        conforming: check.note === undefined,
+        note: check.note ?? null,
+        openNc: check.note !== undefined,
+        severity: "MINOR",
+      });
+    }
+  }
   return counts;
 }

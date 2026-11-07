@@ -1,0 +1,62 @@
+---
+title: "Prerequisites"
+description: "The controls repeated every so many days (cleaning, pests, water, calibration, glass and hard plastic, waste), with their responsible person, their notices and the nonconformity if something goes wrong."
+group: calidad
+order: 7
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+IFS Food 8 and BRCGS 9 ask to show the prerequisite programmes are met: cleaning, pest control, water,
+calibration of measuring equipment, glass and hard plastic, waste. In the Quality area, **Prerequisites**
+gathers those controls, each with how often it's due, who does it and when it was last done.
+
+<Shot
+  name="calidad-prerrequisitos"
+  alt="The prerequisite controls grouped by programme, with the last, the next and their state"
+/>
+
+## Create a control
+
+Whoever manages quality clicks **New control** and chooses:
+
+- the **programme** (cleaning and disinfection, pest control, water, calibration, glass and hard plastic, waste
+  or other) and **what is checked**;
+- **where**, **every how many days** and the **next date**;
+- the **responsible** person, who is told 7 days before, the day before and on the day;
+- optionally, the **form** of the Quality space where the detail is written down.
+
+Each control is **Up to date**, **Due soon** (7 days or less left) or **Overdue**. It's edited with the pencil
+and archived with the last button; **Show archived** lists them.
+
+## Record a check
+
+The control's responsible person (or whoever manages quality) clicks **Record**, enters the date and whether it
+was **Conforming** or **Not conforming**, with remarks. The next one is due on that date plus the control's
+days.
+
+If it wasn't conforming, **Open a nonconformity** creates it with origin **Internal** and the chosen severity,
+in the hands of the control's responsible person (see [Nonconformities and CAPA](/en/docs/nonconformities)).
+The clock opens each control's **history**, with its nonconformities.
+
+## In the Summary
+
+The area's **Summary** shows the overdue controls, those due in 7 days and the non-conforming checks of the last
+30 days, with the figures of the rest of the module (see [Quality: getting started](/en/docs/quality)).
+
+## Who sees what
+
+| Who                     | What they see and do                                  |
+| ----------------------- | ----------------------------------------------------- |
+| **Manage quality**      | Everything: creates, edits, archives and records.     |
+| **View quality**        | Reads every control and its history.                  |
+| A control's responsible | Sees it in **Mine** › **My controls** and records it. |
+
+## Related
+
+- [Quality: getting started](/en/docs/quality)
+- [Nonconformities and CAPA](/en/docs/nonconformities)
+- [Expiries](/en/docs/expiries)

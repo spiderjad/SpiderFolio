@@ -1,0 +1,62 @@
+---
+title: "Prerrequisitos"
+description: "Los controles que se repiten cada tantos días (limpieza, plagas, agua, calibración, vidrio y plástico duro, residuos), con su responsable, sus avisos y la no conformidad si algo sale mal."
+group: calidad
+order: 7
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 y BRCGS 9 piden demostrar que los programas de prerrequisitos se cumplen: la limpieza, el control de
+plagas, el agua, la calibración de los equipos de medida, el vidrio y el plástico duro, los residuos. En el área
+Calidad, **Prerrequisitos** reúne esos controles, cada uno con cada cuántos días toca, quién lo hace y cuándo
+se hizo por última vez.
+
+<Shot
+  name="calidad-prerrequisitos"
+  alt="Los controles de prerrequisitos agrupados por programa, con el último, el próximo y su estado"
+/>
+
+## Crear un control
+
+Quien gestiona calidad pulsa **Nuevo control** y elige:
+
+- el **programa** (limpieza y desinfección, control de plagas, agua, calibración, vidrio y plástico duro,
+  residuos u otro) y **qué se controla**;
+- **dónde**, **cada cuántos días** y la **próxima fecha**;
+- el **responsable**, que recibe los avisos 7 días antes, el día anterior y el mismo día;
+- si se quiere, el **formulario** del espacio Calidad donde se anota el detalle.
+
+Cada control sale **Al día**, **Por vencer** (le quedan 7 días o menos) o **Vencido**. Se edita con el lápiz y
+se archiva con el último botón; **Ver archivados** los muestra.
+
+## Registrar un control
+
+El responsable del control (o quien gestiona calidad) pulsa **Registrar**, pone la fecha y si fue **Conforme**
+o **No conforme**, con sus observaciones. El próximo queda para la fecha más los días del control.
+
+Si no fue conforme, **Abrir una no conformidad** la crea con origen **Interna** y la gravedad elegida, a cargo
+del responsable del control (ver [No conformidades y CAPA](/es/docs/no-conformidades)). El reloj abre el
+**historial** de cada control, con sus no conformidades.
+
+## En el Resumen
+
+El **Resumen** del área muestra los controles vencidos, los que vencen en 7 días y los no conformes de los
+últimos 30 días, junto con las cifras del resto del módulo (ver [Calidad: primeros pasos](/es/docs/calidad)).
+
+## Quién ve qué
+
+| Quién                        | Qué ve y qué hace                                      |
+| ---------------------------- | ------------------------------------------------------ |
+| **Gestionar calidad**        | Todo: crea, edita, archiva y registra.                 |
+| **Ver calidad**              | Lee todos los controles y su historial.                |
+| El responsable de un control | Lo ve en **Lo mío** › **Mis controles** y lo registra. |
+
+## Relacionado
+
+- [Calidad: primeros pasos](/es/docs/calidad)
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Vencimientos](/es/docs/vencimientos)

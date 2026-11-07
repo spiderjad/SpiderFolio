@@ -585,6 +585,23 @@ y plástico duro, residuos y SANDACH) son controles periódicos con su responsab
   `GET /quality/prps/:id/checks`, `POST /quality/prps/:id/checks` `{ doneOn, conforming, note?, openNc,
   severity? }`, `GET /quality/dashboard`.
 
+### Hecho (fase 6a)
+
+Hecha el 07/11/2026. Migración `quality_prerequisites` (`QualityPrp`, `QualityPrpCheck`). Backend en
+`prps.service.ts`, `prps.schemas.ts` y `dashboard.service.ts`, vencimiento `quality.prp`; pantalla
+**Prerrequisitos** y el **Resumen** convertido en el panel. Demo (`demoPrps`), capturas
+`calidad-prerrequisitos` y `calidad-resumen` (nueva), guía **Prerrequisitos** (es y en), la de **Calidad:
+primeros pasos** actualizada y tests de seguridad.
+
+Simplificaciones y añadidos:
+
+- `POST /quality/prps/:id/restore` restaura un control archivado.
+- Un control registrado con una fecha anterior al último no mueve la próxima fecha.
+- Quien no tiene `quality.view` ve en **Lo mío** «Mis controles», con los controles a su cargo.
+- Los invitados no entran (403) ni pueden ser responsables de un control.
+- El tiempo medio de cierre cuenta las NC cerradas en los últimos 12 meses (no en el año natural).
+- La NC de un control no conforme queda a cargo del responsable del control (o de quien lo registra).
+
 
 ## Fases
 

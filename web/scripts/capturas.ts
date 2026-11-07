@@ -1076,6 +1076,12 @@ const CAPTURES: Capture[] = [
     before: ({ slug, locale }) => demoQualityOf(locale, slug),
   },
   {
+    name: "calidad-prerrequisitos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/prerrequisitos`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
     name: "calidad-comunicar",
     who: "owner",
     path: (i) => `/app/${i.slug}/calidad/comunicar`,
