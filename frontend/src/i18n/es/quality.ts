@@ -27,6 +27,7 @@ export const qualityTexts = {
     AUDIT_EXTERNAL: "Auditoría externa",
     COMPLAINT: "Reclamación",
     SUPPLIER: "Proveedor",
+    LAB: "Analítica",
     OTHER: "Otra",
   },
   severities: { MINOR: "Menor", MAJOR: "Mayor", CRITICAL: "Crítica" },

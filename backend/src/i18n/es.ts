@@ -1464,6 +1464,7 @@ export const qualityTexts = {
     AUDIT_EXTERNAL: "Auditoría externa",
     COMPLAINT: "Reclamación",
     SUPPLIER: "Proveedor",
+    LAB: "Analítica",
     OTHER: "Otra",
   },
   severities: { MINOR: "Menor", MAJOR: "Mayor", CRITICAL: "Crítica" },
@@ -1684,6 +1685,18 @@ export const qualityTexts = {
   /** Phase 6a (docs/spec/calidad.md, «Fase 6a»): prerequisites. */
   prpNcTitle: (name: string) => `Control no conforme: ${name}`,
   prpWhat: (name: string) => `Control de prerrequisitos: ${name}`,
+  /** Phase 6b (docs/spec/calidad.md, «Fase 6b»): products, labels and the sampling plan. */
+  productsFolder: "Productos",
+  samplingFolder: "Plan analítico",
+  labNcTitle: (point: string, parameter: string) => `Resultado no conforme: ${point} (${parameter})`,
+  studyNcTitle: (product: string) => `Vida útil no superada: ${product}`,
+  samplingWhat: (point: string) => `Muestra del plan analítico: ${point}`,
+  labels: {
+    notInReview: "La etiqueta ya está revisada.",
+    checksMissing: "Para aprobar, marca todas las comprobaciones.",
+    reasonRequired: "Indica el motivo del rechazo.",
+  },
+  studyClosed: "El estudio ya tiene resultado.",
   csv: {
     fileName: "no-conformidades.csv",
     code: "Código",

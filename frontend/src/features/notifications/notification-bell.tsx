@@ -48,7 +48,8 @@ export interface NotificationView {
     | "safety_incident"
     | "audit_room_access"
     | "cae_portal_upload"
-    | "quality_nc";
+    | "quality_nc"
+    | "quality_label";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -143,6 +144,9 @@ function pathOf(
   if (item.kind === "quality_nc") {
     return `/app/${slug}/calidad/no-conformidades/${item.detail ?? ""}`;
   }
+  if (item.kind === "quality_label") {
+    return `/app/${slug}/calidad/productos/${item.detail ?? ""}`;
+  }
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
   }
@@ -179,6 +183,7 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
   if (item.kind === "audit_room_access") return t.auditRoomAccess;
   if (item.kind === "cae_portal_upload") return t.caePortalUpload;
   if (item.kind === "quality_nc") return t.qualityNc(item.actor?.name ?? "");
+  if (item.kind === "quality_label") return t.qualityLabel(item.actor?.name ?? "");
   if (item.kind === "expiry_due") {
     return item.expiry === null || item.expiresAt === null
       ? t.expiryGone

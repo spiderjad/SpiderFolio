@@ -278,6 +278,28 @@ export interface TenantDb {
     PrismaClient["qualityPrpCheck"],
     "findFirst" | "findMany" | "count" | "create"
   >;
+  // Products and sampling points are archived, never deleted; studies are closed once, labels
+  // reviewed once (and superseded), lab results only added.
+  qualityProduct: TenantDelegate<
+    PrismaClient["qualityProduct"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityShelfLifeStudy: TenantDelegate<
+    PrismaClient["qualityShelfLifeStudy"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityLabel: TenantDelegate<
+    PrismaClient["qualityLabel"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "updateMany"
+  >;
+  qualitySamplingPoint: TenantDelegate<
+    PrismaClient["qualitySamplingPoint"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  qualityLabResult: TenantDelegate<
+    PrismaClient["qualityLabResult"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -517,6 +539,23 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update"],
   },
   qualityPrpCheck: { model: "QualityPrpCheck", ops: ["findFirst", "findMany", "count", "create"] },
+  qualityProduct: {
+    model: "QualityProduct",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityShelfLifeStudy: {
+    model: "QualityShelfLifeStudy",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityLabel: {
+    model: "QualityLabel",
+    ops: ["findFirst", "findMany", "count", "create", "update", "updateMany"],
+  },
+  qualitySamplingPoint: {
+    model: "QualitySamplingPoint",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  qualityLabResult: { model: "QualityLabResult", ops: ["findFirst", "findMany", "count", "create"] },
   qualityHold: {
     model: "QualityHold",
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],

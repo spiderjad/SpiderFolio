@@ -29,6 +29,7 @@ export const qualityTexts: typeof es = {
     AUDIT_EXTERNAL: "External audit",
     COMPLAINT: "Complaint",
     SUPPLIER: "Supplier",
+    LAB: "Laboratory",
     OTHER: "Other",
   },
   severities: { MINOR: "Minor", MAJOR: "Major", CRITICAL: "Critical" },

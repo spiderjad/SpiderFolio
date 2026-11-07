@@ -60,6 +60,9 @@ export const NOTIFICATION_KINDS = [
   /** Food quality (docs/spec/calidad.md): a nonconformity reported, assigned, reopened or closed (to
    * its owner, whoever has quality.manage or whoever reported it; `detail` = the NC's id). */
   "quality_nc",
+  /** A label sent to review, approved or rejected (docs/spec/calidad.md, «Fase 6b»; `detail` = the
+   * product's id). */
+  "quality_label",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

@@ -11,8 +11,8 @@ import type { Prisma } from "../../generated/prisma/client.ts";
 import type { TenantDb } from "../../db/tenant.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { dayOf, resolveExpiry, setExpiry } from "../expiries/expiries.service.ts";
-import { lastPosition } from "../nodes/nodes.service.ts";
 import { canManageQuality, canViewQuality, requireQuality } from "./quality-access.ts";
+import { ensureFolder, liveFolder } from "./quality-folders.ts";
 import { SUPPLIER_DOC_EXPIRY, SUPPLIER_REVIEW_EXPIRY } from "./quality-expiry.ts";
 import type {
   ReviewInput,
@@ -567,43 +567,10 @@ export async function supplierFolder(
   const settings = await requireQuality(ctx);
   if (settings.spaceId === undefined) throw notFound();
   const spaceId = settings.spaceId;
-  if (supplier.folderId !== null) {
-    const live = await ctx.db.node.findFirst({
-      where: { id: supplier.folderId, type: "FOLDER", trashedAt: null },
-      select: { id: true, spaceId: true },
-    });
-    if (live !== null) return live;
-  }
-  const folder = async (parentId: string | null, wanted: string): Promise<string> => {
-    const clean = cleanName(wanted.replace(/[/\\]/gu, "-")).slice(0, 120) || "-";
-    const existing = await ctx.db.node.findFirst({
-      where: { spaceId, parentId, type: "FOLDER", nameKey: nameKeyOf(clean), trashedAt: null },
-      select: { id: true },
-    });
-    if (existing !== null) return existing.id;
-    const created = await ctx.db.node.create({
-      data: {
-        spaceId,
-        parentId,
-        type: "FOLDER",
-        name: clean,
-        nameKey: nameKeyOf(clean),
-        position: await lastPosition(ctx, spaceId, parentId),
-        createdById: ctx.tenant.membershipId,
-        updatedById: ctx.tenant.membershipId,
-      },
-      select: { id: true },
-    });
-    await auditAdmin(ctx, {
-      action: "folder.create",
-      entityType: "Node",
-      entityId: created.id,
-      metadata: { spaceId, parentId, name: clean },
-    });
-    return created.id;
-  };
-  const root = await folder(null, qualityTexts.suppliersFolder);
-  const folderId = await folder(root, supplier.name);
+  const live = await liveFolder(ctx, supplier.folderId);
+  if (live !== null) return live;
+  const root = await ensureFolder(ctx, spaceId, null, qualityTexts.suppliersFolder);
+  const folderId = await ensureFolder(ctx, spaceId, root, supplier.name);
   await ctx.db.qualitySupplier.update({ where: { id }, data: { folderId }, select: { id: true } });
   return { id: folderId, spaceId };
 }

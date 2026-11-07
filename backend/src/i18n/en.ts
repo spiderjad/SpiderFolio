@@ -1463,6 +1463,7 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
     AUDIT_EXTERNAL: "External audit",
     COMPLAINT: "Complaint",
     SUPPLIER: "Supplier",
+    LAB: "Laboratory",
     OTHER: "Other",
   },
   severities: { MINOR: "Minor", MAJOR: "Major", CRITICAL: "Critical" },
@@ -1679,6 +1680,18 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
   },
   prpNcTitle: (name: string) => `Non-conforming check: ${name}`,
   prpWhat: (name: string) => `Prerequisite check: ${name}`,
+  /** Phase 6b (docs/spec/calidad.md, «Fase 6b»): products, labels and the sampling plan. */
+  productsFolder: "Products",
+  samplingFolder: "Sampling plan",
+  labNcTitle: (point: string, parameter: string) => `Non-conforming result: ${point} (${parameter})`,
+  studyNcTitle: (product: string) => `Shelf life not met: ${product}`,
+  samplingWhat: (point: string) => `Sampling plan sample: ${point}`,
+  labels: {
+    notInReview: "The label has already been reviewed.",
+    checksMissing: "To approve, tick every check.",
+    reasonRequired: "Give the reason for rejecting it.",
+  },
+  studyClosed: "The study already has its result.",
   csv: {
     fileName: "nonconformities.csv",
     code: "Code",

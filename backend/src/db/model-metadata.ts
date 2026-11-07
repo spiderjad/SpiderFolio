@@ -111,6 +111,11 @@ export const modelMetadata = {
       qualityRecallTests: "QualityRecallTest",
       qualityPrps: "QualityPrp",
       qualityPrpChecks: "QualityPrpCheck",
+      qualityProducts: "QualityProduct",
+      qualityShelfLifeStudies: "QualityShelfLifeStudy",
+      qualityLabels: "QualityLabel",
+      qualitySamplingPoints: "QualitySamplingPoint",
+      qualityLabResults: "QualityLabResult",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -464,6 +469,27 @@ export const modelMetadata = {
   QualityRecallTest: { scope: "tenant", relations: { workspace: "Workspace" } },
   QualityPrp: { scope: "tenant", relations: { workspace: "Workspace", checks: "QualityPrpCheck" } },
   QualityPrpCheck: { scope: "tenant", relations: { workspace: "Workspace", prp: "QualityPrp" } },
+  QualityProduct: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      studies: "QualityShelfLifeStudy",
+      labels: "QualityLabel",
+    },
+  },
+  QualityShelfLifeStudy: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", product: "QualityProduct" },
+  },
+  QualityLabel: { scope: "tenant", relations: { workspace: "Workspace", product: "QualityProduct" } },
+  QualitySamplingPoint: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", results: "QualityLabResult" },
+  },
+  QualityLabResult: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", point: "QualitySamplingPoint" },
+  },
   QualitySupplierDoc: {
     scope: "tenant",
     relations: { workspace: "Workspace", supplier: "QualitySupplier" },

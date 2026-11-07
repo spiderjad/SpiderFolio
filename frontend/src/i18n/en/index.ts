@@ -331,6 +331,8 @@ export const en: Messages = {
       who === ""
         ? "A quality nonconformity needs you."
         : `${who}: a quality nonconformity needs you.`,
+    qualityLabel: (who: string) =>
+      who === "" ? "A label changed status." : `${who}: a label to review or already reviewed.`,
     expiryGone: "An expiry that no longer exists.",
     formOverdue: (what: string) => `“${what}” wasn't filled in last period.`,
     directorySyncStopped:

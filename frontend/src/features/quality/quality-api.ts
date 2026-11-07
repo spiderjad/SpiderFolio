@@ -11,6 +11,7 @@ export const NC_ORIGINS = [
   "AUDIT_EXTERNAL",
   "COMPLAINT",
   "SUPPLIER",
+  "LAB",
   "OTHER",
 ] as const;
 export const SEVERITIES = ["CRITICAL", "MAJOR", "MINOR"] as const;

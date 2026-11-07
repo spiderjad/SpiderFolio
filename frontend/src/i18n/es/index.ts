@@ -335,6 +335,8 @@ export const es = {
       who === ""
         ? "Una no conformidad de calidad te necesita."
         : `${who}: una no conformidad de calidad te necesita.`,
+    qualityLabel: (who: string) =>
+      who === "" ? "Una etiqueta cambió de estado." : `${who}: una etiqueta para revisar o ya revisada.`,
     expiryGone: "Un vencimiento que ya no existe.",
     formOverdue: (what: string) => `«${what}» quedó sin llenar en el período anterior.`,
     directorySyncStopped:

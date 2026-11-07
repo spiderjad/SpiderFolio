@@ -7,6 +7,42 @@ import { sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import { qualityDashboard } from "./dashboard.service.ts";
 import {
+  addStudy,
+  createProduct,
+  getProduct,
+  listProducts,
+  productFiles,
+  productFolder,
+  reviewLabel,
+  setProductArchived,
+  studyResult,
+  submitLabel,
+  updateProduct,
+} from "./products.service.ts";
+import {
+  LabelReviewSchema,
+  LabelSchema,
+  LabResultSchema,
+  ProductSchema,
+  ProductsQuerySchema,
+  SamplingPointSchema,
+  SamplingQuerySchema,
+  StudyResultSchema,
+  StudySchema,
+  UpdateProductSchema,
+  UpdateSamplingPointSchema,
+} from "./products.schemas.ts";
+import {
+  addLabResult,
+  createSamplingPoint,
+  listSamplingPoints,
+  samplingFiles,
+  samplingFolder,
+  samplingResults,
+  setSamplingArchived,
+  updateSamplingPoint,
+} from "./sampling.service.ts";
+import {
   addPrpCheck,
   createPrp,
   listPrps,
@@ -849,11 +885,204 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
       path: "/quality/prps/:id/checks",
       handler: async (req, res) => {
         const { id } = IdParams.parse(req.params);
+        res.status(201).json({
+          prp: await addPrpCheck(adminContextOf(req), id, PrpCheckSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/products",
+      handler: async (req, res) => {
+        res.json(await listProducts(adminContextOf(req), ProductsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/products",
+      handler: async (req, res) => {
         res
           .status(201)
           .json({
-            prp: await addPrpCheck(adminContextOf(req), id, PrpCheckSchema.parse(req.body)),
+            product: await createProduct(adminContextOf(req), ProductSchema.parse(req.body)),
           });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/products/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ product: await getProduct(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/products/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          product: await updateProduct(
+            adminContextOf(req),
+            id,
+            UpdateProductSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/products/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { archived } = ArchiveSchema.parse(req.body);
+        res.json({ product: await setProductArchived(adminContextOf(req), id, archived) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/products/:id/folder",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ folder: await productFolder(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/products/:id/files",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ items: await productFiles(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/products/:id/studies",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res
+          .status(201)
+          .json({ product: await addStudy(adminContextOf(req), id, StudySchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/studies/:id/result",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          product: await studyResult(adminContextOf(req), id, StudyResultSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/products/:id/labels",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res
+          .status(201)
+          .json({
+            product: await submitLabel(adminContextOf(req), id, LabelSchema.parse(req.body)),
+          });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/labels/:id/review",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          product: await reviewLabel(adminContextOf(req), id, LabelReviewSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/sampling",
+      handler: async (req, res) => {
+        res.json({
+          items: await listSamplingPoints(
+            adminContextOf(req),
+            SamplingQuerySchema.parse(req.query),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/sampling",
+      handler: async (req, res) => {
+        res.status(201).json({
+          point: await createSamplingPoint(
+            adminContextOf(req),
+            SamplingPointSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/sampling/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          point: await updateSamplingPoint(
+            adminContextOf(req),
+            id,
+            UpdateSamplingPointSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/sampling/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ point: await setSamplingArchived(adminContextOf(req), id, true) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/sampling/:id/restore",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ point: await setSamplingArchived(adminContextOf(req), id, false) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/sampling/:id/folder",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ folder: await samplingFolder(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/sampling/:id/files",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ items: await samplingFiles(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/sampling/:id/results",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ results: await samplingResults(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/sampling/:id/results",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.status(201).json({
+          point: await addLabResult(adminContextOf(req), id, LabResultSchema.parse(req.body)),
+        });
       },
     },
   ];

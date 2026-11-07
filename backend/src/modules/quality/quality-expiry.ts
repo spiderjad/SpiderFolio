@@ -133,3 +133,20 @@ registerExpiryKind(PRP_EXPIRY, {
   },
   paused,
 });
+
+export const SAMPLING_EXPIRY = "quality.sampling";
+
+registerExpiryKind(SAMPLING_EXPIRY, {
+  describe: async (db, expiry, workspace) => {
+    const point = await db.qualitySamplingPoint.findFirst({
+      where: { id: expiry.subjectId, archivedAt: null },
+      select: { name: true },
+    });
+    if (point === null) return null;
+    return {
+      what: qualityTexts.samplingWhat(point.name),
+      path: `/app/${workspace.slug}/calidad/plan-analitico`,
+    };
+  },
+  paused,
+});
