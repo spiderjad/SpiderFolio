@@ -177,6 +177,7 @@ export interface QualitySettingsView {
   enabled: boolean;
   standards: ("IFS8" | "BRCGS9")[];
   verifyDays: number;
+  responseDays: number;
   space: { id: string; name: string } | null;
 }
 
@@ -277,7 +278,12 @@ export const qualityApi = {
   settings: (slug: string) => api<{ quality: QualitySettingsView }>(w(slug, "/admin/quality")),
   saveSettings: (
     slug: string,
-    body: { enabled?: boolean; standards?: ("IFS8" | "BRCGS9")[]; verifyDays?: number },
+    body: {
+      enabled?: boolean;
+      standards?: ("IFS8" | "BRCGS9")[];
+      verifyDays?: number;
+      responseDays?: number;
+    },
   ) => api<{ quality: QualitySettingsView }>(w(slug, "/admin/quality"), { method: "PUT", body }),
 };
 
@@ -629,4 +635,182 @@ export const suppliersApi = {
       method: "POST",
       body,
     }),
+};
+
+// ─── Phase 5: complaints, crisis and recall ──────────────────────────────────────────────
+
+export const COMPLAINT_SOURCES = ["CUSTOMER", "CONSUMER", "AUTHORITY"] as const;
+export const COMPLAINT_CATEGORIES = [
+  "FOREIGN_BODY",
+  "ALLERGEN",
+  "MICROBIOLOGICAL",
+  "QUALITY",
+  "LABELLING",
+  "PACKAGING",
+  "OTHER",
+] as const;
+export const CRISIS_CONTACT_KINDS = [
+  "AUTHORITY",
+  "CUSTOMER",
+  "INSURER",
+  "LAB",
+  "SUPPLIER",
+  "OTHER",
+] as const;
+export type ComplaintSource = (typeof COMPLAINT_SOURCES)[number];
+export type ComplaintCategory = (typeof COMPLAINT_CATEGORIES)[number];
+export type ComplaintStatus = "OPEN" | "ANSWERED" | "CLOSED";
+
+export interface Complaint {
+  id: string;
+  source: ComplaintSource;
+  from: string;
+  contact: string | null;
+  product: string;
+  lot: string | null;
+  category: ComplaintCategory;
+  description: string;
+  receivedOn: string;
+  respondBy: string;
+  overdue: boolean;
+  respondedOn: string | null;
+  response: string | null;
+  justified: boolean | null;
+  status: ComplaintStatus;
+  owner: Person;
+  nc: { id: string; code: string; status: NcStatus } | null;
+  access: "manage" | "owner" | "read";
+}
+
+export interface ComplaintFilters {
+  status?: ComplaintStatus | "overdue" | "all" | undefined;
+  category?: ComplaintCategory | undefined;
+  source?: ComplaintSource | undefined;
+}
+
+export interface ComplaintIndicators {
+  months: { month: string; complaints: number; units: number | null; perMillion: number | null }[];
+  categories: { category: ComplaintCategory; complaints: number }[];
+  total: { complaints: number; units: number | null; perMillion: number | null; justified: number };
+}
+
+export interface Crisis {
+  team: { id: string; person: Person; role: string }[];
+  contacts: {
+    id: string;
+    kind: (typeof CRISIS_CONTACT_KINDS)[number];
+    name: string;
+    organization: string | null;
+    phone: string | null;
+    email: string | null;
+    notes: string | null;
+  }[];
+  tests: {
+    id: string;
+    kind: "DRILL" | "REAL";
+    date: string;
+    product: string;
+    lot: string;
+    direction: "BACKWARD" | "FORWARD" | "BOTH";
+    minutes: number;
+    recoveredPercent: number | null;
+    result: string;
+    by: Person;
+  }[];
+  nextTestOn: string | null;
+  spaceId: string | null;
+}
+
+export const complaintKeys = {
+  list: (slug: string, filters: ComplaintFilters) =>
+    ["w", slug, "quality", "complaints", filters] as const,
+  one: (slug: string, id: string) => ["w", slug, "quality", "complaint", id] as const,
+  indicators: (slug: string, year: number) =>
+    ["w", slug, "quality", "complaints", "indicators", year] as const,
+  crisis: (slug: string) => ["w", slug, "quality", "crisis"] as const,
+};
+
+export const complaintsApi = {
+  list: (
+    slug: string,
+    filters: ComplaintFilters,
+    cursor: string | undefined,
+    signal: AbortSignal,
+  ) =>
+    api<CursorPage<Complaint>>(
+      w(slug, `/quality/complaints?${listQuery({ ...filters, cursor })}`),
+      { signal },
+    ),
+  get: (slug: string, id: string) =>
+    api<{ complaint: Complaint }>(w(slug, `/quality/complaints/${id}`)),
+  create: (
+    slug: string,
+    body: {
+      source: ComplaintSource;
+      from: string;
+      contact: string | null;
+      product: string;
+      lot: string | null;
+      category: ComplaintCategory;
+      description: string;
+      receivedOn: string;
+      ownerId: string | null;
+    },
+  ) => api<{ complaint: Complaint }>(w(slug, "/quality/complaints"), { method: "POST", body }),
+  answer: (
+    slug: string,
+    id: string,
+    body: { response: string; justified: boolean; respondedOn: string },
+  ) =>
+    api<{ complaint: Complaint }>(w(slug, `/quality/complaints/${id}/answer`), {
+      method: "POST",
+      body,
+    }),
+  close: (slug: string, id: string) =>
+    api<{ complaint: Complaint }>(w(slug, `/quality/complaints/${id}/close`), { method: "POST" }),
+  nc: (slug: string, id: string, body: { severity: Severity; ownerId: string | null }) =>
+    api<{ complaint: Complaint }>(w(slug, `/quality/complaints/${id}/nc`), {
+      method: "POST",
+      body,
+    }),
+  indicators: (slug: string, year: number) =>
+    api<ComplaintIndicators>(w(slug, `/quality/complaints/indicators?year=${String(year)}`)),
+  units: (slug: string, month: string, units: number) =>
+    api<undefined>(w(slug, "/quality/units"), { method: "PUT", body: { month, units } }),
+  crisis: (slug: string) => api<{ crisis: Crisis }>(w(slug, "/quality/crisis")),
+  addMember: (slug: string, membershipId: string, role: string) =>
+    api<{ crisis: Crisis }>(w(slug, "/quality/crisis/members"), {
+      method: "POST",
+      body: { membershipId, role },
+    }),
+  removeMember: (slug: string, id: string) =>
+    api<{ crisis: Crisis }>(w(slug, `/quality/crisis/members/${id}`), { method: "DELETE" }),
+  addContact: (
+    slug: string,
+    body: {
+      kind: (typeof CRISIS_CONTACT_KINDS)[number];
+      name: string;
+      organization: string | null;
+      phone: string | null;
+      email: string | null;
+      notes: string | null;
+    },
+  ) => api<{ crisis: Crisis }>(w(slug, "/quality/crisis/contacts"), { method: "POST", body }),
+  archiveContact: (slug: string, id: string) =>
+    api<{ crisis: Crisis }>(w(slug, `/quality/crisis/contacts/${id}/archive`), {
+      method: "POST",
+    }),
+  addTest: (
+    slug: string,
+    body: {
+      kind: "DRILL" | "REAL";
+      date: string;
+      product: string;
+      lot: string;
+      direction: "BACKWARD" | "FORWARD" | "BOTH";
+      minutes: number;
+      recoveredPercent: number | null;
+      result: string;
+    },
+  ) => api<{ crisis: Crisis }>(w(slug, "/quality/recall-tests"), { method: "POST", body }),
 };

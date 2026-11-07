@@ -194,6 +194,21 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/supplier-page"), "SupplierPage"),
                   },
                   {
+                    path: "reclamaciones",
+                    lazy: page(
+                      () => import("@/features/quality/complaints-page"),
+                      "ComplaintsPage",
+                    ),
+                  },
+                  {
+                    path: "reclamaciones/:complaintId",
+                    lazy: page(() => import("@/features/quality/complaint-page"), "ComplaintPage"),
+                  },
+                  {
+                    path: "crisis",
+                    lazy: page(() => import("@/features/quality/crisis-page"), "CrisisPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),

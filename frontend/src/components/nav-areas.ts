@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   ClipboardX,
   Megaphone,
+  MessageSquareWarning,
   BarChart3,
   BookMarked,
   BookOpen,
@@ -146,6 +147,8 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     items.push({ to: `${base}/retenido`, label: q.holds, icon: PackageX });
     items.push({ to: `${base}/auditorias`, label: q.audits, icon: CalendarSearch });
     items.push({ to: `${base}/proveedores`, label: q.suppliers, icon: Truck });
+    items.push({ to: `${base}/reclamaciones`, label: q.complaints, icon: MessageSquareWarning });
+    items.push({ to: `${base}/crisis`, label: q.crisis, icon: Siren });
   }
   items.push({
     to: `${base}/mis-acciones`,
@@ -160,6 +163,15 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     group: q.mine,
   });
   items.push({ to: `${base}/comunicar`, label: q.report, icon: Megaphone, group: q.mine });
+  // Anyone records a complaint (the list shows them the ones they recorded or are in charge of).
+  if (!view) {
+    items.push({
+      to: `${base}/reclamaciones`,
+      label: q.recordComplaint,
+      icon: MessageSquareWarning,
+      group: q.mine,
+    });
+  }
   items.push(...spaceItems(slug, context.spaces.QUALITY, texts.shell.areas.areaSpaces));
   return items;
 }

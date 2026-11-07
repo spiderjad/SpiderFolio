@@ -21,23 +21,30 @@ function VerifyDays({
   current,
   pending,
   onSave,
+  label = t.verifyDays,
+  hint = t.verifyDaysHint,
+  max = 365,
 }: {
   current: number;
   pending: boolean;
   onSave: (days: number) => void;
+  label?: string;
+  /** null: without a hint. */
+  hint?: string | null;
+  max?: number;
 }) {
   const [days, setDays] = useState(String(current));
   const value = Number.parseInt(days, 10);
-  const valid = Number.isInteger(value) && value >= 1 && value <= 365;
+  const valid = Number.isInteger(value) && value >= 1 && value <= max;
   return (
     <div className="flex flex-wrap items-end gap-2">
-      <FormField label={t.verifyDays} hint={t.verifyDaysHint}>
+      <FormField label={label} {...(hint === null ? {} : { hint })}>
         {(control) => (
           <Input
             {...control}
             type="number"
             min={1}
-            max={365}
+            max={max}
             className="w-28"
             value={days}
             onChange={(event) => {
@@ -70,7 +77,9 @@ export function QualityAdminCard() {
   });
   const update = useMutation({
     mutationFn: (
-      changes: Partial<Pick<QualitySettingsView, "enabled" | "standards" | "verifyDays">>,
+      changes: Partial<
+        Pick<QualitySettingsView, "enabled" | "standards" | "verifyDays" | "responseDays">
+      >,
     ) => qualityApi.saveSettings(workspaceSlug, changes),
     onSuccess: async (_result, changes) => {
       await queryClient.invalidateQueries({ queryKey: qualityKeys.all(workspaceSlug) });
@@ -156,6 +165,17 @@ export function QualityAdminCard() {
                   />
                 ))}
               </fieldset>
+              <VerifyDays
+                key={`r${String(data.responseDays)}`}
+                current={data.responseDays}
+                pending={update.isPending}
+                label={t.responseDays}
+                hint={null}
+                max={90}
+                onSave={(responseDays) => {
+                  update.mutate({ responseDays });
+                }}
+              />
               <VerifyDays
                 key={data.verifyDays}
                 current={data.verifyDays}
