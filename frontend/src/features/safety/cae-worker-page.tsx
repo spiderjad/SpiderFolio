@@ -2,7 +2,7 @@
 // «Pantallas»): whether they can come in and why, their details and the documents the catalog asks of
 // them. Whoever manages CAE edits, blocks or archives them. The worker's QR comes in phase 3.
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Pencil, ServerCrash } from "lucide-react";
+import { ArrowLeft, Pencil, QrCode, ServerCrash } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { caeApi, caeKeys } from "./cae-api";
 import { ArchiveDialog, BlockDialog, CaeStateBadge, useCae } from "./cae-common";
 import { AuthorizationCard, UnblockButton } from "./cae-company-page";
 import { DocumentRequirementsCard } from "./cae-documents";
+import { WorkerCard } from "./cae-worker-card";
 import { WorkerForm } from "./cae-worker-form";
 import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
@@ -23,7 +24,7 @@ export function CaeWorkerPage() {
   const { workspaceSlug = "", workerId = "" } = useParams();
   const cae = useCae();
   const queryClient = useQueryClient();
-  const [action, setAction] = useState<"edit" | "block" | "archive" | null>(null);
+  const [action, setAction] = useState<"edit" | "block" | "archive" | "card" | null>(null);
   const worker = useQuery({
     queryKey: caeKeys.worker(workspaceSlug, workerId),
     queryFn: () => caeApi.worker(workspaceSlug, workerId),
@@ -65,6 +66,17 @@ export function CaeWorkerPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t.company(data.company.name)}</p>
         </div>
+        {data.full && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setAction("card");
+            }}
+          >
+            <QrCode className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            {texts.cae.card.open}
+          </Button>
+        )}
         {manage && (
           <div className="flex flex-wrap gap-2">
             <Button
@@ -141,6 +153,9 @@ export function CaeWorkerPage() {
           if (!open) close();
         }}
       >
+        {action === "card" && (
+          <WorkerCard workerId={data.id} name={data.name} company={data.company.name} />
+        )}
         {action === "edit" && (
           <WorkerForm companyId={data.company.id} worker={data} onClose={close} />
         )}

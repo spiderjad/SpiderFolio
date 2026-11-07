@@ -21,7 +21,10 @@ export interface Membership {
     safety: {
       enabled: boolean;
       terms: "es" | "latam";
-      /** CAE (docs/spec/cae.md), only while the module is on. */ cae: boolean;
+      /** CAE (docs/spec/cae.md), only while the module is on. */
+      cae: boolean;
+      /** CAE's gate records entries and exits. */
+      caeAccessLog: boolean;
     };
   };
   role: { id: string; name: string; base: SystemRole };

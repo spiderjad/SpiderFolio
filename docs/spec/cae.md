@@ -171,8 +171,25 @@ seguridad del centro). La empresa los edita, agrega o archiva.
    vigente lo reemplaza igual; solo se revisan los PENDING (no se revoca un aceptado; se sube otro); el
    responsable interno ve los nombres de los archivos de sus empresas aunque no tenga acceso a la carpeta
    (abrirlos sí lo exige); para subir hace falta poder editar en el espacio del módulo.
-3. **Portería y acceso**: `GET /check`, pantalla de portería, QR por trabajador, registro de entradas y
+3. **Portería y acceso** (hecha): `GET /check`, pantalla de portería, QR por trabajador, registro de entradas y
    salidas opcional, PDF «Autorizados hoy» por empresa.
+   `GET /check?q=` (nombre, final del documento o nombre de la empresa; solo trabajadores y empresas
+   activos) y `GET /check/:workerId`, para `cae.check` o `cae.manage`: nombre, empresa, tarea, documento
+   enmascarado, autorizado, motivos y, con registro, el último acceso de hoy. Solo `GET /check/:workerId`
+   audita (`cae.check.denied`, si no autoriza); la búsqueda no. Pantalla `/seguridad/cae/porteria`
+   (`?trabajador=` elige a la persona). Quien solo tiene `cae.check` entra al módulo directo a la portería
+   y en las pestañas solo ve Contratas (su propia ficha sigue en Mi perfil, como la de cualquiera). QR:
+   `GET /workers/:id/qr` devuelve la URL de la portería y el QR como data URL (`qrcode`, ya en el backend,
+   como las firmas de formación); el QR de nodos (`modules/qr`) no sirve porque apunta a nodos con token
+   público. La tarjeta se imprime desde una ventana propia. Registro: `settings.safety.cae.accessLog`
+   (propietario, junto al interruptor; auditoría `cae.access_log.enable|disable`, y `caeAccessLog` en
+   `/me`), migración `cae_access` (`CaeAccess` con `companyId` además de `workerId`, solo se agrega y se
+   lee), `POST /access` `{ workerId, direction }` (una entrada sin autorización responde 409; una salida
+   siempre se registra) y `GET /access?day&companyId` (paginado; por día, hoy por defecto). PDF:
+   `GET /companies/:id/pdf` (Gotenberg, auditoría `cae.company.export`), para quien ve la empresa (también
+   `cae.check`, que ve lo mismo que en portería); hasta 2000 trabajadores, documentos enmascarados.
+   Simplificaciones: los accesos no se corrigen ni se anulan; la lista de accesos no tiene exportación; el
+   responsable interno sin `cae.check` no ve la portería ni los accesos.
 4. **Información y permisos de trabajo**: entrega de la información del centro (riesgos, emergencias,
    normas: documentos controlados marcados para la CAE) con firma de quien la recibe; permisos de trabajo
    (trabajos en caliente, en altura, espacios confinados, eléctricos) con validez, firmas y cierre.

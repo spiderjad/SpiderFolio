@@ -14,7 +14,12 @@ const terms = {
 
 export const caeTexts: typeof es = {
   terms: { es: terms, latam: terms },
-  nav: { companies: "Companies", catalog: "Required documents" },
+  nav: {
+    companies: "Companies",
+    catalog: "Required documents",
+    gate: "Gatehouse",
+    accesses: "Accesses",
+  },
   states: {
     authorized: "Authorized",
     incomplete: "Incomplete",
@@ -92,6 +97,7 @@ export const caeTexts: typeof es = {
       "Outside these dates it isn't authorized. Leave them empty if it works continuously.",
   },
   company: {
+    pdf: "Authorized today (PDF)",
     back: "Companies",
     edit: "Edit",
     block: "Block",
@@ -253,6 +259,50 @@ export const caeTexts: typeof es = {
       given: "Uploaded",
       actions: "Actions",
     },
+  },
+  gate: {
+    title: "Gatehouse",
+    subtitle:
+      "Search for the person by name, the last characters of their ID or their company, or scan their QR.",
+    search: "Name, ID or company",
+    searchLabel: "Search for a contractor's worker",
+    noResults: "No workers match that search.",
+    yes: "Can come in",
+    no: "Can't come in",
+    idNumber: (value: string) => `ID ${value}`,
+    checkIn: "Record entry",
+    checkOut: "Record exit",
+    checkedIn: "Entry recorded.",
+    checkedOut: "Exit recorded.",
+    lastAccess: (direction: "IN" | "OUT", when: string) =>
+      direction === "IN" ? `Came in today at ${when}` : `Left today at ${when}`,
+    clear: "New search",
+  },
+  accesses: {
+    title: "Accesses",
+    subtitle: "The entries and exits recorded at the gate on the chosen day.",
+    day: "Day",
+    company: "Company",
+    anyCompany: "All companies",
+    columns: {
+      at: "Time",
+      worker: "Worker",
+      company: "Company",
+      direction: "Movement",
+      by: "Recorded by",
+    },
+    directions: { IN: "Entry", OUT: "Exit" },
+    notAuthorized: "Not authorized",
+    empty: "No accesses that day.",
+    today: "Today's accesses",
+    todayEmpty: "Nobody from this company came in today.",
+  },
+  card: {
+    open: "QR card",
+    title: (name: string) => `Card for ${name}`,
+    text: "Print it or show it at the gate: the QR opens the gatehouse with this worker (it needs signing in to SpiderFolio with permission to check contractors).",
+    print: "Print",
+    alt: (name: string) => `QR code for ${name}`,
   },
   toasts: {
     created: "Company added. Its folder was created.",

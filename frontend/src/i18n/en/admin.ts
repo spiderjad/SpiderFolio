@@ -181,6 +181,9 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
           "The first time, the “Contractors” folder is created in the module's space, along with your country's catalog of required documents.",
         enabledHint: "On. Turning it off hides the tab and the notices; the data is kept.",
         moduleOff: "Turn the module on first.",
+        accessLog: "Record entries and exits at the gate",
+        accessLogHint:
+          "The gatehouse records each entry and exit of the contractors' workers. Someone who isn't authorized can't be checked in.",
         folder: "Folder:",
       },
     },

@@ -37,6 +37,7 @@ export function SafetyCard() {
       terms?: SafetyTerms;
       examples?: boolean;
       cae?: boolean;
+      caeAccessLog?: boolean;
     }) => adminApi.updateSafety(workspaceSlug, changes),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: adminKeys.all(workspaceSlug) });
@@ -180,6 +181,22 @@ export function SafetyCard() {
                   </Link>
                 </p>
               )}
+            {data.enabled && data.cae.enabled && (
+              <div className="mt-3">
+                <Checkbox
+                  label={t.cae.accessLog}
+                  aria-describedby="cae-access-log-hint"
+                  checked={data.cae.accessLog}
+                  disabled={update.isPending}
+                  onChange={(event) => {
+                    update.mutate({ caeAccessLog: event.target.checked });
+                  }}
+                />
+                <p id="cae-access-log-hint" className="ml-6 mt-1 text-xs text-muted-foreground">
+                  {t.cae.accessLogHint}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

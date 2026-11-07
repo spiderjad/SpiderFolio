@@ -88,9 +88,14 @@ const UpdateSafetySchema = z
     examples: z.boolean().optional(),
     /** CAE (docs/spec/cae.md), inside the module. */
     cae: z.boolean().optional(),
+    caeAccessLog: z.boolean().optional(),
   })
   .refine(
-    (value) => value.enabled !== undefined || value.terms !== undefined || value.cae !== undefined,
+    (value) =>
+      value.enabled !== undefined ||
+      value.terms !== undefined ||
+      value.cae !== undefined ||
+      value.caeAccessLog !== undefined,
     {
       error: () => validationMessages.noChanges,
     },
@@ -99,7 +104,7 @@ const UpdateSafetySchema = z
 export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] {
   const byUser = (req: Request) => req.auth?.userId ?? "";
   return [
-    ...caeRoutes(),
+    ...caeRoutes(deps),
     {
       method: "get",
       path: "/admin/safety",

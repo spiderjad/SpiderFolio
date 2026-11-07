@@ -150,6 +150,11 @@ export interface TenantDb {
     PrismaClient["caeDocument"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
   >;
+  // The gatehouse log is evidence: added and read, never changed.
+  caeAccess: TenantDelegate<
+    PrismaClient["caeAccess"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -283,6 +288,7 @@ const delegates = {
     model: "CaeDocument",
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
   },
+  caeAccess: { model: "CaeAccess", ops: ["findFirst", "findMany", "count", "create"] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

@@ -68,6 +68,8 @@ export function readBianGuests(settings: unknown): boolean {
 export const CaeSettingsSchema = z.object({
   enabled: z.boolean().default(false),
   folderId: z.string().min(1).max(64).optional(),
+  /** The gatehouse records each entry and exit (CaeAccess). */
+  accessLog: z.boolean().default(false),
 });
 
 export type CaeSettings = z.infer<typeof CaeSettingsSchema>;
@@ -83,7 +85,7 @@ export const SafetySettingsSchema = z.object({
   /** The base form «Accidente o incidente», once it's created. */
   incidentFormId: z.string().min(1).max(64).optional(),
   /** Settings saved before CAE existed parse with it off. */
-  cae: CaeSettingsSchema.default({ enabled: false }),
+  cae: CaeSettingsSchema.default({ enabled: false, accessLog: false }),
 });
 
 export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
@@ -92,7 +94,9 @@ export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
 export function readSafetySettings(settings: unknown): SafetySettings {
   const raw = (settings as { safety?: unknown } | null | undefined)?.safety;
   const parsed = SafetySettingsSchema.safeParse(raw ?? {});
-  return parsed.success ? parsed.data : { enabled: false, terms: "es", cae: { enabled: false } };
+  return parsed.success
+    ? parsed.data
+    : { enabled: false, terms: "es", cae: { enabled: false, accessLog: false } };
 }
 
 /** CAE is on only while the module is on too. */

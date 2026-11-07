@@ -178,6 +178,9 @@ export const adminTexts = {
         enabledHint:
           "Activada. Desactivarla oculta la pestaña y los avisos; los datos se conservan.",
         moduleOff: "Primero activa el módulo.",
+        accessLog: "Registrar entradas y salidas en portería",
+        accessLogHint:
+          "Portería anota cada entrada y salida de los trabajadores de las contratas. A quien no está autorizado no se le puede registrar la entrada.",
         folder: "Carpeta:",
       },
     },

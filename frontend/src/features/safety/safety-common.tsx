@@ -49,7 +49,12 @@ export function RequireSafety() {
 /** The module's start: the handouts for whoever sees others', their own PPE for everyone else. */
 export function SafetyHome() {
   const { slug, canManage, health, leads, membershipId } = useSafety();
+  const cae = useCae();
   const base = `/app/${slug}/seguridad`;
+  // Whoever only checks contractors (the gatehouse) starts at the gate.
+  if (cae.visible && !cae.manage && !canManage && !health && !leads) {
+    return <Navigate replace to={`${cae.base}/porteria`} />;
+  }
   return (
     <Navigate
       replace
@@ -109,6 +114,8 @@ export function PpeTabs() {
   // Only for whoever manages the module (or its health data), the heads and whoever checks
   // contractors (CAE): the rest go to their sheet.
   if (!canManage && !health && !leads && !cae.visible) return null;
+  // Whoever only checks contractors sees only CAE: their own sheet stays at «Mi ficha» in their profile.
+  const safetyTabs = canManage || health || leads;
   const t = texts.safety.tabs;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -125,20 +132,26 @@ export function PpeTabs() {
           {texts.safety.summary.tab}
         </NavLink>
       )}
-      <NavLink end to={`${base}/personas`} className={tab}>
-        {texts.safety.people.tab}
-      </NavLink>
-      <NavLink end to={`${base}/epis`} className={tab}>
-        {t.deliveries}
-      </NavLink>
+      {safetyTabs && (
+        <>
+          <NavLink end to={`${base}/personas`} className={tab}>
+            {texts.safety.people.tab}
+          </NavLink>
+          <NavLink end to={`${base}/epis`} className={tab}>
+            {t.deliveries}
+          </NavLink>
+        </>
+      )}
       {canManage && (
         <NavLink to={`${base}/epis/catalogo`} className={tab}>
           {t.catalog}
         </NavLink>
       )}
-      <NavLink to={`${base}/formacion`} className={tab}>
-        {texts.safety.training.tab}
-      </NavLink>
+      {safetyTabs && (
+        <NavLink to={`${base}/formacion`} className={tab}>
+          {texts.safety.training.tab}
+        </NavLink>
+      )}
       {health && (
         <NavLink to={`${base}/incidentes`} className={tab}>
           {texts.safety.incidents.tab}

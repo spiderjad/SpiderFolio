@@ -615,7 +615,7 @@ const workerSelect = {
 type WorkerRecord = Prisma.CaeWorkerGetPayload<{ select: typeof workerSelect }>;
 
 /** «•••123»: enough to tell two people apart at the gate. */
-const maskedId = (value: string): string => `•••${value.slice(-3)}`;
+export const maskedId = (value: string): string => `•••${value.slice(-3)}`;
 
 async function workerRows(
   ctx: AdminContext,

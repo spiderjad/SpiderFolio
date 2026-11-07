@@ -108,7 +108,7 @@ export interface Account {
       /** Idioma por defecto de la empresa. */
       locale: Locale;
       /** The occupational health and safety module: on or off, and the country's terms. */
-      safety: { enabled: boolean; terms: "es" | "latam"; cae: boolean };
+      safety: { enabled: boolean; terms: "es" | "latam"; cae: boolean; caeAccessLog: boolean };
     };
     role: { id: string; name: string; base: string };
     capabilities: string[];
@@ -256,6 +256,7 @@ export function createAuthService(deps: AppDeps) {
               terms,
               // CAE (docs/spec/cae.md) only counts while the module is on too.
               cae: enabled && cae.enabled,
+              caeAccessLog: enabled && cae.enabled && cae.accessLog,
             }))(readSafetySettings(m.workspace.settings)),
           },
           role: { id: m.role.id, name: m.role.name, base: m.role.base },

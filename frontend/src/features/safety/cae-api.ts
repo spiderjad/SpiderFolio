@@ -2,7 +2,7 @@
 // catalog of required documents. The server checks CAE is on and who sees and changes what.
 import type { CursorPage } from "@/components/ui/infinite";
 import { listQuery } from "@/features/admin/api";
-import { api } from "@/lib/api";
+import { api, apiBlob } from "@/lib/api";
 
 export type CaeKind = "CONTRACTOR" | "SUBCONTRACTOR" | "CONCURRENT";
 export type CaeState = "authorized" | "incomplete" | "blocked" | "archived";
@@ -166,6 +166,37 @@ export interface CaeWorkerFilters {
   status?: CaeState | undefined;
 }
 
+/** What the gate answers about a worker. */
+export interface CaeGateResult {
+  id: string;
+  name: string;
+  /** Only the last 3 characters. */
+  idNumber: string | null;
+  task: string | null;
+  company: { id: string; name: string };
+  authorized: boolean;
+  reasons: string[];
+  accessLog: boolean;
+  lastAccess: { direction: "IN" | "OUT"; at: string } | null;
+}
+
+export interface CaeAccess {
+  id: string;
+  at: string;
+  direction: "IN" | "OUT";
+  authorized: boolean;
+  reasons: string[];
+  worker: { id: string; name: string };
+  company: { id: string; name: string };
+  by: { id: string; name: string };
+}
+
+export interface CaeAccessFilters {
+  /** «YYYY-MM-DD»; today without it. */
+  day?: string | undefined;
+  companyId?: string | undefined;
+}
+
 const w = (slug: string, path: string) => `/w/${slug}/cae${path}`;
 const withSignal = (signal?: AbortSignal) => (signal === undefined ? {} : { signal });
 
@@ -177,6 +208,11 @@ export const caeKeys = {
   workers: (slug: string, companyId: string, filters: CaeWorkerFilters) =>
     ["w", slug, "cae", "workers", companyId, filters] as const,
   worker: (slug: string, id: string) => ["w", slug, "cae", "worker", id] as const,
+  gate: (slug: string, q: string) => ["w", slug, "cae", "gate", q] as const,
+  check: (slug: string, id: string) => ["w", slug, "cae", "check", id] as const,
+  accesses: (slug: string, filters: CaeAccessFilters) =>
+    ["w", slug, "cae", "accesses", filters] as const,
+  qr: (slug: string, id: string) => ["w", slug, "cae", "qr", id] as const,
   documents: (slug: string, filters: CaeDocumentFilters) =>
     ["w", slug, "cae", "documents", filters] as const,
   requirements: (slug: string, scope: CaeScope, archived: boolean) =>
@@ -184,6 +220,30 @@ export const caeKeys = {
 };
 
 export const caeApi = {
+  search: (slug: string, q: string, cursor: string | undefined, signal?: AbortSignal) =>
+    api<CursorPage<CaeGateResult>>(
+      w(slug, `/check?${listQuery({ q, cursor })}`),
+      withSignal(signal),
+    ),
+  check: (slug: string, id: string) => api<{ result: CaeGateResult }>(w(slug, `/check/${id}`)),
+  recordAccess: (slug: string, workerId: string, direction: "IN" | "OUT") =>
+    api<{ result: CaeGateResult }>(w(slug, "/access"), {
+      method: "POST",
+      body: { workerId, direction },
+    }),
+  accesses: (
+    slug: string,
+    filters: CaeAccessFilters,
+    cursor: string | undefined,
+    signal?: AbortSignal,
+  ) =>
+    api<CursorPage<CaeAccess> & { day: string }>(
+      w(slug, `/access?${listQuery({ day: filters.day, companyId: filters.companyId, cursor })}`),
+      withSignal(signal),
+    ),
+  workerQr: (slug: string, id: string) =>
+    api<{ url: string; qr: string }>(w(slug, `/workers/${id}/qr`)),
+  authorizedPdf: (slug: string, id: string) => apiBlob(w(slug, `/companies/${id}/pdf`)),
   companyFolder: (slug: string, id: string) =>
     api<{ target: { spaceId: string; folderId: string } }>(w(slug, `/companies/${id}/folder`), {
       method: "POST",

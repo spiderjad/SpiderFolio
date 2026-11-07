@@ -143,6 +143,24 @@ export const ListDocumentsQuerySchema = z.object({
   workerId: Id.optional(),
 });
 
+/** The gate's search: name, the end of the ID or the company's name. */
+export const CheckQuerySchema = z.object({
+  ...pageShape(["name"], "name", { defaultPageSize: 10 }),
+  q: z.string().trim().min(1).max(100),
+});
+
+export const AccessSchema = z.strictObject({
+  workerId: Id,
+  direction: z.enum(["IN", "OUT"]),
+});
+
+export const ListAccessesQuerySchema = z.object({
+  ...pageShape(["at"], "at", { defaultPageSize: 50 }),
+  /** A company day; today without it. */
+  day: Day.optional(),
+  companyId: Id.optional(),
+});
+
 export const IdParamsSchema = z.object({ id: Id });
 
 export type CreateCompanyInput = z.infer<typeof CreateCompanySchema>;
@@ -157,3 +175,6 @@ export type ListRequirementsQuery = z.infer<typeof ListRequirementsQuerySchema>;
 export type OrderRequirementsInput = z.infer<typeof OrderRequirementsSchema>;
 export type CreateDocumentInput = z.infer<typeof CreateDocumentSchema>;
 export type ListDocumentsQuery = z.infer<typeof ListDocumentsQuerySchema>;
+export type CheckQuery = z.infer<typeof CheckQuerySchema>;
+export type AccessInput = z.infer<typeof AccessSchema>;
+export type ListAccessesQuery = z.infer<typeof ListAccessesQuerySchema>;

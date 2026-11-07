@@ -7,6 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowLeft,
   CheckCircle2,
+  Download,
   FolderOpen,
   Pencil,
   Plus,
@@ -24,7 +25,7 @@ import { Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
 import { SearchField } from "@/components/ui/filter-bar";
 import { useInfiniteList } from "@/components/ui/infinite";
 import { Dialog } from "@/components/ui/overlay";
-import { adminErrorText } from "@/features/admin/admin-utils";
+import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { useListParams, useSearchParam } from "@/features/admin/list-params";
 import { formatUtcDate } from "@/lib/utils";
 import {
@@ -37,6 +38,7 @@ import {
   type CaeWorkerRow,
 } from "./cae-api";
 import { ArchiveDialog, BlockDialog, CaeStateBadge, useCae } from "./cae-common";
+import { CompanyAccessesCard } from "./cae-accesses-page";
 import { CompanyForm } from "./cae-company-form";
 import { DocumentRequirementsCard } from "./cae-documents";
 import { WorkerForm } from "./cae-worker-form";
@@ -96,6 +98,9 @@ export function CaeCompanyPage() {
             {cae.terms.kinds[data.kind]}
             {data.parent !== null && ` · ${texts.cae.companies.dependsOn(data.parent.name)}`}
           </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <PdfButton companyId={data.id} name={data.name} />
         </div>
         {manage && (
           <div className="flex flex-wrap gap-2">
@@ -161,6 +166,7 @@ export function CaeCompanyPage() {
           setAction("worker");
         }}
       />
+      {cae.accessLog && <CompanyAccessesCard companyId={data.id} />}
       <Dialog
         open={action !== null}
         onOpenChange={(open) => {
@@ -194,6 +200,31 @@ export function CaeCompanyPage() {
         {action === "worker" && <WorkerForm companyId={data.id} worker={null} onClose={close} />}
       </Dialog>
     </div>
+  );
+}
+
+/** «Autorizados hoy» as a PDF. */
+function PdfButton({ companyId, name }: { companyId: string; name: string }) {
+  const { workspaceSlug = "" } = useParams();
+  const pdf = useMutation({
+    mutationFn: async () => {
+      downloadBlobFile(`${name}.pdf`, await caeApi.authorizedPdf(workspaceSlug, companyId));
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  return (
+    <Button
+      variant="outline"
+      disabled={pdf.isPending}
+      onClick={() => {
+        pdf.mutate();
+      }}
+    >
+      <Download className="size-4" strokeWidth={1.75} aria-hidden="true" />
+      {t.pdf}
+    </Button>
   );
 }
 

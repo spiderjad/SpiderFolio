@@ -236,6 +236,17 @@ export const routes = [
                         ),
                       },
                       {
+                        path: "porteria",
+                        lazy: page(() => import("@/features/safety/cae-gate-page"), "CaeGatePage"),
+                      },
+                      {
+                        path: "accesos",
+                        lazy: page(
+                          () => import("@/features/safety/cae-accesses-page"),
+                          "CaeAccessesPage",
+                        ),
+                      },
+                      {
                         path: "trabajadores/:workerId",
                         lazy: page(
                           () => import("@/features/safety/cae-worker-page"),

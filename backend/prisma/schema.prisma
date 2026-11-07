@@ -265,6 +265,7 @@ model Workspace {
   caeWorkers          CaeWorker[]
   caeRequirements     CaeRequirement[]
   caeDocuments        CaeDocument[]
+  caeAccesses         CaeAccess[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -716,6 +717,7 @@ model CaeCompany {
   children  CaeCompany[] @relation("CaeCompanyTree")
   workers   CaeWorker[]
   documents CaeDocument[]
+  accesses  CaeAccess[]
 
   @@unique([workspaceId, nameKey])
   @@unique([id, workspaceId])
@@ -744,6 +746,7 @@ model CaeWorker {
   workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   company   CaeCompany    @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
   documents CaeDocument[]
+  accesses  CaeAccess[]
 
   @@unique([id, workspaceId])
   @@index([workspaceId, companyId, name, id])
@@ -2055,4 +2058,33 @@ model AuditRoomAccess {
   room      AuditRoom @relation(fields: [roomId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, roomId, createdAt])
+}
+
+enum CaeAccessDirection {
+  IN
+  OUT
+}
+
+/// The gatehouse log (docs/spec/cae.md, «Modelo»), optional per company (settings.safety.cae.accessLog):
+/// each entry or exit of a contractor's worker, with whether they were authorized and why not. Evidence:
+/// added and read, never changed.
+model CaeAccess {
+  id          String             @id @default(cuid())
+  workspaceId String
+  workerId    String
+  /// The worker's company at that moment (for the company's list).
+  companyId   String
+  at          DateTime           @default(now())
+  direction   CaeAccessDirection
+  authorized  Boolean
+  reasons     String[]
+  createdById String
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  worker    CaeWorker  @relation(fields: [workerId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  company   CaeCompany @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@index([workspaceId, at, id])
+  @@index([workspaceId, companyId, at])
+  @@index([workspaceId, workerId, at])
 }

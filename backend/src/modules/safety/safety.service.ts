@@ -25,7 +25,12 @@ export interface SafetyView {
   /** The module's space, while it exists. */
   space: { id: string; name: string } | null;
   /** CAE (docs/spec/cae.md): on or off, and its «Contratas» folder while it exists. */
-  cae: { enabled: boolean; folder: { id: string; name: string } | null };
+  cae: {
+    enabled: boolean;
+    folder: { id: string; name: string } | null;
+    /** The gatehouse records entries and exits. */
+    accessLog: boolean;
+  };
 }
 
 export interface UpdateSafetyInput {
@@ -35,6 +40,8 @@ export interface UpdateSafetyInput {
   examples?: boolean | undefined;
   /** CAE on or off (needs the module on). */
   cae?: boolean | undefined;
+  /** CAE's gatehouse log on or off. */
+  caeAccessLog?: boolean | undefined;
 }
 
 async function workspaceOf(ctx: AdminContext) {
@@ -65,7 +72,11 @@ async function viewOf(ctx: AdminContext, settings: SafetySettings): Promise<Safe
     enabled: settings.enabled,
     terms: settings.terms,
     space: await spaceOf(ctx, settings.spaceId),
-    cae: { enabled: settings.cae.enabled, folder: await folderOf(ctx, settings.cae.folderId) },
+    cae: {
+      enabled: settings.cae.enabled,
+      folder: await folderOf(ctx, settings.cae.folderId),
+      accessLog: settings.cae.accessLog,
+    },
   };
 }
 
@@ -213,7 +224,11 @@ export async function updateSafetySettings(
     terms: input.terms ?? before.terms,
     ...(before.spaceId === undefined ? {} : { spaceId: before.spaceId }),
     ...(before.incidentFormId === undefined ? {} : { incidentFormId: before.incidentFormId }),
-    cae: { ...before.cae, enabled: input.cae ?? before.cae.enabled },
+    cae: {
+      ...before.cae,
+      enabled: input.cae ?? before.cae.enabled,
+      accessLog: input.caeAccessLog ?? before.cae.accessLog,
+    },
   };
   if (input.cae === true && !after.enabled) {
     throw new AppError("BAD_REQUEST", { message: caeTexts.messages.moduleOff });
@@ -248,6 +263,13 @@ export async function updateSafetySettings(
       entityType: "Workspace",
       entityId: workspace.id,
       metadata: { before: before.terms, after: after.terms },
+    });
+  }
+  if (after.cae.accessLog !== before.cae.accessLog) {
+    await auditAdmin(ctx, {
+      action: after.cae.accessLog ? "cae.access_log.enable" : "cae.access_log.disable",
+      entityType: "Workspace",
+      entityId: workspace.id,
     });
   }
   if (after.cae.enabled !== before.cae.enabled) {

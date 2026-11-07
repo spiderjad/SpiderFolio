@@ -18,7 +18,7 @@ import { texts } from "@/i18n";
 
 export function useCae() {
   const membership = useMembership();
-  const { cae, terms } = membership.workspace.safety;
+  const { cae, terms, caeAccessLog } = membership.workspace.safety;
   const manage = membership.capabilities.includes("cae.manage");
   const check = manage || membership.capabilities.includes("cae.check");
   return {
@@ -27,6 +27,8 @@ export function useCae() {
     visible: cae && check,
     manage,
     check,
+    /** The gate records entries and exits. */
+    accessLog: caeAccessLog,
     terms: texts.cae.terms[terms],
     slug: membership.workspace.slug,
     base: `/app/${membership.workspace.slug}/seguridad/cae`,
@@ -57,11 +59,10 @@ export function RequireCaeManager() {
   return visible && manage ? <Outlet /> : <NotFoundPage />;
 }
 
-/** Companies, documents to review and, for whoever manages it, the catalog. */
+/** Companies, the gate and its log; for whoever manages CAE, also the review and the catalog. */
 export function CaeNav() {
-  const { base, manage, terms } = useCae();
+  const { base, manage, terms, accessLog } = useCae();
   const pending = usePendingCount();
-  if (!manage) return null;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
       "rounded-md px-3 py-1.5 text-sm transition-colors",
@@ -74,12 +75,24 @@ export function CaeNav() {
       <NavLink end to={base} className={tab}>
         {texts.cae.nav.companies}
       </NavLink>
-      <NavLink to={`${base}/revisar`} className={tab}>
-        {texts.cae.review.tab(pending)}
+      <NavLink to={`${base}/porteria`} className={tab}>
+        {texts.cae.nav.gate}
       </NavLink>
-      <NavLink to={`${base}/catalogo`} className={tab}>
-        {texts.cae.nav.catalog}
-      </NavLink>
+      {accessLog && (
+        <NavLink to={`${base}/accesos`} className={tab}>
+          {texts.cae.nav.accesses}
+        </NavLink>
+      )}
+      {manage && (
+        <>
+          <NavLink to={`${base}/revisar`} className={tab}>
+            {texts.cae.review.tab(pending)}
+          </NavLink>
+          <NavLink to={`${base}/catalogo`} className={tab}>
+            {texts.cae.nav.catalog}
+          </NavLink>
+        </>
+      )}
     </nav>
   );
 }

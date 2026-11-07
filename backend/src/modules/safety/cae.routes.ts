@@ -1,7 +1,17 @@
 // CAE, coordination of business activities (docs/spec/cae.md, «API»): /cae/* answers 404 while CAE or
 // the module is off. The services check who sees and changes what (cae.manage, cae.check and the
 // internal responsible person of each company).
-import type { TenantRoute } from "../../routes.ts";
+import type { Request } from "express";
+import type { AppDeps, TenantRoute } from "../../routes.ts";
+import { sensitiveRateLimit } from "../../middleware/rate-limit.ts";
+import {
+  checkWorker,
+  listAccesses,
+  recordAccess,
+  searchGate,
+  workerQr,
+} from "./cae-gate.service.ts";
+import { authorizedTodayPdf } from "./cae-pdf.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import {
   acceptDocument,
@@ -13,6 +23,9 @@ import {
 } from "./cae-documents.service.ts";
 import {
   AcceptDocumentSchema,
+  AccessSchema,
+  CheckQuerySchema,
+  ListAccessesQuerySchema,
   CreateDocumentSchema,
   ListDocumentsQuerySchema,
   RejectDocumentSchema,
@@ -54,8 +67,72 @@ import {
   updateRequirement,
 } from "./cae-requirements.service.ts";
 
-export function caeRoutes(): TenantRoute[] {
+const HOUR = 3_600_000;
+
+export function caeRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] {
+  const byUser = (req: Request) => req.auth?.userId ?? "";
   return [
+    // The gatehouse (cae.check): search, one worker, entries and exits.
+    {
+      method: "get",
+      path: "/cae/check",
+      handler: async (req, res) => {
+        res.json(await searchGate(adminContextOf(req), CheckQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/check/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ result: await checkWorker(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/access",
+      handler: async (req, res) => {
+        const result = await recordAccess(adminContextOf(req), AccessSchema.parse(req.body));
+        res.status(201).json({ result });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/access",
+      handler: async (req, res) => {
+        res.json(await listAccesses(adminContextOf(req), ListAccessesQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/workers/:id/qr",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json(await workerQr(adminContextOf(req), deps.env.APP_URL, id));
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/companies/:id/pdf",
+      guards: [
+        sensitiveRateLimit(deps, { name: "cae-pdf", windowMs: HOUR, limit: 60, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const file = await authorizedTodayPdf(
+          adminContextOf(req),
+          { gotenbergUrl: deps.env.GOTENBERG_URL },
+          id,
+        );
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="autorizados.pdf"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(Buffer.from(file.body));
+      },
+    },
     // Companies.
     {
       method: "get",
