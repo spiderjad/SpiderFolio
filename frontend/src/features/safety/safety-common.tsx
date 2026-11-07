@@ -13,6 +13,7 @@ import { adminApi } from "@/features/admin/api";
 import { NotFoundPage } from "@/features/home/not-found-page";
 import { useMembership } from "@/features/home/workspace-layout";
 import { cn } from "@/lib/utils";
+import { useCae } from "./cae-common";
 import {
   incidentsApi,
   incidentsKeys,
@@ -103,8 +104,10 @@ export function RequireSafetyManager() {
 
 export function PpeTabs() {
   const { slug, canManage, health, leads } = useSafety();
-  // Only for whoever manages the module (or its health data) and the heads: the rest go to their sheet.
-  if (!canManage && !health && !leads) return null;
+  const cae = useCae();
+  // Only for whoever manages the module (or its health data), the heads and whoever checks
+  // contractors (CAE): the rest go to their sheet.
+  if (!canManage && !health && !leads && !cae.visible) return null;
   const t = texts.safety.tabs;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -138,6 +141,11 @@ export function PpeTabs() {
       {health && (
         <NavLink to={`${base}/incidentes`} className={tab}>
           {texts.safety.incidents.tab}
+        </NavLink>
+      )}
+      {cae.visible && (
+        <NavLink to={cae.base} className={tab}>
+          {cae.terms.tab}
         </NavLink>
       )}
     </nav>

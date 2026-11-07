@@ -216,6 +216,49 @@ export const routes = [
                     path: "personas/:membershipId",
                     lazy: page(() => import("@/features/safety/person-page"), "PersonPage"),
                   },
+                  {
+                    // CAE (docs/spec/cae.md): only while it's on, for whoever manages or checks it.
+                    path: "cae",
+                    lazy: page(() => import("@/features/safety/cae-common"), "RequireCae"),
+                    children: [
+                      {
+                        index: true,
+                        lazy: page(
+                          () => import("@/features/safety/cae-companies-page"),
+                          "CaeCompaniesPage",
+                        ),
+                      },
+                      {
+                        path: "empresas/:companyId",
+                        lazy: page(
+                          () => import("@/features/safety/cae-company-page"),
+                          "CaeCompanyPage",
+                        ),
+                      },
+                      {
+                        path: "trabajadores/:workerId",
+                        lazy: page(
+                          () => import("@/features/safety/cae-worker-page"),
+                          "CaeWorkerPage",
+                        ),
+                      },
+                      {
+                        lazy: page(
+                          () => import("@/features/safety/cae-common"),
+                          "RequireCaeManager",
+                        ),
+                        children: [
+                          {
+                            path: "catalogo",
+                            lazy: page(
+                              () => import("@/features/safety/cae-catalog-page"),
+                              "CaeCatalogPage",
+                            ),
+                          },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
               {

@@ -64,4 +64,5 @@ export const expiryNoticeTexts = localized("expiryNoticeTexts");
 export const safetyIncidentEmailTexts = localized("safetyIncidentEmailTexts");
 export const auditRoomTexts = localized("auditRoomTexts");
 export const safetyTexts = localized("safetyTexts");
+export const caeTexts = localized("caeTexts");
 export const formExportTexts = localized("formExportTexts");

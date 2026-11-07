@@ -4,7 +4,7 @@ import { notFound } from "../../lib/errors.ts";
 import type { TenantDb } from "../../db/tenant.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
 import { ledDepartmentIds } from "../departments/departments.scope.ts";
-import { readSafetySettings, type SafetySettings } from "../workspaces/settings.ts";
+import { caeEnabled, readSafetySettings, type SafetySettings } from "../workspaces/settings.ts";
 
 export async function safetySettingsOf(db: TenantDb): Promise<SafetySettings> {
   const workspace = await db.workspace.findFirst({ where: {}, select: { settings: true } });
@@ -17,6 +17,24 @@ export async function requireSafety(ctx: Pick<AdminContext, "db">): Promise<Safe
   if (!settings.enabled) throw notFound();
   return settings;
 }
+
+/**
+ * CAE (docs/spec/cae.md) is on, and so is the module; otherwise every /cae screen answers 404.
+ * Returns the module's settings.
+ */
+export async function requireCae(ctx: Pick<AdminContext, "db">): Promise<SafetySettings> {
+  const settings = await safetySettingsOf(ctx.db);
+  if (!caeEnabled(settings)) throw notFound();
+  return settings;
+}
+
+/** CAE: companies, workers and the catalog. */
+export const canManageCae = (ctx: Pick<AdminContext, "tenant">): boolean =>
+  ctx.tenant.capabilities.includes("cae.manage");
+
+/** CAE: only whether a company or a worker is authorized; cae.manage includes it. */
+export const canCheckCae = (ctx: Pick<AdminContext, "tenant">): boolean =>
+  canManageCae(ctx) || ctx.tenant.capabilities.includes("cae.check");
 
 export const canManageSafety = (ctx: Pick<AdminContext, "tenant">): boolean =>
   ctx.tenant.capabilities.includes("safety.manage");

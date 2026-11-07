@@ -969,6 +969,68 @@ export const safetyIncidentEmailTexts: Catalog<typeof Es.safetyIncidentEmailText
   footnote: "You get this notice because you can see the company's health data.",
 };
 
+export const caeTexts: Catalog<typeof Es.caeTexts> = {
+  folder: { es: "Contractors", latam: "Contractors" },
+  catalog: {
+    es: {
+      liabilityInsurance: "Liability insurance and receipt",
+      socialSecurityCert: "Certificate of being up to date with Social Security",
+      taxCert: "Certificate of being up to date with the tax office",
+      preventiveModality: "Health and safety organization model",
+      riskAssessment: "Risk assessment of the work to be done",
+      preventivePlanning: "Planning of the preventive activity",
+      workerList: "List of workers (RNT/ITA)",
+      prlTraining: "Health and safety training for the job",
+      medicalFitness: "Medical fitness certificate",
+      ppeHandout: "PPE handout",
+      socialSecurityRegistration: "Social Security registration",
+      siteRiskInfo: "Site risk information received",
+    },
+    latam: {
+      liabilityInsurance: "Liability insurance",
+      socialSecurityPayment: "Proof of social security payment",
+      riskMatrix: "Risk matrix of the work",
+      sstProgram: "Health and safety program",
+      sstTraining: "Health and safety training",
+      medicalFitness: "Medical fitness",
+      ppeHandout: "PPE handout",
+      socialSecurityAffiliation: "Social security affiliation",
+      siteInduction: "Site safety induction",
+    },
+  },
+  messages: {
+    companyNameTaken: "There's already a company with that name.",
+    requirementNameTaken: "There's already a required document with that name.",
+    parentRequired: "A subcontractor needs the contractor it works for.",
+    parentInvalid: "The company it works for has to be an active contractor.",
+    parentOnlySubcontractor: "Only a subcontractor works for another company.",
+    hasSubcontractors: "This contractor has subcontractors: change or archive them first.",
+    datesInverted: "The end date can't be before the start date.",
+    responsibleInvalid: "The internal contact has to be an active person in the company.",
+    archived: "It's archived: it can't be changed.",
+    workerArchived: "It's archived: it can't be changed.",
+    alreadyBlocked: "It's already blocked.",
+    notBlocked: "It isn't blocked.",
+    alreadyArchived: "It's already archived.",
+    moduleOff: "Turn on the occupational health and safety module first.",
+    orderMismatch: "The order has to include every required document of that kind, once.",
+  },
+  reasons: {
+    missing: (requirement: string) => `Missing: ${requirement}`,
+    expired: (day: string, requirement: string) => `Expired on ${day}: ${requirement}`,
+    pending: (requirement: string) => `To review: ${requirement}`,
+    rejected: (requirement: string) => `Rejected: ${requirement}`,
+    companyBlocked: (reason: string) => `Company blocked: ${reason}`,
+    companyArchived: "Company archived",
+    notStarted: (day: string) => `Starts working on ${day}`,
+    ended: (day: string) => `Stopped working on ${day}`,
+    parentNotAuthorized: (name: string) => `Its contractor isn't authorized: ${name}`,
+    companyNotAuthorized: (name: string) => `Its company isn't authorized: ${name}`,
+    workerBlocked: (reason: string) => `Worker blocked: ${reason}`,
+    workerArchived: "Worker archived",
+  },
+};
+
 export const expiryNoticeTexts: Catalog<typeof Es.expiryNoticeTexts> = {
   greeting: (name: string) => `Hi ${name},`,
   subject: {

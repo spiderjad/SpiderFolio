@@ -16,7 +16,8 @@ replacing it, and what each person lacks for their position. It builds on
 [positions](/en/docs/departments#positions), controlled documents and forms.
 
 For now it covers **PPE** handouts, **accidents and incidents**, **training** and **risk assessments**.
-And each person's **fitness for work**.
+And each person's **fitness for work**. If you turn it on, also the coordination with
+[contractors (CAE)](#contractors-cae).
 
 ## Turn it on
 
@@ -45,11 +46,11 @@ also see it on [Home](/en/docs/home).
 
 ## Who sees what
 
-| Who | What they see |
-|---|---|
-| With **Manage occupational health and safety** | Every handout and the catalog; records and voids handouts. |
-| Heads and deputies | The handouts and PPE of the people in their area (and sub-areas). |
-| Everyone else | Their own handouts and PPE. |
+| Who                                            | What they see                                                     |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| With **Manage occupational health and safety** | Every handout and the catalog; records and voids handouts.        |
+| Heads and deputies                             | The handouts and PPE of the people in their area (and sub-areas). |
+| Everyone else                                  | Their own handouts and PPE.                                       |
 
 The capability is given in [Roles and permissions](/en/docs/roles-and-permissions); the Admin role already
 has it.
@@ -82,7 +83,10 @@ An item no longer used is **Archived**: it's no longer offered at handouts and t
 The handout keeps who received it, who handed it out, the company's date and time, and the signature. It's
 never changed or deleted.
 
-<Shot name="epis-nueva" alt="New handout: the person, what they lack, the items and the signature" />
+<Shot
+  name="epis-nueva"
+  alt="New handout: the person, what they lack, the items and the signature"
+/>
 
 ## View a handout and its receipt
 
@@ -122,7 +126,6 @@ Each person sees their own by opening **Health & safety** in the menu.
 has **Health data: accidents and fitness for work** it also has their fitness and their accidents and
 incidents, with a note that it's confidential; each person can download their own (with their fitness). It
 needs [Gotenberg](/en/docs/gotenberg) and it's recorded in the audit log.
-
 
 ## Replacement notices
 
@@ -200,7 +203,62 @@ whoever recorded it are told; the earlier one stays in the history.
 
 With that capability, the sheet also shows the person's **Accidents and incidents**.
 
-<Shot name="epis-ficha" alt="A person's sheet: what they lack, their PPE, their training, their fitness for work and their accidents" />
+<Shot
+  name="epis-ficha"
+  alt="A person's sheet: what they lack, their PPE, their training, their fitness for work and their accidents"
+/>
+
+## Contractors (CAE)
+
+**Coordination of business activities** (CAE: Law 31/1995, art. 24, and Royal Decree 171/2004 in Spain; in
+Latin America, each country's equivalent duty) tells you which external companies work at the site, whether
+their documents and each worker's are up to date, and whether they can come in today. It lives inside the
+module, in the **Contractors (CAE)** tab.
+
+**Turn it on.** The owner turns it on in **Administration** › **Security** › **General**, below the module,
+in **Coordination of business activities (CAE)**. It needs the module on; turning the module off hides it
+too. The first time, the **Contractors** folder is created in the module's space, along with your country's
+**catalog of required documents**. It never overwrites what you already have with the same name. Turning it
+off hides the tab and deletes nothing.
+
+**Who sees what.** Two new capabilities in [Roles and permissions](/en/docs/roles-and-permissions):
+
+- **Manage contractors (CAE)**: adds and changes companies, workers and the catalog; blocks and archives.
+  The owner and the Administrator have it by default.
+- **Check whether a contractor can come in**: only sees whether a company or a worker is authorized and why,
+  without contact details or documents; of each worker's ID, only the last 3 characters. Meant for the
+  gatehouse and team leads. Nobody has it by default except whoever manages contractors.
+
+Each company's **internal contact** (a person in your company) sees its whole record even without those
+capabilities.
+
+**Companies.** The list shows each company with its type, its internal contact, how many workers it has and
+its status: **Authorized** (green), **Incomplete** (amber, with the first reason), **Blocked** (red) or
+**Archived**. Search by name or tax ID and filter by type and status. **New company** asks for the name, the
+type (**Contractor**, **Subcontractor**, which works for a contractor, or **Concurrent company**, which shares
+the site without a contract with your company), what it does at the site, the internal contact, the contact
+details and, if it works for a while, the start and end dates. Each company gets its own folder inside
+**Contractors**, named after it; renaming the company renames the folder.
+
+**The company's record** says in green whether it can work at the site or, in red, every reason it can't
+(“Missing: …”, “Company blocked: …”, “Stopped working on …”). Below are its details, the link to its folder,
+the documents the catalog asks of it by its type, and its workers. **Block** asks for a reason; **Archive**
+takes it off the lists without deleting anything (its workers and documents are kept). A subcontractor is
+only authorized if its contractor is too.
+
+**Workers.** In the company's record, **Add worker** asks for the name, the ID document (optional) and the
+job or task. Contractors' workers aren't members of your company: they have no account and take no seat.
+Don't store health data: for medical fitness only the fact that the certificate was presented is recorded.
+Each worker's record says whether they can come in and why, and they can be edited, blocked or archived.
+
+**Required documents.** The catalog (the **Required documents** tab inside Contractors) has the company's
+documents and each worker's, in order (arrows to move them up or down). Each one says how long it's valid
+(to suggest the expiry date), which companies it's asked of and whether it's mandatory: a missing mandatory
+one keeps them from working at the site. They can be edited, added and archived.
+
+Uploading and reviewing documents isn't there yet: it comes in an upcoming version. Until then every
+document shows as **Missing** and a company the catalog asks for something mandatory shows as
+**Incomplete**.
 
 ## Food industry examples
 

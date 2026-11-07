@@ -115,6 +115,16 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
     description:
       "Views and manages accidents and incidents and people's fitness for work (“fit / not fit”).",
   },
+  "cae.manage": {
+    label: "Manage contractors (CAE)",
+    description:
+      "Adds and changes external companies, their workers and the documents asked of them; blocks or archives them.",
+  },
+  "cae.check": {
+    label: "Check whether a contractor can come in",
+    description:
+      "Only sees whether an external company or worker is authorized and why, without their documents or contact details. Meant for the gatehouse and team leads.",
+  },
 };
 
 export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
@@ -164,6 +174,15 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
       termsHint: "What things are called in the app and in the notices.",
       termsOptions: { es: "Spain: PRL and EPI", latam: "Latin America: SST and EPP" },
       space: "The module's space:",
+      cae: {
+        title: "Coordination of business activities (CAE)",
+        text: "The external companies that work at the site, their workers and the documents asked of them, with who can come in today.",
+        enableHint:
+          "The first time, the “Contractors” folder is created in the module's space, along with your country's catalog of required documents.",
+        enabledHint: "On. Turning it off hides the tab and the notices; the data is kept.",
+        moduleOff: "Turn the module on first.",
+        folder: "Folder:",
+      },
     },
     language: {
       title: "Language and time zone",

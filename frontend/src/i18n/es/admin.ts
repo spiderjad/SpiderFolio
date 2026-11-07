@@ -111,6 +111,16 @@ export const capabilityTexts = {
     description:
       "Ve y gestiona los accidentes e incidentes y la aptitud («apto / no apto») de las personas.",
   },
+  "cae.manage": {
+    label: "Gestionar contratas (CAE)",
+    description:
+      "Da de alta y cambia las empresas externas, sus trabajadores y los documentos que se les exigen; las bloquea o las archiva.",
+  },
+  "cae.check": {
+    label: "Consultar si una contrata puede entrar",
+    description:
+      "Solo ve si una empresa externa o un trabajador está autorizado y por qué, sin sus documentos ni sus datos de contacto. Pensada para portería y jefes de equipo.",
+  },
 } as const;
 
 export const capabilityGroupTexts = {
@@ -160,6 +170,16 @@ export const adminTexts = {
       termsHint: "Cómo se llaman las cosas en la app y en los avisos.",
       termsOptions: { es: "España: PRL y EPI", latam: "Latinoamérica: SST y EPP" },
       space: "Espacio del módulo:",
+      cae: {
+        title: "Coordinación de actividades empresariales (CAE)",
+        text: "Las empresas externas que trabajan en el centro, sus trabajadores y los documentos que se les piden, con quién puede entrar hoy.",
+        enableHint:
+          "La primera vez se crean la carpeta «Contratas» en el espacio del módulo y el catálogo de documentos exigidos de tu país.",
+        enabledHint:
+          "Activada. Desactivarla oculta la pestaña y los avisos; los datos se conservan.",
+        moduleOff: "Primero activa el módulo.",
+        folder: "Carpeta:",
+      },
     },
     language: {
       title: "Idioma y zona horaria",

@@ -56,6 +56,9 @@ export const auditEs: Catalog<typeof EsAudit> = {
     WorkspaceEmail: "Company email",
     DocumentType: "Document types",
     BianLimit: "Bian limits",
+    CaeCompany: "Contractors",
+    CaeWorker: "Contractors' workers",
+    CaeRequirement: "Documents required of contractors",
   },
   /** Known actions; the rest are shown with their code. */
   actions: {
@@ -132,6 +135,23 @@ export const auditEs: Catalog<typeof EsAudit> = {
     "directory.mfa_trust.enable": "Accepted the identity provider's two-step verification",
     "directory.mfa_trust.disable":
       "Stopped accepting the identity provider's two-step verification",
+    "cae.enable": "Turned on coordination of business activities (CAE)",
+    "cae.disable": "Turned off coordination of business activities (CAE)",
+    "cae.company.create": "Added a contractor",
+    "cae.company.update": "Changed a contractor",
+    "cae.company.block": "Blocked a contractor",
+    "cae.company.unblock": "Unblocked a contractor",
+    "cae.company.archive": "Archived a contractor",
+    "cae.worker.create": "Added a contractor's worker",
+    "cae.worker.update": "Changed a contractor's worker",
+    "cae.worker.block": "Blocked a contractor's worker",
+    "cae.worker.unblock": "Unblocked a contractor's worker",
+    "cae.worker.archive": "Archived a contractor's worker",
+    "cae.requirement.create": "Added a document required of contractors",
+    "cae.requirement.update": "Changed a document required of contractors",
+    "cae.requirement.restore": "Restored a document required of contractors",
+    "cae.requirement.archive": "Archived a document required of contractors",
+    "cae.requirement.order": "Reordered the documents required of contractors",
   },
   actor: {
     system: "System",

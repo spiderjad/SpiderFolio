@@ -16,7 +16,8 @@ reposición, y lo que le falta a cada persona según su puesto. Se apoya en los
 [puestos](/es/docs/departamentos#puestos), los documentos controlados y los formularios.
 
 Por ahora trae la entrega de **EPIs**, los **accidentes e incidentes**, la **formación** y las **evaluaciones
-de riesgos**. Y la **aptitud** de cada persona.
+de riesgos**. Y la **aptitud** de cada persona. Si la activas, también la coordinación con
+[contratas (CAE)](#contratas-cae).
 
 ## Activarlo
 
@@ -46,11 +47,11 @@ Quien no gestiona entra directo a su ficha. Si le falta un EPI o tiene formació
 
 ## Quién ve qué
 
-| Quién | Qué ve |
-|---|---|
-| Con **Gestionar seguridad y salud laboral** | Todas las entregas, el catálogo; registra y anula entregas. |
-| Jefes y subjefes | Las entregas y los EPIs de las personas de su área (y subáreas). |
-| Todos los demás | Sus propias entregas y sus EPIs. |
+| Quién                                       | Qué ve                                                           |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| Con **Gestionar seguridad y salud laboral** | Todas las entregas, el catálogo; registra y anula entregas.      |
+| Jefes y subjefes                            | Las entregas y los EPIs de las personas de su área (y subáreas). |
+| Todos los demás                             | Sus propias entregas y sus EPIs.                                 |
 
 La capacidad se da en [Roles y permisos](/es/docs/roles-y-permisos); el rol Administrador ya la tiene.
 
@@ -68,7 +69,10 @@ En **Entregas** › **Catálogo** están los equipos de tu empresa. Pulsa **Nuev
 Un equipo que ya no se usa se **Archiva**: deja de ofrecerse en las entregas y las anteriores se conservan.
 **Ver archivados** los muestra y desde cada uno puedes pulsar **Recuperar**.
 
-<Shot name="epis-catalogo" alt="El catálogo de EPIs, con la vida útil y los puestos de cada equipo" />
+<Shot
+  name="epis-catalogo"
+  alt="El catálogo de EPIs, con la vida útil y los puestos de cada equipo"
+/>
 
 ## Registrar una entrega
 
@@ -122,7 +126,6 @@ Cada persona ve la suya entrando a **Prevención** en el menú.
 **Datos de salud: accidentes y aptitud** también lleva su aptitud y sus accidentes e incidentes, con un aviso de
 que es confidencial; cada persona puede descargar la suya (con su aptitud). Necesita
 [Gotenberg](/es/docs/gotenberg) y queda en la auditoría.
-
 
 ## Avisos de reposición
 
@@ -183,7 +186,10 @@ si quiere, la **Validez en meses**.
 - En cada curso se ve cada persona con su estado (**Al día**, **Por vencer**, **Vencida**, **Pendiente**), y
   en la ficha de cada persona, su formación.
 
-<Shot name="formacion" alt="Un curso: cada persona con su estado y el registro de formación presencial" />
+<Shot
+  name="formacion"
+  alt="Un curso: cada persona con su estado y el registro de formación presencial"
+/>
 
 ## Evaluaciones de riesgos
 
@@ -200,7 +206,63 @@ la registró; la anterior queda en el historial.
 
 En la ficha también se ven, con esa capacidad, los **Accidentes e incidentes** de la persona.
 
-<Shot name="epis-ficha" alt="La ficha de una persona: lo que le falta, sus EPIs, su formación, su aptitud y sus accidentes" />
+<Shot
+  name="epis-ficha"
+  alt="La ficha de una persona: lo que le falta, sus EPIs, su formación, su aptitud y sus accidentes"
+/>
+
+## Contratas (CAE)
+
+La **coordinación de actividades empresariales** (CAE: Ley 31/1995, art. 24, y Real Decreto 171/2004 en
+España; en Latinoamérica, la obligación equivalente de cada país) sirve para saber qué empresas externas
+trabajan en el centro, si su documentación y la de cada trabajador está al día y si pueden entrar hoy. Va
+dentro del módulo, en la pestaña **Contratas (CAE)** (**Contratistas** con los términos de Latinoamérica).
+
+**Activarla.** El propietario la enciende en **Administración** › **Seguridad** › **General**, debajo del
+módulo, en **Coordinación de actividades empresariales (CAE)**. Necesita el módulo activado; apagar el
+módulo la oculta también. La primera vez se crean la carpeta **Contratas** (o **Contratistas**) en el espacio
+del módulo y el **catálogo de documentos exigidos** de tu país. Nunca pisa lo que ya tengas con el mismo
+nombre. Desactivarla oculta la pestaña y no borra nada.
+
+**Quién ve qué.** Dos capacidades nuevas en [Roles y permisos](/es/docs/roles-y-permisos):
+
+- **Gestionar contratas (CAE)**: da de alta y cambia empresas, trabajadores y el catálogo; bloquea y
+  archiva. Por defecto la tienen el propietario y el Administrador.
+- **Consultar si una contrata puede entrar**: solo ve si una empresa o un trabajador está autorizado y por
+  qué, sin los datos de contacto ni los documentos; del documento de identidad de cada trabajador, solo los 3
+  últimos caracteres. Pensada para portería y jefes de equipo. Nadie la tiene por defecto salvo quien
+  gestiona las contratas.
+
+El **responsable interno** de cada empresa (una persona de tu empresa) ve su ficha completa aunque no tenga
+esas capacidades.
+
+**Empresas.** La lista muestra cada empresa con su tipo, su responsable interno, cuántos trabajadores tiene y
+su estado: **Autorizada** (verde), **Incompleta** (ámbar, con el primer motivo), **Bloqueada** (rojo) o
+**Archivada**. Se busca por nombre o identificación fiscal y se filtra por tipo y estado. **Nueva empresa**
+pide el nombre, el tipo (**Contrata**, **Subcontrata**, que depende de una contrata, o **Empresa
+concurrente**, que comparte el centro sin contrato con tu empresa), qué hace en el centro, el responsable
+interno, el contacto y, si trabaja por un tiempo, las fechas de inicio y fin. Cada empresa tiene su propia
+carpeta dentro de **Contratas**, con su nombre; si cambias el nombre de la empresa, cambia el de la carpeta.
+
+**La ficha de la empresa** dice en verde si puede trabajar en el centro o, en rojo, todos los motivos por los
+que no («Falta: …», «Empresa bloqueada: …», «Terminó de trabajar el …»). Debajo están sus datos, el enlace a
+su carpeta, los documentos que le pide el catálogo según su tipo y sus trabajadores. **Bloquear** pide un
+motivo; **Archivar** la saca de las listas sin borrar nada (sus trabajadores y documentos se conservan). Una
+subcontrata solo está autorizada si su contrata también lo está.
+
+**Trabajadores.** En la ficha de la empresa, **Agregar trabajador** pide el nombre, el documento de identidad
+(opcional) y el puesto o tarea. Los trabajadores de las contratas no son miembros de tu empresa: no tienen
+cuenta ni ocupan plaza. No guardes datos de salud: de la aptitud médica solo se registra que el certificado se
+presentó. La ficha de cada trabajador dice si puede entrar y por qué, y se puede editar, bloquear o archivar.
+
+**Documentos exigidos.** El catálogo (pestaña **Documentos exigidos** dentro de Contratas) tiene los
+documentos de la empresa y los de cada trabajador, en su orden (flechas para subir o bajar). Cada uno dice
+cuánto vale (para proponer el vencimiento), a qué empresas se pide y si es obligatorio: uno obligatorio que
+falta impide trabajar en el centro. Se editan, se agregan y se archivan.
+
+Por ahora la subida y la revisión de documentos no están: llegan en una próxima versión. Mientras tanto,
+todos los documentos figuran como **Falta** y una empresa a la que el catálogo le pide algo obligatorio
+aparece **Incompleta**.
 
 ## Ejemplos del sector alimentario
 

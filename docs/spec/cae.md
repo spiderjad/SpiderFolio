@@ -137,10 +137,23 @@ seguridad del centro). La empresa los edita, agrega o archiva.
 
 ## Fases
 
-1. **Activación, permisos, empresas, trabajadores y catálogo**: interruptor dentro de Prevención,
+1. **Activación, permisos, empresas, trabajadores y catálogo** (hecha): interruptor dentro de Prevención,
    `cae.manage` y `cae.check`, carpeta «Contratas» y una carpeta por empresa, catálogo por defecto,
    altas, cambios, bloqueo y archivo, estado calculado (todavía todo «falta»). Pestaña y pantallas de
    lista, fichas y catálogo.
+   Modelos `CaeCompany`, `CaeWorker` y `CaeRequirement` (migración `cae_companies_workers`, que también
+   suma `cae.manage` y `cae.check` a los roles de sistema propietario y Administrador existentes; el
+   Administrador las tiene las dos). `caeStatus` en `backend/src/modules/safety/cae-status.ts`
+   (`companyStatus`, `workerStatus`) ya devuelve el estado por requisito y los motivos; la fase 2 solo
+   llena `loadDocuments` y `authorizedCompanyWhere`. Simplificaciones: el filtro de estado de las listas
+   (`authorized` / `incomplete`) se calcula en la base con las mismas reglas porque todavía no hay
+   documentos (autorizada = sin requisitos obligatorios que le apliquen, dentro de sus fechas, sin bloqueo
+   ni archivo, y su contrata igual); una subcontrata depende siempre de una contrata (un solo nivel); el
+   catálogo no tiene `due_soon` hasta que haya documentos; las carpetas las crea el sistema sin pedir
+   permiso de edición en el espacio (si «Contratas» o la carpeta de una empresa se borra, se vuelve a crear
+   al dar de alta o renombrar). Sin pestaña para el responsable interno sin `cae.manage` ni `cae.check`
+   (la API ya le deja ver sus empresas). `GET /workers` y `GET /check` quedan para la portería (fase 3);
+   el primero ya existe. Capturas pendientes (docs/plans/pendientes.md).
 2. **Documentos**: subir a la carpeta, aceptar o rechazar, vigente e historial, vencimientos
    `cae.document` con avisos al responsable interno, bandeja «Por revisar», estado y autorización reales.
 3. **Portería y acceso**: `GET /check`, pantalla de portería, QR por trabajador, registro de entradas y

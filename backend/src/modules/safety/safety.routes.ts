@@ -7,6 +7,7 @@ import { sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import { validationMessages } from "../../i18n/index.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import { getSafetySettings, updateSafetySettings } from "./safety.service.ts";
+import { caeRoutes } from "./cae.routes.ts";
 import { deliveryPdf } from "./ppe-pdf.ts";
 import { fitnessOf, recordFitness } from "./fitness.service.ts";
 import { listSafetyPeople, myAlerts, myCount, safetySummary } from "./people.service.ts";
@@ -85,14 +86,20 @@ const UpdateSafetySchema = z
     enabled: z.boolean().optional(),
     terms: z.enum(["es", "latam"]).optional(),
     examples: z.boolean().optional(),
+    /** CAE (docs/spec/cae.md), inside the module. */
+    cae: z.boolean().optional(),
   })
-  .refine((value) => value.enabled !== undefined || value.terms !== undefined, {
-    error: () => validationMessages.noChanges,
-  });
+  .refine(
+    (value) => value.enabled !== undefined || value.terms !== undefined || value.cae !== undefined,
+    {
+      error: () => validationMessages.noChanges,
+    },
+  );
 
 export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] {
   const byUser = (req: Request) => req.auth?.userId ?? "";
   return [
+    ...caeRoutes(),
     {
       method: "get",
       path: "/admin/safety",

@@ -487,6 +487,8 @@ export interface SafetyView {
   enabled: boolean;
   terms: SafetyTerms;
   space: { id: string; name: string } | null;
+  /** CAE (docs/spec/cae.md): on or off and its «Contratas» folder. */
+  cae: { enabled: boolean; folder: { id: string; name: string } | null };
 }
 
 export interface RoleQuery {
@@ -800,7 +802,7 @@ export const adminApi = {
   safety: (slug: string) => api<{ safety: SafetyView }>(admin(slug, "/safety")),
   updateSafety: (
     slug: string,
-    body: { enabled?: boolean; terms?: SafetyTerms; examples?: boolean },
+    body: { enabled?: boolean; terms?: SafetyTerms; examples?: boolean; cae?: boolean },
   ) => api<{ safety: SafetyView }>(admin(slug, "/safety"), { method: "PUT", body }),
   addDepartmentMembers: (slug: string, id: string, membershipIds: string[]) =>
     api<{ added: number }>(admin(slug, `/departments/${id}/members`), {

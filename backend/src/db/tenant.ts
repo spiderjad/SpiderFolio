@@ -123,11 +123,27 @@ export interface TenantDb {
     "findFirst" | "findMany" | "count" | "create"
   >;
   // Fitness records are history: added and read only.
-  safetyFitness: TenantDelegate<PrismaClient["safetyFitness"], "findFirst" | "findMany" | "count" | "create">;
+  safetyFitness: TenantDelegate<
+    PrismaClient["safetyFitness"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   // Training records are evidence: added and read, never changed nor deleted.
   safetyTraining: TenantDelegate<
     PrismaClient["safetyTraining"],
     "findFirst" | "findMany" | "count" | "create" | "createManyAndReturn"
+  >;
+  // CAE (docs/spec/cae.md): companies and workers are archived, never deleted here.
+  caeCompany: TenantDelegate<
+    PrismaClient["caeCompany"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "updateMany"
+  >;
+  caeWorker: TenantDelegate<
+    PrismaClient["caeWorker"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
+  >;
+  caeRequirement: TenantDelegate<
+    PrismaClient["caeRequirement"],
+    "findFirst" | "findMany" | "count" | "create" | "createMany" | "update" | "updateMany"
   >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
@@ -245,6 +261,18 @@ const delegates = {
   safetyTraining: {
     model: "SafetyTraining",
     ops: ["findFirst", "findMany", "count", "create", "createManyAndReturn"],
+  },
+  caeCompany: {
+    model: "CaeCompany",
+    ops: ["findFirst", "findMany", "count", "create", "update", "updateMany"],
+  },
+  caeWorker: {
+    model: "CaeWorker",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
+  },
+  caeRequirement: {
+    model: "CaeRequirement",
+    ops: ["findFirst", "findMany", "count", "create", "createMany", "update", "updateMany"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },

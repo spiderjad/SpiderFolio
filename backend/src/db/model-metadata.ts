@@ -76,6 +76,9 @@ export const modelMetadata = {
       auditRoomSessions: "AuditRoomSession",
       auditRoomAccesses: "AuditRoomAccess",
       safetyFitness: "SafetyFitness",
+      caeCompanies: "CaeCompany",
+      caeWorkers: "CaeWorker",
+      caeRequirements: "CaeRequirement",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -257,6 +260,17 @@ export const modelMetadata = {
     relations: { workspace: "Workspace", course: "SafetyCourse" },
   },
   SafetyFitness: { scope: "tenant", relations: { workspace: "Workspace" } },
+  CaeCompany: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      parent: "CaeCompany",
+      children: "CaeCompany",
+      workers: "CaeWorker",
+    },
+  },
+  CaeWorker: { scope: "tenant", relations: { workspace: "Workspace", company: "CaeCompany" } },
+  CaeRequirement: { scope: "tenant", relations: { workspace: "Workspace" } },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
   CommentThread: {
     scope: "tenant",

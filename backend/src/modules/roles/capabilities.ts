@@ -28,6 +28,10 @@ export const capabilities = [
   "safety.manage",
   /** Health data (accidents, fitness for work): only the owner by default, given explicitly. */
   "safety.health",
+  /** CAE (docs/spec/cae.md): contractors, their workers and the catalog of required documents. */
+  "cae.manage",
+  /** CAE: only whether a contractor or a worker is authorized (gatehouse, team leads). */
+  "cae.check",
 ] as const;
 
 /** Las del núcleo. */

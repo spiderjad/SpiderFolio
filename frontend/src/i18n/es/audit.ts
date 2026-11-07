@@ -53,6 +53,9 @@ export const auditEs = {
     WorkspaceEmail: "Email de la empresa",
     DocumentType: "Tipos de documento",
     BianLimit: "Límites de Bian",
+    CaeCompany: "Contratas",
+    CaeWorker: "Trabajadores de contratas",
+    CaeRequirement: "Documentos exigidos a contratas",
   } as Record<string, string>,
   /** Acciones conocidas; las demás se muestran con su código. */
   actions: {
@@ -129,6 +132,23 @@ export const auditEs = {
     "directory.mfa_trust.enable": "Aceptó la verificación en dos pasos del proveedor de identidad",
     "directory.mfa_trust.disable":
       "Dejó de aceptar la verificación en dos pasos del proveedor de identidad",
+    "cae.enable": "Activó la coordinación de actividades empresariales (CAE)",
+    "cae.disable": "Desactivó la coordinación de actividades empresariales (CAE)",
+    "cae.company.create": "Dio de alta una contrata",
+    "cae.company.update": "Cambió una contrata",
+    "cae.company.block": "Bloqueó una contrata",
+    "cae.company.unblock": "Desbloqueó una contrata",
+    "cae.company.archive": "Archivó una contrata",
+    "cae.worker.create": "Dio de alta a un trabajador de una contrata",
+    "cae.worker.update": "Cambió a un trabajador de una contrata",
+    "cae.worker.block": "Bloqueó a un trabajador de una contrata",
+    "cae.worker.unblock": "Desbloqueó a un trabajador de una contrata",
+    "cae.worker.archive": "Archivó a un trabajador de una contrata",
+    "cae.requirement.create": "Agregó un documento exigido a las contratas",
+    "cae.requirement.update": "Cambió un documento exigido a las contratas",
+    "cae.requirement.restore": "Recuperó un documento exigido a las contratas",
+    "cae.requirement.archive": "Archivó un documento exigido a las contratas",
+    "cae.requirement.order": "Ordenó los documentos exigidos a las contratas",
   } as Record<string, string>,
   actor: {
     system: "Sistema",

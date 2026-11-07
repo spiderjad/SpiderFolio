@@ -944,6 +944,71 @@ export const safetyTexts = {
   },
 } as const;
 
+/** CAE, coordination of business activities (docs/spec/cae.md): what it creates and its reasons. */
+export const caeTexts = {
+  folder: { es: "Contratas", latam: "Contratistas" },
+  /** The default catalog's names, by the country's terms (the structure is in cae-catalog.ts). */
+  catalog: {
+    es: {
+      liabilityInsurance: "Seguro de responsabilidad civil y recibo",
+      socialSecurityCert: "Certificado de estar al corriente con la Seguridad Social",
+      taxCert: "Certificado de estar al corriente con Hacienda",
+      preventiveModality: "Modalidad de organización preventiva",
+      riskAssessment: "Evaluación de riesgos de los trabajos a realizar",
+      preventivePlanning: "Planificación de la actividad preventiva",
+      workerList: "Relación de trabajadores (RNT/ITA)",
+      prlTraining: "Formación en PRL del puesto",
+      medicalFitness: "Certificado de aptitud médica",
+      ppeHandout: "Entrega de EPI",
+      socialSecurityRegistration: "Alta en la Seguridad Social",
+      siteRiskInfo: "Información de riesgos del centro recibida",
+    },
+    latam: {
+      liabilityInsurance: "Seguro de responsabilidad civil",
+      socialSecurityPayment: "Constancia de pago de seguridad social",
+      riskMatrix: "Matriz de riesgos de los trabajos",
+      sstProgram: "Programa de SST",
+      sstTraining: "Capacitación en SST",
+      medicalFitness: "Aptitud médica",
+      ppeHandout: "Entrega de EPP",
+      socialSecurityAffiliation: "Afiliación a seguridad social",
+      siteInduction: "Inducción de seguridad del centro",
+    },
+  },
+  messages: {
+    companyNameTaken: "Ya hay una empresa con ese nombre.",
+    requirementNameTaken: "Ya hay un documento exigido con ese nombre.",
+    parentRequired: "Una subcontrata necesita la contrata de la que depende.",
+    parentInvalid: "La empresa de la que depende tiene que ser una contrata activa.",
+    parentOnlySubcontractor: "Solo una subcontrata depende de otra empresa.",
+    hasSubcontractors: "Esta contrata tiene subcontratas: cámbialas o archívalas antes.",
+    datesInverted: "La fecha de fin no puede ser anterior a la de inicio.",
+    responsibleInvalid: "El responsable interno tiene que ser una persona activa de la empresa.",
+    archived: "Está archivada: no se puede cambiar.",
+    workerArchived: "Está archivado: no se puede cambiar.",
+    alreadyBlocked: "Ya está bloqueado.",
+    notBlocked: "No está bloqueado.",
+    alreadyArchived: "Ya está archivado.",
+    moduleOff: "Primero activa el módulo de seguridad y salud laboral.",
+    orderMismatch: "El orden tiene que incluir todos los documentos exigidos de ese tipo, una vez.",
+  },
+  /** Why a company or a worker isn't authorized (caeStatus). */
+  reasons: {
+    missing: (requirement: string) => `Falta: ${requirement}`,
+    expired: (day: string, requirement: string) => `Vencido el ${day}: ${requirement}`,
+    pending: (requirement: string) => `Por revisar: ${requirement}`,
+    rejected: (requirement: string) => `Rechazado: ${requirement}`,
+    companyBlocked: (reason: string) => `Empresa bloqueada: ${reason}`,
+    companyArchived: "Empresa archivada",
+    notStarted: (day: string) => `Empieza a trabajar el ${day}`,
+    ended: (day: string) => `Terminó de trabajar el ${day}`,
+    parentNotAuthorized: (name: string) => `Su contrata no está autorizada: ${name}`,
+    companyNotAuthorized: (name: string) => `Su empresa no está autorizada: ${name}`,
+    workerBlocked: (reason: string) => `Trabajador bloqueado: ${reason}`,
+    workerArchived: "Trabajador archivado",
+  },
+} as const;
+
 /** Vencimientos (docs/spec/seguridad-salud.md, «Motor de vencimientos»): algo vence o venció. */
 export const expiryNoticeTexts = {
   greeting: (name: string) => `Hola ${name}:`,

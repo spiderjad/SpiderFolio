@@ -261,6 +261,9 @@ model Workspace {
   auditRoomSessions   AuditRoomSession[]
   auditRoomAccesses   AuditRoomAccess[]
   safetyFitness       SafetyFitness[]
+  caeCompanies        CaeCompany[]
+  caeWorkers          CaeWorker[]
+  caeRequirements     CaeRequirement[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -651,6 +654,120 @@ model SafetyFitness {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, membershipId, createdAt])
+}
+
+// ─── CAE: coordination of business activities (docs/spec/cae.md) ──────────────
+
+/// CONTRACTOR: works for us; SUBCONTRACTOR: works for one of our contractors; CONCURRENT: shares the
+/// site without a contract with us (RD 171/2004, ch. II).
+enum CaeCompanyKind {
+  CONTRACTOR
+  SUBCONTRACTOR
+  CONCURRENT
+}
+
+/// What a required document is about: the company or each of its workers.
+enum CaeScope {
+  COMPANY
+  WORKER
+}
+
+/// Which companies a required document applies to (SUBCONTRACTOR goes with CONTRACTOR).
+enum CaeAppliesTo {
+  ALL
+  CONTRACTOR
+  CONCURRENT
+}
+
+/// An external company that works at the site (docs/spec/cae.md, «Modelo»). Archived instead of
+/// deleted. Its authorization is computed (caeStatus), never stored.
+model CaeCompany {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  name          String
+  /// Lowercase name: unique per company regardless of case.
+  nameKey       String
+  /// CIF/NIF/RUT.
+  taxId         String?
+  kind          CaeCompanyKind
+  /// The contractor a subcontractor depends on.
+  parentId      String?
+  /// What it does at the site.
+  activity      String
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+  /// The internal responsible person (membership; no FK).
+  responsibleId String
+  startsOn      DateTime?      @db.Date
+  endsOn        DateTime?      @db.Date
+  blockedAt     DateTime?
+  blockedReason String?
+  archivedAt    DateTime?
+  /// Its folder inside «Contratas» (node; no FK: the folder can be trashed apart).
+  folderId      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // NoAction (not SetNull): SetNull would also clear workspaceId, part of the key.
+  parent    CaeCompany?  @relation("CaeCompanyTree", fields: [parentId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+  children  CaeCompany[] @relation("CaeCompanyTree")
+  workers   CaeWorker[]
+
+  @@unique([workspaceId, nameKey])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, name, id])
+  @@index([workspaceId, responsibleId])
+  @@index([workspaceId, parentId])
+}
+
+/// A worker of an external company: not a member (no account, no seat). No health data.
+model CaeWorker {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  companyId     String
+  name          String
+  /// Identity document (only cae.manage and the responsible person see it whole).
+  idNumber      String?
+  task          String?
+  blockedAt     DateTime?
+  blockedReason String?
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   CaeCompany @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, companyId, name, id])
+  @@index([workspaceId, name, id])
+}
+
+/// A document the company asks of its contractors or of their workers (the catalog), ordered by
+/// position. Archived instead of deleted.
+model CaeRequirement {
+  id             String       @id @default(cuid())
+  workspaceId    String
+  name           String
+  nameKey        String
+  scope          CaeScope
+  /// To propose the expiry date of a document.
+  validityMonths Int?
+  appliesTo      CaeAppliesTo @default(ALL)
+  /// Missing, it doesn't authorize.
+  required       Boolean      @default(true)
+  archivedAt     DateTime?
+  position       Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, nameKey])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, scope, position, id])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único

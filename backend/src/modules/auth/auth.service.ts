@@ -108,7 +108,7 @@ export interface Account {
       /** Idioma por defecto de la empresa. */
       locale: Locale;
       /** The occupational health and safety module: on or off, and the country's terms. */
-      safety: { enabled: boolean; terms: "es" | "latam" };
+      safety: { enabled: boolean; terms: "es" | "latam"; cae: boolean };
     };
     role: { id: string; name: string; base: string };
     capabilities: string[];
@@ -251,9 +251,12 @@ export function createAuthService(deps: AppDeps) {
             logoKey: m.workspace.logoKey,
             locale: readWorkspaceLocale(m.workspace.settings),
             timeZone: zoneOf(m.workspace.settings),
-            safety: (({ enabled, terms }) => ({ enabled, terms }))(
-              readSafetySettings(m.workspace.settings),
-            ),
+            safety: (({ enabled, terms, cae }) => ({
+              enabled,
+              terms,
+              // CAE (docs/spec/cae.md) only counts while the module is on too.
+              cae: enabled && cae.enabled,
+            }))(readSafetySettings(m.workspace.settings)),
           },
           role: { id: m.role.id, name: m.role.name, base: m.role.base },
           // El propietario tiene también las capacidades de los plugins instalados.

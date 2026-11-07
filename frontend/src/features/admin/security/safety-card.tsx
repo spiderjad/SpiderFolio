@@ -2,7 +2,7 @@
 // on or off for the company, its country's terms and, when turning it on, the food sector's examples.
 // Only the owner (the server enforces it). Turning it off hides the module and never deletes anything.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { HardHat } from "lucide-react";
+import { HardHat, Handshake } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
@@ -32,8 +32,12 @@ export function SafetyCard() {
     select: (data) => data.safety,
   });
   const update = useMutation({
-    mutationFn: (changes: { enabled?: boolean; terms?: SafetyTerms; examples?: boolean }) =>
-      adminApi.updateSafety(workspaceSlug, changes),
+    mutationFn: (changes: {
+      enabled?: boolean;
+      terms?: SafetyTerms;
+      examples?: boolean;
+      cae?: boolean;
+    }) => adminApi.updateSafety(workspaceSlug, changes),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: adminKeys.all(workspaceSlug) });
       // The menu and the module's terms come with the session's company data.
@@ -125,6 +129,58 @@ export function SafetyCard() {
               </Link>
             </p>
           )}
+          {/* CAE (docs/spec/cae.md): inside the module, with its own switch. */}
+          <div className="mt-2 border-t border-border pt-4">
+            <div className="flex items-start gap-3">
+              <Handshake
+                className="mt-0.5 size-4 shrink-0 text-primary"
+                strokeWidth={1.75}
+                aria-hidden="true"
+              />
+              <div className="min-w-0 break-words">
+                <p className="text-sm font-medium">{t.cae.title}</p>
+                <p className="text-xs text-muted-foreground">{t.cae.text}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-start gap-3">
+              <Switch
+                id="cae-enabled"
+                aria-labelledby="cae-enabled-label"
+                aria-describedby="cae-enabled-hint"
+                checked={data.enabled && data.cae.enabled}
+                disabled={update.isPending || !data.enabled}
+                onCheckedChange={(cae) => {
+                  update.mutate({ cae });
+                }}
+              />
+              <div className="min-w-0 break-words">
+                <p id="cae-enabled-label" className="text-sm font-medium">
+                  {t.cae.title}
+                </p>
+                <p id="cae-enabled-hint" className="text-xs text-muted-foreground">
+                  {!data.enabled
+                    ? t.cae.moduleOff
+                    : data.cae.enabled
+                      ? t.cae.enabledHint
+                      : t.cae.enableHint}
+                </p>
+              </div>
+            </div>
+            {data.enabled &&
+              data.cae.enabled &&
+              data.cae.folder !== null &&
+              data.space !== null && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {t.cae.folder}{" "}
+                  <Link
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                    to={`/app/${workspaceSlug}/files/${data.space.id}/f/${data.cae.folder.id}`}
+                  >
+                    {data.cae.folder.name}
+                  </Link>
+                </p>
+              )}
+          </div>
         </div>
       )}
     </Card>

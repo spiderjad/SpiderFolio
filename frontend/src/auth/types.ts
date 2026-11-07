@@ -18,7 +18,11 @@ export interface Membership {
     /** The company's time zone (IANA): every date and time in the app is shown in it. */
     timeZone: string;
     /** The occupational health and safety module: on or off, and the country's terms. */
-    safety: { enabled: boolean; terms: "es" | "latam" };
+    safety: {
+      enabled: boolean;
+      terms: "es" | "latam";
+      /** CAE (docs/spec/cae.md), only while the module is on. */ cae: boolean;
+    };
   };
   role: { id: string; name: string; base: SystemRole };
   capabilities: string[];

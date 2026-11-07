@@ -62,6 +62,17 @@ export function readBianGuests(settings: unknown): boolean {
 }
 
 /**
+ * Coordination of business activities (docs/spec/cae.md), inside the module: on or off and the
+ * «Contratas» folder in the module's space once it's created.
+ */
+export const CaeSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  folderId: z.string().min(1).max(64).optional(),
+});
+
+export type CaeSettings = z.infer<typeof CaeSettingsSchema>;
+
+/**
  * The occupational health and safety module (docs/spec/seguridad-salud.md): on or off, the country's
  * terms (es: PRL and EPI in Spain; latam: SST and EPP) and the module's space once it's created.
  */
@@ -71,6 +82,8 @@ export const SafetySettingsSchema = z.object({
   spaceId: z.string().min(1).max(64).optional(),
   /** The base form «Accidente o incidente», once it's created. */
   incidentFormId: z.string().min(1).max(64).optional(),
+  /** Settings saved before CAE existed parse with it off. */
+  cae: CaeSettingsSchema.default({ enabled: false }),
 });
 
 export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
@@ -79,8 +92,12 @@ export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
 export function readSafetySettings(settings: unknown): SafetySettings {
   const raw = (settings as { safety?: unknown } | null | undefined)?.safety;
   const parsed = SafetySettingsSchema.safeParse(raw ?? {});
-  return parsed.success ? parsed.data : { enabled: false, terms: "es" };
+  return parsed.success ? parsed.data : { enabled: false, terms: "es", cae: { enabled: false } };
 }
+
+/** CAE is on only while the module is on too. */
+export const caeEnabled = (settings: SafetySettings): boolean =>
+  settings.enabled && settings.cae.enabled;
 
 export const WorkspaceSettingsSchema = z.object({
   timezone: z.string().refine(isTimeZone, { error: () => validationMessages.invalidTimeZone }),

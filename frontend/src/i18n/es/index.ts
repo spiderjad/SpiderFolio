@@ -16,6 +16,7 @@ import { profileTexts } from "./profile";
 import { connectorTexts } from "./connector";
 import { formsTexts } from "./forms";
 import { safetyTexts } from "./safety";
+import { caeTexts } from "./cae";
 import { expiriesTexts } from "./expiries";
 import { auditRoomsTexts } from "./audit-rooms";
 import { termsTexts } from "./terms";
@@ -38,6 +39,7 @@ export const es = {
   connector: connectorTexts,
   forms: formsTexts,
   safety: safetyTexts,
+  cae: caeTexts,
   expiries: expiriesTexts,
   auditRooms: auditRoomsTexts,
   terms: termsTexts,

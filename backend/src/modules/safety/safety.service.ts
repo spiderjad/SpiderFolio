@@ -9,7 +9,11 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { ensureTypes } from "../documents/documents.service.ts";
 import { createForm, saveTemplate } from "../forms/forms.service.ts";
 import { createSpace, freeSpaceName } from "../spaces/spaces.service.ts";
+import { AppError } from "../../lib/errors.ts";
+import { caeTexts } from "../../i18n/index.ts";
 import { incidentTemplate } from "./incident-form.ts";
+import { ensureCaeRoot } from "./cae-folders.ts";
+import { seedDefaultCatalog } from "./cae-requirements.service.ts";
 import { readSafetySettings, type SafetySettings } from "../workspaces/settings.ts";
 
 /** The risk assessment document type (reviewed every 12 months). */
@@ -20,6 +24,8 @@ export interface SafetyView {
   terms: SafetySettings["terms"];
   /** The module's space, while it exists. */
   space: { id: string; name: string } | null;
+  /** CAE (docs/spec/cae.md): on or off, and its «Contratas» folder while it exists. */
+  cae: { enabled: boolean; folder: { id: string; name: string } | null };
 }
 
 export interface UpdateSafetyInput {
@@ -27,6 +33,8 @@ export interface UpdateSafetyInput {
   terms?: SafetySettings["terms"] | undefined;
   /** Load the food sector's examples that aren't there yet. */
   examples?: boolean | undefined;
+  /** CAE on or off (needs the module on). */
+  cae?: boolean | undefined;
 }
 
 async function workspaceOf(ctx: AdminContext) {
@@ -44,13 +52,44 @@ async function spaceOf(ctx: AdminContext, spaceId: string | undefined) {
   });
 }
 
-export async function getSafetySettings(ctx: AdminContext): Promise<SafetyView> {
-  const settings = readSafetySettings((await workspaceOf(ctx)).settings);
+async function folderOf(ctx: AdminContext, folderId: string | undefined) {
+  if (folderId === undefined) return null;
+  return await ctx.db.node.findFirst({
+    where: { id: folderId, type: "FOLDER", trashedAt: null },
+    select: { id: true, name: true },
+  });
+}
+
+async function viewOf(ctx: AdminContext, settings: SafetySettings): Promise<SafetyView> {
   return {
     enabled: settings.enabled,
     terms: settings.terms,
     space: await spaceOf(ctx, settings.spaceId),
+    cae: { enabled: settings.cae.enabled, folder: await folderOf(ctx, settings.cae.folderId) },
   };
+}
+
+export async function getSafetySettings(ctx: AdminContext): Promise<SafetyView> {
+  return await viewOf(ctx, readSafetySettings((await workspaceOf(ctx)).settings));
+}
+
+/**
+ * CAE's first activation creates, once, the «Contratas» folder in the module's space and the default
+ * catalog with its country's documents; later ones only bring the folder back if it's gone.
+ */
+async function setUpCae(
+  ctx: AdminContext,
+  settings: SafetySettings,
+  companySettings: unknown,
+): Promise<string | undefined> {
+  const firstTime = settings.cae.folderId === undefined;
+  const folderId = await ensureCaeRoot(ctx, settings, companySettings);
+  if (firstTime) {
+    await withLocale(readWorkspaceLocale(companySettings), () =>
+      seedDefaultCatalog(ctx, settings.terms),
+    );
+  }
+  return folderId ?? settings.cae.folderId;
 }
 
 /** What the module creates, named in the company's language with its terms. */
@@ -174,11 +213,19 @@ export async function updateSafetySettings(
     terms: input.terms ?? before.terms,
     ...(before.spaceId === undefined ? {} : { spaceId: before.spaceId }),
     ...(before.incidentFormId === undefined ? {} : { incidentFormId: before.incidentFormId }),
+    cae: { ...before.cae, enabled: input.cae ?? before.cae.enabled },
   };
+  if (input.cae === true && !after.enabled) {
+    throw new AppError("BAD_REQUEST", { message: caeTexts.messages.moduleOff });
+  }
   if (after.enabled) {
     const created = await setUp(ctx, after, workspace.settings, input.examples === true);
     after.spaceId = created.spaceId;
     after.incidentFormId = created.incidentFormId;
+    if (after.cae.enabled) {
+      const folderId = await setUpCae(ctx, after, workspace.settings);
+      after.cae = { ...after.cae, ...(folderId === undefined ? {} : { folderId }) };
+    }
   }
   const current =
     typeof workspace.settings === "object" && workspace.settings !== null
@@ -203,5 +250,13 @@ export async function updateSafetySettings(
       metadata: { before: before.terms, after: after.terms },
     });
   }
-  return { enabled: after.enabled, terms: after.terms, space: await spaceOf(ctx, after.spaceId) };
+  if (after.cae.enabled !== before.cae.enabled) {
+    await auditAdmin(ctx, {
+      action: after.cae.enabled ? "cae.enable" : "cae.disable",
+      entityType: "Workspace",
+      entityId: workspace.id,
+      metadata: { terms: after.terms },
+    });
+  }
+  return await viewOf(ctx, after);
 }
