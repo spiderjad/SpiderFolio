@@ -410,7 +410,7 @@ export const qualityTexts: typeof es = {
     findings: (total: number, open: number) =>
       total === 0
         ? "No findings"
-        : `${String(total)} ${total === 1 ? "finding" : "findings"}${open > 0 ? ` · ${String(open)} open NCs` : ""}`,
+        : `${String(total)} ${total === 1 ? "finding" : "findings"}${open > 0 ? ` · ${String(open)} ${open === 1 ? "open NC" : "open NCs"}` : ""}`,
     coverage: {
       title: "Internal programme coverage",
       hint: "Each standard's chapters covered by a done internal audit this year.",

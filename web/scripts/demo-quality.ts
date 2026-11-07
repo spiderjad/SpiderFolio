@@ -539,7 +539,7 @@ async function demoHaccp(
     `SELECT c.id FROM "QualityCcp" c JOIN "Workspace" w ON w.id = c."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoAudits(target, counts);
   const { quality } = await call<{ quality: { space: { id: string } | null } }>(
     "GET",
     "/admin/quality",
@@ -615,5 +615,187 @@ async function demoHaccp(
     signature: demoSignature(),
   });
   counts.holds = 2;
+  return await demoAudits(target, counts);
+}
+
+interface DemoAudit {
+  scheme: "INTERNAL" | "IFS8" | "OFFICIAL";
+  title: string;
+  planned: string;
+  done?: { on: string; result?: string };
+  auditor: string;
+  chapters?: string[];
+  findings?: { clause: string; description: string; severity: "MINOR" | "MAJOR" | "CRITICAL" }[];
+}
+
+const AUDITS: Record<QualityLocale, DemoAudit[]> = {
+  es: [
+    {
+      scheme: "INTERNAL",
+      title: "Auditoría interna · Dirección, sistema y recursos",
+      planned: "02-12",
+      done: { on: "02-13" },
+      auditor: "Equipo de calidad",
+      chapters: ["IFS8:1", "IFS8:2", "IFS8:3", "BRCGS9:1", "BRCGS9:3", "BRCGS9:7"],
+    },
+    {
+      scheme: "INTERNAL",
+      title: "Auditoría interna · APPCC y procesos",
+      planned: "05-20",
+      done: { on: "05-21", result: "2 hallazgos" },
+      auditor: "Equipo de calidad",
+      chapters: ["IFS8:4", "BRCGS9:2", "BRCGS9:4", "BRCGS9:5", "BRCGS9:6"],
+      findings: [
+        {
+          clause: "4.9.6",
+          description:
+            "La verificación de las piezas patrón de la línea 2 no se registró dos turnos seguidos.",
+          severity: "MAJOR",
+        },
+        {
+          clause: "4.11.2",
+          description:
+            "Hay un bidón de producto de limpieza sin etiqueta en el almacén de químicos.",
+          severity: "MINOR",
+        },
+      ],
+    },
+    {
+      scheme: "IFS8",
+      title: "Auditoría de certificación IFS Food 8",
+      planned: "09-16",
+      done: { on: "09-17", result: "Nivel superior, 96,3 %" },
+      auditor: "Entidad de certificación",
+      findings: [
+        {
+          clause: "5.4.2",
+          description:
+            "Las tendencias de los análisis microbiológicos no se revisan con la frecuencia del plan.",
+          severity: "MINOR",
+        },
+        {
+          clause: "4.3.1",
+          description:
+            "La etiqueta del chorizo picante no declara la mostaza de la mezcla de especias nueva.",
+          severity: "MAJOR",
+        },
+      ],
+    },
+    {
+      scheme: "INTERNAL",
+      title: "Auditoría interna · Mejora, food defense y producto comercializado",
+      planned: "12-02",
+      auditor: "Equipo de calidad",
+      chapters: ["IFS8:5", "IFS8:6", "BRCGS9:8", "BRCGS9:9"],
+    },
+    {
+      scheme: "OFFICIAL",
+      title: "Inspección sanitaria anual",
+      planned: "12-10",
+      auditor: "Servicio de salud pública",
+    },
+  ],
+  en: [
+    {
+      scheme: "INTERNAL",
+      title: "Internal audit · Management, system and resources",
+      planned: "02-12",
+      done: { on: "02-13" },
+      auditor: "Quality team",
+      chapters: ["IFS8:1", "IFS8:2", "IFS8:3", "BRCGS9:1", "BRCGS9:3", "BRCGS9:7"],
+    },
+    {
+      scheme: "INTERNAL",
+      title: "Internal audit · HACCP and processes",
+      planned: "05-20",
+      done: { on: "05-21", result: "2 findings" },
+      auditor: "Quality team",
+      chapters: ["IFS8:4", "BRCGS9:2", "BRCGS9:4", "BRCGS9:5", "BRCGS9:6"],
+      findings: [
+        {
+          clause: "4.9.6",
+          description: "Line 2's test piece check wasn't recorded for two shifts in a row.",
+          severity: "MAJOR",
+        },
+        {
+          clause: "4.11.2",
+          description: "There's an unlabelled drum of cleaning product in the chemicals store.",
+          severity: "MINOR",
+        },
+      ],
+    },
+    {
+      scheme: "IFS8",
+      title: "IFS Food 8 certification audit",
+      planned: "09-16",
+      done: { on: "09-17", result: "Higher level, 96.3 %" },
+      auditor: "Certification body",
+      findings: [
+        {
+          clause: "5.4.2",
+          description: "Microbiological trends aren't reviewed as often as the plan says.",
+          severity: "MINOR",
+        },
+        {
+          clause: "4.3.1",
+          description: "The spicy chorizo label doesn't declare the mustard in the new spice mix.",
+          severity: "MAJOR",
+        },
+      ],
+    },
+    {
+      scheme: "INTERNAL",
+      title: "Internal audit · Improvement, food defence and traded products",
+      planned: "12-02",
+      auditor: "Quality team",
+      chapters: ["IFS8:5", "IFS8:6", "BRCGS9:8", "BRCGS9:9"],
+    },
+    {
+      scheme: "OFFICIAL",
+      title: "Yearly health inspection",
+      planned: "12-10",
+      auditor: "Public health service",
+    },
+  ],
+};
+
+/**
+ * Phase 3 (docs/spec/calidad.md, «Fase 3»): the year's audit programme, with findings that open their
+ * nonconformity. Idempotent: if the company has audits, nothing is done.
+ */
+export async function demoAudits(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT a.id FROM "QualityAudit" a JOIN "Workspace" w ON w.id = a."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const year = new Date().getFullYear();
+  for (const audit of AUDITS[target.locale]) {
+    const { audit: created } = await call<{ audit: { id: string } }>("POST", "/quality/audits", {
+      scheme: audit.scheme,
+      title: audit.title,
+      plannedOn: `${String(year)}-${audit.planned}`,
+      auditor: audit.auditor,
+      chapters: audit.chapters ?? [],
+    });
+    counts.audits = (counts.audits ?? 0) + 1;
+    if (audit.done !== undefined) {
+      await call("POST", `/quality/audits/${created.id}/done`, {
+        doneOn: `${String(year)}-${audit.done.on}`,
+        result: audit.done.result ?? null,
+      });
+    }
+    for (const finding of audit.findings ?? []) {
+      await call("POST", `/quality/audits/${created.id}/findings`, {
+        ...finding,
+        openNc: finding.severity !== "MINOR" || audit.scheme !== "INTERNAL",
+      });
+      counts.findings = (counts.findings ?? 0) + 1;
+    }
+  }
   return counts;
 }

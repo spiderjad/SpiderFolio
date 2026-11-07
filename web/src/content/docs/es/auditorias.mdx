@@ -1,0 +1,86 @@
+---
+title: "Auditorías"
+description: "El programa anual de auditorías internas y externas, la cobertura de la norma por capítulo, los hallazgos por cláusula que abren su no conformidad y la sala para el auditor externo."
+group: calidad
+order: 4
+icon: book
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 y BRCGS 9 piden un **programa anual de auditorías internas** que cubra toda la norma, y que cada
+hallazgo, interno o externo, tenga su corrección y su acción correctiva con evidencia. En **Auditorías** (menú
+de Calidad) están las del año, la cobertura de la norma y los hallazgos de cada una, que terminan en su
+[no conformidad](/es/docs/no-conformidades).
+
+## El programa del año
+
+La pantalla muestra el año elegido (arriba a la derecha) con sus auditorías por fecha: el tipo, quién audita,
+el resultado, sus hallazgos y cuántas no conformidades siguen abiertas, y su estado: **Planificada**,
+**Hecha** o **Anulada**.
+
+<Shot
+  name="calidad-auditorias"
+  alt="El programa de auditorías del año con la cobertura de IFS y BRCGS por capítulo"
+/>
+
+**Cobertura del programa interno**: por cada norma que audita la empresa (se eligen en **Administración** ›
+**Seguridad** › **General**, tarjeta **Calidad alimentaria**), sus capítulos y si alguna auditoría interna
+**hecha** este año los cubrió. Los capítulos sin marca son los que faltan auditar.
+
+## Planificar una auditoría
+
+Quien gestiona calidad pulsa **Nueva auditoría** y completa:
+
+- el **tipo**: **Interna**, **IFS Food 8**, **BRCGS Food Safety 9**, **De cliente**, **Inspección oficial** u
+  **Otra externa**;
+- el título, el alcance y la **fecha prevista**;
+- **quién audita** (una persona o una entidad) y el **responsable en la empresa**, que la lleva;
+- en una interna, los **capítulos que cubre** de las normas de la empresa;
+- en una externa, si quieres, la **sala de auditoría** para que el auditor vea las evidencias (ver
+  [Salas de auditoría](/es/docs/salas-de-auditoria)).
+
+El responsable recibe el aviso 7 días antes, el día anterior y el mismo día, y la ve en
+[Vencimientos](/es/docs/vencimientos).
+
+## Los hallazgos
+
+En la ficha de la auditoría, **Agregar hallazgo** pide la **cláusula** (por ejemplo, 4.12.1), el hallazgo y
+la **gravedad** (menor, mayor o crítica; el KO de IFS se carga como crítico). Con **Abrir su no conformidad**
+marcado (lo está por defecto), se crea la NC:
+
+- con origen **Auditoría interna** o **Auditoría externa**, según la auditoría;
+- con la gravedad del hallazgo y el título «Cláusula 4.12.1: …»;
+- a cargo del responsable elegido (por defecto, quien lleva la auditoría), que recibe el aviso.
+
+Desde ahí sigue su camino: causa raíz, acciones y verificación. Si no la abriste al registrarlo, **Abrir no
+conformidad** junto al hallazgo la crea después. La ficha de la NC enlaza su auditoría.
+
+<Shot
+  name="calidad-auditoria"
+  alt="Una auditoría de certificación IFS con su resultado y dos hallazgos con su no conformidad"
+/>
+
+## Cerrar o anular
+
+- **Cerrar la auditoría** pide la fecha en que se hizo y, si quieres, el **resultado** (por ejemplo, «Nivel
+  superior, 96,3 %»). Una auditoría hecha sigue recibiendo hallazgos, pero ya no se edita.
+- **Anular** pide un motivo; queda en el programa como anulada.
+
+## Quién ve qué
+
+| Quién                     | Qué ve y qué hace                                                      |
+| ------------------------- | ---------------------------------------------------------------------- |
+| **Gestionar calidad**     | Todo: planifica, edita, registra hallazgos, cierra y anula.            |
+| **Ver calidad**           | Lee el programa, la cobertura y cada auditoría.                        |
+| Quien lleva una auditoría | La ve aunque no tenga capacidades, registra sus hallazgos y la cierra. |
+
+Enlazar una sala de auditoría exige poder verla: la creaste tú o eres el propietario.
+
+## Relacionado
+
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Salas de auditoría](/es/docs/salas-de-auditoria)
+- [Calidad: primeros pasos](/es/docs/calidad)

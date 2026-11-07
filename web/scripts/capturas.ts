@@ -521,6 +521,13 @@ async function demoQualityOf(locale: Locale, slug: string): Promise<void> {
   demoQualityNcs.set(locale, Object.fromEntries(rows.rows.map((row) => [row.status, row.id])));
 }
 
+const demoAuditIds = new Map<Locale, string>();
+const qualityAuditOf = (locale: Locale) => {
+  const id = demoAuditIds.get(locale);
+  if (id === undefined) throw new Error("La auditoría IFS de la demo todavía no está");
+  return id;
+};
+
 const qualityNcOf = (locale: Locale, status: string) => {
   const id = demoQualityNcs.get(locale)?.[status];
   if (id === undefined) throw new Error(`demoQualityOf no dejó una no conformidad ${status}`);
@@ -972,7 +979,8 @@ const CAPTURES: Capture[] = [
     // With its 5 whys and three actions, one overdue.
     name: "calidad-nc",
     who: "owner",
-    path: (i, locale) => `/app/${i.slug}/calidad/no-conformidades/${qualityNcOf(locale, "ACTIONS")}`,
+    path: (i, locale) =>
+      `/app/${i.slug}/calidad/no-conformidades/${qualityNcOf(locale, "ACTIONS")}`,
     before: ({ slug, locale }) => demoQualityOf(locale, slug),
   },
   {
@@ -1000,6 +1008,29 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i) => `/app/${i.slug}/calidad/retenido?estado=all`,
     before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    // Phase 3: the audit programme with its coverage, and the certification audit with its findings.
+    name: "calidad-auditorias",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/auditorias`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-auditoria",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/auditorias/${qualityAuditOf(locale)}`,
+    before: async ({ slug, locale }) => {
+      await demoQualityOf(locale, slug);
+      const { rows } = await db.query<{ id: string }>(
+        `SELECT a.id FROM "QualityAudit" a JOIN "Workspace" w ON w.id = a."workspaceId"
+          WHERE w.slug = $1 AND a.scheme = 'IFS8' LIMIT 1`,
+        [slug],
+      );
+      const id = rows[0]?.id;
+      if (id === undefined) throw new Error("demoQualityOf no dejó la auditoría IFS");
+      demoAuditIds.set(locale, id);
+    },
   },
   {
     name: "calidad-comunicar",

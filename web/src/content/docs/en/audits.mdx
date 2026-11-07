@@ -1,0 +1,84 @@
+---
+title: "Audits"
+description: "The yearly programme of internal and external audits, the standard's coverage by chapter, findings by clause that open their nonconformity and the room for the external auditor."
+group: calidad
+order: 4
+icon: book
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+IFS Food 8 and BRCGS 9 ask for a **yearly internal audit programme** covering the whole standard, and for every
+finding, internal or external, to have its correction and corrective action with evidence. **Audits** (Quality
+menu) holds the year's audits, the standard's coverage and each one's findings, which end in their
+[nonconformity](/en/docs/nonconformities).
+
+## The year's programme
+
+The screen shows the chosen year (top right) with its audits by date: the type, the auditor, the result, its
+findings and how many nonconformities are still open, and its status: **Planned**, **Done** or **Cancelled**.
+
+<Shot
+  name="calidad-auditorias"
+  alt="The year's audit programme with the IFS and BRCGS coverage by chapter"
+/>
+
+**Internal programme coverage**: for each standard the company is audited against (chosen in
+**Administration** › **Security** › **General**, **Food quality** card), its chapters and whether a **done**
+internal audit covered them this year. The unmarked chapters are the ones still to audit.
+
+## Plan an audit
+
+Whoever manages quality clicks **New audit** and fills in:
+
+- the **type**: **Internal**, **IFS Food 8**, **BRCGS Food Safety 9**, **Customer**, **Official inspection**
+  or **Other external**;
+- the title, the scope and the **planned date**;
+- the **auditor** (a person or a body) and the **owner in the company**, who leads it;
+- for an internal one, the **chapters it covers** of the company's standards;
+- for an external one, if you like, the **audit room** so the auditor sees the evidence (see
+  [Audit rooms](/en/docs/audit-rooms)).
+
+The owner is told 7 days before, the day before and on the day, and sees it in [Expiries](/en/docs/expiries).
+
+## Findings
+
+On the audit's record, **Add finding** asks for the **clause** (for example, 4.12.1), the finding and the
+**severity** (minor, major or critical; an IFS KO is entered as critical). With **Open its nonconformity**
+ticked (it is by default), the NC is created:
+
+- with origin **Internal audit** or **External audit**, as the audit is;
+- with the finding's severity and the title “Clause 4.12.1: …”;
+- in the chosen owner's hands (by default, whoever leads the audit), who gets a notice.
+
+From there it follows its path: root cause, actions and check. If you didn't open it when recording the
+finding, **Open nonconformity** next to it creates it later. The NC's record links its audit.
+
+<Shot
+  name="calidad-auditoria"
+  alt="An IFS certification audit with its result and two findings with their nonconformity"
+/>
+
+## Close or cancel
+
+- **Close the audit** asks for the date it was done and, if you like, the **result** (for example, “Higher
+  level, 96.3 %”). A done audit still takes findings, but it's no longer edited.
+- **Cancel** asks for a reason; it stays in the programme as cancelled.
+
+## Who sees what
+
+| Who                    | What they see and do                                                   |
+| ---------------------- | ---------------------------------------------------------------------- |
+| **Manage quality**     | Everything: plans, edits, records findings, closes and cancels.        |
+| **View quality**       | Reads the programme, the coverage and each audit.                      |
+| Whoever leads an audit | Sees it even without capabilities, records its findings and closes it. |
+
+Linking an audit room requires seeing it: you created it or you're the owner.
+
+## Related
+
+- [Nonconformities and CAPA](/en/docs/nonconformities)
+- [Audit rooms](/en/docs/audit-rooms)
+- [Quality: getting started](/en/docs/quality)

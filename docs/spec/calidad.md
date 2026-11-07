@@ -348,6 +348,23 @@ auditorías en un programa, sus hallazgos por cláusula y la NC de cada uno.
   cierra.
 - Enlazar una sala exige verla (la creó o es el propietario, como en las salas).
 
+### Hecho (fase 3)
+
+Hecha el 07/11/2026. Migración `quality_audits` (`QualityAudit`, `QualityFinding`). Backend en
+`audits.service.ts` y `audits.schemas.ts`, vencimiento `quality.audit`; pantallas **Auditorías**
+(`/calidad/auditorias`, con la cobertura) y la ficha de cada una; la ficha de la NC enlaza su auditoría.
+Demo (`demoAudits`), capturas `calidad-auditorias` y `calidad-auditoria`, guía **Auditorías** (es y en) y
+tests de seguridad.
+
+Simplificaciones:
+
+- Una auditoría hecha sigue recibiendo hallazgos (el informe externo suele llegar días después); ya no se
+  edita.
+- La sala se elige entre las que la persona ve (las suyas, o todas para el propietario) y solo en las
+  externas; la ficha la enlaza para quien tiene `audit.share`.
+- Sin normas elegidas en los ajustes, no hay cobertura ni capítulos para elegir.
+- El responsable de la NC de un hallazgo es el elegido, quien lleva la auditoría o quien lo registra.
+
 ### API (fase 3)
 
 - `GET /quality/audits?year&status`, `POST /quality/audits`, `GET /quality/audits/:id`,

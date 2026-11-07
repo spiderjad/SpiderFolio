@@ -680,3 +680,184 @@ describe("calidad fase 2: producto retenido", () => {
     ).toBe(404);
   });
 });
+
+// ─── Phase 3: audits ────────────────────────────────────────────────────────────────────
+
+interface AuditBody {
+  audit: {
+    id: string;
+    status: string;
+    access: string;
+    findingItems: { id: string; nc: { id: string } | null }[];
+  };
+}
+
+const auditInput = (extra: object = {}) => ({
+  scheme: "INTERNAL",
+  title: "Auditoría interna · APPCC",
+  plannedOn: "2026-10-20",
+  ...extra,
+});
+
+describe("calidad fase 3: auditorías", () => {
+  it("quality.view lee; un miembro no ve ni la cobertura; solo quality.manage la planifica", async () => {
+    const created = await api(w.ws.slug, w.manager.token).post("/quality/audits", auditInput());
+    expect(created.status).toBe(201);
+    const id = (created.body as AuditBody).audit.id;
+    expect((await api(w.ws.slug, w.viewer.token).get(`/quality/audits/${id}`)).status).toBe(200);
+    expect(
+      (await api(w.ws.slug, w.viewer.token).post("/quality/audits", auditInput())).status,
+    ).toBe(403);
+    const plain = api(w.ws.slug, w.plain.token);
+    expect((await plain.get(`/quality/audits/${id}`)).status).toBe(404);
+    expect(
+      ((await plain.get("/quality/audits?year=2026")).body as { items: unknown[] }).items,
+    ).toEqual([]);
+    expect((await plain.get("/quality/audits/coverage?year=2026")).status).toBe(403);
+    expect(
+      (
+        await plain.post(`/quality/audits/${id}/findings`, {
+          clause: "1",
+          description: "x",
+          severity: "MINOR",
+        })
+      ).status,
+    ).toBe(404);
+  });
+
+  it("quien la lleva registra hallazgos con su NC y la cierra; no la edita ni la anula", async () => {
+    const created = await api(w.ws.slug, w.manager.token).post(
+      "/quality/audits",
+      auditInput({ leadId: w.plain.membership.id }),
+    );
+    const id = (created.body as AuditBody).audit.id;
+    const lead = api(w.ws.slug, w.plain.token);
+    const seen = await lead.get(`/quality/audits/${id}`);
+    expect((seen.body as AuditBody).audit.access).toBe("lead");
+    const finding = await lead.post(`/quality/audits/${id}/findings`, {
+      clause: "4.12.1",
+      description: "Falta la verificación del detector.",
+      severity: "MAJOR",
+    });
+    expect(finding.status).toBe(201);
+    const ncId = (finding.body as AuditBody).audit.findingItems[0]?.nc?.id ?? "";
+    const nc = await ctx.prisma.qualityNc.findFirstOrThrow({ where: { id: ncId } });
+    expect(nc).toMatchObject({
+      origin: "AUDIT_INTERNAL",
+      severity: "MAJOR",
+      ownerId: w.plain.membership.id,
+      workspaceId: w.ws.workspaceId,
+    });
+    expect((await lead.patch(`/quality/audits/${id}`, { title: "x" })).status).toBe(403);
+    expect((await lead.post(`/quality/audits/${id}/cancel`, { reason: "x" })).status).toBe(403);
+    const closed = await lead.post(`/quality/audits/${id}/done`, { doneOn: "2026-10-21" });
+    expect((closed.body as AuditBody).audit.status).toBe("DONE");
+    // Done: nothing is edited any more.
+    expect(
+      (await api(w.ws.slug, w.manager.token).patch(`/quality/audits/${id}`, { title: "x" })).status,
+    ).toBe(409);
+  });
+
+  it("un hallazgo abre su NC una sola vez; una anulada no recibe hallazgos", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const created = await manager.post("/quality/audits", auditInput({ scheme: "IFS8" }));
+    const id = (created.body as AuditBody).audit.id;
+    const finding = await manager.post(`/quality/audits/${id}/findings`, {
+      clause: "5.4.2",
+      description: "Tendencias sin revisar.",
+      severity: "MINOR",
+      openNc: false,
+    });
+    const findingId = (finding.body as AuditBody).audit.findingItems[0]?.id ?? "";
+    const opened = await manager.post(`/quality/findings/${findingId}/nc`, {});
+    expect(opened.status).toBe(200);
+    const ncId = (opened.body as AuditBody).audit.findingItems[0]?.nc?.id ?? "";
+    expect((await ctx.prisma.qualityNc.findFirstOrThrow({ where: { id: ncId } })).origin).toBe(
+      "AUDIT_EXTERNAL",
+    );
+    expect((await manager.post(`/quality/findings/${findingId}/nc`, {})).status).toBe(409);
+    expect(
+      (await manager.post(`/quality/audits/${id}/cancel`, { reason: "Repetida" })).status,
+    ).toBe(200);
+    expect(
+      (
+        await manager.post(`/quality/audits/${id}/findings`, {
+          clause: "1",
+          description: "x",
+          severity: "MINOR",
+        })
+      ).status,
+    ).toBe(409);
+  });
+
+  it("los capítulos son de las normas de la empresa; la cobertura cuenta solo internas hechas", async () => {
+    const t = await world("Calidad cobertura");
+    await api(t.ws.slug, t.ws.token).put("/admin/quality", { standards: ["IFS8"] });
+    const manager = api(t.ws.slug, t.manager.token);
+    expect(
+      (await manager.post("/quality/audits", auditInput({ chapters: ["BRCGS9:1"] }))).status,
+    ).toBe(400);
+    expect(
+      (await manager.post("/quality/audits", auditInput({ chapters: ["IFS8:7"] }))).status,
+    ).toBe(400);
+    const done = await manager.post(
+      "/quality/audits",
+      auditInput({ chapters: ["IFS8:1", "IFS8:4"] }),
+    );
+    await manager.post(`/quality/audits/${(done.body as AuditBody).audit.id}/done`, {
+      doneOn: "2026-10-21",
+    });
+    await manager.post("/quality/audits", auditInput({ chapters: ["IFS8:2"] }));
+    const coverage = (await manager.get("/quality/audits/coverage?year=2026")).body as {
+      standards: { standard: string; chapters: { number: number; audits: string[] }[] }[];
+    };
+    expect(coverage.standards.map((item) => item.standard)).toEqual(["IFS8"]);
+    expect(
+      coverage.standards[0]?.chapters
+        .filter((item) => item.audits.length > 0)
+        .map((item) => item.number),
+    ).toEqual([1, 4]);
+  });
+
+  it("otra empresa: su auditoría, su hallazgo, su gente y su sala son 404 o 400", async () => {
+    const other = await world("Calidad auditoría ajena");
+    const theirs = await api(other.ws.slug, other.manager.token).post(
+      "/quality/audits",
+      auditInput({ scheme: "IFS8" }),
+    );
+    const theirId = (theirs.body as AuditBody).audit.id;
+    const finding = await api(other.ws.slug, other.manager.token).post(
+      `/quality/audits/${theirId}/findings`,
+      { clause: "1", description: "x", severity: "MINOR", openNc: false },
+    );
+    const theirFinding = (finding.body as AuditBody).audit.findingItems[0]?.id ?? "";
+    const room = await ctx.prisma.auditRoom.create({
+      data: {
+        workspaceId: other.ws.workspaceId,
+        name: "Sala ajena",
+        auditorEmail: "auditor@example.com",
+        expiresAt: new Date(Date.now() + 86_400_000),
+        createdById: other.ws.membershipId,
+      },
+    });
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await manager.get(`/quality/audits/${theirId}`)).status).toBe(404);
+    expect((await manager.patch(`/quality/audits/${theirId}`, { title: "x" })).status).toBe(404);
+    expect(
+      (await manager.post(`/quality/audits/${theirId}/done`, { doneOn: "2026-10-21" })).status,
+    ).toBe(404);
+    expect((await manager.post(`/quality/findings/${theirFinding}/nc`, {})).status).toBe(404);
+    expect(
+      (await manager.post("/quality/audits", auditInput({ leadId: other.manager.membership.id })))
+        .status,
+    ).toBe(404);
+    expect(
+      (
+        await api(w.ws.slug, w.ws.token).post(
+          "/quality/audits",
+          auditInput({ scheme: "IFS8", auditRoomId: room.id }),
+        )
+      ).status,
+    ).toBe(400);
+  });
+});

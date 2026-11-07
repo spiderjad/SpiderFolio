@@ -46,7 +46,7 @@ function CoverageCard({ slug, year }: { slug: string; year: number }) {
           {query.data.map((standard) => {
             const covered = standard.chapters.filter((chapter) => chapter.audits.length > 0).length;
             return (
-              <div key={standard.standard} className="grid gap-2">
+              <div key={standard.standard} className="grid content-start gap-2">
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-sm font-medium">{t.standards[standard.standard]}</p>
                   <p

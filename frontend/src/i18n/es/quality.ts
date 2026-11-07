@@ -411,7 +411,7 @@ export const qualityTexts = {
     findings: (total: number, open: number) =>
       total === 0
         ? "Sin hallazgos"
-        : `${String(total)} ${total === 1 ? "hallazgo" : "hallazgos"}${open > 0 ? ` · ${String(open)} NC abiertas` : ""}`,
+        : `${String(total)} ${total === 1 ? "hallazgo" : "hallazgos"}${open > 0 ? ` · ${String(open)} ${open === 1 ? "NC abierta" : "NC abiertas"}` : ""}`,
     coverage: {
       title: "Cobertura del programa interno",
       hint: "Los capítulos de cada norma que cubrió alguna auditoría interna hecha este año.",

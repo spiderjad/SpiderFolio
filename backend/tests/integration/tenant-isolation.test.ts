@@ -74,6 +74,56 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
   // Food quality (docs/spec/calidad.md). B's module is off: its own reads are 404 too.
   { method: "get", path: "/admin/quality", url: () => "/admin/quality" },
+  // Food quality, phase 3: audits and findings.
+  {
+    method: "get",
+    path: "/quality/audits",
+    url: () => "/quality/audits?year=2026",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/quality/audits/coverage",
+    url: () => "/quality/audits/coverage?year=2026",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/quality/audits",
+    url: () => "/quality/audits",
+    body: { scheme: "INTERNAL", title: "Ajena", plannedOn: "2026-12-01" },
+  },
+  { method: "get", path: "/quality/audits/:id", url: () => "/quality/audits/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/quality/audits/:id",
+    url: () => "/quality/audits/x",
+    body: { title: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/quality/audits/:id/done",
+    url: () => "/quality/audits/x/done",
+    body: { doneOn: "2026-12-01" },
+  },
+  {
+    method: "post",
+    path: "/quality/audits/:id/cancel",
+    url: () => "/quality/audits/x/cancel",
+    body: { reason: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/quality/audits/:id/findings",
+    url: () => "/quality/audits/x/findings",
+    body: { clause: "1.1", description: "Ajena", severity: "MINOR" },
+  },
+  {
+    method: "post",
+    path: "/quality/findings/:id/nc",
+    url: () => "/quality/findings/x/nc",
+    body: {},
+  },
   // Food quality, phase 2: HACCP and product on hold.
   { method: "post", path: "/admin/quality/template", url: () => "/admin/quality/template" },
   { method: "get", path: "/quality/haccp", url: () => "/quality/haccp", ownStatus: 404 },
