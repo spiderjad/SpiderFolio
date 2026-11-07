@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpiderFolio · Navegación por áreas</title>
+<!-- spider-ui from the installed package (open this file from the repo: docs/plans/navegacion/). -->
+<link rel="stylesheet" href="../../../node_modules/spider-ui/spider-ui.css">
+<style>
+/* nav-: proposal mockups only (docs/plans/navegacion/propuesta.html). Colors only from --sp-*. */
+/* SpiderFolio decision: the panel's primary is spider-ui violet, not black (docs/spec/diseno.md). */
+.v-app .v-btn-primary { background: var(--sp-primary); color: var(--sp-on-primary); border-color: var(--sp-primary); }
+.v-app .v-btn-primary:hover { background: var(--sp-primary-hover); border-color: var(--sp-primary-hover); }
+body { margin: 0; background: var(--sp-bg-subtle); }
+.nav-page { max-width: 1240px; margin: 0 auto; padding: 32px 16px 64px; }
+.nav-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
+.nav-controls .v-label { margin: 0 8px 0 0; }
+.nav-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .nav-grid { grid-template-columns: minmax(0, 1fr); } }
+.nav-frame { border: 1px solid var(--sp-border); border-radius: var(--sp-radius-lg); background: var(--sp-bg); box-shadow: var(--sp-shadow-md); overflow: hidden; }
+.nav-frame__bar { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-bottom: 1px solid var(--sp-border); background: var(--sp-bg-subtle); font-size: 12px; color: var(--sp-text-secondary); }
+.nav-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sp-border-hover); }
+.nav-desk { display: flex; min-height: 470px; }
+.nav-rail { width: 64px; flex: none; border-right: 1px solid var(--sp-border); background: var(--sp-bg-subtle); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0; }
+.nav-rail__item { width: 52px; padding: 6px 0; border-radius: var(--sp-radius); text-align: center; font-size: 10px; color: var(--sp-text-secondary); }
+.nav-rail__item span { display: block; font-size: 17px; line-height: 1.2; }
+.nav-rail__item[aria-current="true"] { background: var(--sp-primary-light); color: var(--sp-primary-text); }
+.nav-side { width: 210px; flex: none; border-right: 1px solid var(--sp-border); padding: 12px 8px; }
+.nav-switch { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; margin-bottom: 10px; border: 1px solid var(--sp-border); border-radius: var(--sp-radius); background: var(--sp-bg); font: inherit; font-size: 13px; font-weight: 600; color: var(--sp-text-primary); text-align: left; }
+.nav-switch small { margin-left: auto; color: var(--sp-text-tertiary); font-weight: 400; }
+.nav-group { margin: 12px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--sp-text-tertiary); }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--sp-radius); font-size: 13px; color: var(--sp-text-secondary); }
+.nav-link[aria-current="true"] { background: var(--sp-primary-light); color: var(--sp-primary-text); font-weight: 600; }
+.nav-link .v-badge { margin-left: auto; }
+.nav-main { flex: 1; min-width: 0; padding: 20px 24px; }
+.nav-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+.nav-tile { border: 1px solid var(--sp-border); border-radius: var(--sp-radius-lg); padding: 12px; background: var(--sp-bg); }
+.nav-tile strong { display: block; font-size: 13px; margin: 4px 0 2px; }
+.nav-tile p { margin: 0; font-size: 12px; color: var(--sp-text-secondary); }
+.nav-tile span { font-size: 18px; }
+.nav-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0 16px; border-bottom: 1px solid var(--sp-border); }
+.nav-tab { padding: 8px 10px; font-size: 13px; color: var(--sp-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.nav-tab[aria-current="true"] { color: var(--sp-primary-text); border-color: var(--sp-primary); font-weight: 600; }
+.nav-phone { width: 300px; margin: 0 auto; border: 1px solid var(--sp-border); border-radius: 28px; background: var(--sp-bg); box-shadow: var(--sp-shadow-md); overflow: hidden; }
+.nav-phone__top { padding: 14px 16px 10px; border-bottom: 1px solid var(--sp-border); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.nav-phone__body { min-height: 380px; padding: 12px 14px; }
+.nav-phone__tabs { display: flex; border-top: 1px solid var(--sp-border); background: var(--sp-bg-subtle); }
+.nav-phone__tab { flex: 1; text-align: center; padding: 8px 0 10px; font-size: 10px; color: var(--sp-text-secondary); }
+.nav-phone__tab span { display: block; font-size: 17px; }
+.nav-phone__tab[aria-current="true"] { color: var(--sp-primary-text); font-weight: 600; }
+.nav-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--sp-border); font-size: 13px; }
+.nav-row .v-badge { margin-left: auto; }
+.nav-pros { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.nav-pros ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--sp-text-secondary); }
+.nav-pros h3 { margin: 0; font-size: 13px; }
+.nav-note { font-size: 13px; color: var(--sp-text-secondary); }
+@media (prefers-reduced-motion: no-preference) { .nav-frame, .nav-phone { transition: opacity 150ms ease; } }
+</style>
+</head>
+<body class="v-app">
+<main class="nav-page">
+  <h1 class="v-page-title">Navegación por áreas</h1>
+  <p class="v-page-subtitle">Propuesta para elegir antes de sumar más módulos. Cada área tiene su menú; cada persona entra directo a la suya.</p>
+
+  <div class="v-banner v-banner--info" style="margin-top:16px">
+    El menú de hoy es una sola lista: Inicio, Mis documentos, Archivos, Compartido, Aprobaciones, Vencimientos, Prevención y 12 entradas de Administración, más los espacios. Prevención ya tiene 7 pestañas y la CAE suma 6 más. Con Calidad, no entra.
+  </div>
+
+  <div class="nav-controls">
+    <div><span class="v-label">Opción</span>
+      <div class="v-segmented" role="tablist" id="opt"></div></div>
+    <div><span class="v-label">Quién mira</span>
+      <div class="v-segmented" role="tablist" id="who"></div></div>
+  </div>
+
+  <div class="nav-grid">
+    <section aria-label="Escritorio">
+      <div class="nav-frame">
+        <div class="nav-frame__bar"><i class="nav-dot"></i><i class="nav-dot"></i><i class="nav-dot"></i><span id="url" style="margin-left:8px"></span></div>
+        <div class="nav-desk" id="desk"></div>
+      </div>
+    </section>
+    <section aria-label="Celular (375 px)">
+      <div class="nav-phone"><div class="nav-phone__top" id="ptop"></div><div class="nav-phone__body" id="pbody"></div><div class="nav-phone__tabs" id="ptabs"></div></div>
+    </section>
+  </div>
+
+  <section class="v-card" style="margin-top:24px">
+    <header class="v-card__header"><h2 class="v-card__title" id="optTitle"></h2></header>
+    <div class="v-card__body"><div class="nav-pros" id="pros"></div></div>
+  </section>
+
+  <section class="v-card" style="margin-top:16px">
+    <header class="v-card__header"><h2 class="v-card__title">Qué va en cada área (igual en las tres opciones)</h2></header>
+    <div class="v-card__body"><div class="v-table-wrap"><table class="v-table" id="map"></table></div>
+      <p class="nav-note" style="margin-top:12px">Transversal, fuera de las áreas: buscador (⌘K), Mis pendientes (lecturas, aprobaciones, formularios de hoy, medidas, vencimientos), notificaciones y Bian. Las áreas se ven según los módulos activos de la empresa y los permisos de cada persona; la de entrada sale del departamento (la empresa la fija por departamento y cada persona puede cambiarla).</p>
+    </div>
+  </section>
+
+  <section class="v-card" style="margin-top:16px">
+    <header class="v-card__header"><h2 class="v-card__title">Recomendación</h2></header>
+    <div class="v-card__body nav-note">
+      <p style="margin-top:0"><strong>Opción B (barra de áreas + menú del área)</strong>: las áreas siempre a la vista, sin un clic extra para cambiar, y en el celular se convierten en la barra de abajo. El menú lateral solo muestra el área elegida, así que Prevención y Calidad pueden crecer sin ensuciar lo demás. A una persona con una sola área se le oculta la barra y queda como hoy, pero más corto.</p>
+      <p style="margin-bottom:0">Decisiones abiertas: si la Wiki y la Documentación se separan o van juntas; si Formularios y registros va en Documentación o en cada área (los de PCC en Calidad, la inspección en Prevención); y si Administración es un área o un menú del avatar.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+/* Data-driven mockups: options × profiles. Everything is static; nothing is sent anywhere. */
+const AREAS = {
+  inicio: { icon: "🏠", name: "Inicio" },
+  docs: { icon: "📄", name: "Documentación" },
+  wiki: { icon: "📚", name: "Wiki" },
+  prl: { icon: "🦺", name: "Prevención" },
+  cal: { icon: "✅", name: "Calidad" },
+  admin: { icon: "⚙️", name: "Administración" },
+};
+const MENU = {
+  inicio: [["Panel"], ["Mis pendientes", 4], ["Notificaciones", 2]],
+  docs: [["Documentos controlados"], ["Mis lecturas", 2], ["Aprobaciones", 3], ["Vencimientos", 1], ["Formularios y registros"], ["Salas de auditoría"]],
+  wiki: [["Producción"], ["Calidad"], ["Mantenimiento"], ["Compartido conmigo"]],
+  prl: [["Resumen"], ["Personas"], ["EPI"], ["Formación"], ["Accidentes"], ["Planificación", 2], ["Contratas (CAE)", 6], ["Emergencias"], ["Comité"]],
+  cal: [["Panel de calidad"], ["APPCC"], ["Registros de PCC", 1], ["No conformidades y CAPA", 3], ["Proveedores"], ["Auditorías"], ["Reclamaciones"]],
+  admin: [["Miembros"], ["Departamentos"], ["Puestos"], ["Roles"], ["Accesos"], ["Seguridad"], ["Bian"], ["Límites"], ["Licencia y plugins"], ["Auditoría"]],
+};
+const PROFILES = {
+  op: { name: "Operario", user: "Ana · Producción (lector)", areas: ["inicio", "docs", "wiki"], home: "inicio" },
+  jefe: { name: "Jefa de producción", user: "Carmen · Producción", areas: ["inicio", "docs", "wiki", "prl", "cal"], home: "wiki" },
+  prl: { name: "Técnico de PRL", user: "Sergio · Prevención", areas: ["inicio", "docs", "wiki", "prl"], home: "prl" },
+  cal: { name: "Calidad", user: "Irene · Calidad", areas: ["inicio", "docs", "wiki", "cal"], home: "cal" },
+  admin: { name: "Admin", user: "Martín · Administración", areas: ["inicio", "docs", "wiki", "prl", "cal", "admin"], home: "inicio" },
+};
+const OPTIONS = {
+  A: {
+    name: "A · Selector de área",
+    pros: ["Un solo menú lateral, el del área elegida: el más corto.", "Se parece a cambiar de aplicación (Google, Atlassian).", "Fácil de implementar sobre el menú actual."],
+    cons: ["Cambiar de área cuesta un clic más y no se ve qué otras áreas hay.", "En el celular el selector queda arriba, lejos del pulgar."],
+  },
+  B: {
+    name: "B · Barra de áreas + menú del área (recomendada)",
+    pros: ["Las áreas siempre a la vista, un clic para cambiar.", "En el celular la barra pasa abajo, como una app.", "Cada área crece sin ensuciar las demás; con una sola área la barra se oculta."],
+    cons: ["Ocupa 64 px más en escritorio.", "Hace falta un ícono claro por área."],
+  },
+  C: {
+    name: "C · Portada por departamento",
+    pros: ["Cada departamento aterriza en su portada con accesos grandes a lo suyo.", "Muy simple para el operario y en tablet de planta."],
+    cons: ["El menú lateral sigue mezclando áreas para quien usa varias.", "Es más una portada que una navegación: no resuelve sola el menú de Prevención o Calidad."],
+  },
+};
+let opt = "B", who = "jefe";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const badge = (n) => (n ? `<span class="v-badge v-badge--brand">${n}</span>` : "");
+function seg(el, items, current, onPick) {
+  el.innerHTML = items.map(([k, label]) => `<button class="v-segmented__item" role="tab" aria-selected="${k === current}" data-k="${k}">${esc(label)}</button>`).join("");
+  el.querySelectorAll("button").forEach((b) => (b.onclick = () => onPick(b.dataset.k)));
+}
+function links(area, active = 0) {
+  return MENU[area].map(([l, n], i) => `<div class="nav-link" aria-current="${i === active}">${esc(l)}${badge(n)}</div>`).join("");
+}
+function mainFor(area, p) {
+  if (area === "inicio" || opt === "C") {
+    const tiles = p.areas.filter((a) => a !== "inicio").map((a) => `<div class="nav-tile"><span>${AREAS[a].icon}</span><strong>${AREAS[a].name}</strong><p>${MENU[a].slice(0, 3).map((m) => m[0]).join(" · ")}</p></div>`).join("");
+    const title = opt === "C" && area !== "inicio" ? `Portada · ${p.user.split("· ")[1]}` : `Hola, ${p.user.split(" ·")[0]}`;
+    return `<h2 class="v-page-title" style="font-size:20px">${esc(title)}</h2><p class="v-page-subtitle">Mis pendientes: 2 lecturas, 1 formulario de hoy, 1 medida.</p><div class="nav-tiles">${tiles}</div>`;
+  }
+  const tabs = area === "prl" ? `<div class="nav-tabs">${["Resumen", "Personas", "EPI", "Formación", "Accidentes", "Planificación", "Contratas"].map((t, i) => `<span class="nav-tab" aria-current="${i === 6}">${t}</span>`).join("")}</div>` : "";
+  const rows = area === "prl"
+    ? [["Frío Técnico Levante", "Incompleta", "warning"], ["Limpiezas Industriales Norte", "Autorizada", "success"], ["Control de Plagas Ibérica", "Bloqueada", "danger"]]
+    : [[MENU[area][0][0], "Al día", "success"], [MENU[area][1][0], "2 pendientes", "warning"], [MENU[area][2][0], "Nuevo", "brand"]];
+  return `<h2 class="v-page-title" style="font-size:20px">${AREAS[area].name}</h2>${tabs}<div class="v-table-wrap"><table class="v-table"><thead><tr><th>Nombre</th><th>Estado</th></tr></thead><tbody>${rows.map(([n, s, t]) => `<tr><td>${esc(n)}</td><td><span class="v-badge v-badge--${t}">${s}</span></td></tr>`).join("")}</tbody></table></div><div style="margin-top:14px"><button class="v-btn-primary v-btn--sm">Nueva</button> <button class="v-btn-secondary v-btn--sm">Exportar CSV</button></div>`;
+}
+function render() {
+  const p = PROFILES[who];
+  const area = opt === "C" ? "inicio" : p.home;
+  seg($("opt"), Object.entries(OPTIONS).map(([k, o]) => [k, o.name.split(" ·")[0] === k ? `Opción ${k}` : k]), opt, (k) => { opt = k; render(); });
+  seg($("who"), Object.entries(PROFILES).map(([k, v]) => [k, v.name]), who, (k) => { who = k; render(); });
+  $("url").textContent = `spiderfolio.app/app/demo-industrias/${opt === "C" ? "" : area === "inicio" ? "" : area}`;
+  let desk = "";
+  if (opt === "A") {
+    desk = `<nav class="nav-side"><button class="nav-switch" aria-haspopup="menu">${AREAS[area].icon} ${AREAS[area].name}<small>▾ cambiar</small></button>${links(area, area === "prl" ? 6 : 0)}<div class="nav-group">Transversal</div><div class="nav-link">Mis pendientes${badge(4)}</div><div class="nav-link">Buscar <span class="v-kbd" style="margin-left:auto">⌘K</span></div></nav>`;
+  } else if (opt === "B") {
+    const rail = p.areas.length > 1 ? `<nav class="nav-rail" aria-label="Áreas">${p.areas.map((a) => `<div class="nav-rail__item" aria-current="${a === area}"><span>${AREAS[a].icon}</span>${AREAS[a].name.slice(0, 10)}</div>`).join("")}</nav>` : "";
+    desk = `${rail}<nav class="nav-side"><div class="nav-group" style="margin-top:4px">${AREAS[area].name}</div>${links(area, area === "prl" ? 6 : 0)}</nav>`;
+  } else {
+    desk = `<nav class="nav-side"><div class="nav-link" aria-current="true">Portada</div><div class="nav-link">Mis pendientes${badge(4)}</div>${p.areas.filter((a) => a !== "inicio").map((a) => `<div class="nav-group">${AREAS[a].name}</div>${MENU[a].slice(0, 2).map(([l]) => `<div class="nav-link">${esc(l)}</div>`).join("")}`).join("")}</nav>`;
+  }
+  $("desk").innerHTML = desk + `<div class="nav-main">${mainFor(area, p)}</div>`;
+  // Phone: B uses a bottom bar of areas; A a top selector; C the department's home.
+  $("ptop").innerHTML = opt === "A" ? `${AREAS[area].icon} ${AREAS[area].name} <span style="margin-left:auto;font-weight:400;color:var(--sp-text-tertiary)">▾</span>` : `${AREAS[area].icon} ${opt === "C" ? "Portada" : AREAS[area].name}`;
+  const phoneRows = (area === "inicio" || opt === "C")
+    ? [["Leer: Instrucción cortadora v4", "Leer", "brand"], ["Control de temperatura de cámaras", "Hoy", "warning"], ["Medida: revisar extintor", "7 días", "warning"], ["Mis EPI", "Al día", "success"]]
+    : MENU[area].slice(0, 6).map(([l, n]) => [l, n ? String(n) : "", n ? "brand" : ""]);
+  $("pbody").innerHTML = phoneRows.map(([l, b, t]) => `<div class="nav-row">${esc(l)}${b ? `<span class="v-badge ${t ? "v-badge--" + t : ""}">${b}</span>` : ""}</div>`).join("");
+  const tabs = opt === "B" ? p.areas.slice(0, 5) : ["inicio"];
+  $("ptabs").innerHTML = opt === "B"
+    ? tabs.map((a) => `<div class="nav-phone__tab" aria-current="${a === area}"><span>${AREAS[a].icon}</span>${AREAS[a].name.slice(0, 9)}</div>`).join("")
+    : `<div class="nav-phone__tab" aria-current="true"><span>🏠</span>Inicio</div><div class="nav-phone__tab"><span>🔍</span>Buscar</div><div class="nav-phone__tab"><span>🔔</span>Avisos</div>`;
+  const o = OPTIONS[opt];
+  $("optTitle").textContent = o.name;
+  $("pros").innerHTML = `<div><h3>A favor</h3><ul>${o.pros.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div><div><h3>En contra</h3><ul>${o.cons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+}
+$("map").innerHTML = `<thead><tr><th>Área</th><th>Contenido</th><th>Quién la ve</th></tr></thead><tbody>${[
+  ["inicio", "Panel, Mis pendientes, notificaciones", "Todos"],
+  ["docs", MENU.docs.map((m) => m[0]).join(", "), "Todos (cada uno lo suyo)"],
+  ["wiki", "Espacios y páginas por departamento, Compartido conmigo", "Todos, según el acceso de cada espacio"],
+  ["prl", MENU.prl.map((m) => m[0]).join(", "), "Con el módulo activo: PRL, jefes (su área), portería (solo CAE)"],
+  ["cal", MENU.cal.map((m) => m[0]).join(", "), "Con el módulo activo: calidad, jefes, quien registra PCC"],
+  ["admin", MENU.admin.map((m) => m[0]).join(", "), "Propietario y admin (según capacidades)"],
+].map(([a, c, w]) => `<tr><td>${AREAS[a].icon} ${AREAS[a].name}</td><td>${esc(c)}</td><td>${esc(w)}</td></tr>`).join("")}</tbody>`;
+render();
+</script>
+</body>
+</html>

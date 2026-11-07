@@ -18,6 +18,9 @@ Hay que analizar y decidir con él, sin código todavía:
 - Cómo encajan lo transversal (buscador, Mis pendientes, notificaciones, Bian, Administración) y el móvil.
 - Entregable: una propuesta corta con 2 o 3 opciones de navegación (boceto de menú por rol: operario,
   jefe de producción, técnico de PRL, calidad, admin) para elegir, y después el spec en docs/spec/diseno.md.
+- **Propuesta lista** (07/11/2026): `docs/plans/navegacion/propuesta.html` (abrir en el navegador desde el
+  repo; usa spider-ui del paquete instalado). Tres opciones (A selector, B barra de áreas, C portada por
+  departamento) × cinco perfiles, escritorio y celular. Recomendada: B. Falta que el mantenedor elija.
 
 ## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 
