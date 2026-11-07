@@ -14,6 +14,8 @@ export default defineConfig({
   reporter: [["list"]],
   // Test texts are in Spanish: the app takes its language from the browser.
   use: { baseURL: E2E_WEB_URL, locale: "es-ES", trace: "retain-on-failure" },
+  // `npm run e2e` runs each browser in its own pass, so each starts a fresh API: the global rate
+  // limit (300/min per IP, in memory) would otherwise carry the first browser's requests over.
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
