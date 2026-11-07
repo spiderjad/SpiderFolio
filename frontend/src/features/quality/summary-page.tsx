@@ -6,7 +6,7 @@ import { CalendarCheck, ClipboardX, Siren } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
-import { cn, formatUtcDate } from "@/lib/utils";
+import { cn, formatNumber, formatUtcDate } from "@/lib/utils";
 import { NC_ORIGINS, SEVERITIES, prpKeys, prpsApi, qualityApi, qualityKeys } from "./quality-api";
 import { NcStatusBadge, SeverityBadge } from "./quality-common";
 import { texts } from "@/i18n";
@@ -185,6 +185,47 @@ export function QualitySummaryPage() {
                 label={b.withoutStudy}
                 value={board.products.withoutStudy}
                 to={`${base}/productos`}
+                alert
+              />
+            </div>
+          </Section>
+          <Section title={b.culture}>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Stat
+                label={b.overdueActivities}
+                value={board.culture.overdueActivities}
+                to={`${base}/cultura`}
+                alert
+              />
+              <Stat
+                label={b.lastSurvey}
+                value={
+                  board.culture.lastSurvey?.participation === null ||
+                  board.culture.lastSurvey === null
+                    ? b.noSurvey
+                    : `${formatNumber(board.culture.lastSurvey.participation)} %`
+                }
+                to={`${base}/cultura`}
+              />
+              <Stat
+                label={b.lastSurveyAverage}
+                value={
+                  board.culture.lastSurvey?.average === null ||
+                  board.culture.lastSurvey === null
+                    ? b.noSurvey
+                    : formatNumber(board.culture.lastSurvey.average)
+                }
+                to={`${base}/cultura`}
+              />
+              <Stat
+                label={b.proposedChanges}
+                value={board.changes.proposed}
+                to={`${base}/cambios?estado=PROPOSED`}
+              />
+              <Stat
+                label={b.overdueChanges}
+                value={board.changes.overdue}
+                to={`${base}/cambios?estado=APPROVED`}
                 alert
               />
             </div>

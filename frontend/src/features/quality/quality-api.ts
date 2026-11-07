@@ -883,6 +883,16 @@ export interface QualityDashboard {
   prps: { overdue: number; dueSoon: number; nonConforming: number };
   sampling: { overdue: number; nonConforming: number };
   products: { labelsOutdated: number; labelsInReview: number; withoutStudy: number };
+  culture: {
+    overdueActivities: number;
+    lastSurvey: {
+      id: string;
+      title: string;
+      participation: number | null;
+      average: number | null;
+    } | null;
+  };
+  changes: { proposed: number; overdue: number };
 }
 
 export const prpKeys = {

@@ -225,6 +225,25 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/product-page"), "ProductPage"),
                   },
                   {
+                    path: "cultura",
+                    lazy: page(() => import("@/features/quality/culture-page"), "CulturePage"),
+                  },
+                  {
+                    path: "encuestas/:surveyId",
+                    lazy: page(
+                      () => import("@/features/quality/survey-answer-page"),
+                      "SurveyAnswerPage",
+                    ),
+                  },
+                  {
+                    path: "cambios",
+                    lazy: page(() => import("@/features/quality/changes-page"), "ChangesPage"),
+                  },
+                  {
+                    path: "cambios/:changeId",
+                    lazy: page(() => import("@/features/quality/change-page"), "ChangePage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),

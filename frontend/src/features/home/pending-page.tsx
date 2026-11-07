@@ -3,7 +3,7 @@
 // Prevention measures, PPE and training. Each block comes from what the app already had and hides when
 // there's nothing in it.
 import { useQuery } from "@tanstack/react-query";
-import { BadgeCheck, ListChecks } from "lucide-react";
+import { BadgeCheck, HeartHandshake, ListChecks } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/display";
@@ -12,6 +12,7 @@ import { PendingFormsCard } from "@/features/forms/pending-forms";
 import { incidentsApi, incidentsKeys } from "@/features/safety/safety-api";
 import { SafetyHomeAlert } from "@/features/safety/home-alert";
 import { qualityApi, qualityKeys } from "@/features/quality/quality-api";
+import { cultureApi, cultureKeys } from "@/features/quality/culture-api";
 import { formatUtcDate } from "@/lib/utils";
 import { PendingCard } from "./dashboard-page";
 import { useHome } from "./home-api";
@@ -97,6 +98,44 @@ function MyQualityActionsCard({ slug }: { slug: string }) {
   );
 }
 
+/** The open food safety culture surveys the person hasn't answered (docs/spec/calidad.md, «Fase 6c»). */
+function PendingSurveysCard({ slug }: { slug: string }) {
+  const membership = useMembership();
+  const enabled = membership.workspace.quality.enabled && membership.role.base !== "GUEST";
+  const query = useQuery({
+    queryKey: cultureKeys.pending(slug),
+    queryFn: () => cultureApi.pending(slug),
+    select: (data) => data.items,
+    enabled,
+  });
+  const items = query.data ?? [];
+  if (!enabled || items.length === 0) return null;
+  const t = texts.quality.culture.pending;
+  return (
+    <Card className="grid gap-3 p-4 sm:p-5">
+      <div className="flex items-center gap-2">
+        <HeartHandshake className="size-5 text-primary" aria-hidden="true" />
+        <h2 className="text-base font-semibold">{t.title}</h2>
+      </div>
+      <ul className="-my-2 divide-y divide-border">
+        {items.slice(0, SHOWN).map((survey) => (
+          <li key={survey.id} className="flex min-h-14 items-center gap-3 py-2 text-sm">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{survey.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {t.questions(survey.questions)} · {t.closes(formatUtcDate(survey.closesOn))}
+              </p>
+            </div>
+            <Button asChild size="sm">
+              <Link to={`/app/${slug}/calidad/encuestas/${survey.id}`}>{t.answer}</Link>
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 export function PendingPage() {
   const { workspaceSlug = "" } = useParams();
   const overview = useHome(workspaceSlug);
@@ -110,6 +149,7 @@ export function PendingPage() {
       <PendingFormsCard slug={workspaceSlug} />
       <ExpiriesHomeCard slug={workspaceSlug} />
       <MyActionsCard slug={workspaceSlug} />
+      <PendingSurveysCard slug={workspaceSlug} />
       <MyQualityActionsCard slug={workspaceSlug} />
       <SafetyHomeAlert slug={workspaceSlug} />
     </div>
