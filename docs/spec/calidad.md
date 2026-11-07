@@ -603,6 +603,153 @@ Simplificaciones y añadidos:
 - La NC de un control no conforme queda a cargo del responsable del control (o de quien lo registra).
 
 
+## Fase 6b: productos, etiquetado y plan analítico
+
+Bloques 9 y 10 de las notas. Mismo patrón que los prerrequisitos: controles periódicos con responsable,
+vencimiento y no conformidad en el mismo paso.
+
+### Productos y ficha técnica
+
+El catálogo de lo que fabrica la empresa, con su ficha técnica (IFS 4.2, BRCGS 3.6 y 5.1). El documento
+formal de la ficha sigue siendo un documento controlado; aquí van los datos que se revisan contra la etiqueta.
+
+- `QualityProduct` `{ id, workspaceId, code? (hasta 40), name (1 a 160), family? (hasta 80), ingredients
+  (hasta 4000, en orden de peso), allergens (QualityAllergen[]), mayContain (QualityAllergen[]: trazas por
+  contaminación cruzada), nutrition? (Json, por 100 g: energyKj, energyKcal, fat, saturates, carbs, sugars,
+  protein, salt), shelfLifeDays? (1 a 3650), storage? (hasta 200: «Entre 0 y 4 °C»), readyToEat (bool: listo
+  para consumo, Reglamento 2073/2005), specNodeId? (la ficha como documento controlado; sin FK), folderId?,
+  notes? (hasta 1000), specVersion (Int, empieza en 1), archivedAt?, createdById, createdAt, updatedAt }`.
+  Se archiva.
+- `QualityAllergen`: los 14 del anexo II del Reglamento 1169/2011 (GLUTEN, CRUSTACEANS, EGGS, FISH, PEANUTS,
+  SOY, MILK, NUTS, CELERY, MUSTARD, SESAME, SULPHITES, LUPIN, MOLLUSCS).
+- **`specVersion` sube** cuando cambian los ingredientes, los alérgenos, las trazas, la información
+  nutricional o la vida útil. Es contra lo que se aprueba una etiqueta.
+- Cada producto tiene su carpeta «Productos/<nombre>» en el espacio de Calidad, creada la primera vez que se
+  necesita (como la de un proveedor): ahí van el arte de las etiquetas y los informes de vida útil.
+
+### Estudios de vida útil
+
+- `QualityShelfLifeStudy` `{ id, workspaceId, productId, startedOn (DATE), targetDays (1 a 3650), listeria
+  (bool: incluye Listeria monocytogenes), result (PENDING | PASSED | FAILED), resultOn?, conclusion? (hasta
+  1000), reportNodeId? (archivo de la carpeta del producto; sin FK), createdById, createdAt }`.
+- Registrar el resultado (**Aprobado** o **No superado**) cierra el estudio; no superado puede abrir la NC
+  (origen **Analítica**) en el mismo paso.
+- Un producto **listo para consumo** sin estudio aprobado aparece como «Sin estudio de vida útil».
+
+### Etiquetas
+
+El circuito de aprobación de etiquetas contra el Reglamento 1169/2011 y la ficha vigente.
+
+- `QualityLabel` `{ id, workspaceId, productId, version (correlativo por producto), nodeId? (el arte, archivo
+  de la carpeta del producto; sin FK), status (IN_REVIEW | APPROVED | REJECTED | SUPERSEDED), specVersion
+  (la versión de la ficha contra la que se revisa), checks (Json), note? (hasta 1000), submittedById,
+  submittedAt, reviewedById?, reviewedAt?, reviewNote? (hasta 1000) }`.
+- **Enviar a revisión** (quality.manage): la etiqueta queda En revisión con la versión actual de la ficha.
+- **Revisar** (quality.manage): la lista de comprobación del artículo 9: denominación, lista de ingredientes,
+  alérgenos destacados, cantidad neta, fecha de duración mínima o de caducidad, conservación, operador, lote,
+  origen e información nutricional; en la pantalla se ven los alérgenos y la vida útil de la ficha al lado.
+  **Aprobar** exige todo marcado (o «no aplica» en origen y nutricional); **Rechazar** exige el motivo.
+  Aprobar una pasa la aprobada anterior a Sustituida. Si la aprueba quien la envió, queda registrado (no se
+  impide: en una pyme puede haber una sola persona de calidad).
+- Estado del etiquetado de cada producto: **Aprobada**, **Desactualizada** (la ficha cambió después:
+  `specVersion` mayor que la de la etiqueta aprobada), **En revisión** o **Sin etiqueta**.
+
+### Plan analítico
+
+Muestreo de producto, superficies, ambiente y agua, con su criterio y el informe del laboratorio externo.
+
+- `QualitySamplingPoint` `{ id, workspaceId, kind (PRODUCT | SURFACE | ENVIRONMENT | WATER), name (1 a 160:
+  «Sumidero sala de loncheado»), productId?, zone? (hasta 120: «Zona 1, contacto»), parameter (1 a 120:
+  «Listeria monocytogenes»), criterion? (hasta 200: «Ausencia en 25 g»), maxValue? (Float), unit? (hasta 20),
+  everyDays (1 a 730), laboratory? (hasta 120), responsibleId?, lastSampledOn?, nextDueOn, archivedAt?,
+  createdById, createdAt, updatedAt }`. Se archiva.
+- `QualityLabResult` `{ id, workspaceId, pointId, sampledOn (DATE), value? (Float), detected? (bool),
+  conforming (bool), reportNodeId? (archivo del espacio de Calidad; sin FK), note? (hasta 1000), ncId?,
+  recordedById, createdAt }`: solo se agregan.
+- **Registrar resultado**: el valor (o detectado / no detectado). La pantalla propone conforme o no conforme
+  según el límite (`value ≤ maxValue`, no detectado) y la persona lo confirma. No conforme: **Abrir no
+  conformidad** con el origen nuevo **Analítica** (`LAB`) y el punto y el parámetro en el título.
+- Mueve la próxima fecha como un prerrequisito; vencimiento `quality.sampling` al responsable (o a quien lo
+  creó): 7 días antes, el día anterior y el mismo día.
+- **Tendencia**: el historial de cada punto muestra sus valores contra el límite; dos resultados no conformes
+  seguidos en el mismo punto lo marcan **Repetido**.
+- Los informes del laboratorio van en «Plan analítico» dentro del espacio de Calidad (carpeta creada la
+  primera vez).
+
+### Permisos
+
+- Productos, estudios y etiquetas: quality.manage crea, edita, envía y revisa; quality.view lee.
+- Plan analítico: como los prerrequisitos (quality.manage gestiona; el responsable de un punto registra sus
+  resultados y lo ve en **Lo mío** › «Mis muestras»; quality.view lee).
+- Los invitados no entran (403).
+
+### Pantallas
+
+- **Productos** (`/calidad/productos`): la lista con familia, alérgenos, vida útil y estado del etiquetado;
+  **Nuevo producto**. La ficha de cada producto (`/calidad/productos/:id`): datos, alérgenos, nutricional,
+  estudios de vida útil y etiquetas con su revisión.
+- **Plan analítico** (`/calidad/plan-analitico`): por tipo, cada punto con su parámetro, criterio, último
+  resultado, estado (Al día, Por vencer, Vencido) y **Repetido**; **Nuevo punto**, **Registrar resultado** e
+  historial.
+- **Panel**: muestras vencidas, resultados no conformes de los últimos 30 días, etiquetas desactualizadas o
+  en revisión y productos listos para consumo sin estudio.
+
+### API (fase 6b)
+
+- `GET/POST /quality/products`, `GET/PATCH /quality/products/:id`, `POST /quality/products/:id/archive`
+  `{ archived }`, `POST /quality/products/:id/folder`, `GET /quality/products/:id/files`.
+- `POST /quality/products/:id/studies`, `POST /quality/studies/:id/result` `{ result, resultOn, conclusion?,
+  reportNodeId?, openNc, severity? }`.
+- `POST /quality/products/:id/labels` `{ nodeId?, note? }`, `POST /quality/labels/:id/review` `{ decision
+  (APPROVE | REJECT), checks, reviewNote? }`.
+- `GET/POST /quality/sampling`, `PATCH /quality/sampling/:id`, `POST /quality/sampling/:id/archive`,
+  `POST /quality/sampling/:id/restore`, `GET/POST /quality/sampling/:id/results`.
+
+
+## Fase 6c: cultura de seguridad alimentaria y gestión de cambios
+
+Bloques 12 y 13. Se hace después de la 6b.
+
+### Cultura de seguridad alimentaria
+
+IFS 8 (1.2) y BRCGS 9 (1.1.2) piden un plan con actividades, su seguimiento y medir la cultura.
+
+- **Plan anual**: `QualityCulturePlan` `{ workspaceId, year, objectives (hasta 4000) }` (único por año) y
+  `QualityCultureActivity` `{ id, workspaceId, year, title (1 a 160), kind (TRAINING | COMMUNICATION |
+  SURVEY | MEETING | OTHER), plannedOn (DATE), doneOn?, responsibleId?, note? (hasta 1000), archivedAt? }`.
+  Vencimiento `quality.culture` al responsable hasta que se marca hecha.
+- **Encuestas anónimas**: `QualityCultureSurvey` `{ id, workspaceId, title, questions (String[], 1 a 20, cada
+  una hasta 200; por defecto diez afirmaciones sobre compromiso de la dirección, comunicación, formación,
+  responsabilidad y comunicar problemas sin miedo), opensOn, closesOn, closedAt?, createdById }`.
+  - Cada persona activa (no invitada) responde una vez mientras está abierta, del 1 (nada de acuerdo) al 5
+    (muy de acuerdo), con un comentario opcional. Le aparece en **Mis pendientes**.
+  - **Anonimato**: `QualityCultureAnswer` `{ id, workspaceId, surveyId, scores (Int[]), comment? }` no guarda
+    quién ni cuándo (sin `createdAt`); quién ya respondió va en otra tabla, `QualityCultureVoter`
+    `{ surveyId, membershipId }`, sin enlace con la respuesta. Ni el log de auditoría ni los avisos dicen
+    qué respondió nadie.
+  - **Resultados** (quality.view): participación, media y reparto por pregunta y los comentarios en orden
+    aleatorio; solo con 5 respuestas o más (el mínimo en `packages/limits`).
+- Panel: actividades vencidas y la participación y media de la última encuesta.
+
+### Gestión de cambios
+
+Una receta, un producto, una línea, un equipo, un proveedor o un proceso nuevos pasan por la revisión del
+APPCC antes de aprobarse (IFS 4.2.1.3 y 2.3.1, BRCGS 1.1.11 y 2.3).
+
+- `QualityChange` `{ id, workspaceId, year, number (código **CAM-AAAA-NNNN**), title (1 a 160), kind (RECIPE |
+  PRODUCT | LINE | EQUIPMENT | SUPPLIER | PROCESS | OTHER), description (hasta 4000), productId?, plannedOn?,
+  status (PROPOSED | APPROVED | REJECTED | IMPLEMENTED | CANCELLED), review (Json: haccp, allergens, label,
+  training, validation, cada uno `pending | not_applicable | done` con su nota), impact? (NONE | LOW | HIGH),
+  ownerId?, proposedById, decidedById?, decidedAt?, decisionNote?, implementedOn?, createdAt, updatedAt }`.
+- Cualquier persona (no invitada) **propone** un cambio. quality.manage lo **revisa**: completa la revisión
+  (peligros y PCC del APPCC, alérgenos, etiqueta y ficha, formación, validación) y lo **aprueba** (con la
+  revisión del APPCC respondida) o lo **rechaza** con motivo. Aprobado, su responsable lo marca
+  **implantado** cuando ningún punto queda pendiente.
+- Vencimiento `quality.change` al responsable con `plannedOn` mientras está aprobado.
+- Pantalla **Cambios** (`/calidad/cambios`): lista y ficha de cada cambio. Quien lo propuso lo ve, sin
+  cambiarlo.
+
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
@@ -617,8 +764,9 @@ Simplificaciones y añadidos:
    evaluación anual y sus NC.
 5. **Reclamaciones y retirada** (bloques 6 y 7, detalle arriba): reclamaciones con plazo, respuesta y NC;
    indicador por millón de unidades; equipo y contactos de crisis y pruebas de retirada.
-6. **Panel de indicadores** (bloque 14) y el resto (bloques 3, 9, 10, 12 y 13): prerrequisitos,
-   especificaciones y etiquetado, plan analítico, cultura de seguridad alimentaria y gestión de cambios.
+6. **Panel de indicadores** (bloque 14) y el resto, en tres partes: 6a panel y prerrequisitos (bloque 3);
+   6b productos, etiquetado y plan analítico (9 y 10); 6c cultura de seguridad alimentaria y gestión de
+   cambios (12 y 13).
 7. **Trazabilidad** (bloque 4): al final, con el conector de SAP y ADA MES (plugin).
 
 Cada fase: commit propio, guías es/en de las pantallas que cambian y capturas. Tests de permisos y de
@@ -634,3 +782,7 @@ aislamiento entre empresas: todos juntos al cerrar el módulo.
 6. Modelo propio (`QualityAction`), no las medidas de Prevención (`SafetyAction`): el ciclo con
    verificación de eficacia y los tipos corrección / correctiva / preventiva son distintos. La pantalla de
    acciones reutiliza los componentes.
+7. Fase 6b: origen de NC nuevo **Analítica** (`LAB`) para resultados de laboratorio y estudios de vida útil
+   no superados. Una etiqueta la puede aprobar quien la envió (queda registrado).
+8. Fase 6c: encuestas de cultura anónimas por diseño (respuesta sin persona ni fecha, quién respondió en otra
+   tabla) y resultados solo desde 5 respuestas.
