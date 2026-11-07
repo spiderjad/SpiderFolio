@@ -74,6 +74,63 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
   // Food quality (docs/spec/calidad.md). B's module is off: its own reads are 404 too.
   { method: "get", path: "/admin/quality", url: () => "/admin/quality" },
+  // Food quality, phase 2: HACCP and product on hold.
+  { method: "post", path: "/admin/quality/template", url: () => "/admin/quality/template" },
+  { method: "get", path: "/quality/haccp", url: () => "/quality/haccp", ownStatus: 404 },
+  {
+    method: "get",
+    path: "/quality/ccps/form-options",
+    url: () => "/quality/ccps/form-options",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/quality/ccps",
+    url: () => "/quality/ccps",
+    body: {
+      code: "PCC-9",
+      name: "Ajeno",
+      step: "Ajeno",
+      hazard: "Ajeno",
+      hazardType: "PHYSICAL",
+      criticalLimit: "Ajeno",
+      frequency: "Ajeno",
+      correctiveAction: "Ajeno",
+      verification: "Ajeno",
+    },
+  },
+  {
+    method: "put",
+    path: "/quality/ccps/order",
+    url: () => "/quality/ccps/order",
+    body: { ids: ["x"] },
+  },
+  {
+    method: "patch",
+    path: "/quality/ccps/:id",
+    url: () => "/quality/ccps/x",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/quality/ccps/:id/archive",
+    url: () => "/quality/ccps/x/archive",
+    body: { archived: true },
+  },
+  { method: "get", path: "/quality/holds", url: () => "/quality/holds", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/holds",
+    url: () => "/quality/holds",
+    body: { product: "Ajeno", reason: "Ajeno" },
+  },
+  { method: "get", path: "/quality/holds/:id", url: () => "/quality/holds/x", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/holds/:id/decision",
+    url: () => "/quality/holds/x/decision",
+    body: { status: "RELEASED", note: "Ajeno", signature: "data:image/png;base64,AAAA" },
+  },
   {
     method: "put",
     path: "/admin/quality",

@@ -269,6 +269,25 @@ Los límites son ejemplos habituales del sector: la empresa los ajusta a su plan
 - Pantalla **Producto retenido** (`/calidad/retenido`): lo retenido primero, filtrable por estado.
 - El retenido de una NC se ve en su ficha.
 
+### Hecho (fase 2)
+
+Hecha el 07/11/2026. Migración `quality_haccp_holds` (`QualityCcp`, `QualityHold`). Backend en
+`haccp.service.ts`, `haccp-template.ts`, `haccp.schemas.ts` y `holds.service.ts`; pantallas **Plan APPCC**
+(`/calidad/appcc`) y **Producto retenido** (`/calidad/retenido`), tarjeta de retenido en la ficha de la NC y
+botón de la plantilla en la tarjeta del módulo. Demo en `web/scripts/demo-quality.ts` (`demoHaccp`), capturas
+`calidad-appcc` y `calidad-retenido`, guía **Plan APPCC y producto retenido** (es y en) y tests de seguridad
+en `quality-security.test.ts` y `tenant-isolation.test.ts`.
+
+Simplificaciones:
+
+- La plantilla no fija la frecuencia ni quién llena cada formulario (un formulario periódico necesita a
+  quién se le pide): se eligen en sus ajustes. Sus formularios quedan con apertura automática de NC.
+- El formulario de un PCC se elige entre los de los espacios del área Calidad (`GET /quality/ccps/form-options`,
+  solo quality.manage, solo nombres).
+- La firma de la decisión se guarda (PNG) y la pantalla dice «Firmado», sin mostrar la imagen.
+- Las NC abiertas por PCC se cuentan entre las 2000 abiertas más recientes con registro.
+- Una NC cerrada o anulada no admite retener producto nuevo.
+
 ### API (fase 2)
 
 - `GET/POST /quality/ccps`, `PATCH /quality/ccps/:id`, `POST /quality/ccps/:id/archive`,

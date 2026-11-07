@@ -357,7 +357,7 @@ export async function demoQuality(target: DemoQualityTarget): Promise<Record<str
       WHERE w.slug = $1 AND n.title = $2 LIMIT 1`,
     [target.slug, first?.title ?? ""],
   );
-  if (existing.length > 0) return counts;
+  if (existing.length > 0) return await demoHaccp(target, counts);
 
   const { quality } = await call<{ quality: { space: { id: string } | null } }>(
     "PUT",
@@ -478,5 +478,142 @@ export async function demoQuality(target: DemoQualityTarget): Promise<Record<str
     correction: null,
   });
   counts.reported = 1;
+  return await demoHaccp(target, counts);
+}
+
+const HACCP: Record<
+  QualityLocale,
+  {
+    plan: { name: string; text: string };
+    product: string;
+    reworkProduct: string;
+    reason: string;
+    reworkReason: string;
+    released: string;
+  }
+> = {
+  es: {
+    plan: {
+      name: "Plan APPCC · Embutidos curados y cocidos",
+      text: "Diagrama de flujo, análisis de peligros y cuadro de gestión de los puntos de control crítico de la planta.",
+    },
+    product: "Loncheado de jamón cocido 100 g",
+    reworkProduct: "Chorizo picante 250 g",
+    reason: "Producido desde la última verificación correcta del detector de metales.",
+    reworkReason: "Etiqueta sin el alérgeno mostaza.",
+    released: "Reetiquetado con la ficha técnica vigente y revisado por calidad.",
+  },
+  en: {
+    plan: {
+      name: "HACCP plan · Cured and cooked sausages",
+      text: "Flow diagram, hazard analysis and the plant's critical control points table.",
+    },
+    product: "Sliced cooked ham 100 g",
+    reworkProduct: "Spicy chorizo 250 g",
+    reason: "Made since the metal detector's last correct check.",
+    reworkReason: "Label missing the mustard allergen.",
+    released: "Relabelled with the current specification and checked by quality.",
+  },
+};
+
+/** A PNG-looking signature for the demo decision (the app only stores it). */
+function demoSignature(): string {
+  const bytes = new Uint8Array(320);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  for (let index = 8; index < bytes.length; index++) bytes[index] = (index * 37) % 251;
+  return `data:image/png;base64,${Buffer.from(bytes).toString("base64")}`;
+}
+
+/**
+ * Phase 2 (docs/spec/calidad.md, «Fase 2»): the HACCP plan as a controlled document, the meat template
+ * (forms and CCPs), records in and out of limits (out of limits open their nonconformity by themselves)
+ * and product on hold, one decided. Idempotent: if the company has CCPs, nothing is done.
+ */
+async function demoHaccp(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const t = HACCP[target.locale];
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT c.id FROM "QualityCcp" c JOIN "Workspace" w ON w.id = c."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const { quality } = await call<{ quality: { space: { id: string } | null } }>(
+    "GET",
+    "/admin/quality",
+  );
+  if (quality.space === null) throw new Error("The quality module has no space");
+  const loaded = await call<{ forms: number; ccps: number }>("POST", "/admin/quality/template");
+  counts.templateForms = loaded.forms;
+  counts.ccps = loaded.ccps;
+  // The plan itself, as a controlled document of type APPCC.
+  const { page } = await call<{ page: { node: { id: string } } }>(
+    "POST",
+    `/spaces/${quality.space.id}/pages`,
+    {
+      name: t.plan.name,
+      content: {
+        type: "doc",
+        content: [{ type: "paragraph", content: [{ type: "text", text: t.plan.text }] }],
+      },
+    },
+  );
+  await call("POST", `/nodes/${page.node.id}/controlled`, { docType: "APPCC" });
+  const haccp = await call<{ ccps: { code: string; form: { id: string } | null }[] }>(
+    "GET",
+    "/quality/haccp",
+  );
+  const formOf = (code: string) => haccp.ccps.find((ccp) => ccp.code === code)?.form?.id;
+  const submit = async (code: string, answers: Record<string, unknown>) => {
+    const formId = formOf(code);
+    if (formId === undefined) return;
+    const { form } = await call<{ form: { template: { version: number } } }>(
+      "GET",
+      `/forms/${formId}`,
+    );
+    await call("POST", `/forms/${formId}/records`, {
+      version: form.template.version,
+      answers,
+      source: "app",
+    });
+    counts.haccpRecords = (counts.haccpRecords ?? 0) + 1;
+  };
+  for (const temperature of [2.4, 3.1, 1.8, 3.6])
+    await submit("PCC-2", { camara: "o1", temp: temperature });
+  await submit("PCC-2", { camara: "o2", temp: 5.7 });
+  await submit("PCC-4", { producto: t.product, lote: "24-315", centro: 74.2 });
+  await submit("PCC-4", { producto: t.product, lote: "24-316", centro: 73.5 });
+  await submit("PCC-6", { linea: "o3", piezas: ["fe", "nofe", "inox"] });
+  await submit("PCC-6", { linea: "o3", piezas: ["fe", "nofe"] });
+  // Product on hold: the metal detector's (by itself, CRITICAL) still on hold; a label one, released.
+  const { rows: metal } = await target.db.query<{ id: string }>(
+    `SELECT n.id FROM "QualityNc" n JOIN "Workspace" w ON w.id = n."workspaceId"
+      WHERE w.slug = $1 AND n.origin = 'CCP' AND n.severity = 'CRITICAL' ORDER BY n.number DESC LIMIT 1`,
+    [target.slug],
+  );
+  await call("POST", "/quality/holds", {
+    ncId: metal[0]?.id ?? null,
+    product: t.product,
+    lot: "24-316",
+    quantity: "640 kg",
+    location: target.locale === "es" ? "Cámara 2" : "Cold room 2",
+    reason: t.reason,
+  });
+  const { hold } = await call<{ hold: { id: string } }>("POST", "/quality/holds", {
+    ncId: null,
+    product: t.reworkProduct,
+    lot: "24-298",
+    quantity: "1.200 u",
+    location: target.locale === "es" ? "Almacén de expedición" : "Dispatch warehouse",
+    reason: t.reworkReason,
+  });
+  await call("POST", `/quality/holds/${hold.id}/decision`, {
+    status: "REWORKED",
+    note: t.released,
+    signature: demoSignature(),
+  });
+  counts.holds = 2;
   return counts;
 }

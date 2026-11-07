@@ -989,6 +989,19 @@ const CAPTURES: Capture[] = [
     },
   },
   {
+    // Phase 2: the HACCP plan with the meat template's CCPs.
+    name: "calidad-appcc",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/appcc`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-retenido",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/retenido?estado=all`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
     name: "calidad-comunicar",
     who: "owner",
     path: (i) => `/app/${i.slug}/calidad/comunicar`,

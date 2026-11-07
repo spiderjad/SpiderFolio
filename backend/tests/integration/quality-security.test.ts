@@ -464,3 +464,219 @@ describe("calidad: desde un registro de formulario", () => {
     });
   });
 });
+
+// ─── Phase 2: HACCP and product on hold ─────────────────────────────────────────────────
+
+const ccpInput = (code: string, extra: object = {}) => ({
+  code,
+  name: "Cocción",
+  step: "Cocción",
+  hazard: "Supervivencia de patógenos.",
+  hazardType: "BIOLOGICAL",
+  criticalLimit: "≥ 72 °C en el centro",
+  frequency: "Cada lote",
+  correctiveAction: "Prolongar la cocción.",
+  verification: "Calibración mensual.",
+  ...extra,
+});
+
+/** A PNG-looking signature (the app checks the header and a minimum size). */
+const signature = `data:image/png;base64,${Buffer.concat([
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  Buffer.alloc(300, 7),
+]).toString("base64")}`;
+
+interface HoldBody {
+  hold: { id: string; status: string; canDecide: boolean };
+}
+
+describe("calidad fase 2: plan APPCC", () => {
+  it("la plantilla cárnica es del propietario, carga 6 formularios y 6 PCC, y una sola vez", async () => {
+    const t = await world("Calidad plantilla");
+    expect((await api(t.ws.slug, t.manager.token).post("/admin/quality/template")).status).toBe(
+      403,
+    );
+    const loaded = await api(t.ws.slug, t.ws.token).post("/admin/quality/template");
+    expect(loaded.status).toBe(200);
+    expect(loaded.body).toEqual({ forms: 6, ccps: 6 });
+    expect((await api(t.ws.slug, t.ws.token).post("/admin/quality/template")).status).toBe(409);
+    const plan = (await api(t.ws.slug, t.viewer.token).get("/quality/haccp")).body as {
+      ccps: { code: string; form: { id: string } | null }[];
+    };
+    expect(plan.ccps.map((ccp) => ccp.code)).toEqual([
+      "PCC-1",
+      "PCC-2",
+      "PCC-3",
+      "PCC-4",
+      "PCC-5",
+      "PCC-6",
+    ]);
+    expect(plan.ccps.every((ccp) => ccp.form !== null)).toBe(true);
+    const type = await ctx.prisma.documentType.findFirst({
+      where: { workspaceId: t.ws.workspaceId, code: "APPCC" },
+    });
+    expect(type?.reviewMonths).toBe(12);
+  });
+
+  it("el cuadro: quality.view lee; solo quality.manage cambia; un miembro, 403", async () => {
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/haccp")).status).toBe(403);
+    expect((await api(w.ws.slug, w.viewer.token).get("/quality/haccp")).status).toBe(200);
+    expect(
+      (await api(w.ws.slug, w.viewer.token).post("/quality/ccps", ccpInput("PCC-V"))).status,
+    ).toBe(403);
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/ccps/form-options")).status).toBe(
+      403,
+    );
+    const created = await api(w.ws.slug, w.manager.token).post("/quality/ccps", ccpInput("PCC-M"));
+    expect(created.status).toBe(201);
+    // Codes are unique without caring about case.
+    expect(
+      (await api(w.ws.slug, w.manager.token).post("/quality/ccps", ccpInput("pcc-m"))).status,
+    ).toBe(409);
+    // The order has to name every active CCP.
+    expect(
+      (await api(w.ws.slug, w.manager.token).put("/quality/ccps/order", { ids: ["x"] })).status,
+    ).toBe(400);
+  });
+
+  it("otra empresa: su formulario o su gente no entran en un PCC; sus PCC son 404", async () => {
+    const other = await world("Calidad APPCC ajena");
+    const foreignForm = await ctx.prisma.node.create({
+      data: {
+        workspaceId: other.ws.workspaceId,
+        spaceId: other.spaceId,
+        type: "FORM",
+        name: "Cámaras ajenas",
+        nameKey: "cámaras ajenas",
+        position: "a0",
+        createdById: other.ws.membershipId,
+        updatedById: other.ws.membershipId,
+      },
+    });
+    const manager = api(w.ws.slug, w.manager.token);
+    expect(
+      (await manager.post("/quality/ccps", ccpInput("PCC-X1", { formId: foreignForm.id }))).status,
+    ).toBe(400);
+    expect(
+      (
+        await manager.post(
+          "/quality/ccps",
+          ccpInput("PCC-X2", { responsibleId: other.manager.membership.id }),
+        )
+      ).status,
+    ).toBe(404);
+    const theirs = await api(other.ws.slug, other.manager.token).post(
+      "/quality/ccps",
+      ccpInput("PCC-A"),
+    );
+    const theirId = (theirs.body as { ccp: { id: string } }).ccp.id;
+    expect((await manager.patch(`/quality/ccps/${theirId}`, { name: "x" })).status).toBe(404);
+    expect(
+      (await manager.post(`/quality/ccps/${theirId}/archive`, { archived: true })).status,
+    ).toBe(404);
+  });
+});
+
+describe("calidad fase 2: producto retenido", () => {
+  it("lo retiene quien gestiona la NC; decide solo quality.manage, una vez y con firma", async () => {
+    const nc = await createNc(w);
+    const hold = await api(w.ws.slug, w.owner.token).post("/quality/holds", {
+      ncId: nc.id,
+      product: "Jamón cocido",
+      lot: "24-316",
+      reason: "Detector sin verificar.",
+    });
+    expect(hold.status).toBe(201);
+    const id = (hold.body as HoldBody).hold.id;
+    expect((hold.body as HoldBody).hold.canDecide).toBe(false);
+    // Whoever only reads the NC can't put product on hold.
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).post("/quality/holds", {
+          ncId: nc.id,
+          product: "x",
+          reason: "x",
+        })
+      ).status,
+    ).toBe(403);
+    // Alone (without an NC) it's quality.manage's.
+    expect(
+      (await api(w.ws.slug, w.owner.token).post("/quality/holds", { product: "x", reason: "x" }))
+        .status,
+    ).toBe(403);
+    const decision = { status: "RELEASED", note: "Reinspeccionado.", signature };
+    expect(
+      (await api(w.ws.slug, w.owner.token).post(`/quality/holds/${id}/decision`, decision)).status,
+    ).toBe(403);
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).post(`/quality/holds/${id}/decision`, {
+          ...decision,
+          signature: "data:image/png;base64,AAAA",
+        })
+      ).status,
+    ).toBe(400);
+    const decided = await api(w.ws.slug, w.manager.token).post(
+      `/quality/holds/${id}/decision`,
+      decision,
+    );
+    expect((decided.body as HoldBody).hold.status).toBe("RELEASED");
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).post(`/quality/holds/${id}/decision`, {
+          ...decision,
+          status: "DESTROYED",
+        })
+      ).status,
+    ).toBe(409);
+    const stored = await ctx.prisma.qualityHold.findFirstOrThrow({ where: { id } });
+    expect(stored.status).toBe("RELEASED");
+    expect(stored.signature?.length).toBeGreaterThan(100);
+  });
+
+  it("se ve con su NC; un miembro sin relación, 404; la lista es de quality.view", async () => {
+    const nc = await createNc(w);
+    const created = await api(w.ws.slug, w.manager.token).post("/quality/holds", {
+      ncId: nc.id,
+      product: "Chorizo",
+      reason: "Etiqueta sin alérgeno.",
+    });
+    const id = (created.body as HoldBody).hold.id;
+    expect((await api(w.ws.slug, w.owner.token).get(`/quality/holds/${id}`)).status).toBe(200);
+    expect((await api(w.ws.slug, w.plain.token).get(`/quality/holds/${id}`)).status).toBe(404);
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/holds")).status).toBe(403);
+    expect((await api(w.ws.slug, w.viewer.token).get("/quality/holds?status=all")).status).toBe(
+      200,
+    );
+  });
+
+  it("otra empresa: su NC no recibe retenido; su retenido es 404", async () => {
+    const other = await world("Calidad retenido ajeno");
+    const theirNc = await createNc(other);
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).post("/quality/holds", {
+          ncId: theirNc.id,
+          product: "x",
+          reason: "x",
+        })
+      ).status,
+    ).toBe(404);
+    const theirs = await api(other.ws.slug, other.manager.token).post("/quality/holds", {
+      product: "Ajeno",
+      reason: "Ajeno",
+    });
+    const theirId = (theirs.body as HoldBody).hold.id;
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await manager.get(`/quality/holds/${theirId}`)).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/holds/${theirId}/decision`, {
+          status: "RELEASED",
+          note: "x",
+          signature,
+        })
+      ).status,
+    ).toBe(404);
+  });
+});

@@ -1,0 +1,94 @@
+---
+title: "HACCP plan and product on hold"
+description: "The HACCP plan as a controlled document, the critical control points table linked to their records, the meat template and product on hold with its signed decision."
+group: calidad
+order: 3
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+**HACCP** is the base of IFS and BRCGS: the hazards of each process step and the **critical control points**
+(CCPs) where they're controlled, with their limit, how they're monitored, what's done if the limit is exceeded
+and how it's verified. In SpiderFolio:
+
+- the **plan** is a [controlled document](/en/docs/controlled-documents) of type **HACCP plan**, with its
+  version in force, its approval and its yearly review;
+- the **CCP table** is a list in the Quality area, each CCP linked to its monitoring form;
+- **monitoring** is done with [forms](/en/docs/forms) with a minimum and maximum: a value out of limits opens
+  its [nonconformity](/en/docs/nonconformities#from-a-form-record) by itself.
+
+It needs the [Quality module](/en/docs/quality) on.
+
+## The HACCP plan
+
+Turning the module on creates the **HACCP plan** document type (reviewed every 12 months). Upload your plan
+(flow diagrams, hazard analysis) as a controlled document of that type and approve it with the HACCP team. In
+**HACCP plan**, at the top, the document in force shows with a link.
+
+## The CCP table
+
+In **HACCP plan** (Quality menu) each CCP shows:
+
+- its **code** (PCC-1), name, process step and hazard type (biological, chemical, physical or allergen);
+- the **hazard** and the **critical limit**;
+- the monitoring **frequency** and its responsible person;
+- the **corrective action** if the limit is exceeded and the **verification**;
+- the **last 30 days** of its form: how many records, how many out of limits and the open nonconformities;
+- **Records**, which opens its form, and **QR**, which opens its settings with the QR code to post on the
+  line: scanning it fills in a record.
+
+<Shot
+  name="calidad-appcc"
+  alt="The HACCP plan in force and the CCP table: reception, cold rooms and drying rooms with their limits and last 30 days"
+/>
+
+Whoever manages quality adds one with **New CCP**, edits it, orders it with the arrows and **archives** it
+when it no longer applies (it isn't deleted; **Show archived** lists them). Whoever has **View quality**
+reads it.
+
+## The meat template
+
+In **Administration** › **Security** › **General**, on the **Food quality** card, **Load the meat template**
+creates the **Monitoring records (CCP)** folder in the Quality space with six forms and their six CCPs:
+
+| CCP   | Form                   | Example critical limit                      | NC severity |
+| ----- | ---------------------- | ------------------------------------------- | ----------- |
+| PCC-1 | Raw material reception | Fresh meat ≤ 7 °C; correct condition        | Major       |
+| PCC-2 | Cold room temperature  | 0 to 4 °C                                   | Major       |
+| PCC-3 | Drying curve           | aw ≤ 0.92 and pH ≤ 5.3 at exit              | Major       |
+| PCC-4 | Cooking                | ≥ 72 °C at the product's core               | Critical    |
+| PCC-5 | Cooling                | ≤ 4 °C within 6 hours                       | Major       |
+| PCC-6 | Metal detector         | All three test pieces detected and rejected | Critical    |
+
+Each form opens its nonconformity by itself when a record is out of limits. The limits are common examples of
+the industry: adjust them to your plan in each form's design and in its CCP. How often and who fills them in
+are chosen in each form's settings. It never overwrites what you already have with the same name.
+
+## Product on hold
+
+When product is affected, it's **put on hold** until someone decides what to do with it:
+
+- **From a nonconformity**: on its record, **Product on hold** › **Put product on hold** (whoever handles
+  it).
+- **Alone**: in **Product on hold**, **Put product on hold** (whoever manages quality).
+
+You note the product, the lot, the quantity, where it is and why it's on hold. It's **On hold**.
+
+<Shot
+  name="calidad-retenido"
+  alt="Product on hold: a metal detector lot on hold and another already reworked"
+/>
+
+**Deciding** is for whoever manages quality: choose **Released**, **Reworked**, **Diverted** or **Destroyed /
+animal by-product** (Regulation 1069/2009), write the grounds and **sign on screen**. The decision keeps who
+and when, it's never changed nor deleted, and if the product belongs to a nonconformity it's also in its
+history.
+
+## Related
+
+- [Nonconformities and CAPA](/en/docs/nonconformities)
+- [Forms and records](/en/docs/forms)
+- [QR codes](/en/docs/qr-codes)

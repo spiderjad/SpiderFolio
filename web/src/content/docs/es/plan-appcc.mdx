@@ -1,0 +1,94 @@
+---
+title: "Plan APPCC y producto retenido"
+description: "El plan APPCC como documento controlado, el cuadro de puntos de control crítico enlazado con sus registros, la plantilla cárnica y el producto retenido con su decisión firmada."
+group: calidad
+order: 3
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+El **APPCC** (HACCP) es la base de IFS y BRCGS: los peligros de cada paso del proceso y los **puntos de control
+crítico** (PCC) donde se controlan, con su límite, cómo se vigilan, qué se hace si se pasa el límite y cómo
+se verifica. En SpiderFolio:
+
+- el **plan** es un [documento controlado](/es/docs/documentos-controlados) de tipo **Plan APPCC**, con su
+  versión vigente, su aprobación y su revisión anual;
+- el **cuadro de PCC** es una lista del área Calidad, con cada PCC enlazado a su formulario de vigilancia;
+- la **vigilancia** son [formularios](/es/docs/formularios) con mínimo y máximo: un valor fuera de límite abre
+  su [no conformidad](/es/docs/no-conformidades#desde-un-registro-de-formulario) sola.
+
+Necesita el [módulo de Calidad](/es/docs/calidad) activo.
+
+## El plan APPCC
+
+Al activar el módulo se crea el tipo de documento **Plan APPCC** (revisión cada 12 meses). Sube tu plan
+(diagramas de flujo, análisis de peligros) como documento controlado de ese tipo y apruébalo con el equipo
+APPCC. En **Plan APPCC**, arriba, aparece el documento vigente con un enlace.
+
+## El cuadro de PCC
+
+En **Plan APPCC** (menú de Calidad) cada PCC muestra:
+
+- su **código** (PCC-1), nombre, paso del proceso y tipo de peligro (biológico, químico, físico o alérgeno);
+- el **peligro** y el **límite crítico**;
+- la **frecuencia** de vigilancia y su responsable;
+- la **acción correctiva** si se pasa el límite y la **verificación**;
+- los **últimos 30 días** de su formulario: cuántos registros, cuántos fuera de límite y las no conformidades
+  abiertas;
+- **Registros**, que abre su formulario, y **QR**, que abre sus ajustes con el código QR para pegarlo en la
+  línea: al escanearlo se llena el registro.
+
+<Shot
+  name="calidad-appcc"
+  alt="El plan APPCC vigente y el cuadro de PCC: recepción, cámaras y secaderos con sus límites y sus últimos 30 días"
+/>
+
+Quien gestiona calidad agrega uno con **Nuevo PCC**, lo edita, lo ordena con las flechas y lo **archiva** cuando
+deja de aplicar (no se borra; **Ver archivados** los muestra). Quien tiene **Ver calidad** lo lee.
+
+## La plantilla cárnica
+
+En **Administración** › **Seguridad** › **General**, en la tarjeta **Calidad alimentaria**, **Cargar la
+plantilla cárnica** crea en el espacio Calidad la carpeta **Registros de vigilancia (PCC)** con seis
+formularios y sus seis PCC:
+
+| PCC   | Formulario                 | Límite crítico de ejemplo                      | Gravedad de la NC |
+| ----- | -------------------------- | ---------------------------------------------- | ----------------- |
+| PCC-1 | Recepción de materia prima | Carne fresca ≤ 7 °C; estado correcto           | Mayor             |
+| PCC-2 | Temperatura de cámaras     | 0 a 4 °C                                       | Mayor             |
+| PCC-3 | Curva de secaderos         | aw ≤ 0,92 y pH ≤ 5,3 al salir                  | Mayor             |
+| PCC-4 | Cocción                    | ≥ 72 °C en el centro del producto              | Crítica           |
+| PCC-5 | Enfriamiento               | ≤ 4 °C antes de 6 horas                        | Mayor             |
+| PCC-6 | Detector de metales        | Las tres piezas patrón detectadas y rechazadas | Crítica           |
+
+Cada formulario abre su no conformidad solo cuando un registro sale fuera de límite. Los límites son ejemplos
+habituales del sector: ajústalos a tu plan en el diseño de cada formulario y en su PCC. La frecuencia y quién
+los llena se eligen en los ajustes de cada formulario. Nunca pisa lo que ya tengas con el mismo nombre.
+
+## Producto retenido
+
+Cuando hay producto afectado, se **retiene** hasta que alguien decida qué hacer con él:
+
+- **Desde una no conformidad**: en su ficha, **Producto retenido** › **Retener producto** (quien la
+  gestiona).
+- **Suelto**: en **Producto retenido**, **Retener producto** (quien gestiona calidad).
+
+Se anota el producto, el lote, la cantidad, dónde está y por qué se retiene. Queda **Retenido**.
+
+<Shot
+  name="calidad-retenido"
+  alt="El producto retenido: un lote del detector de metales retenido y otro ya reprocesado"
+/>
+
+**Decidir** es de quien gestiona calidad: elige **Liberado**, **Reprocesado**, **Otro destino** o **Destruido /
+SANDACH** (Reglamento 1069/2009), escribe el fundamento y **firma en pantalla**. La decisión queda con quién y
+cuándo, no se cambia ni se borra, y si el producto es de una no conformidad queda también en su historial.
+
+## Relacionado
+
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Formularios y registros](/es/docs/formularios)
+- [Códigos QR](/es/docs/codigos-qr)

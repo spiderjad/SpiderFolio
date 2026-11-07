@@ -55,6 +55,7 @@ export const routes: LocaleRoutes = {
     caePortal: "contractors-portal",
     quality: "quality",
     qualityNcs: "nonconformities",
+    qualityHaccp: "haccp-plan",
     search: "search",
     bian: "bian",
     security2fa: "security-and-2fa",

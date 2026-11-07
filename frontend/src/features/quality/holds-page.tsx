@@ -62,7 +62,13 @@ export function HoldsPage() {
           </div>
         ),
       },
-      { id: "lot", header: t.columns.lot, cell: ({ row }) => row.original.lot ?? "—" },
+      {
+        id: "lot",
+        header: t.columns.lot,
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap tabular-nums">{row.original.lot ?? "—"}</span>
+        ),
+      },
       {
         id: "nc",
         header: t.columns.nc,
