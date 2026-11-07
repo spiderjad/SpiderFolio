@@ -22,3 +22,15 @@ export const directorySignInLimits = {
   /** Shortest time a directory sign-in answers in, right or wrong (it doesn't reveal which). */
   minResponseMs: 600,
 } as const;
+
+/** CAE (docs/spec/cae.md): information for contractors and work permits. */
+export const caeLimits = {
+  /** Controlled documents handed to every contractor. */
+  infoMaxDocuments: 50,
+  /** The longest a work permit lasts, in days (it's renewed with a new one). */
+  permitMaxDays: 7,
+  /** People in one work permit (contractors' workers plus own staff). */
+  permitMaxPeople: 50,
+  /** Precautions in one permit's checklist. */
+  permitMaxPrecautions: 40,
+} as const;

@@ -1,6 +1,7 @@
 // Workspace.settings (CLAUDE.md, secciones 9.3 y 12A.2): zona horaria e idioma del workspace;
 // las políticas de seguridad se agregan con su módulo.
 import { z } from "zod";
+import { caeLimits } from "@spiderfolio/limits";
 import { LOCALES } from "../../i18n/locales.ts";
 import { validationMessages } from "../../i18n/index.ts";
 import { isTimeZone } from "../../lib/time-zone.ts";
@@ -70,6 +71,10 @@ export const CaeSettingsSchema = z.object({
   folderId: z.string().min(1).max(64).optional(),
   /** The gatehouse records each entry and exit (CaeAccess). */
   accessLog: z.boolean().default(false),
+  /** The controlled documents handed to every contractor (RD 171/2004, arts. 7 to 9). */
+  infoNodeIds: z.array(z.string().min(1).max(64)).max(caeLimits.infoMaxDocuments).default([]),
+  /** Whether a contractor needs the current version of each of them to be authorized. */
+  infoRequired: z.boolean().default(true),
 });
 
 export type CaeSettings = z.infer<typeof CaeSettingsSchema>;
@@ -85,7 +90,12 @@ export const SafetySettingsSchema = z.object({
   /** The base form «Accidente o incidente», once it's created. */
   incidentFormId: z.string().min(1).max(64).optional(),
   /** Settings saved before CAE existed parse with it off. */
-  cae: CaeSettingsSchema.default({ enabled: false, accessLog: false }),
+  cae: CaeSettingsSchema.default({
+    enabled: false,
+    accessLog: false,
+    infoNodeIds: [],
+    infoRequired: true,
+  }),
 });
 
 export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
@@ -96,7 +106,11 @@ export function readSafetySettings(settings: unknown): SafetySettings {
   const parsed = SafetySettingsSchema.safeParse(raw ?? {});
   return parsed.success
     ? parsed.data
-    : { enabled: false, terms: "es", cae: { enabled: false, accessLog: false } };
+    : {
+        enabled: false,
+        terms: "es",
+        cae: { enabled: false, accessLog: false, infoNodeIds: [], infoRequired: true },
+      };
 }
 
 /** CAE is on only while the module is on too. */

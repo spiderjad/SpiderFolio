@@ -10,6 +10,7 @@ import { offsetArgs, pageOf, stableOrder, type Page } from "../../lib/pagination
 import { dayIn, endOfDayIn, startOfDayIn, zoneOf } from "../../lib/time-zone.ts";
 import { caeTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
+import { activePermitsOf } from "./cae-permits.service.ts";
 import { workerStatuses } from "./cae-status.ts";
 import type { AccessInput, ListAccessesQuery, CheckQuery } from "./cae.schemas.ts";
 import { accessOf, loadWorker, maskedId } from "./cae.service.ts";
@@ -27,6 +28,14 @@ export interface GateResult {
   accessLog: boolean;
   /** The last one recorded today, if the log is on. */
   lastAccess: { direction: "IN" | "OUT"; at: Date } | null;
+  /** The work permits they're on right now. */
+  permits: {
+    id: string;
+    type: "HOT_WORK" | "HEIGHT" | "CONFINED_SPACE" | "ELECTRICAL" | "OTHER";
+    customName: string | null;
+    location: string;
+    validTo: Date;
+  }[];
 }
 
 const gateSelect = {
@@ -63,6 +72,10 @@ async function results(
   accessLog: boolean,
 ): Promise<GateResult[]> {
   const statuses = await workerStatuses(ctx, rows);
+  const permits = await activePermitsOf(
+    ctx,
+    rows.map((row) => row.id),
+  );
   const range = accessLog ? await todayRange(ctx) : null;
   const last =
     range === null || rows.length === 0
@@ -90,6 +103,7 @@ async function results(
       reasons: status?.reasons ?? [],
       accessLog,
       lastAccess: lastOf.get(row.id) ?? null,
+      permits: permits.get(row.id) ?? [],
     };
   });
 }

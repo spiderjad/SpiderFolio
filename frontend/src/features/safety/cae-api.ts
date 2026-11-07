@@ -178,6 +178,108 @@ export interface CaeGateResult {
   reasons: string[];
   accessLog: boolean;
   lastAccess: { direction: "IN" | "OUT"; at: string } | null;
+  /** The work permits they're on right now. */
+  permits: {
+    id: string;
+    type: CaePermitType;
+    customName: string | null;
+    location: string;
+    validTo: string;
+  }[];
+}
+
+// ─── Site information ────────────────────────────────────────────────────────────────────
+
+export interface CaeInfoDocument {
+  nodeId: string;
+  code: string;
+  title: string;
+  version: number;
+}
+
+export interface CaeInfoSettings {
+  documents: CaeInfoDocument[];
+  required: boolean;
+}
+
+export interface CaeCompanyInfo {
+  documents: (CaeInfoDocument & { delivered: boolean })[];
+  required: boolean;
+}
+
+export interface CaeInfoDelivery {
+  id: string;
+  deliveredOn: string;
+  receivedBy: string;
+  signed: boolean;
+  items: CaeInfoDocument[];
+  createdBy: { id: string; name: string };
+  createdAt: string;
+}
+
+// ─── Work permits ────────────────────────────────────────────────────────────────────────
+
+export type CaePermitType = "HOT_WORK" | "HEIGHT" | "CONFINED_SPACE" | "ELECTRICAL" | "OTHER";
+export type CaePermitStatus = "DRAFT" | "ACTIVE" | "CLOSED" | "CANCELLED";
+export type CaePermitState = "draft" | "scheduled" | "active" | "expired" | "closed" | "cancelled";
+
+export const CAE_PERMIT_TYPES: readonly CaePermitType[] = [
+  "HOT_WORK",
+  "HEIGHT",
+  "CONFINED_SPACE",
+  "ELECTRICAL",
+  "OTHER",
+];
+export const CAE_PERMIT_STATUSES: readonly CaePermitStatus[] = [
+  "DRAFT",
+  "ACTIVE",
+  "CLOSED",
+  "CANCELLED",
+];
+
+export interface CaePrecaution {
+  label: string;
+  done: boolean;
+}
+
+export interface CaePermit {
+  id: string;
+  type: CaePermitType;
+  customName: string | null;
+  company: { id: string; name: string } | null;
+  location: string;
+  description: string;
+  validFrom: string;
+  validTo: string;
+  workers: { id: string; name: string; company: string }[];
+  members: { id: string; name: string }[];
+  precautions: CaePrecaution[];
+  status: CaePermitStatus;
+  state: CaePermitState;
+  issuedBy: { id: string; name: string };
+  approved: { at: string; by: { id: string; name: string } } | null;
+  closed: { at: string; by: { id: string; name: string }; note: string | null } | null;
+  canManage: boolean;
+}
+
+export interface CaePermitInput {
+  type: CaePermitType;
+  customName: string | null;
+  companyId: string | null;
+  location: string;
+  description: string;
+  validFrom: string;
+  validTo: string;
+  workerIds: string[];
+  membershipIds: string[];
+  precautions: CaePrecaution[];
+}
+
+export interface CaePermitFilters {
+  status?: CaePermitStatus | undefined;
+  type?: CaePermitType | undefined;
+  companyId?: string | undefined;
+  day?: string | undefined;
 }
 
 export interface CaeAccess {
@@ -213,6 +315,12 @@ export const caeKeys = {
   accesses: (slug: string, filters: CaeAccessFilters) =>
     ["w", slug, "cae", "accesses", filters] as const,
   qr: (slug: string, id: string) => ["w", slug, "cae", "qr", id] as const,
+  info: (slug: string) => ["w", slug, "cae", "info"] as const,
+  companyInfo: (slug: string, id: string) => ["w", slug, "cae", "company-info", id] as const,
+  infoDeliveries: (slug: string, id: string) => ["w", slug, "cae", "info-deliveries", id] as const,
+  permits: (slug: string, filters: CaePermitFilters) =>
+    ["w", slug, "cae", "permits", filters] as const,
+  permit: (slug: string, id: string) => ["w", slug, "cae", "permit", id] as const,
   documents: (slug: string, filters: CaeDocumentFilters) =>
     ["w", slug, "cae", "documents", filters] as const,
   requirements: (slug: string, scope: CaeScope, archived: boolean) =>
@@ -220,6 +328,78 @@ export const caeKeys = {
 };
 
 export const caeApi = {
+  info: (slug: string) => api<{ info: CaeInfoSettings }>(w(slug, "/info")),
+  updateInfo: (slug: string, body: { nodeIds?: string[]; required?: boolean }) =>
+    api<{ info: CaeInfoSettings }>(w(slug, "/info"), { method: "PUT", body }),
+  infoOptions: (
+    slug: string,
+    query: { q?: string; cursor?: string | undefined; ids?: readonly string[] },
+    signal?: AbortSignal,
+  ) =>
+    api<CursorPage<{ id: string; code: string; title: string }>>(
+      w(
+        slug,
+        `/info/options?${listQuery({ q: query.q, cursor: query.cursor, ids: query.ids?.join(",") })}`,
+      ),
+      withSignal(signal),
+    ),
+  companyInfo: (slug: string, id: string) =>
+    api<{ info: CaeCompanyInfo }>(w(slug, `/companies/${id}/info`)),
+  infoDeliveries: (slug: string, id: string, cursor: string | undefined, signal?: AbortSignal) =>
+    api<CursorPage<CaeInfoDelivery>>(
+      w(slug, `/companies/${id}/info/deliveries?${listQuery({ cursor })}`),
+      withSignal(signal),
+    ),
+  deliverInfo: (
+    slug: string,
+    id: string,
+    body: { nodeIds: string[]; deliveredOn: string; receivedBy: string; signature: string | null },
+  ) =>
+    api<{ delivery: CaeInfoDelivery }>(w(slug, `/companies/${id}/info/deliveries`), {
+      method: "POST",
+      body,
+    }),
+  infoDeliveryPdf: (slug: string, id: string) => apiBlob(w(slug, `/info/deliveries/${id}/pdf`)),
+  permits: (
+    slug: string,
+    filters: CaePermitFilters,
+    cursor: string | undefined,
+    signal?: AbortSignal,
+  ) =>
+    api<CursorPage<CaePermit>>(
+      w(
+        slug,
+        `/permits?${listQuery({
+          status: filters.status,
+          type: filters.type,
+          companyId: filters.companyId,
+          day: filters.day,
+          cursor,
+        })}`,
+      ),
+      withSignal(signal),
+    ),
+  permit: (slug: string, id: string) => api<{ permit: CaePermit }>(w(slug, `/permits/${id}`)),
+  createPermit: (slug: string, body: CaePermitInput) =>
+    api<{ permit: CaePermit }>(w(slug, "/permits"), { method: "POST", body }),
+  updatePermit: (slug: string, id: string, body: Partial<CaePermitInput>) =>
+    api<{ permit: CaePermit }>(w(slug, `/permits/${id}`), { method: "PATCH", body }),
+  approvePermit: (
+    slug: string,
+    id: string,
+    body: { signature: string; precautions: CaePrecaution[] },
+  ) => api<{ permit: CaePermit }>(w(slug, `/permits/${id}/approve`), { method: "POST", body }),
+  closePermit: (slug: string, id: string, note: string) =>
+    api<{ permit: CaePermit }>(w(slug, `/permits/${id}/close`), {
+      method: "POST",
+      body: note === "" ? {} : { note },
+    }),
+  cancelPermit: (slug: string, id: string, reason: string) =>
+    api<{ permit: CaePermit }>(w(slug, `/permits/${id}/cancel`), {
+      method: "POST",
+      body: { reason },
+    }),
+  permitPdf: (slug: string, id: string) => apiBlob(w(slug, `/permits/${id}/pdf`)),
   search: (slug: string, q: string, cursor: string | undefined, signal?: AbortSignal) =>
     api<CursorPage<CaeGateResult>>(
       w(slug, `/check?${listQuery({ q, cursor })}`),

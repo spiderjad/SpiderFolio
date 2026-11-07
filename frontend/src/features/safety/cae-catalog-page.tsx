@@ -19,6 +19,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { useListParams } from "@/features/admin/list-params";
 import { caeApi, caeKeys, type CaeAppliesTo, type CaeRequirement, type CaeScope } from "./cae-api";
 import { CaeNav, useCae } from "./cae-common";
+import { InfoSettingsCard } from "./cae-info";
 import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -52,6 +53,7 @@ export function CaeCatalogPage() {
       </div>
       <PpeTabs />
       <CaeNav />
+      <InfoSettingsCard />
       <Checkbox
         label={t.showArchived}
         checked={archived}

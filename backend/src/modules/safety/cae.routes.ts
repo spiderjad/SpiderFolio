@@ -1,7 +1,7 @@
 // CAE, coordination of business activities (docs/spec/cae.md, «API»): /cae/* answers 404 while CAE or
 // the module is off. The services check who sees and changes what (cae.manage, cae.check and the
 // internal responsible person of each company).
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import {
@@ -12,6 +12,25 @@ import {
   workerQr,
 } from "./cae-gate.service.ts";
 import { authorizedTodayPdf } from "./cae-pdf.ts";
+import {
+  companyInfo,
+  createInfoDelivery,
+  getInfoSettings,
+  infoDeliveryPdf,
+  infoOptions,
+  listInfoDeliveries,
+  updateInfoSettings,
+} from "./cae-info.service.ts";
+import {
+  approvePermit,
+  cancelPermit,
+  closePermit,
+  createPermit,
+  getPermit,
+  listPermits,
+  permitPdf,
+  updatePermit,
+} from "./cae-permits.service.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import {
   acceptDocument,
@@ -23,6 +42,16 @@ import {
 } from "./cae-documents.service.ts";
 import {
   AcceptDocumentSchema,
+  ApprovePermitSchema,
+  CancelPermitSchema,
+  ClosePermitSchema,
+  CreateInfoDeliverySchema,
+  CreatePermitSchema,
+  InfoOptionsQuerySchema,
+  ListInfoDeliveriesQuerySchema,
+  ListPermitsQuerySchema,
+  UpdateInfoSchema,
+  UpdatePermitSchema,
   AccessSchema,
   CheckQuerySchema,
   ListAccessesQuerySchema,
@@ -71,7 +100,162 @@ const HOUR = 3_600_000;
 
 export function caeRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] {
   const byUser = (req: Request) => req.auth?.userId ?? "";
+  const pdfLimit = sensitiveRateLimit(deps, {
+    name: "cae-pdf",
+    windowMs: HOUR,
+    limit: 60,
+    key: byUser,
+  });
+  const sendPdf = (res: Response, file: { fileName: string; body: Uint8Array }) => {
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="cae.pdf"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+    );
+    res.setHeader("Cache-Control", "no-store");
+    res.send(Buffer.from(file.body));
+  };
+  const gotenberg = { gotenbergUrl: deps.env.GOTENBERG_URL };
   return [
+    // The site's information for contractors (RD 171/2004, arts. 7 to 9).
+    {
+      method: "get",
+      path: "/cae/info",
+      handler: async (req, res) => {
+        res.json({ info: await getInfoSettings(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "put",
+      path: "/cae/info",
+      handler: async (req, res) => {
+        const info = await updateInfoSettings(
+          adminContextOf(req),
+          UpdateInfoSchema.parse(req.body),
+        );
+        res.json({ info });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/info/options",
+      handler: async (req, res) => {
+        res.json(await infoOptions(adminContextOf(req), InfoOptionsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/companies/:id/info",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ info: await companyInfo(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/companies/:id/info/deliveries",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json(
+          await listInfoDeliveries(
+            adminContextOf(req),
+            id,
+            ListInfoDeliveriesQuerySchema.parse(req.query),
+          ),
+        );
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/companies/:id/info/deliveries",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const delivery = await createInfoDelivery(
+          adminContextOf(req),
+          id,
+          CreateInfoDeliverySchema.parse(req.body),
+        );
+        res.status(201).json({ delivery });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/info/deliveries/:id/pdf",
+      guards: [pdfLimit],
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        sendPdf(res, await infoDeliveryPdf(adminContextOf(req), gotenberg, id));
+      },
+    },
+    // Work permits (contractors' workers and own staff).
+    {
+      method: "get",
+      path: "/cae/permits",
+      handler: async (req, res) => {
+        res.json(await listPermits(adminContextOf(req), ListPermitsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/permits",
+      handler: async (req, res) => {
+        const permit = await createPermit(adminContextOf(req), CreatePermitSchema.parse(req.body));
+        res.status(201).json({ permit });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/permits/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ permit: await getPermit(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/cae/permits/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const changes = UpdatePermitSchema.parse(req.body);
+        res.json({ permit: await updatePermit(adminContextOf(req), id, changes) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/permits/:id/approve",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const input = ApprovePermitSchema.parse(req.body);
+        res.json({ permit: await approvePermit(adminContextOf(req), id, input) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/permits/:id/close",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { note } = ClosePermitSchema.parse(req.body ?? {});
+        res.json({ permit: await closePermit(adminContextOf(req), id, note) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/permits/:id/cancel",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { reason } = CancelPermitSchema.parse(req.body);
+        res.json({ permit: await cancelPermit(adminContextOf(req), id, reason) });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/permits/:id/pdf",
+      guards: [pdfLimit],
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        sendPdf(res, await permitPdf(adminContextOf(req), gotenberg, id));
+      },
+    },
     // The gatehouse (cae.check): search, one worker, entries and exits.
     {
       method: "get",

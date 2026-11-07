@@ -40,6 +40,7 @@ import {
 import { ArchiveDialog, BlockDialog, CaeStateBadge, useCae } from "./cae-common";
 import { CompanyAccessesCard } from "./cae-accesses-page";
 import { CompanyForm } from "./cae-company-form";
+import { CompanyInfoCard } from "./cae-info";
 import { DocumentRequirementsCard } from "./cae-documents";
 import { WorkerForm } from "./cae-worker-form";
 import { PpeTabs } from "./safety-common";
@@ -159,6 +160,7 @@ export function CaeCompanyPage() {
           />
         </>
       )}
+      {data.full && <CompanyInfoCard companyId={data.id} canManage={manage} />}
       <WorkersCard
         companyId={data.id}
         canAdd={manage}

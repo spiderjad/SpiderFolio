@@ -266,6 +266,8 @@ model Workspace {
   caeRequirements     CaeRequirement[]
   caeDocuments        CaeDocument[]
   caeAccesses         CaeAccess[]
+  caeInfoDeliveries   CaeInfoDelivery[]
+  caeWorkPermits      CaeWorkPermit[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -711,13 +713,15 @@ model CaeCompany {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   // NoAction (not SetNull): SetNull would also clear workspaceId, part of the key.
-  parent    CaeCompany?  @relation("CaeCompanyTree", fields: [parentId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
-  children  CaeCompany[] @relation("CaeCompanyTree")
-  workers   CaeWorker[]
-  documents CaeDocument[]
-  accesses  CaeAccess[]
+  parent         CaeCompany?       @relation("CaeCompanyTree", fields: [parentId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+  children       CaeCompany[]      @relation("CaeCompanyTree")
+  workers        CaeWorker[]
+  documents      CaeDocument[]
+  accesses       CaeAccess[]
+  infoDeliveries CaeInfoDelivery[]
+  permits        CaeWorkPermit[]
 
   @@unique([workspaceId, nameKey])
   @@unique([id, workspaceId])
@@ -2087,4 +2091,88 @@ model CaeAccess {
   @@index([workspaceId, at, id])
   @@index([workspaceId, companyId, at])
   @@index([workspaceId, workerId, at])
+}
+
+/// The site's information handed to a contractor (docs/spec/cae.md, «Información»; RD 171/2004, arts.
+/// 7 to 9): which controlled documents, in which version, when and who received them. Evidence: added
+/// and read, never changed.
+model CaeInfoDelivery {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  companyId     String
+  /// What was handed out, as it was then: [{ nodeId, version, code, title }].
+  items         Json
+  /// «nodeId@version» of each item, to know in the database what's been handed out.
+  deliveredKeys String[]
+  deliveredOn   DateTime @db.Date
+  /// Who received it for the contractor.
+  receivedBy    String
+  /// Their signature, a PNG.
+  signature     Bytes?
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   CaeCompany @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, companyId, deliveredOn])
+}
+
+enum CaePermitType {
+  HOT_WORK
+  HEIGHT
+  CONFINED_SPACE
+  ELECTRICAL
+  OTHER
+}
+
+enum CaePermitStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+/// A work permit (docs/spec/cae.md, «Permisos de trabajo»): for contractors' workers and the company's
+/// own staff. Issued as a draft, approved with a signature (then active within its dates), closed or
+/// cancelled. Never deleted.
+model CaeWorkPermit {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  type              CaePermitType
+  /// The name of an OTHER permit.
+  customName        String?
+  /// The contractor doing the work, if any.
+  companyId         String?
+  location          String
+  description       String
+  validFrom         DateTime
+  validTo           DateTime
+  /// Contractors' workers (CaeWorker; no FK).
+  workerIds         String[]
+  /// The company's own people (memberships; no FK).
+  membershipIds     String[]
+  /// The precautions checklist: [{ label, done }].
+  precautions       Json
+  status            CaePermitStatus @default(DRAFT)
+  issuedById        String
+  approvedById      String?
+  approvedAt        DateTime?
+  /// Whoever approves it signs, a PNG.
+  approvalSignature Bytes?
+  closedAt          DateTime?
+  closedById        String?
+  /// How it was closed, or why it was cancelled.
+  closeNote         String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   CaeCompany? @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, validFrom, id])
+  @@index([workspaceId, status, validTo])
+  @@index([workspaceId, companyId, validFrom])
 }

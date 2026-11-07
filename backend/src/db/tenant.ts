@@ -155,6 +155,16 @@ export interface TenantDb {
     PrismaClient["caeAccess"],
     "findFirst" | "findMany" | "count" | "create"
   >;
+  // Information deliveries are evidence: added and read, never changed.
+  caeInfoDelivery: TenantDelegate<
+    PrismaClient["caeInfoDelivery"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
+  // Work permits are evidence: issued, approved, closed or cancelled (updates); never deleted.
+  caeWorkPermit: TenantDelegate<
+    PrismaClient["caeWorkPermit"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -289,6 +299,14 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
   },
   caeAccess: { model: "CaeAccess", ops: ["findFirst", "findMany", "count", "create"] },
+  caeInfoDelivery: {
+    model: "CaeInfoDelivery",
+    ops: ["findFirst", "findMany", "count", "create"],
+  },
+  caeWorkPermit: {
+    model: "CaeWorkPermit",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

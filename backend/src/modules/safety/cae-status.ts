@@ -17,6 +17,7 @@ import { dayIn, zoneOf } from "../../lib/time-zone.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
 import { DEFAULT_NOTICE_DAYS } from "../expiries/expiries.service.ts";
 import { expiryState } from "../expiries/expiry-rules.ts";
+import { infoKey, missingInfo, requiredInfoDocuments } from "./cae-info-docs.ts";
 
 export type CaeRequirementState =
   "ok" | "due_soon" | "expired" | "pending" | "rejected" | "missing";
@@ -167,6 +168,8 @@ export function companyStatus(input: {
   /** The company's day, «YYYY-MM-DD». */
   today: string;
   parent?: { name: string; status: CaeStatus } | null;
+  /** The site's information it hasn't received (when it's required): their titles. */
+  infoMissing?: readonly string[];
 }): CaeStatus {
   const { company, today } = input;
   const r = caeTexts.reasons;
@@ -186,6 +189,7 @@ export function companyStatus(input: {
     reasons.push(r.parentNotAuthorized(input.parent.name));
   }
   reasons.push(...documentReasons(requirements));
+  for (const title of input.infoMissing ?? []) reasons.push(r.infoMissing(title));
   const authorized = reasons.length === 0;
   return {
     authorized,
@@ -413,6 +417,7 @@ export async function companyStatuses(
     companyIds: [...known.keys()],
     workerIds: [],
   });
+  const info = await missingInfo(ctx, [...known.keys()], await requiredInfoDocuments(ctx));
   const result = new Map<string, CaeStatus>();
   const statusOf = (company: StatusCompany, depth: number): CaeStatus => {
     const cached = result.get(company.id);
@@ -426,6 +431,7 @@ export async function companyStatuses(
       requirements,
       today,
       documents: documents.companies.get(company.id) ?? none,
+      infoMissing: (info.get(company.id) ?? []).map((doc) => doc.title),
       parent:
         parent === undefined ? null : { name: parent.name, status: statusOf(parent, depth + 1) },
     });
@@ -520,6 +526,7 @@ const validDocument = (requirementId: string, day: Date, ownOnly: boolean) => ({
 function companyOwnWhere(
   day: Date,
   required: Map<CaeCompanyKind, string[]>,
+  infoKeys: readonly string[],
 ): Prisma.CaeCompanyWhereInput {
   return {
     blockedAt: null,
@@ -535,6 +542,8 @@ function companyOwnWhere(
           })),
         })),
       },
+      // The site's information, each document in its version in force (when it's required).
+      ...infoKeys.map((key) => ({ infoDeliveries: { some: { deliveredKeys: { has: key } } } })),
     ],
   };
 }
@@ -551,7 +560,8 @@ export async function authorizedCompanyWhere(
 ): Promise<Prisma.CaeCompanyWhereInput> {
   const day = await todayDate(ctx);
   const required = await requiredByKind(ctx, "COMPANY");
-  const own = companyOwnWhere(day, required);
+  const infoKeys = (await requiredInfoDocuments(ctx)).map(infoKey);
+  const own = companyOwnWhere(day, required, infoKeys);
   return {
     AND: [own, { OR: [{ kind: { not: "SUBCONTRACTOR" } }, { parent: { is: own } }] }],
   };

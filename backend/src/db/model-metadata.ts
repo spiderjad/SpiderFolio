@@ -81,6 +81,8 @@ export const modelMetadata = {
       caeRequirements: "CaeRequirement",
       caeDocuments: "CaeDocument",
       caeAccesses: "CaeAccess",
+      caeInfoDeliveries: "CaeInfoDelivery",
+      caeWorkPermits: "CaeWorkPermit",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -271,6 +273,8 @@ export const modelMetadata = {
       workers: "CaeWorker",
       documents: "CaeDocument",
       accesses: "CaeAccess",
+      infoDeliveries: "CaeInfoDelivery",
+      permits: "CaeWorkPermit",
     },
   },
   CaeWorker: {
@@ -286,6 +290,11 @@ export const modelMetadata = {
     scope: "tenant",
     relations: { workspace: "Workspace", documents: "CaeDocument" },
   },
+  CaeInfoDelivery: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", company: "CaeCompany" },
+  },
+  CaeWorkPermit: { scope: "tenant", relations: { workspace: "Workspace", company: "CaeCompany" } },
   CaeAccess: {
     scope: "tenant",
     relations: { workspace: "Workspace", worker: "CaeWorker", company: "CaeCompany" },

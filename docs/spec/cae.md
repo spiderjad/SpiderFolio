@@ -190,9 +190,30 @@ seguridad del centro). La empresa los edita, agrega o archiva.
    `cae.check`, que ve lo mismo que en portería); hasta 2000 trabajadores, documentos enmascarados.
    Simplificaciones: los accesos no se corrigen ni se anulan; la lista de accesos no tiene exportación; el
    responsable interno sin `cae.check` no ve la portería ni los accesos.
-4. **Información y permisos de trabajo**: entrega de la información del centro (riesgos, emergencias,
+4. **Información y permisos de trabajo** (hecha): entrega de la información del centro (riesgos, emergencias,
    normas: documentos controlados marcados para la CAE) con firma de quien la recibe; permisos de trabajo
    (trabajos en caliente, en altura, espacios confinados, eléctricos) con validez, firmas y cierre.
+   Migración `cae_info_permits`: `CaeInfoDelivery` (los ítems entregados como foto `{ nodeId, version,
+   code, title }` más `deliveredKeys` «nodeId@versión» para consultar en la base; firma PNG opcional) y
+   `CaeWorkPermit`; las dos solo se agregan (y el permiso se actualiza al aprobarlo, cerrarlo o anularlo),
+   nunca se borran. Información: la lista de documentos es `settings.safety.cae.infoNodeIds` (no una
+   marca por documento controlado) y `infoRequired` (por defecto sí), que se editan en el Catálogo
+   (`GET/PUT /cae/info`, `GET /cae/info/options`: documentos controlados vigentes). Solo cuentan los que
+   siguen vigentes; una empresa cumple si cada uno le fue entregado alguna vez **en su versión vigente**
+   (en cualquier entrega, no solo la última), y si no, el motivo «Falta entregar la información del
+   centro: …» entra en `caeStatus` y en el filtro de las listas (también para la contrata de una
+   subcontrata). Aplica a todos los tipos de empresa. Entregas: `GET/POST /companies/:id/info/deliveries`,
+   `GET /companies/:id/info`, constancia en `GET /info/deliveries/:id/pdf`; auditoría
+   `cae.info.update|deliver|export`. Permisos: `GET/POST /permits`, `GET/PATCH /permits/:id` (solo en
+   borrador), `POST /permits/:id/approve` (firma y todas las medidas marcadas; vuelve a comprobar que cada
+   trabajador esté autorizado), `/close`, `/cancel`, `/pdf`; auditoría `cae.permit.*`. Duración máxima,
+   personas y medidas en `caeLimits` (`packages/limits`); las medidas por defecto de cada tipo, en el i18n
+   de la app (es, latam y en). Los permisos sirven también para el personal propio: están en la pestaña de
+   la CAE y solo existen con la CAE activada. Simplificaciones: emitir, aprobar, cerrar y anular es
+   `cae.manage` (sin una capacidad `cae.permits` aparte) y quien emite puede aprobar; `cae.check` los lee;
+   los trabajadores de un permiso son de la empresa del permiso; un permiso aprobado pasa a «Vencido»
+   solo en la vista (no hay job que lo cierre); la constancia de entrega lleva la firma si se firmó en
+   pantalla.
 5. **Portal de contratas**: que la contrata suba sus propios documentos con un acceso propio. **Toca
    seguridad (acceso externo): se decide con el mantenedor antes de empezar** (opciones: enlace con código
    como las salas de auditoría, o cuentas de invitado).

@@ -1,6 +1,7 @@
 // CAE (docs/spec/cae.md, «API»): request bodies and list queries.
 import { z } from "zod";
 import { IdsParam, pageShape, SearchParam } from "../../lib/pagination.ts";
+import { caeLimits } from "@spiderfolio/limits";
 import { validationMessages } from "../../i18n/index.ts";
 
 const Id = z.string().min(1).max(64);
@@ -161,6 +162,99 @@ export const ListAccessesQuerySchema = z.object({
   companyId: Id.optional(),
 });
 
+/** A PNG as a data URL: a signature (up to ~300 KB). */
+const Signature = z
+  .string()
+  .max(400_000)
+  .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/u);
+
+// ─── Site information (RD 171/2004, arts. 7 to 9) ────────────────────────────────────────
+
+export const UpdateInfoSchema = NonEmpty(
+  z
+    .strictObject({
+      nodeIds: z.array(Id).max(caeLimits.infoMaxDocuments),
+      required: z.boolean(),
+    })
+    .partial(),
+);
+
+/** Controlled documents in force, to choose the information documents. */
+export const InfoOptionsQuerySchema = z.object({
+  ...pageShape(["code"], "code", { defaultPageSize: 20 }),
+  q: SearchParam,
+  ids: IdsParam,
+});
+
+export const CreateInfoDeliverySchema = z.strictObject({
+  /** Some of the information documents; all of them without it. */
+  nodeIds: z.array(Id).min(1).max(caeLimits.infoMaxDocuments).optional(),
+  /** Today without it. */
+  deliveredOn: Day.optional(),
+  receivedBy: z.string().trim().min(2).max(120),
+  signature: Signature.nullable().optional(),
+});
+
+export const ListInfoDeliveriesQuerySchema = z.object({
+  ...pageShape(["deliveredOn"], "deliveredOn"),
+  dir: z.enum(["asc", "desc"]).default("desc"),
+});
+
+// ─── Work permits ────────────────────────────────────────────────────────────────────────
+
+export const permitTypes = ["HOT_WORK", "HEIGHT", "CONFINED_SPACE", "ELECTRICAL", "OTHER"] as const;
+export const permitStatuses = ["DRAFT", "ACTIVE", "CLOSED", "CANCELLED"] as const;
+
+const Precautions = z
+  .array(z.strictObject({ label: z.string().trim().min(1).max(200), done: z.boolean() }))
+  .max(caeLimits.permitMaxPrecautions);
+
+const PermitShape = {
+  type: z.enum(permitTypes),
+  customName: z.string().trim().min(1).max(80).nullable(),
+  companyId: Id.nullable(),
+  location: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000),
+  validFrom: z.iso.datetime({ offset: true }),
+  validTo: z.iso.datetime({ offset: true }),
+  workerIds: z.array(Id).max(caeLimits.permitMaxPeople),
+  membershipIds: z.array(Id).max(caeLimits.permitMaxPeople),
+  precautions: Precautions,
+};
+
+export const CreatePermitSchema = z.strictObject({
+  ...PermitShape,
+  customName: PermitShape.customName.optional(),
+  companyId: PermitShape.companyId.optional(),
+  description: PermitShape.description.default(""),
+  workerIds: PermitShape.workerIds.default([]),
+  membershipIds: PermitShape.membershipIds.default([]),
+  precautions: Precautions.default([]),
+});
+
+/** Only while it's a draft. */
+export const UpdatePermitSchema = NonEmpty(z.strictObject(PermitShape).partial());
+
+/** Whoever approves signs; the checklist can be ticked at that moment. */
+export const ApprovePermitSchema = z.strictObject({
+  signature: Signature,
+  precautions: Precautions.optional(),
+});
+
+export const ClosePermitSchema = z.strictObject({ note: z.string().trim().max(1000).optional() });
+
+export const CancelPermitSchema = z.strictObject({ reason: z.string().trim().min(3).max(500) });
+
+export const ListPermitsQuerySchema = z.object({
+  ...pageShape(["validFrom"], "validFrom"),
+  dir: z.enum(["asc", "desc"]).default("desc"),
+  status: z.enum(permitStatuses).optional(),
+  type: z.enum(permitTypes).optional(),
+  companyId: Id.optional(),
+  /** Permits valid at some point of that company day. */
+  day: Day.optional(),
+});
+
 export const IdParamsSchema = z.object({ id: Id });
 
 export type CreateCompanyInput = z.infer<typeof CreateCompanySchema>;
@@ -178,3 +272,11 @@ export type ListDocumentsQuery = z.infer<typeof ListDocumentsQuerySchema>;
 export type CheckQuery = z.infer<typeof CheckQuerySchema>;
 export type AccessInput = z.infer<typeof AccessSchema>;
 export type ListAccessesQuery = z.infer<typeof ListAccessesQuerySchema>;
+export type UpdateInfoInput = z.infer<typeof UpdateInfoSchema>;
+export type InfoOptionsQuery = z.infer<typeof InfoOptionsQuerySchema>;
+export type CreateInfoDeliveryInput = z.infer<typeof CreateInfoDeliverySchema>;
+export type ListInfoDeliveriesQuery = z.infer<typeof ListInfoDeliveriesQuerySchema>;
+export type CreatePermitInput = z.infer<typeof CreatePermitSchema>;
+export type UpdatePermitInput = z.infer<typeof UpdatePermitSchema>;
+export type ApprovePermitInput = z.infer<typeof ApprovePermitSchema>;
+export type ListPermitsQuery = z.infer<typeof ListPermitsQuerySchema>;

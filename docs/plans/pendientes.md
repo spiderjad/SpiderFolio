@@ -7,11 +7,12 @@ Lista viva. Al terminar algo, se marca o se borra de acá.
 - [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: en curso (07/11/2026). Núcleo, **dentro de
       Prevención** como pestaña «Contratas (CAE)», con su propio interruptor en la configuración del
       módulo (apagado por defecto). Spec y fases en `docs/spec/cae.md`.
-  - [ ] Capturas de la CAE (fases 1 a 3: lista de contratas, ficha de empresa y de trabajador con sus
-        documentos, subir documento, «Por revisar», catálogo, portería en verde y en rojo (375 px),
-        tarjeta con QR, accesos, interruptor en Administración › Seguridad ›
-        General) para la guía de Seguridad y salud laboral en
-        es y en: regenerarlas con `web/scripts/capturas.ts` (base `spiderfolio_capturas`).
+  - [ ] Capturas de la CAE (fases 1 a 4): lista de contratas, ficha de empresa y de trabajador con sus
+        documentos, subir documento, «Por revisar», catálogo con la información para contratas, entrega de
+        información con firma, portería en verde y en rojo (375 px), tarjeta con QR, accesos, lista y
+        ficha de permisos de trabajo, interruptor en Administración › Seguridad › General. Para la guía de
+        Seguridad y salud laboral en es y en: regenerarlas con `web/scripts/capturas.ts` (base
+        `spiderfolio_capturas`).
 - [ ] **Lo que le falte a Prevención**: relevarlo y sumarlo como fases nuevas en
       docs/spec/seguridad-salud.md (pedido del 07/11/2026).
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en

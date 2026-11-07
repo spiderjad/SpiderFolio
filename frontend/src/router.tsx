@@ -240,6 +240,20 @@ export const routes = [
                         lazy: page(() => import("@/features/safety/cae-gate-page"), "CaeGatePage"),
                       },
                       {
+                        path: "permisos",
+                        lazy: page(
+                          () => import("@/features/safety/cae-permits-page"),
+                          "CaePermitsPage",
+                        ),
+                      },
+                      {
+                        path: "permisos/:permitId",
+                        lazy: page(
+                          () => import("@/features/safety/cae-permit-page"),
+                          "CaePermitPage",
+                        ),
+                      },
+                      {
                         path: "accesos",
                         lazy: page(
                           () => import("@/features/safety/cae-accesses-page"),

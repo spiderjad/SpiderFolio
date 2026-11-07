@@ -15,6 +15,7 @@ import { useListParams, useSearchParam } from "@/features/admin/list-params";
 import { cn, formatDateTime } from "@/lib/utils";
 import { caeApi, caeKeys, type CaeGateResult } from "./cae-api";
 import { CaeNav } from "./cae-common";
+import { permitName } from "./cae-permits-page";
 import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -199,6 +200,19 @@ function GateAnswer({ workerId, onClear }: { workerId: string; onClear: () => vo
           <p className="mt-4 text-sm">
             {t.lastAccess(result.lastAccess.direction, formatDateTime(result.lastAccess.at))}
           </p>
+        )}
+        {result.permits.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium">{texts.cae.permits.gate}</p>
+            <ul className="mt-1 grid gap-1 text-sm">
+              {result.permits.map((permit) => (
+                <li key={permit.id}>
+                  {permitName(permit)} · {permit.location} ·{" "}
+                  {texts.cae.permits.until(formatDateTime(permit.validTo))}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
       <div className="grid gap-2 sm:grid-cols-3">

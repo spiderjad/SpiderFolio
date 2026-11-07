@@ -16,6 +16,20 @@ import { cn } from "@/lib/utils";
 import { caeApi, caeKeys, type CaeRequirementState, type CaeState } from "./cae-api";
 import { texts } from "@/i18n";
 
+/** A signature drawn on the pad, as the PNG data URL the API takes. */
+export function dataUrlOf(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(typeof reader.result === "string" ? reader.result : "");
+    };
+    reader.onerror = () => {
+      reject(new Error("signature"));
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function useCae() {
   const membership = useMembership();
   const { cae, terms, caeAccessLog } = membership.workspace.safety;
@@ -83,6 +97,9 @@ export function CaeNav() {
           {texts.cae.nav.accesses}
         </NavLink>
       )}
+      <NavLink to={`${base}/permisos`} className={tab}>
+        {texts.cae.nav.permits}
+      </NavLink>
       {manage && (
         <>
           <NavLink to={`${base}/revisar`} className={tab}>
