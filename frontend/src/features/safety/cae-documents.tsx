@@ -152,6 +152,7 @@ export function DocumentRequirementsCard({
                       {t.statuses[latest.status]}
                     </Badge>
                     <FileLink doc={latest} />
+                    {latest.fromPortal && <Badge>{texts.cae.portal.fromPortal}</Badge>}
                     {latest.status === "REJECTED" && latest.rejectReason !== null && (
                       <span className="text-xs text-muted-foreground">
                         {t.rejectedBecause(latest.rejectReason)}
@@ -542,6 +543,7 @@ function HistoryDialog({
                     status: doc.status,
                     validUntil: doc.validUntil,
                     rejectReason: doc.rejectReason,
+                    fromPortal: doc.fromPortal,
                     createdAt: doc.createdAt,
                   }}
                 />
@@ -552,7 +554,9 @@ function HistoryDialog({
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                {t.givenBy(doc.createdBy.name, formatDateTime(doc.createdAt))}
+                {doc.fromPortal
+                  ? `${texts.cae.portal.fromPortal} · ${formatDateTime(doc.createdAt)}`
+                  : t.givenBy(doc.createdBy.name, formatDateTime(doc.createdAt))}
                 {doc.reviewed !== null &&
                   ` · ${t.reviewedBy(doc.reviewed.by.name, formatDateTime(doc.reviewed.at))}`}
               </p>

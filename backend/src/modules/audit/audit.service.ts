@@ -6,7 +6,8 @@ import type { PrismaClient } from "../../lib/prisma.ts";
 
 /** Done through the connector for Claude (docs/spec/conector-mcp.md): «… vía Claude» in the activity. */
 export interface AuditVia {
-  via: "mcp";
+  /** mcp: the connector for Claude; cae-portal: a contractor through its portal (no member). */
+  via: "mcp" | "cae-portal";
   client: string;
 }
 
@@ -23,7 +24,8 @@ export interface AuditEntry {
 }
 
 const toData = (entry: AuditEntry) => ({
-  actorId: entry.actorId ?? null,
+  // "" is how a context without a member (the contractors' portal) says «nobody».
+  actorId: entry.actorId === "" ? null : (entry.actorId ?? null),
   action: entry.action,
   entityType: entry.entityType ?? null,
   entityId: entry.entityId ?? null,

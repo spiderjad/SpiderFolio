@@ -32,6 +32,8 @@ export interface CaeDocumentRef {
   status: CaeDocumentStatus;
   validUntil: string | null;
   rejectReason: string | null;
+  /** Uploaded by the contractor through its portal. */
+  fromPortal: boolean;
   createdAt: string;
 }
 
@@ -52,6 +54,8 @@ export interface CaeDocument {
   validUntil: string | null;
   rejectReason: string | null;
   superseded: boolean;
+  /** Uploaded by the contractor through its portal. */
+  fromPortal: boolean;
   createdAt: string;
   createdBy: { id: string; name: string };
   reviewed: { at: string; by: { id: string; name: string } } | null;

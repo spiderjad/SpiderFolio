@@ -255,6 +255,12 @@ export const ListPermitsQuerySchema = z.object({
   day: Day.optional(),
 });
 
+/** A contractor's portal access: how many days it lasts and, optionally, who it's for. */
+export const IssuePortalSchema = z.strictObject({
+  days: z.number().int().min(1).max(caeLimits.portalAccessMaxDays),
+  email: z.email().max(254).nullable().optional(),
+});
+
 export const IdParamsSchema = z.object({ id: Id });
 
 export type CreateCompanyInput = z.infer<typeof CreateCompanySchema>;

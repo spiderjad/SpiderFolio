@@ -45,6 +45,11 @@ export const routes = [
         path: "auditoria/:roomId",
         lazy: page(() => import("@/features/audit-rooms/auditor-page"), "AuditorPage"),
       },
+      // A contractor's portal (docs/spec/cae.md): no account, only its access's own cookie.
+      {
+        path: "contratas/:accessId",
+        lazy: page(() => import("@/features/safety/cae-portal-page"), "CaePortalPage"),
+      },
       {
         element: <GuestOnly />,
         children: [

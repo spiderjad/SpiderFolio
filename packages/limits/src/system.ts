@@ -33,4 +33,14 @@ export const caeLimits = {
   permitMaxPeople: 50,
   /** Precautions in one permit's checklist. */
   permitMaxPrecautions: 40,
+  /** The longest a contractor's portal access lasts, in days (it's issued again after). */
+  portalAccessMaxDays: 180,
+  /** A portal session (never past the access). */
+  portalSessionHours: 4,
+  /** A session's token is replaced after this many minutes of use. */
+  portalRotateMinutes: 15,
+  /** Wrong codes in a row before the access stops working (it has to be issued again). */
+  portalMaxFailedAttempts: 10,
+  /** A document uploaded through the portal (the company's own limits apply too). */
+  portalMaxFileMb: 20,
 } as const;

@@ -27,6 +27,8 @@ export interface CaeDocumentView {
   rejectReason: string | null;
   /** A newer one replaced it. */
   superseded: boolean;
+  /** Uploaded by the contractor through its portal. */
+  fromPortal: boolean;
   createdAt: Date;
   createdBy: { id: string; name: string };
   reviewed: { at: Date; by: { id: string; name: string } } | null;
@@ -43,6 +45,7 @@ const documentSelect = {
   validUntil: true,
   rejectReason: true,
   supersededAt: true,
+  portalAccessId: true,
   createdAt: true,
   createdById: true,
   reviewedAt: true,
@@ -99,6 +102,7 @@ async function views(ctx: AdminContext, rows: DocumentRecord[]): Promise<CaeDocu
       validUntil: dayOfDate(row.validUntil),
       rejectReason: row.rejectReason,
       superseded: row.supersededAt !== null,
+      fromPortal: row.portalAccessId !== null,
       createdAt: row.createdAt,
       createdBy: { id: row.createdById, name: nameOf.get(row.createdById) ?? "" },
       reviewed:
@@ -209,6 +213,23 @@ export async function createDocument(
   input: CreateDocumentInput,
 ): Promise<CaeDocumentView> {
   await requireManager(ctx);
+  const id = await giveDocument(ctx, input, null);
+  if (input.accept) return await acceptDocument(ctx, id, {});
+  const [view] = await views(ctx, [await loadDocument(ctx, id)]);
+  if (view === undefined) throw notFound();
+  return view;
+}
+
+/**
+ * Gives a file for a requirement: checks the requirement, the worker and that the file is inside the
+ * company's folder, then saves it PENDING. `portalAccessId`: uploaded by the contractor through its
+ * portal (audited as the portal, never as a member). Returns the document's id.
+ */
+export async function giveDocument(
+  ctx: AdminContext,
+  input: Omit<CreateDocumentInput, "accept">,
+  portalAccessId: string | null,
+): Promise<string> {
   const access = await accessOf(ctx);
   const m = caeTexts.messages;
   const company = await loadCompany(ctx, access, input.companyId);
@@ -256,11 +277,12 @@ export async function createDocument(
       nodeId: input.nodeId,
       validUntil: validUntil === null ? null : dateOf(validUntil),
       createdById: ctx.tenant.membershipId,
+      portalAccessId,
     },
     select: { id: true },
   });
   await auditAdmin(ctx, {
-    action: "cae.document.upload",
+    action: portalAccessId === null ? "cae.document.upload" : "cae.portal.document.upload",
     entityType: "CaeDocument",
     entityId: created.id,
     metadata: {
@@ -268,12 +290,10 @@ export async function createDocument(
       companyId: company.id,
       ...(workerId === null ? {} : { workerId }),
       nodeId: input.nodeId,
+      ...(portalAccessId === null ? {} : { portalAccessId }),
     },
   });
-  if (input.accept) return await acceptDocument(ctx, created.id, {});
-  const [view] = await views(ctx, [await loadDocument(ctx, created.id)]);
-  if (view === undefined) throw notFound();
-  return view;
+  return created.id;
 }
 
 function assertPending(row: { status: string }): void {

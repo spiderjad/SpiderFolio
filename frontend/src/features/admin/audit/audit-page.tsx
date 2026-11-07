@@ -37,6 +37,11 @@ const select =
 const actionLabel = (action: string): string => t.actions[action] ?? action;
 
 function actorLabel(event: AuditEvent): string {
+  const meta = event.metadata as { via?: unknown; client?: unknown } | null;
+  // A contractor through its portal (docs/spec/cae.md): no member acted.
+  if (event.actor === null && meta?.via === "cae-portal") {
+    return t.actor.portal(typeof meta.client === "string" ? meta.client : "");
+  }
   if (event.actor === null) return t.actor.system;
   if (event.actor.staff) return t.actor.staff;
   const name = event.actor.name ?? t.actor.unknown;

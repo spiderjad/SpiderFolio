@@ -214,9 +214,48 @@ seguridad del centro). La empresa los edita, agrega o archiva.
    los trabajadores de un permiso son de la empresa del permiso; un permiso aprobado pasa a «Vencido»
    solo en la vista (no hay job que lo cierre); la constancia de entrega lleva la firma si se firmó en
    pantalla.
-5. **Portal de contratas**: que la contrata suba sus propios documentos con un acceso propio. **Toca
-   seguridad (acceso externo): se decide con el mantenedor antes de empezar** (opciones: enlace con código
-   como las salas de auditoría, o cuentas de invitado).
+5. **Portal de contratas** (hecha): que la contrata suba sus propios documentos con un acceso propio.
+   Opción elegida por el mantenedor: **enlace con código**, como las salas de auditoría. Decisiones de
+   seguridad:
+   - `CaePortalAccess` por empresa (migración `cae_portal`): el código (12 caracteres de base32 de
+     Crockford, ~60 bits, `cae-portal-codes.ts`) se muestra una sola vez y solo se guarda su hash ligado
+     al acceso (`sha256(accessId:código)`, como `auditCodeHash`), comparado en tiempo constante. Uno
+     activo por empresa (índice único parcial); dar uno nuevo revoca el anterior y termina sus sesiones.
+     Duración, sesión, rotación, intentos y tamaño de archivo en `caeLimits` (`packages/limits`).
+   - URL fuera de `/app`: `/contratas/:accessId` (app) y `/api/v1/contratas/:accessId` (API, antes de las
+     rutas de empresa, como `/api/v1/auditor`). El enlace no lleva el código.
+   - Entrar: límite por acceso y dirección (10 cada 15 min) y por dirección (30 cada 15 min); cada código
+     incorrecto suma en el acceso y a los 10 seguidos se bloquea (hay que dar otro). Cualquier problema
+     (acceso inexistente, revocado, vencido o bloqueado, empresa archivada, CAE o módulo apagados, quien lo
+     dio ya no activo o sin `cae.manage`, código incorrecto) responde el mismo error genérico; la portada
+     sin sesión solo dice si hay sesión (ni el nombre de la empresa).
+   - Sesión: token aleatorio en una cookie httpOnly, SameSite=Strict, Secure en producción y con `path`
+     del acceso (las mismas opciones que la del auditor); se crea después del código (un token previo se
+     ignora: sin fijación), se reemplaza cada 15 minutos de uso (el anterior vale un minuto más), dura 4
+     horas como mucho y nunca más que el acceso; «Salir» la termina (`endedAt`, no se borra). En cada
+     pedido se revisa todo de nuevo.
+   - Alcance: todo se lee y escribe con `forTenant` del workspace del acceso y con el contexto de quien
+     lo dio (como la sala usa el de su creador), siempre para la empresa de la sesión: ningún id del
+     pedido llega a otra empresa (sus trabajadores, requisitos, carpetas) ni a otro tenant. La
+     información del centro sale por un endpoint propio que solo sirve los documentos elegidos (el PDF
+     controlado, con `Content-Security-Policy: default-src 'none'`), nunca las URLs generales de archivos.
+     De la empresa anfitriona solo se ve el nombre del responsable interno; los permisos, sin los nombres
+     del personal propio.
+   - Subidas: el flujo normal (reserva, PUT prefirmado al almacenamiento, `completeUpload` con tamaño,
+     tipo real por sus bytes y los límites de la empresa), más estrecho: solo PDF, JPG o PNG y hasta
+     `portalMaxFileMb`. `CaePortalUpload` ata cada subida (su id es el de la reserva) al acceso y al
+     requisito: nada más se puede completar desde el portal. Quedan PENDING en la carpeta de la empresa o
+     del trabajador.
+   - Autoría: lo que crea el portal se audita sin actor (`actorId` nulo) con `via: cae-portal` y el
+     nombre de la empresa (`cae.portal.login`, `.login.failure` sin el código, `.document.upload`,
+     `.worker.create|update|archive`, `.info.view`, y `cae.portal.issue|revoke` del lado del anfitrión);
+     los documentos llevan `portalAccessId` («Subido por la contrata») y su `createdById` es quien dio el
+     acceso, que responde por él. El responsable interno recibe el aviso `cae_portal_upload` en la campana.
+   - No se relajó CSP, CORS ni los límites: la página del portal es una ruta más de la app.
+   Simplificaciones: el email del acceso solo se guarda (no se envía el enlace); el PDF de la información
+   lleva la marca de agua de quien dio el acceso; el responsable interno sin `cae.manage` no gestiona el
+   acceso.
+
 6. Ejemplos del sector alimentario, guías es/en, capturas y versión (hecha, salvo la versión).
    Con «Cargar ejemplos del sector alimentario» junto al interruptor de la CAE (`examples` con `cae: true`
    en `PUT /admin/safety`; solo carga los de la CAE, no los del módulo) se suman al catálogo, sin pisar

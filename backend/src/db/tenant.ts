@@ -165,6 +165,19 @@ export interface TenantDb {
     PrismaClient["caeWorkPermit"],
     "findFirst" | "findMany" | "count" | "create" | "update"
   >;
+  // The contractors' portal: accesses are revoked (an update), sessions ended; nothing is deleted.
+  caePortalAccess: TenantDelegate<
+    PrismaClient["caePortalAccess"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "updateMany"
+  >;
+  caePortalSession: TenantDelegate<
+    PrismaClient["caePortalSession"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "updateMany"
+  >;
+  caePortalUpload: TenantDelegate<
+    PrismaClient["caePortalUpload"],
+    "findFirst" | "count" | "create" | "updateMany"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -306,6 +319,18 @@ const delegates = {
   caeWorkPermit: {
     model: "CaeWorkPermit",
     ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  caePortalAccess: {
+    model: "CaePortalAccess",
+    ops: ["findFirst", "findMany", "count", "create", "update", "updateMany"],
+  },
+  caePortalSession: {
+    model: "CaePortalSession",
+    ops: ["findFirst", "findMany", "count", "create", "update", "updateMany"],
+  },
+  caePortalUpload: {
+    model: "CaePortalUpload",
+    ops: ["findFirst", "count", "create", "updateMany"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },

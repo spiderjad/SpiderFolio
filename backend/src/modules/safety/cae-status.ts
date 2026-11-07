@@ -43,6 +43,8 @@ export interface CaeDocumentRef {
   status: "PENDING" | "ACCEPTED" | "REJECTED";
   validUntil: string | null;
   rejectReason: string | null;
+  /** Uploaded by the contractor through its portal. */
+  fromPortal: boolean;
   createdAt: Date;
 }
 
@@ -334,6 +336,7 @@ export async function loadDocuments(
             status: true,
             validUntil: true,
             rejectReason: true,
+            portalAccessId: true,
             createdAt: true,
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -360,6 +363,7 @@ export async function loadDocuments(
       status: row.status,
       validUntil: dayOfDate(row.validUntil),
       rejectReason: row.rejectReason,
+      fromPortal: row.portalAccessId !== null,
       createdAt: row.createdAt,
     });
   }

@@ -83,6 +83,9 @@ export const modelMetadata = {
       caeAccesses: "CaeAccess",
       caeInfoDeliveries: "CaeInfoDelivery",
       caeWorkPermits: "CaeWorkPermit",
+      caePortalAccesses: "CaePortalAccess",
+      caePortalSessions: "CaePortalSession",
+      caePortalUploads: "CaePortalUpload",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -275,6 +278,7 @@ export const modelMetadata = {
       accesses: "CaeAccess",
       infoDeliveries: "CaeInfoDelivery",
       permits: "CaeWorkPermit",
+      portalAccesses: "CaePortalAccess",
     },
   },
   CaeWorker: {
@@ -289,6 +293,24 @@ export const modelMetadata = {
   CaeRequirement: {
     scope: "tenant",
     relations: { workspace: "Workspace", documents: "CaeDocument" },
+  },
+  CaePortalAccess: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      company: "CaeCompany",
+      sessions: "CaePortalSession",
+      uploads: "CaePortalUpload",
+      documents: "CaeDocument",
+    },
+  },
+  CaePortalSession: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", access: "CaePortalAccess" },
+  },
+  CaePortalUpload: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", access: "CaePortalAccess" },
   },
   CaeInfoDelivery: {
     scope: "tenant",
@@ -306,6 +328,7 @@ export const modelMetadata = {
       requirement: "CaeRequirement",
       company: "CaeCompany",
       worker: "CaeWorker",
+      portalAccess: "CaePortalAccess",
     },
   },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },

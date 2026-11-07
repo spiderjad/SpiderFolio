@@ -99,7 +99,9 @@ export function CaeReviewPage() {
         header: t.columns.given,
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">
-            {d.givenBy(row.original.createdBy.name, formatDateTime(row.original.createdAt))}
+            {row.original.fromPortal
+              ? `${texts.cae.portal.fromPortal} · ${formatDateTime(row.original.createdAt)}`
+              : d.givenBy(row.original.createdBy.name, formatDateTime(row.original.createdAt))}
           </span>
         ),
       },

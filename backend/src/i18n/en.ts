@@ -1088,6 +1088,14 @@ export const caeTexts: Catalog<typeof Es.caeTexts> = {
       hygieneRules: "Site hygiene and GMP rules received",
     },
   },
+  portal: {
+    invalid: "The link or the code isn't valid, or the access is no longer active.",
+    noSession: "Your session ended: sign in again with the code.",
+    fileType: "Upload a PDF or a photo (JPG or PNG).",
+    fileTooLarge: (mb: number) => `The file is over ${String(mb)} MB.`,
+    infoNotChosen: "That document isn't part of the site information.",
+    uploadGone: "That upload is gone: upload the file again.",
+  },
   messages: {
     companyNameTaken: "There's already a company with that name.",
     requirementNameTaken: "There's already a required document with that name.",

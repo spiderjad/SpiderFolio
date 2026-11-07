@@ -268,6 +268,9 @@ model Workspace {
   caeAccesses         CaeAccess[]
   caeInfoDeliveries   CaeInfoDelivery[]
   caeWorkPermits      CaeWorkPermit[]
+  caePortalAccesses   CaePortalAccess[]
+  caePortalSessions   CaePortalSession[]
+  caePortalUploads    CaePortalUpload[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -722,6 +725,7 @@ model CaeCompany {
   accesses       CaeAccess[]
   infoDeliveries CaeInfoDelivery[]
   permits        CaeWorkPermit[]
+  portalAccesses CaePortalAccess[]
 
   @@unique([workspaceId, nameKey])
   @@unique([id, workspaceId])
@@ -793,29 +797,32 @@ enum CaeDocumentStatus {
 /// The ACCEPTED one without supersededAt is the current one of its (requirement, company, worker); the
 /// rest are history. Never deleted.
 model CaeDocument {
-  id            String            @id @default(cuid())
-  workspaceId   String
-  requirementId String
-  companyId     String
+  id             String            @id @default(cuid())
+  workspaceId    String
+  requirementId  String
+  companyId      String
   /// With a WORKER requirement.
-  workerId      String?
+  workerId       String?
   /// The file (node; no FK: it can go to the trash apart).
-  nodeId        String
-  validUntil    DateTime?         @db.Date
-  status        CaeDocumentStatus @default(PENDING)
-  reviewedById  String?
-  reviewedAt    DateTime?
-  rejectReason  String?
+  nodeId         String
+  validUntil     DateTime?         @db.Date
+  status         CaeDocumentStatus @default(PENDING)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  rejectReason   String?
   /// A newer document of the same requirement was accepted.
-  supersededAt  DateTime?
-  createdById   String
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  supersededAt   DateTime?
+  /// Uploaded by the contractor through its portal (createdById is then whoever issued that access).
+  portalAccessId String?
+  createdById    String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  requirement CaeRequirement @relation(fields: [requirementId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
-  company     CaeCompany     @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
-  worker      CaeWorker?     @relation(fields: [workerId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  requirement  CaeRequirement   @relation(fields: [requirementId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  company      CaeCompany       @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  portalAccess CaePortalAccess? @relation(fields: [portalAccessId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+  worker       CaeWorker?       @relation(fields: [workerId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([id, workspaceId])
   @@index([workspaceId, companyId, workerId, requirementId, createdAt])
@@ -2175,4 +2182,68 @@ model CaeWorkPermit {
   @@index([workspaceId, validFrom, id])
   @@index([workspaceId, status, validTo])
   @@index([workspaceId, companyId, validFrom])
+}
+
+/// A contractor's portal access (docs/spec/cae.md, «Portal de contratas»): a link with a code, for one
+/// company. The code is only kept as a hash bound to the access. One active per company: a new one
+/// revokes the previous. Never deleted.
+model CaePortalAccess {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  companyId      String
+  /// sha256(accessId:code), like the audit rooms' codes.
+  codeHash       String
+  /// Who issued it (membership; no FK): the portal reads and writes with their access.
+  createdById    String
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  revokedById    String?
+  lastUsedAt     DateTime?
+  /// Wrong codes in a row: past caeLimits.portalMaxFailedAttempts it stops working.
+  failedAttempts Int       @default(0)
+  /// Where the link was sent, if it was.
+  email          String?
+  createdAt      DateTime  @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   CaeCompany         @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  sessions  CaePortalSession[]
+  uploads   CaePortalUpload[]
+  documents CaeDocument[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, companyId, createdAt])
+}
+
+/// A portal session (its own httpOnly cookie, scoped to the access's path). Ended, never deleted.
+model CaePortalSession {
+  id          String    @id @default(cuid())
+  workspaceId String
+  accessId    String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  access    CaePortalAccess @relation(fields: [accessId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@index([workspaceId, accessId])
+}
+
+/// A file the contractor is uploading through the portal: binds the upload (its id is the upload
+/// reservation's) to the access and to the requirement it's for, so nothing else can be completed.
+model CaePortalUpload {
+  id            String    @id
+  workspaceId   String
+  accessId      String
+  requirementId String
+  workerId      String?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  access    CaePortalAccess @relation(fields: [accessId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+
+  @@index([workspaceId, accessId])
 }

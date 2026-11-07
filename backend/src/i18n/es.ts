@@ -1065,6 +1065,15 @@ export const caeTexts = {
       hygieneRules: "Normas de higiene y BPM del centro recibidas",
     },
   },
+  portal: {
+    /** The same answer for any problem with the link or the code: nothing is learned from it. */
+    invalid: "El enlace o el código no son válidos, o el acceso ya no está activo.",
+    noSession: "Tu sesión terminó: vuelve a entrar con el código.",
+    fileType: "Sube un PDF o una foto (JPG o PNG).",
+    fileTooLarge: (mb: number) => `El archivo pesa más de ${String(mb)} MB.`,
+    infoNotChosen: "Ese documento no está entre la información del centro.",
+    uploadGone: "Esa subida ya no está: vuelve a subir el archivo.",
+  },
   messages: {
     companyNameTaken: "Ya hay una empresa con ese nombre.",
     requirementNameTaken: "Ya hay un documento exigido con ese nombre.",

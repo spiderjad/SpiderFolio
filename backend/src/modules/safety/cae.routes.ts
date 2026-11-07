@@ -13,6 +13,11 @@ import {
 } from "./cae-gate.service.ts";
 import { authorizedTodayPdf } from "./cae-pdf.ts";
 import {
+  getPortalAccess,
+  issuePortalAccess,
+  revokePortalAccess,
+} from "./cae-portal-access.service.ts";
+import {
   companyInfo,
   createInfoDelivery,
   getInfoSettings,
@@ -53,6 +58,7 @@ import {
   UpdateInfoSchema,
   UpdatePermitSchema,
   AccessSchema,
+  IssuePortalSchema,
   CheckQuerySchema,
   ListAccessesQuerySchema,
   CreateDocumentSchema,
@@ -117,6 +123,44 @@ export function caeRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] 
   };
   const gotenberg = { gotenbergUrl: deps.env.GOTENBERG_URL };
   return [
+    // The contractor's portal (a link with a code): issue, see and revoke it (cae.manage).
+    {
+      method: "get",
+      path: "/cae/companies/:id/portal",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ access: await getPortalAccess(adminContextOf(req), deps.env.APP_URL, id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/companies/:id/portal",
+      guards: [
+        sensitiveRateLimit(deps, {
+          name: "cae-portal-issue",
+          windowMs: HOUR,
+          limit: 30,
+          key: byUser,
+        }),
+      ],
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const input = IssuePortalSchema.parse(req.body);
+        const issued = await issuePortalAccess(adminContextOf(req), deps.env.APP_URL, id, input);
+        // The code goes once, in this answer only.
+        res.setHeader("Cache-Control", "no-store");
+        res.status(201).json(issued);
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/companies/:id/portal/revoke",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await revokePortalAccess(adminContextOf(req), id);
+        res.status(204).end();
+      },
+    },
     // The site's information for contractors (RD 171/2004, arts. 7 to 9).
     {
       method: "get",

@@ -54,6 +54,9 @@ export const NOTIFICATION_KINDS = [
   "safety_incident",
   /** The auditor of an audit room came in for the first time (to whoever created it; `detail` = room). */
   "audit_room_access",
+  /** A contractor uploaded a document through its portal (to the internal responsible; `detail` =
+   * the company's id). */
+  "cae_portal_upload",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

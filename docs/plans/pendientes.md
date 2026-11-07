@@ -4,10 +4,19 @@ Lista viva. Al terminar algo, se marca o se borra de acá.
 
 ## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 
-- [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: fases 1 a 4 y 6 hechas (07/11/2026). Núcleo, **dentro de
+- [ ] **CAE (Coordinación de Actividades Empresariales, PRL)**: fases 1 a 6 hechas (07/11/2026). Núcleo, **dentro de
       Prevención** como pestaña «Contratas (CAE)», con su propio interruptor en la configuración del
       módulo (apagado por defecto). Spec y fases en `docs/spec/cae.md`.
-  - [ ] Fase 5 (portal de contratas): en espera de que el mantenedor elija el tipo de acceso externo.
+  - [ ] Tests de seguridad del portal de contratas (al cerrar el módulo, con los de permisos y
+        aislamiento de la CAE): fuerza bruta del código (límites por acceso+IP y por IP, bloqueo a los 10
+        fallos, error genérico igual para acceso inexistente, revocado, vencido o bloqueado); entre empresas
+        (trabajadores, requisitos, subidas, permisos e información de otra contrata del mismo tenant dan
+        404); entre tenants (un acceso o una cookie de un workspace no ven nada de otro); acceso revocado o
+        vencido, empresa archivada, CAE o módulo apagados y quien lo dio suspendido o sin `cae.manage`:
+        la sesión muere; tipo de archivo (extensión fuera de PDF/JPG/PNG, contenido que no coincide,
+        tamaño mayor que el límite, completar una reserva ajena o de otro acceso); fijación y rotación de
+        sesión (un token previo al código no sirve, rotación cada 15 min, logout termina la sesión,
+        cookie con path del acceso); la información del centro solo sirve los documentos elegidos.
 - [ ] **Lo que le falte a Prevención**: relevarlo y sumarlo como fases nuevas en
       docs/spec/seguridad-salud.md (pedido del 07/11/2026).
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
