@@ -12,6 +12,7 @@ import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import { peopleApi, safetyApi, safetyKeys, trainingApi, trainingKeys } from "./safety-api";
 import { FitnessDialog, PersonFitness, PersonIncidents } from "./person-health";
+import { PersonEmergencyCard } from "./emergencies-page";
 import { PpeStateBadge, PpeTabs, ReportIncidentButton, useSafety } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -235,6 +236,7 @@ export function PersonPage() {
       </Card>
 
       <PersonFitness membershipId={data.person.id} />
+      <PersonEmergencyCard membershipId={data.person.id} own={own} />
       <FitnessDialog
         membershipId={data.person.id}
         open={recordingFitness}

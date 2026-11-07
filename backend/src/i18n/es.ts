@@ -767,6 +767,41 @@ export const safetyTexts = {
     },
   },
   riskAssessmentType: "Evaluación de riesgos",
+  /** The emergency plan's document type (PEM, reviewed every year). */
+  emergencyPlanType: { es: "Plan de emergencia", latam: "Plan de emergencias" },
+  /** The emergency team's default roles. */
+  emergencyRoles: {
+    es: [
+      "Jefe de emergencia",
+      "Jefe de intervención",
+      "Equipo de primera intervención",
+      "Equipo de segunda intervención",
+      "Primeros auxilios",
+      "Evacuación",
+    ],
+    latam: [
+      "Coordinador de emergencias",
+      "Jefe de brigada",
+      "Brigada de primera respuesta",
+      "Brigada contra incendios",
+      "Brigada de primeros auxilios",
+      "Brigada de evacuación",
+    ],
+  },
+  drills: {
+    scenarios: {
+      FIRE: "incendio",
+      EVACUATION: "evacuación",
+      SPILL: "derrame químico",
+      AMMONIA: "fuga de amoníaco",
+      OTHER: "otra emergencia",
+    },
+    expiryWhat: "Simulacro anual de emergencia",
+    messages: {
+      roleNameTaken: "Ya hay un rol con ese nombre en el equipo.",
+      alreadyMember: "Esa persona ya está en ese rol.",
+    },
+  },
   examplePositions: [
     "Operario de producción",
     "Operario de cámaras frigoríficas",
@@ -827,10 +862,12 @@ export const safetyTexts = {
       INCIDENT: "Accidente o incidente",
       RISK_ASSESSMENT: "Evaluación de riesgos",
       INSPECTION: "Inspección",
+      DRILL: "Simulacro",
       OTHER: "Otra",
     },
     priorities: { LOW: "Baja", MEDIUM: "Media", HIGH: "Alta" },
     incidentOf: (day: string) => `Accidente o incidente del ${day}`,
+    drillOf: (scenario: string, day: string) => `Simulacro de ${scenario} del ${day}`,
     recordOf: (form: string, day: string) => `${form} del ${day}`,
     messages: {
       notRiskAssessment: "Ese documento no es una evaluación de riesgos (tipo EVR).",

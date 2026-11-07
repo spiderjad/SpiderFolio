@@ -215,7 +215,7 @@ Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después 
    conforme de cualquier formulario no anulado. La tarjeta «Medidas abiertas» del Resumen ahora es de
    `safety.manage` o `safety.health` y lleva a la planificación. Simplificaciones: «Nueva medida» en la
    planificación crea origen «Otra» (las de EVR e inspección se crean desde su documento o registro);
-   `DRILL` y `COMMITTEE` llegan con sus fases (fases 8 y 9); la pestaña va dentro del módulo, sin
+   `DRILL` (hecho en la fase 8) y `COMMITTEE` llegan con sus fases (fases 8 y 9); la pestaña va dentro del módulo, sin
    entrada nueva en el menú lateral.
 7. **Indicadores de siniestralidad** (hecha): horas trabajadas y plantilla media por mes (las carga quien
    gestiona el módulo), e índices de frecuencia, gravedad e incidencia calculados con los accidentes con
@@ -240,10 +240,45 @@ Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después 
    app). Simplificaciones: la incidencia de un periodo no se anualiza (se calcula sobre la plantilla
    media del periodo); la tabla de meses es fija (12 filas por año, sin paginar); sin Delt@ ni partes
    oficiales.
-8. **Emergencias y simulacros**: el plan de autoprotección o de emergencia como documento controlado
+8. **Emergencias y simulacros** (hecha): el plan de autoprotección o de emergencia como documento controlado
    (tipo PEM, revisión anual), equipos de emergencia (personas con su función: jefe de emergencia,
    primeros auxilios, evacuación…, con formación exigida) y registro de simulacros (fecha, escenario,
    tiempo de evacuación, incidencias y medidas que generan, origen `DRILL`).
+   Migración `safety_emergencies`: `SafetyEmergencyRole` (nombre único por empresa, `courseId?` de la
+   formación exigida sin FK, posición, `archivedAt`), `SafetyEmergencyMember` (rol + `membershipId`, único
+   por rol, `location?` libre para centro o turno; se borra al quitar a la persona: no es evidencia),
+   enum `SafetyDrillScenario` (`FIRE | EVACUATION | SPILL | AMMONIA | OTHER`), `SafetyDrill` (fecha,
+   escenario, zona, avisado, participantes, `evacuationSeconds`, incidencias, observadores, `nodeId?`,
+   `createdById`; sin borrado) y `SafetyAction.drillId` con FK compuesta al simulacro y el valor `DRILL`
+   en `SafetyActionOrigin`. El CHECK de la fase 6 (origen `INCIDENT` ⇔ incidente) sigue igual; «`DRILL` ⇔
+   `drillId`» lo garantiza el servicio (Postgres no deja usar un valor de enum nuevo en la misma
+   transacción en que se agrega, así que no va como CHECK en esta migración).
+   **Tipo PEM y roles por defecto** (`ensureEmergencySetup`, idempotente): se crean al activar el módulo y
+   en cada guardado de los ajustes con el módulo activo; para las empresas que ya lo tenían activo, también
+   la primera vez que alguien con `safety.manage` abre «Emergencias». Nombre del tipo según términos
+   («Plan de emergencia» / latam «Plan de emergencias»), revisión 12 meses. Roles por defecto según
+   términos (es: Jefe de emergencia, Jefe de intervención, Equipo de primera intervención, Equipo de
+   segunda intervención, Primeros auxilios, Evacuación; latam: coordinador y brigadas), solo si la
+   empresa no tiene ninguno; se renombran, archivan y agregan.
+   **Formación exigida**: el estado de cada miembro sale de su `SafetyTraining` más reciente del curso del
+   rol (al día, por vencer, vencida, pendiente); la pantalla cuenta a quienes no la tienen.
+   **Aviso anual**: vencimiento `safety.drill` (tipo registrado en el motor, `subjectId` fijo `yearly`) un
+   año después del último simulacro; se recalcula al crear o editar uno. Avisa a quienes tienen
+   `safety.manage` y al departamento dueño del documento PEM (`responsibleDepartmentId`); en pausa con el
+   módulo apagado.
+   Permisos: equipo y simulacros, `safety.manage` (`GET /safety/emergencies`, `POST/PATCH
+   /safety/emergencies/roles`, `POST /safety/emergencies/roles/:id/members`, `DELETE
+   /safety/emergencies/members/:id`, `GET/POST /safety/drills`, `GET/PATCH /safety/drills/:id`); las
+   medidas `DRILL` se crean con `POST /safety/planning` (`safety.manage`). «Mi rol en emergencias»: `GET
+   /safety/people/:id/emergency` con la misma regla que la ficha (cada uno la suya, los jefes su área,
+   `safety.manage` todas), en la ficha de la persona. Auditoría `safety.emergency.role.create|update`,
+   `safety.emergency.member.add|remove`, `safety.drill.create|update`.
+   Pantalla: pestaña «Emergencias» dentro del módulo (sin entrada en el menú lateral) con dos secciones,
+   «Equipo de emergencia» y «Simulacros» (lista con filtros de escenario y fechas en la dirección y cursor,
+   y detalle con sus medidas y «Nueva medida»). Simplificaciones: el documento del simulacro (`nodeId`) se
+   acepta en la API pero la pantalla no lo elige todavía (solo lo muestra); el centro o turno es texto
+   libre; la lista de roles no pagina (son pocos por empresa); el selector de curso no busca (pagina los
+   cursos tal como vienen).
 9. **Consulta y participación**: delegados de prevención y comité de seguridad y salud (miembros), con
    sus reuniones como actas (página o documento) y los acuerdos como medidas (origen `COMMITTEE`).
 

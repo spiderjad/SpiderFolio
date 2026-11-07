@@ -11,6 +11,7 @@ import { createForm, saveTemplate } from "../forms/forms.service.ts";
 import { createSpace, freeSpaceName } from "../spaces/spaces.service.ts";
 import { AppError } from "../../lib/errors.ts";
 import { caeTexts } from "../../i18n/index.ts";
+import { ensureEmergencySetup } from "./emergencies.service.ts";
 import { incidentTemplate } from "./incident-form.ts";
 import { ensureCaeRoot } from "./cae-folders.ts";
 import { seedDefaultCatalog, seedFoodCatalog } from "./cae-requirements.service.ts";
@@ -148,6 +149,8 @@ async function setUp(
       },
     });
   }
+  // The emergency plan's type (PEM) and the emergency team's default roles, once.
+  await ensureEmergencySetup(ctx, settings.terms);
   if (examples) {
     // Never over what the company already has with the same name.
     await ctx.db.position.createMany({

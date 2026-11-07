@@ -40,6 +40,7 @@ export const ActionSchema = z.strictObject({
 export const PlannedActionSchema = z.discriminatedUnion("origin", [
   z.strictObject({ origin: z.literal("RISK_ASSESSMENT"), nodeId: Id, ...ActionSchema.shape }),
   z.strictObject({ origin: z.literal("INSPECTION"), recordId: Id, ...ActionSchema.shape }),
+  z.strictObject({ origin: z.literal("DRILL"), drillId: Id, ...ActionSchema.shape }),
   z.strictObject({ origin: z.literal("OTHER"), ...ActionSchema.shape }),
 ]);
 
@@ -56,11 +57,19 @@ export const UpdateActionSchema = z
     error: () => validationMessages.noChanges,
   });
 
-export const actionOrigins = ["INCIDENT", "RISK_ASSESSMENT", "INSPECTION", "OTHER"] as const;
+export const actionOrigins = [
+  "INCIDENT",
+  "RISK_ASSESSMENT",
+  "INSPECTION",
+  "DRILL",
+  "OTHER",
+] as const;
 
 /** The planning's filters (in the address). */
 export const ActionFiltersSchema = z.object({
   origin: z.enum(actionOrigins).optional(),
+  /** One drill's measures. */
+  drill: Id.optional(),
   /** open (not done, any day), overdue (open and past its day), done, all. */
   status: z.enum(["open", "overdue", "done", "all"]).default("open"),
   responsible: Id.optional(),
@@ -93,6 +102,72 @@ export const MonthStatSchema = z.strictObject({
   departmentId: Id.nullable().default(null),
   hoursWorked: z.number().int().min(0).max(1_000_000_000),
   avgHeadcount: z.number().min(0).max(10_000_000),
+});
+
+// ─── Emergencies and drills ──────────────────────────────────────────────────────────────
+
+export const EmergencyRoleSchema = z.strictObject({
+  name: z.string().trim().min(2).max(80),
+  courseId: Id.nullable().default(null),
+});
+
+export const UpdateEmergencyRoleSchema = z
+  .strictObject({
+    name: z.string().trim().min(2).max(80),
+    courseId: Id.nullable(),
+    archived: z.boolean(),
+  })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    error: () => validationMessages.noChanges,
+  });
+
+export const EmergencyMemberSchema = z.strictObject({
+  membershipId: Id,
+  location: z.string().trim().max(120).nullable().default(null),
+});
+
+export const TeamQuerySchema = z.object({ archived: z.enum(["0", "1"]).default("0") });
+
+export const drillScenarios = ["FIRE", "EVACUATION", "SPILL", "AMMONIA", "OTHER"] as const;
+
+const DrillShape = {
+  date: Day,
+  scenario: z.enum(drillScenarios),
+  area: z.string().trim().max(200).nullable(),
+  announced: z.boolean(),
+  participants: z.number().int().min(0).max(100_000).nullable(),
+  /** Seconds from the alarm to the last person at the meeting point. */
+  evacuationSeconds: z.number().int().min(0).max(86_400).nullable(),
+  incidents: z.string().trim().max(4000).nullable(),
+  observers: z.string().trim().max(500).nullable(),
+  nodeId: Id.nullable(),
+};
+
+export const DrillSchema = z.strictObject({
+  ...DrillShape,
+  area: DrillShape.area.default(null),
+  announced: DrillShape.announced.default(false),
+  participants: DrillShape.participants.default(null),
+  evacuationSeconds: DrillShape.evacuationSeconds.default(null),
+  incidents: DrillShape.incidents.default(null),
+  observers: DrillShape.observers.default(null),
+  nodeId: DrillShape.nodeId.default(null),
+});
+
+export const UpdateDrillSchema = z
+  .strictObject(DrillShape)
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    error: () => validationMessages.noChanges,
+  });
+
+export const ListDrillsQuerySchema = z.object({
+  ...pageShape(["date"], "date"),
+  dir: z.enum(["asc", "desc"]).default("desc"),
+  scenario: z.enum(drillScenarios).optional(),
+  from: Day.optional(),
+  to: Day.optional(),
 });
 
 export type IncidentFilters = z.infer<typeof IncidentFiltersSchema>;

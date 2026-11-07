@@ -183,6 +183,17 @@ export interface TenantDb {
     PrismaClient["safetyMonthStat"],
     "findFirst" | "findMany" | "count" | "create" | "update"
   >;
+  safetyEmergencyRole: TenantDelegate<
+    PrismaClient["safetyEmergencyRole"],
+    "findFirst" | "findMany" | "count" | "create" | "createMany" | "update"
+  >;
+  // Team membership is configuration: added and removed.
+  safetyEmergencyMember: TenantDelegate<PrismaClient["safetyEmergencyMember"], Op>;
+  // Drills are a record: added and corrected, never deleted.
+  safetyDrill: TenantDelegate<
+    PrismaClient["safetyDrill"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -339,6 +350,15 @@ const delegates = {
   },
   safetyMonthStat: {
     model: "SafetyMonthStat",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  safetyEmergencyRole: {
+    model: "SafetyEmergencyRole",
+    ops: ["findFirst", "findMany", "count", "create", "createMany", "update"],
+  },
+  safetyEmergencyMember: { model: "SafetyEmergencyMember", ops: [...readOps, ...writeOps] },
+  safetyDrill: {
+    model: "SafetyDrill",
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },

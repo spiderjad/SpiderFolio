@@ -162,13 +162,14 @@ export interface Incident {
 /** Open (just reported), under investigation, or closed. */
 export type IncidentStatus = "OPEN" | "INVESTIGATING" | "CLOSED";
 
-export type ActionOrigin = "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "OTHER";
+export type ActionOrigin = "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "DRILL" | "OTHER";
 export type ActionPriority = "LOW" | "MEDIUM" | "HIGH";
 
 export const ACTION_ORIGINS: readonly ActionOrigin[] = [
   "INCIDENT",
   "RISK_ASSESSMENT",
   "INSPECTION",
+  "DRILL",
   "OTHER",
 ];
 export const ACTION_PRIORITIES: readonly ActionPriority[] = ["HIGH", "MEDIUM", "LOW"];
@@ -185,6 +186,7 @@ export type ActionReference =
       label: string;
     }
   | { kind: "record"; id: string; formId: string | null; spaceId: string | null; label: string }
+  | { kind: "drill"; id: string; label: string }
   | null;
 
 export interface SafetyAction {
@@ -214,6 +216,7 @@ export type PlannedActionInput = ActionInput &
   (
     | { origin: "RISK_ASSESSMENT"; nodeId: string }
     | { origin: "INSPECTION"; recordId: string }
+    | { origin: "DRILL"; drillId: string }
     | { origin: "OTHER" }
   );
 
@@ -224,7 +227,126 @@ export interface PlanningFilters {
   priority?: ActionPriority | undefined;
   from?: string | undefined;
   to?: string | undefined;
+  /** One drill's measures. */
+  drill?: string | undefined;
 }
+
+// ─── Emergencies and drills ──────────────────────────────────────────────────────────────
+
+export type TrainingStatus = "valid" | "due_soon" | "expired" | "pending" | "none";
+export type DrillScenario = "FIRE" | "EVACUATION" | "SPILL" | "AMMONIA" | "OTHER";
+export const DRILL_SCENARIOS: readonly DrillScenario[] = [
+  "FIRE",
+  "EVACUATION",
+  "SPILL",
+  "AMMONIA",
+  "OTHER",
+];
+
+export interface EmergencyTeam {
+  roles: {
+    id: string;
+    name: string;
+    course: { id: string; name: string } | null;
+    archived: boolean;
+    members: {
+      id: string;
+      person: { id: string; name: string };
+      location: string | null;
+      training: TrainingStatus;
+    }[];
+  }[];
+  plan: { id: string; spaceId: string; code: string; name: string; type: "PAGE" | "FILE" } | null;
+  lastDrill: { id: string; date: string } | null;
+  nextDrillBy: string | null;
+}
+
+export interface DrillInput {
+  date: string;
+  scenario: DrillScenario;
+  area: string | null;
+  announced: boolean;
+  participants: number | null;
+  evacuationSeconds: number | null;
+  incidents: string | null;
+  observers: string | null;
+  nodeId: string | null;
+}
+
+export interface Drill extends Omit<DrillInput, "nodeId"> {
+  id: string;
+  document: {
+    id: string;
+    spaceId: string;
+    name: string;
+    type: "PAGE" | "FILE" | "FOLDER" | "FORM";
+    parentId: string | null;
+  } | null;
+  actions: { total: number; open: number };
+  createdBy: { id: string; name: string };
+  createdAt: string;
+}
+
+export interface DrillFilters {
+  scenario?: DrillScenario | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
+}
+
+export const emergenciesKeys = {
+  all: (slug: string) => ["w", slug, "safety", "incidents", "emergencies"] as const,
+  team: (slug: string, archived: boolean) =>
+    ["w", slug, "safety", "incidents", "emergencies", "team", archived] as const,
+  drills: (slug: string, filters: DrillFilters) =>
+    ["w", slug, "safety", "incidents", "emergencies", "drills", filters] as const,
+  drill: (slug: string, id: string) =>
+    ["w", slug, "safety", "incidents", "emergencies", "drill", id] as const,
+  person: (slug: string, id: string) =>
+    ["w", slug, "safety", "incidents", "emergencies", "person", id] as const,
+};
+
+export const emergenciesApi = {
+  team: (slug: string, archived: boolean) =>
+    api<{ team: EmergencyTeam }>(
+      w(slug, `/safety/emergencies?${listQuery({ archived: archived ? "1" : undefined })}`),
+    ),
+  createRole: (slug: string, body: { name: string; courseId: string | null }) =>
+    api<{ role: { id: string } }>(w(slug, "/safety/emergencies/roles"), { method: "POST", body }),
+  updateRole: (
+    slug: string,
+    id: string,
+    body: { name?: string; courseId?: string | null; archived?: boolean },
+  ) => api<undefined>(w(slug, `/safety/emergencies/roles/${id}`), { method: "PATCH", body }),
+  addMember: (
+    slug: string,
+    roleId: string,
+    body: { membershipId: string; location: string | null },
+  ) =>
+    api<undefined>(w(slug, `/safety/emergencies/roles/${roleId}/members`), {
+      method: "POST",
+      body,
+    }),
+  removeMember: (slug: string, id: string) =>
+    api<undefined>(w(slug, `/safety/emergencies/members/${id}`), { method: "DELETE" }),
+  person: (slug: string, id: string) =>
+    api<{
+      items: {
+        role: string;
+        location: string | null;
+        training: TrainingStatus;
+        course: string | null;
+      }[];
+    }>(w(slug, `/safety/people/${id}/emergency`)),
+  drills: (slug: string, filters: DrillFilters, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<Drill>>(w(slug, `/safety/drills?${listQuery({ ...filters, cursor })}`), {
+      signal,
+    }),
+  drill: (slug: string, id: string) => api<{ drill: Drill }>(w(slug, `/safety/drills/${id}`)),
+  createDrill: (slug: string, body: DrillInput) =>
+    api<{ drill: Drill }>(w(slug, "/safety/drills"), { method: "POST", body }),
+  updateDrill: (slug: string, id: string, body: Partial<DrillInput>) =>
+    api<{ drill: Drill }>(w(slug, `/safety/drills/${id}`), { method: "PATCH", body }),
+};
 
 // ─── Accident rates ──────────────────────────────────────────────────────────────────────
 

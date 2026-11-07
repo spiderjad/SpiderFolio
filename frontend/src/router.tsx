@@ -163,6 +163,22 @@ export const routes = [
                         lazy: page(() => import("@/features/safety/planning-page"), "PlanningPage"),
                       },
                       {
+                        // Emergency plan, team and drills (docs/spec/seguridad-salud.md).
+                        path: "emergencias",
+                        lazy: page(
+                          () => import("@/features/safety/emergencies-page"),
+                          "EmergenciesPage",
+                        ),
+                      },
+                      {
+                        path: "emergencias/simulacros",
+                        lazy: page(() => import("@/features/safety/drills-page"), "DrillsPage"),
+                      },
+                      {
+                        path: "emergencias/simulacros/:drillId",
+                        lazy: page(() => import("@/features/safety/drill-page"), "DrillPage"),
+                      },
+                      {
                         path: "epis/catalogo",
                         lazy: page(() => import("@/features/safety/catalog-page"), "CatalogPage"),
                       },

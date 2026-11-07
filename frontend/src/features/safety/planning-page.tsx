@@ -64,6 +64,8 @@ export function referenceHref(slug: string, reference: ActionReference): string 
         ? base
         : `${base}/f/${reference.parentId}`;
   }
+  if (reference.kind === "drill")
+    return `/app/${slug}/seguridad/emergencias/simulacros/${reference.id}`;
   return reference.spaceId === null || reference.formId === null
     ? null
     : `/app/${slug}/files/${reference.spaceId}/form/${reference.formId}/r/${reference.id}`;

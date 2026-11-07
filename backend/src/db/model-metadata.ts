@@ -85,6 +85,9 @@ export const modelMetadata = {
       caeWorkPermits: "CaeWorkPermit",
       caePortalAccesses: "CaePortalAccess",
       safetyMonthStats: "SafetyMonthStat",
+      safetyEmergencyRoles: "SafetyEmergencyRole",
+      safetyEmergencyMembers: "SafetyEmergencyMember",
+      safetyDrills: "SafetyDrill",
       caePortalSessions: "CaePortalSession",
       caePortalUploads: "CaePortalUpload",
       pageImages: "PageImage",
@@ -235,7 +238,7 @@ export const modelMetadata = {
   },
   SafetyAction: {
     scope: "tenant",
-    relations: { workspace: "Workspace", incident: "SafetyIncident" },
+    relations: { workspace: "Workspace", incident: "SafetyIncident", drill: "SafetyDrill" },
   },
   SafetyCourse: {
     scope: "tenant",
@@ -296,6 +299,15 @@ export const modelMetadata = {
     relations: { workspace: "Workspace", documents: "CaeDocument" },
   },
   SafetyMonthStat: { scope: "tenant", relations: { workspace: "Workspace" } },
+  SafetyEmergencyRole: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", members: "SafetyEmergencyMember" },
+  },
+  SafetyEmergencyMember: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", role: "SafetyEmergencyRole" },
+  },
+  SafetyDrill: { scope: "tenant", relations: { workspace: "Workspace", actions: "SafetyAction" } },
   CaePortalAccess: {
     scope: "tenant",
     relations: {

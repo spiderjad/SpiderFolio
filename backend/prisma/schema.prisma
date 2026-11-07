@@ -224,81 +224,84 @@ model Workspace {
   createdAt        DateTime  @default(now())
   deletedAt        DateTime?
 
-  roles               Role[]
-  memberships         Membership[]
-  departments         Department[]
-  departmentMembers   DepartmentMember[]
-  invitations         Invitation[]
-  auditLogs           AuditLog[]
-  pinLogins           PinLogin[]
-  spaces              Space[]
-  nodes               Node[]
-  permissions         Permission[]
-  fileVersions        FileVersion[]
-  uploadReservations  UploadReservation[]
-  importJobs          ImportJob[]
-  spaceStates         SpaceUserState[]
-  downloadTokens      DownloadToken[]
-  zipExports          ZipExport[]
-  pageContents        PageContent[]
-  formVersions        FormVersion[]
-  formRecords         FormRecord[]
-  formFiles           FormFile[]
-  formSettings        FormSettings[]
-  positions           Position[]
-  expiries            Expiry[]
-  safetyItems         SafetyItem[]
-  safetyDeliveries    SafetyDelivery[]
-  safetyDeliveryLines SafetyDeliveryLine[]
-  safetyIncidents     SafetyIncident[]
-  safetyActions       SafetyAction[]
-  safetyCourses       SafetyCourse[]
-  safetyTrainings     SafetyTraining[]
-  safetySignSessions  SafetySignSession[]
-  auditRooms          AuditRoom[]
-  auditRoomItems      AuditRoomItem[]
-  auditRoomCodes      AuditRoomCode[]
-  auditRoomSessions   AuditRoomSession[]
-  auditRoomAccesses   AuditRoomAccess[]
-  safetyFitness       SafetyFitness[]
-  caeCompanies        CaeCompany[]
-  caeWorkers          CaeWorker[]
-  caeRequirements     CaeRequirement[]
-  caeDocuments        CaeDocument[]
-  caeAccesses         CaeAccess[]
-  caeInfoDeliveries   CaeInfoDelivery[]
-  caeWorkPermits      CaeWorkPermit[]
-  caePortalAccesses   CaePortalAccess[]
-  safetyMonthStats    SafetyMonthStat[]
-  caePortalSessions   CaePortalSession[]
-  caePortalUploads    CaePortalUpload[]
-  pageImages          PageImage[]
-  commentThreads      CommentThread[]
-  comments            Comment[]
-  mentions            Mention[]
-  sharedSeen          SharedSeen[]
-  notifications       Notification[]
-  documentTypes       DocumentType[]
-  controlledDocuments ControlledDocument[]
-  documentVersions    DocumentVersion[]
-  approvals           Approval[]
-  readRequirements    ReadRequirement[]
-  documentVisits      DocumentVisit[]
-  qrCodes             QrCode[]
-  emailSettings       WorkspaceEmail?
-  contentChunks       ContentChunk[]
-  usageCounters       UsageCounter[]
-  usageCounterMembers UsageCounterMember[]
-  bianLimits          BianLimit[]
-  bianFeedback        BianFeedback[]
-  fileTexts           FileText[]
-  readAcknowledgments ReadAcknowledgment[]
-  license             WorkspaceLicense?
-  pluginSettings      PluginSetting[]
-  pluginSecrets       PluginSecret[]
-  externalIdentities  ExternalIdentity[]
-  ssoFlows            SsoFlow[]
-  oauthGrants         OAuthGrant[]
+  roles                  Role[]
+  memberships            Membership[]
+  departments            Department[]
+  departmentMembers      DepartmentMember[]
+  invitations            Invitation[]
+  auditLogs              AuditLog[]
+  pinLogins              PinLogin[]
+  spaces                 Space[]
+  nodes                  Node[]
+  permissions            Permission[]
+  fileVersions           FileVersion[]
+  uploadReservations     UploadReservation[]
+  importJobs             ImportJob[]
+  spaceStates            SpaceUserState[]
+  downloadTokens         DownloadToken[]
+  zipExports             ZipExport[]
+  pageContents           PageContent[]
+  formVersions           FormVersion[]
+  formRecords            FormRecord[]
+  formFiles              FormFile[]
+  formSettings           FormSettings[]
+  positions              Position[]
+  expiries               Expiry[]
+  safetyItems            SafetyItem[]
+  safetyDeliveries       SafetyDelivery[]
+  safetyDeliveryLines    SafetyDeliveryLine[]
+  safetyIncidents        SafetyIncident[]
+  safetyActions          SafetyAction[]
+  safetyCourses          SafetyCourse[]
+  safetyTrainings        SafetyTraining[]
+  safetySignSessions     SafetySignSession[]
+  auditRooms             AuditRoom[]
+  auditRoomItems         AuditRoomItem[]
+  auditRoomCodes         AuditRoomCode[]
+  auditRoomSessions      AuditRoomSession[]
+  auditRoomAccesses      AuditRoomAccess[]
+  safetyFitness          SafetyFitness[]
+  caeCompanies           CaeCompany[]
+  caeWorkers             CaeWorker[]
+  caeRequirements        CaeRequirement[]
+  caeDocuments           CaeDocument[]
+  caeAccesses            CaeAccess[]
+  caeInfoDeliveries      CaeInfoDelivery[]
+  caeWorkPermits         CaeWorkPermit[]
+  caePortalAccesses      CaePortalAccess[]
+  safetyMonthStats       SafetyMonthStat[]
+  safetyEmergencyRoles   SafetyEmergencyRole[]
+  safetyEmergencyMembers SafetyEmergencyMember[]
+  safetyDrills           SafetyDrill[]
+  caePortalSessions      CaePortalSession[]
+  caePortalUploads       CaePortalUpload[]
+  pageImages             PageImage[]
+  commentThreads         CommentThread[]
+  comments               Comment[]
+  mentions               Mention[]
+  sharedSeen             SharedSeen[]
+  notifications          Notification[]
+  documentTypes          DocumentType[]
+  controlledDocuments    ControlledDocument[]
+  documentVersions       DocumentVersion[]
+  approvals              Approval[]
+  readRequirements       ReadRequirement[]
+  documentVisits         DocumentVisit[]
+  qrCodes                QrCode[]
+  emailSettings          WorkspaceEmail?
+  contentChunks          ContentChunk[]
+  usageCounters          UsageCounter[]
+  usageCounterMembers    UsageCounterMember[]
+  bianLimits             BianLimit[]
+  bianFeedback           BianFeedback[]
+  fileTexts              FileText[]
+  readAcknowledgments    ReadAcknowledgment[]
+  license                WorkspaceLicense?
+  pluginSettings         PluginSetting[]
+  pluginSecrets          PluginSecret[]
+  externalIdentities     ExternalIdentity[]
+  ssoFlows               SsoFlow[]
+  oauthGrants            OAuthGrant[]
 }
 
 model Role {
@@ -565,6 +568,7 @@ enum SafetyActionOrigin {
   RISK_ASSESSMENT
   INSPECTION
   OTHER
+  DRILL
 }
 
 enum SafetyActionPriority {
@@ -586,6 +590,8 @@ model SafetyAction {
   nodeId        String?
   /// With origin INSPECTION: the non-conforming form record (no FK: records are never deleted).
   recordId      String?
+  /// With origin DRILL: the drill it comes from.
+  drillId       String?
   description   String
   priority      SafetyActionPriority @default(MEDIUM)
   /// Estimated cost in cents of the company's currency, optional.
@@ -600,6 +606,7 @@ model SafetyAction {
   createdAt     DateTime             @default(now())
 
   workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  drill     SafetyDrill?    @relation(fields: [drillId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
   incident  SafetyIncident? @relation(fields: [incidentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, incidentId])
@@ -2300,4 +2307,81 @@ model SafetyMonthStat {
 
   @@unique([workspaceId, month, departmentId])
   @@index([workspaceId, departmentId, month])
+}
+
+/// An emergency team role (docs/spec/seguridad-salud.md, «Emergencias y simulacros»): emergency chief,
+/// first aid, evacuation… with the training it requires, if any. Archived instead of deleted.
+model SafetyEmergencyRole {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  nameKey     String
+  /// The course its members need (SafetyCourse; no FK: a course can go with its document).
+  courseId    String?
+  position    Int       @default(0)
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members   SafetyEmergencyMember[]
+
+  @@unique([workspaceId, nameKey])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, position])
+}
+
+/// Someone of the company in an emergency role, optionally for a work centre or shift (free text).
+model SafetyEmergencyMember {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  roleId       String
+  /// Membership; no FK.
+  membershipId String
+  /// Work centre or shift, free text.
+  location     String?
+  createdById  String
+  createdAt    DateTime @default(now())
+
+  workspace Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role      SafetyEmergencyRole @relation(fields: [roleId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([roleId, membershipId])
+  @@index([workspaceId, membershipId])
+}
+
+enum SafetyDrillScenario {
+  FIRE
+  EVACUATION
+  SPILL
+  AMMONIA
+  OTHER
+}
+
+/// An emergency drill: when, what, where, how it went and what it shows has to change (its measures are
+/// SafetyActions with origin DRILL). Never deleted.
+model SafetyDrill {
+  id                String              @id @default(cuid())
+  workspaceId       String
+  date              DateTime            @db.Date
+  scenario          SafetyDrillScenario
+  area              String?
+  /// Announced beforehand to the staff.
+  announced         Boolean             @default(false)
+  participants      Int?
+  /// From the alarm to the last person at the meeting point.
+  evacuationSeconds Int?
+  incidents         String?
+  observers         String?
+  /// A report or photos in the module's space (node; no FK).
+  nodeId            String?
+  createdById       String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actions   SafetyAction[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, date, id])
 }

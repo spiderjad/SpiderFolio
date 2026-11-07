@@ -26,6 +26,7 @@ const t = texts.safety.planning;
 export type ActionOriginInput =
   | { origin: "RISK_ASSESSMENT"; nodeId: string; label: string }
   | { origin: "INSPECTION"; recordId: string; label: string }
+  | { origin: "DRILL"; drillId: string; label: string }
   | { origin: "OTHER" };
 
 function inDays(days: number): string {
@@ -91,7 +92,13 @@ export function ActionDialog({
                 origin: "INSPECTION",
                 recordId: origin.recordId,
               })
-            : await planningApi.create(workspaceSlug, { ...body, origin: "OTHER" });
+            : origin.origin === "DRILL"
+              ? await planningApi.create(workspaceSlug, {
+                  ...body,
+                  origin: "DRILL",
+                  drillId: origin.drillId,
+                })
+              : await planningApi.create(workspaceSlug, { ...body, origin: "OTHER" });
       return created.action;
     },
     onSuccess: async () => {

@@ -787,6 +787,39 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
     },
   },
   riskAssessmentType: "Risk assessment",
+  emergencyPlanType: { es: "Emergency plan", latam: "Emergency plan" },
+  emergencyRoles: {
+    es: [
+      "Emergency chief",
+      "Intervention chief",
+      "First response team",
+      "Second response team",
+      "First aid",
+      "Evacuation",
+    ],
+    latam: [
+      "Emergency coordinator",
+      "Brigade leader",
+      "First response brigade",
+      "Firefighting brigade",
+      "First aid brigade",
+      "Evacuation brigade",
+    ],
+  },
+  drills: {
+    scenarios: {
+      FIRE: "Fire",
+      EVACUATION: "Evacuation",
+      SPILL: "Chemical spill",
+      AMMONIA: "Ammonia leak",
+      OTHER: "Other emergency",
+    },
+    expiryWhat: "Yearly emergency drill",
+    messages: {
+      roleNameTaken: "There's already a role with that name in the team.",
+      alreadyMember: "That person is already in that role.",
+    },
+  },
   examplePositions: [
     "Production operator",
     "Cold room operator",
@@ -848,10 +881,12 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
       INCIDENT: "Accident or incident",
       RISK_ASSESSMENT: "Risk assessment",
       INSPECTION: "Inspection",
+      DRILL: "Drill",
       OTHER: "Other",
     },
     priorities: { LOW: "Low", MEDIUM: "Medium", HIGH: "High" },
     incidentOf: (day: string) => `Accident or incident on ${day}`,
+    drillOf: (scenario: string, day: string) => `${scenario} drill on ${day}`,
     recordOf: (form: string, day: string) => `${form} on ${day}`,
     messages: {
       notRiskAssessment: "That document isn't a risk assessment (type EVR).",

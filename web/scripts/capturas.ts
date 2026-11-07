@@ -38,6 +38,7 @@ import {
 } from "./demo-app.ts";
 import { BIAN_TEXT, BIAN_USAGE, bianRecording, fakeBian, fakeBianUsage } from "./bian-recording.ts";
 import { demoCae, demoCaeNames } from "./demo-cae.ts";
+import { demoEmergencies } from "./demo-emergencies.ts";
 import { demoIndicators } from "./demo-indicators.ts";
 import { demoPlanning } from "./demo-planning.ts";
 const out = join(root, "web", "public", "capturas");
@@ -102,8 +103,20 @@ function licenseFor(workspaceId: string): string | null {
   );
 }
 
+/** Owner tokens already issued: reused for a few minutes so the demos don't hit the login limit. */
+const ownerTokens = new Map<Locale, { token: string; at: number }>();
+const OWNER_TOKEN_REUSE_MS = 5 * 60_000;
+
 /** An owner's API session (the demo owners have no 2FA), to set a plugin up like the screen does. */
 async function ownerToken(locale: Locale): Promise<string> {
+  const cached = ownerTokens.get(locale);
+  if (cached !== undefined && Date.now() - cached.at < OWNER_TOKEN_REUSE_MS) return cached.token;
+  const token = await freshOwnerToken(locale);
+  ownerTokens.set(locale, { token, at: Date.now() });
+  return token;
+}
+
+async function freshOwnerToken(locale: Locale): Promise<string> {
   const res = await fetch(`${BASE}/api/v1/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-requested-with": "spiderfolio" },
@@ -432,8 +445,33 @@ async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
   });
   // The accident rates: hours, headcount, accidents with leave and their days.
   await demoIndicators({ base: BASE, token: await ownerToken(locale), slug, locale, db });
+  // Emergencies: the PEM plan, the team and three drills with a measure.
+  await demoEmergencies({
+    base: BASE,
+    token: await ownerToken(locale),
+    slug,
+    locale,
+    db,
+    peopleEmails: [PEOPLE[locale].owner, PEOPLE[locale].admin, PEOPLE[locale].reader],
+  });
+  const drill = await db.query<{ id: string }>(
+    `SELECT d.id FROM "SafetyDrill" d JOIN "Workspace" w ON w.id = d."workspaceId"
+      WHERE w.slug = $1 ORDER BY d.date DESC, d.id DESC LIMIT 1`,
+    [slug],
+  );
+  const drillId = drill.rows[0]?.id;
+  if (drillId === undefined) throw new Error("demoEmergencies no dejó simulacros");
+  demoDrillIds.set(locale, drillId);
   demoPlanningDone.add(locale);
 }
+
+/** The latest demo drill of each language, for its capture. */
+const demoDrillIds = new Map<Locale, string>();
+const drillIdOf = (locale: Locale) => {
+  const id = demoDrillIds.get(locale);
+  if (id === undefined) throw new Error("demoPlanningOf todavía no corrió");
+  return id;
+};
 
 const caeIdsOf = (locale: Locale) => {
   const ids = demoCaeIds.get(locale);
@@ -781,6 +819,25 @@ const CAPTURES: Capture[] = [
     name: "indicadores",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/indicadores`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    // Emergencies and drills (docs/spec/seguridad-salud.md, «Emergencias y simulacros»).
+    name: "emergencias",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/emergencias`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    name: "simulacros",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/emergencias/simulacros`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    name: "simulacro",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/emergencias/simulacros/${drillIdOf(locale)}`,
     before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   // CAE, coordination of business activities (docs/spec/cae.md), with web/scripts/demo-cae.ts.

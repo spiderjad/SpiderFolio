@@ -50,11 +50,30 @@ import {
   PlannedActionSchema,
   UpdateActionSchema,
   IndicatorsQuerySchema,
+  DrillSchema,
+  EmergencyMemberSchema,
+  EmergencyRoleSchema,
+  ListDrillsQuerySchema,
+  TeamQuerySchema,
+  UpdateDrillSchema,
+  UpdateEmergencyRoleSchema,
   LostDaysSchema,
   MonthStatSchema,
   StatsQuerySchema,
 } from "./incidents.schemas.ts";
 import { exportIndicatorsCsv, getIndicators, listStats, setStat } from "./indicators.service.ts";
+import {
+  addMember,
+  createDrill,
+  createRole,
+  getDrill,
+  getTeam,
+  listDrills,
+  personEmergencyRoles,
+  removeMember,
+  updateDrill,
+  updateRole,
+} from "./emergencies.service.ts";
 import {
   completeAction,
   createAction,
@@ -342,6 +361,91 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         const { id } = IdParamsSchema.parse(req.params);
         const action = await createAction(adminContextOf(req), id, ActionSchema.parse(req.body));
         res.status(201).json({ action });
+      },
+    },
+    // Emergencies and drills (safety.manage; each person sees their own role on their sheet).
+    {
+      method: "get",
+      path: "/safety/emergencies",
+      handler: async (req, res) => {
+        const { archived } = TeamQuerySchema.parse(req.query);
+        res.json({ team: await getTeam(adminContextOf(req), archived === "1") });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/emergencies/roles",
+      handler: async (req, res) => {
+        const role = await createRole(adminContextOf(req), EmergencyRoleSchema.parse(req.body));
+        res.status(201).json({ role });
+      },
+    },
+    {
+      method: "patch",
+      path: "/safety/emergencies/roles/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await updateRole(adminContextOf(req), id, UpdateEmergencyRoleSchema.parse(req.body));
+        res.status(204).end();
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/emergencies/roles/:id/members",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await addMember(adminContextOf(req), id, EmergencyMemberSchema.parse(req.body));
+        res.status(204).end();
+      },
+    },
+    {
+      method: "delete",
+      path: "/safety/emergencies/members/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await removeMember(adminContextOf(req), id);
+        res.status(204).end();
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/people/:id/emergency",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ items: await personEmergencyRoles(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/drills",
+      handler: async (req, res) => {
+        res.json(await listDrills(adminContextOf(req), ListDrillsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/drills",
+      handler: async (req, res) => {
+        const drill = await createDrill(adminContextOf(req), DrillSchema.parse(req.body));
+        res.status(201).json({ drill });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/drills/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ drill: await getDrill(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/safety/drills/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({
+          drill: await updateDrill(adminContextOf(req), id, UpdateDrillSchema.parse(req.body)),
+        });
       },
     },
     // Accident rates (safety.manage or safety.health; by department, only safety.health).

@@ -34,7 +34,8 @@ oculta, junto con sus avisos, sin borrar nada.
 Quien gestiona el módulo entra a **Prevención** por el **Resumen**: tarjetas con lo que hay que atender
 (personas a las que les faltan EPIs, EPIs por reponer, formación vencida o por vencer y, con **Datos de salud**,
 aptitudes por vencer, medidas abiertas y casos abiertos), cada una con **Ver la lista**. Sus pestañas son
-**Resumen**, **Personas**, **Entregas**, **Catálogo**, **Formación** y **Accidentes**. Los jefes ven
+**Resumen**, **Personas**, **Entregas**, **Catálogo**, **Formación**, **Planificación**, **Emergencias**,
+**Indicadores** y **Accidentes**. Los jefes ven
 **Personas**, **Entregas** y **Formación** de su área.
 
 En el menú lateral, **Prevención** lleva un número con lo pendiente: para quien gestiona, el total del
@@ -211,6 +212,47 @@ fecha y los últimos 12 meses, y un gráfico por mes con el índice de frecuenci
 <Shot
   name="indicadores"
   alt="Los indicadores de siniestralidad: índices del año y de los últimos 12 meses, el gráfico por mes y las horas de cada mes"
+/>
+
+## Emergencias y simulacros
+
+La pestaña **Emergencias** (para quien gestiona el módulo) tiene dos partes: **Equipo de emergencia** y
+**Simulacros**.
+
+- **Plan de emergencia**: al activar el módulo se crea el tipo de documento controlado **PEM** («Plan de
+  emergencia» en España, «Plan de emergencias» en Latinoamérica), con revisión anual. Convierte tu plan en
+  documento controlado de ese tipo y la pantalla lo enlaza. En una empresa que ya tenía el módulo activo, el
+  tipo se crea la primera vez que alguien que lo gestiona abre **Emergencias** o guarda los ajustes.
+- **Equipo de emergencia**: roles con las personas de cada uno. De entrada están Jefe de emergencia, Jefe de
+  intervención, Equipo de primera intervención, Equipo de segunda intervención, Primeros auxilios y Evacuación
+  (en Latinoamérica, coordinador y brigadas); se renombran, se archivan y se agregan otros con **Nuevo rol**.
+  Cada persona puede llevar un centro o turno.
+- **Formación exigida**: un rol puede exigir un curso de **Formación**. Junto a cada persona se ve si la tiene
+  al día, por vencer, vencida o si le falta, y un aviso arriba cuenta a quienes no la tienen.
+- **Mi rol en emergencias**: cada persona ve en su ficha el rol que tiene en el equipo.
+
+<Shot
+  name="emergencias"
+  alt="El equipo de emergencia: el plan, el último simulacro, los roles con sus personas y quién no tiene la formación"
+/>
+
+En **Simulacros**, **Registrar simulacro** anota la fecha, el escenario (incendio, evacuación, derrame
+químico, fuga de amoníaco u otra emergencia), la zona, si se avisó antes, cuántas personas participaron, el
+tiempo de evacuación, las incidencias y los observadores. La lista se filtra por escenario y fechas (los
+filtros quedan en la dirección).
+
+<Shot
+  name="simulacros"
+  alt="La lista de simulacros con su escenario, zona, tiempo de evacuación y medidas"
+/>
+
+Desde un simulacro, **Nueva medida** crea una medida de la planificación ligada a él (origen «Simulacro»), con
+su responsable y su fecha. Al año del último simulacro, quienes gestionan el módulo reciben el aviso de que
+toca otro (en **Vencimientos**, y también el departamento dueño del plan de emergencia).
+
+<Shot
+  name="simulacro"
+  alt="Un simulacro de fuga de amoníaco con sus incidencias y la medida que salió de él"
 />
 
 ## Formación
