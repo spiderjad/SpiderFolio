@@ -169,6 +169,35 @@ const cases: IsolationCase[] = [
       result: "Ajeno",
     },
   },
+  // Food quality, phase 6a: prerequisite programmes and the dashboard.
+  { method: "get", path: "/quality/dashboard", url: () => "/quality/dashboard", ownStatus: 404 },
+  { method: "get", path: "/quality/prps", url: () => "/quality/prps", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/prps",
+    url: () => "/quality/prps",
+    body: { kind: "CLEANING", name: "Ajeno", everyDays: 1 },
+  },
+  {
+    method: "patch",
+    path: "/quality/prps/:id",
+    url: () => "/quality/prps/x",
+    body: { name: "Ajeno" },
+  },
+  { method: "post", path: "/quality/prps/:id/archive", url: () => "/quality/prps/x/archive" },
+  { method: "post", path: "/quality/prps/:id/restore", url: () => "/quality/prps/x/restore" },
+  {
+    method: "get",
+    path: "/quality/prps/:id/checks",
+    url: () => "/quality/prps/x/checks",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/quality/prps/:id/checks",
+    url: () => "/quality/prps/x/checks",
+    body: { doneOn: "2026-11-01", conforming: true },
+  },
   // Food quality, phase 4: suppliers.
   { method: "get", path: "/quality/suppliers", url: () => "/quality/suppliers", ownStatus: 404 },
   {

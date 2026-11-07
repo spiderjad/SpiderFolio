@@ -1279,3 +1279,146 @@ describe("calidad fase 5: crisis y retirada", () => {
     ).toBe(404);
   });
 });
+
+const prpInput = (extra: object = {}) => ({
+  kind: "CLEANING",
+  name: "Limpieza de la sala de despiece",
+  everyDays: 7,
+  nextDueOn: "2026-11-01",
+  ...extra,
+});
+
+interface PrpBody {
+  prp: { id: string; nextDueOn: string; access: string; state: string; archived: boolean };
+}
+
+describe("calidad fase 6a: prerrequisitos y panel", () => {
+  it("quality.view lee; solo quality.manage crea, edita y archiva; un miembro ve solo los suyos", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await api(w.ws.slug, w.viewer.token).post("/quality/prps", prpInput())).status).toBe(
+      403,
+    );
+    expect((await api(w.ws.slug, w.plain.token).post("/quality/prps", prpInput())).status).toBe(
+      403,
+    );
+    const mine = await manager.post(
+      "/quality/prps",
+      prpInput({ responsibleId: w.responsible.membership.id }),
+    );
+    expect(mine.status).toBe(201);
+    const id = (mine.body as PrpBody).prp.id;
+    const other = await manager.post("/quality/prps", prpInput({ name: "Control de plagas" }));
+    const otherId = (other.body as PrpBody).prp.id;
+    const viewer = await api(w.ws.slug, w.viewer.token).get("/quality/prps");
+    expect((viewer.body as { prps: { id: string }[] }).prps.map((prp) => prp.id)).toEqual(
+      expect.arrayContaining([id, otherId]),
+    );
+    expect((await api(w.ws.slug, w.viewer.token).post(`/quality/prps/${id}/archive`)).status).toBe(
+      403,
+    );
+    // The responsible person sees only theirs; another member sees none, and the rest is 404.
+    const theirs = await api(w.ws.slug, w.responsible.token).get("/quality/prps");
+    expect((theirs.body as { prps: { id: string }[] }).prps.map((prp) => prp.id)).toEqual([id]);
+    expect(
+      (await api(w.ws.slug, w.responsible.token).get(`/quality/prps/${otherId}/checks`)).status,
+    ).toBe(404);
+    expect(
+      (await api(w.ws.slug, w.responsible.token).patch(`/quality/prps/${id}`, { everyDays: 1 }))
+        .status,
+    ).toBe(403);
+    const plain = await api(w.ws.slug, w.plain.token).get("/quality/prps");
+    expect((plain.body as { prps: unknown[] }).prps).toHaveLength(0);
+    expect((await api(w.ws.slug, w.guest.token).get("/quality/prps")).status).toBe(403);
+    expect(
+      (await manager.post("/quality/prps", prpInput({ responsibleId: w.guest.membership.id })))
+        .status,
+    ).toBe(404);
+  });
+
+  it("registra su responsable o quality.manage; no conforme abre su NC; quality.view no registra", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const created = await manager.post(
+      "/quality/prps",
+      prpInput({ name: "Cloro libre", everyDays: 1, responsibleId: w.responsible.membership.id }),
+    );
+    const id = (created.body as PrpBody).prp.id;
+    const check = { doneOn: "2026-11-05", conforming: true };
+    expect(
+      (await api(w.ws.slug, w.viewer.token).post(`/quality/prps/${id}/checks`, check)).status,
+    ).toBe(403);
+    expect(
+      (await api(w.ws.slug, w.plain.token).post(`/quality/prps/${id}/checks`, check)).status,
+    ).toBe(404);
+    const done = await api(w.ws.slug, w.responsible.token).post(`/quality/prps/${id}/checks`, {
+      doneOn: "2026-11-06",
+      conforming: false,
+      note: "Cloro por debajo de 0,2 ppm.",
+      openNc: true,
+      severity: "MAJOR",
+    });
+    expect(done.status).toBe(201);
+    expect((done.body as PrpBody).prp.nextDueOn).toBe("2026-11-07");
+    const expiry = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.prp", subjectId: id },
+    });
+    expect(expiry?.dueOn.toISOString().slice(0, 10)).toBe("2026-11-07");
+    expect(expiry?.responsibleId).toBe(w.responsible.membership.id);
+    const checks = await manager.get(`/quality/prps/${id}/checks`);
+    const nc = (checks.body as { checks: { nc: { id: string } | null }[] }).checks[0]?.nc;
+    expect(nc).not.toBeNull();
+    const ncRow = await ctx.prisma.qualityNc.findFirst({ where: { id: nc?.id ?? "" } });
+    expect(ncRow?.origin).toBe("INTERNAL");
+    expect(ncRow?.ownerId).toBe(w.responsible.membership.id);
+    // An older check doesn't move the next date back.
+    await manager.post(`/quality/prps/${id}/checks`, { doneOn: "2026-11-01", conforming: true });
+    const list = await manager.get("/quality/prps");
+    const row = (list.body as { prps: { id: string; nextDueOn: string }[] }).prps.find(
+      (prp) => prp.id === id,
+    );
+    expect(row?.nextDueOn).toBe("2026-11-07");
+    // Archived: no more checks and its expiry is resolved.
+    expect((await manager.post(`/quality/prps/${id}/archive`)).status).toBe(200);
+    expect(
+      (await api(w.ws.slug, w.responsible.token).post(`/quality/prps/${id}/checks`, check)).status,
+    ).toBe(404);
+    const resolved = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.prp", subjectId: id },
+    });
+    expect(resolved === null || resolved.resolvedAt !== null).toBe(true);
+  });
+
+  it("el panel es de quality.view; un miembro, 403; otra empresa: su control es 404 y su gente no entra", async () => {
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/dashboard")).status).toBe(403);
+    const board = await api(w.ws.slug, w.viewer.token).get("/quality/dashboard");
+    expect(board.status).toBe(200);
+    expect((board.body as { prps: { nonConforming: number } }).prps.nonConforming).toBeGreaterThan(
+      0,
+    );
+    const other = await world("Calidad prerrequisito ajeno");
+    const theirs = await api(other.ws.slug, other.manager.token).post("/quality/prps", prpInput());
+    const theirId = (theirs.body as PrpBody).prp.id;
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await manager.get(`/quality/prps/${theirId}/checks`)).status).toBe(404);
+    expect((await manager.patch(`/quality/prps/${theirId}`, { everyDays: 2 })).status).toBe(404);
+    expect((await manager.post(`/quality/prps/${theirId}/archive`)).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/prps/${theirId}/checks`, {
+          doneOn: "2026-11-05",
+          conforming: true,
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await manager.post(
+          "/quality/prps",
+          prpInput({ responsibleId: other.manager.membership.id }),
+        )
+      ).status,
+    ).toBe(404);
+    // Their board doesn't count ours.
+    const theirBoard = await api(other.ws.slug, other.viewer.token).get("/quality/dashboard");
+    expect((theirBoard.body as { prps: { nonConforming: number } }).prps.nonConforming).toBe(0);
+  });
+});
