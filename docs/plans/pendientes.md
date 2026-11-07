@@ -50,7 +50,8 @@ Hay que analizar y decidir con él, sin código todavía:
 - [x] **Lo que le falte a Prevención**: fases 6 a 9 hechas (07/11/2026), en docs/spec/seguridad-salud.md.
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
       [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, **módulo aparte en el menú**,
-      activable por empresa como Prevención. Primero el spec `docs/spec/calidad.md`.
+      activable por empresa como Prevención. Spec escrita (07/11/2026): [docs/spec/calidad.md](../spec/calidad.md),
+      fase 1 no conformidades y CAPA; en revisión, con 6 decisiones a confirmar al final.
 
 ## Migración a spider-ui
 

@@ -127,6 +127,7 @@ Lista viva en `docs/plans/pendientes.md`. Lo principal:
 | Formularios y registros | docs/spec/formularios.md |
 | Seguridad y salud laboral, puestos, vencimientos | docs/spec/seguridad-salud.md |
 | CAE (contratas, dentro de Prevención) | docs/spec/cae.md |
+| Calidad alimentaria (IFS 8 / BRCGS 9) | docs/spec/calidad.md |
 | Vencimientos de archivos y páginas | docs/spec/vencimientos.md |
 | Salas de auditoría | docs/spec/salas-de-auditoria.md |
 | Fase 2 | docs/spec/fase-2.md |

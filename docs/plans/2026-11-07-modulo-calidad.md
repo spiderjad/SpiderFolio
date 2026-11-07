@@ -1,7 +1,7 @@
 # Módulo de Calidad alimentaria (núcleo) — notas
 
-Estado: idea anotada el 07/11/2026. No implementar hasta que quien mantiene el proyecto lo pida. Paso
-siguiente: escribir `docs/spec/calidad.md` y revisarlo antes de tocar código.
+Estado: spec escrita el 07/11/2026 en `docs/spec/calidad.md` (fase 1: no conformidades y CAPA), en
+revisión por quien mantiene el proyecto. No tocar código hasta que la apruebe.
 
 ## Decisiones
 
