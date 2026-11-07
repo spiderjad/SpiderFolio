@@ -1,0 +1,92 @@
+---
+title: "Complaints and recall"
+description: "Record and answer on time the complaints of customers, consumers and the authority, complaints per million units, the crisis team and contacts and the recall tests."
+group: calidad
+order: 6
+icon: message
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+IFS Food 8 and BRCGS 9 ask to record and answer every complaint on time, to analyse their trends, to be ready
+to act if a product has to be recalled and to test it at least once a year. The Quality area has
+**Complaints** and **Crisis and recall**.
+
+## Record a complaint
+
+Anyone in the company can record the complaint they receive (for example, the salesperson who deals with the
+customer): **Record complaint** asks for
+
+- **who complains**: a **customer**, a **consumer** or the **authority**, and their name;
+- for a consumer, their **phone or email**: it's personal data, and only whoever manages quality and the
+  complaint's owner see it;
+- the **product** and the **lot**, the **category** (foreign body, allergen, microbiological, quality,
+  labelling or packaging) and what they complain about;
+- the date it was received.
+
+It's **Open**, in the hands of whoever manages quality (or the owner chosen by whoever manages it), with its
+deadline: the date received plus the company's **days to answer** (10 by default; changed in
+**Administration** › **Security** › **General**, **Food quality** card). The owner is told 7 days before, the
+day before and on the day; overdue, it shows in red.
+
+<Shot
+  name="calidad-reclamaciones"
+  alt="The list of complaints with their category, deadline and status"
+/>
+
+## Answer and close
+
+On the complaint's record, its owner or whoever manages quality:
+
+- **Answer**: the answer, its date and whether the complaint was **justified**. It's **Answered**.
+- **Open nonconformity**: creates the NC with origin **Complaint**, the chosen severity and the product and
+  lot, to find the cause and the actions (see [Nonconformities and CAPA](/en/docs/nonconformities)). The
+  complaint links it.
+- **Close**: marks it finished.
+
+## Indicators
+
+In **Complaints** › **Indicators**: the year's complaints, the **justified** ones and the **complaints per
+million units**, by month and in total, with the split by category. For the per million figure, whoever
+manages quality enters each month's **units sold** in the same table; months without units don't count.
+
+<Shot
+  name="calidad-reclamaciones-indicadores"
+  alt="Complaint indicators: total, per million units, by month and by category"
+/>
+
+## Crisis and recall
+
+**Crisis and recall** gathers what you need at hand if a product has to be recalled:
+
+- **Crisis team**: the company's people with their role (coordination, quality and traceability,
+  communication…).
+- **Contacts**: the health authority, customers, the insurer, the laboratory and others, with their phone and
+  email.
+- **Recall tests**: each **drill** (or real recall) with the product, the lot, the traceability (backward,
+  forward or both ways), the **minutes** it took to trace the lot, the **% recovered** and the result. A year
+  after the last test, whoever recorded it is told another one is due.
+- **Communication templates**: the notes for the authority and customers are controlled documents in the
+  Quality space; the button at the top opens it.
+
+<Shot
+  name="calidad-crisis"
+  alt="The crisis team, the contacts and the last recall test with its time and recovery"
+/>
+
+## Who sees what
+
+| Who                 | What they see and do                                                          |
+| ------------------- | ----------------------------------------------------------------------------- |
+| **Manage quality**  | Everything: complaints, units sold, team, contacts and tests.                 |
+| **View quality**    | Reads the complaints (without consumers' contact), the indicators and crisis. |
+| A complaint's owner | Sees it with the contact, answers it, opens its NC and closes it.             |
+| Everyone            | Records complaints and sees the ones they recorded.                           |
+
+## Related
+
+- [Nonconformities and CAPA](/en/docs/nonconformities)
+- [HACCP plan and product on hold](/en/docs/haccp-plan)
+- [Expiries](/en/docs/expiries)

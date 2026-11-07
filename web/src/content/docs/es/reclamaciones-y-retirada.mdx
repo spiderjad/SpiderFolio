@@ -1,0 +1,93 @@
+---
+title: "Reclamaciones y retirada"
+description: "Registrar y responder en plazo las reclamaciones de clientes, consumidores y la autoridad, las reclamaciones por millón de unidades, el equipo y los contactos de crisis y las pruebas de retirada."
+group: calidad
+order: 6
+icon: message
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 y BRCGS 9 piden registrar y responder cada reclamación en plazo, analizar sus tendencias, tener
+preparado cómo actuar si hay que retirar un producto y probarlo al menos una vez al año. En el área Calidad
+están **Reclamaciones** y **Crisis y retirada**.
+
+## Registrar una reclamación
+
+Cualquiera de la empresa puede registrar la reclamación que recibe (por ejemplo, el comercial que atiende al
+cliente): **Registrar reclamación** pide
+
+- **quién reclama**: un **cliente**, un **consumidor** o la **autoridad**, y su nombre;
+- con un consumidor, su **teléfono o email**: es un dato personal y solo lo ven quien gestiona calidad y el
+  responsable de la reclamación;
+- el **producto** y el **lote**, la **categoría** (cuerpo extraño, alérgeno, microbiológica, calidad,
+  etiquetado o envase) y qué reclama;
+- la fecha en que se recibió.
+
+Queda **Abierta**, a cargo de quien gestiona calidad (o del responsable que elija quien la gestiona), con su
+plazo: la fecha de recepción más los **días para responder** de la empresa (10 por defecto; se cambian en
+**Administración** › **Seguridad** › **General**, tarjeta **Calidad alimentaria**). El responsable recibe el
+aviso 7 días antes, el día anterior y el mismo día; vencida, sale en rojo.
+
+<Shot
+  name="calidad-reclamaciones"
+  alt="La lista de reclamaciones con su categoría, plazo y estado"
+/>
+
+## Responder y cerrar
+
+En la ficha de la reclamación, su responsable o quien gestiona calidad:
+
+- **Responder**: la respuesta, su fecha y si la reclamación estaba **justificada**. Queda **Respondida**.
+- **Abrir no conformidad**: crea la NC con origen **Reclamación**, la gravedad elegida y el producto y el lote,
+  para buscar la causa y las acciones (ver [No conformidades y CAPA](/es/docs/no-conformidades)). La
+  reclamación la enlaza.
+- **Cerrar**: la da por terminada.
+
+## Indicadores
+
+En **Reclamaciones** › **Indicadores**: las reclamaciones del año, las **justificadas** y las **reclamaciones
+por millón de unidades**, por mes y en total, con el reparto por categoría. Para el indicador por millón, quien
+gestiona calidad carga las **unidades vendidas** de cada mes en la misma tabla; los meses sin unidades no
+cuentan.
+
+<Shot
+  name="calidad-reclamaciones-indicadores"
+  alt="Los indicadores de reclamaciones: total, por millón de unidades, por mes y por categoría"
+/>
+
+## Crisis y retirada
+
+**Crisis y retirada** reúne lo que hace falta tener a mano si hay que retirar un producto:
+
+- **Equipo de crisis**: las personas de la empresa con su función (coordinación, calidad y trazabilidad,
+  comunicación…).
+- **Contactos**: la autoridad sanitaria, los clientes, la aseguradora, el laboratorio y otros, con su
+  teléfono y su email.
+- **Pruebas de retirada**: cada **simulacro** (o retirada real) con el producto, el lote, la trazabilidad
+  (hacia atrás, hacia adelante o en los dos sentidos), los **minutos** que se tardó en trazar el lote, el **%
+  recuperado** y el resultado. Al año de la última prueba, quien la registró recibe el aviso de que toca otra.
+- **Plantillas de comunicación**: las notas para la autoridad y los clientes son documentos controlados del
+  espacio Calidad; el botón de arriba lo abre.
+
+<Shot
+  name="calidad-crisis"
+  alt="El equipo de crisis, los contactos y la última prueba de retirada con su tiempo y su recuperación"
+/>
+
+## Quién ve qué
+
+| Quién                             | Qué ve y qué hace                                                                         |
+| --------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Gestionar calidad**             | Todo: reclamaciones, unidades vendidas, equipo, contactos y pruebas.                      |
+| **Ver calidad**                   | Lee las reclamaciones (sin el contacto de los consumidores), los indicadores y la crisis. |
+| El responsable de una reclamación | La ve con el contacto, la responde, abre su NC y la cierra.                               |
+| Todos                             | Registran reclamaciones y ven las que registraron.                                        |
+
+## Relacionado
+
+- [No conformidades y CAPA](/es/docs/no-conformidades)
+- [Plan APPCC y producto retenido](/es/docs/plan-appcc)
+- [Vencimientos](/es/docs/vencimientos)

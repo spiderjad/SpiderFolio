@@ -1042,3 +1042,240 @@ describe("calidad fase 4: proveedores", () => {
     ).toBe(404);
   });
 });
+
+// ─── Phase 5: complaints, crisis and recall ─────────────────────────────────────────────
+
+interface ComplaintBody {
+  complaint: {
+    id: string;
+    contact: string | null;
+    access: string;
+    status: string;
+    respondBy: string;
+    owner: { id: string };
+    nc: { id: string } | null;
+  };
+}
+
+const complaintInput = (extra: object = {}) => ({
+  source: "CONSUMER",
+  from: "Ana Gómez",
+  contact: "600 123 456",
+  product: "Chorizo picante",
+  lot: "24-298",
+  category: "FOREIGN_BODY",
+  description: "Un trozo de plástico.",
+  receivedOn: "2026-11-02",
+  ...extra,
+});
+
+describe("calidad fase 5: reclamaciones", () => {
+  it("cualquiera registra; el contacto del consumidor solo lo ven quality.manage y el responsable", async () => {
+    const recorded = await api(w.ws.slug, w.plain.token).post(
+      "/quality/complaints",
+      complaintInput(),
+    );
+    expect(recorded.status).toBe(201);
+    const body = (recorded.body as ComplaintBody).complaint;
+    expect(body.contact).toBeNull();
+    expect(body.access).toBe("read");
+    expect(body.respondBy).toBe("2026-11-12");
+    // In charge of the first quality.manage (the company owner), never of whoever records it.
+    expect(body.owner.id).not.toBe(w.plain.membership.id);
+    expect(
+      (
+        (await api(w.ws.slug, w.viewer.token).get(`/quality/complaints/${body.id}`))
+          .body as ComplaintBody
+      ).complaint.contact,
+    ).toBeNull();
+    expect(
+      (
+        (await api(w.ws.slug, w.manager.token).get(`/quality/complaints/${body.id}`))
+          .body as ComplaintBody
+      ).complaint.contact,
+    ).toBe("600 123 456");
+    // Whoever recorded it reads it; another member doesn't see it.
+    expect((await api(w.ws.slug, w.plain.token).get(`/quality/complaints/${body.id}`)).status).toBe(
+      200,
+    );
+    expect((await api(w.ws.slug, w.head.token).get(`/quality/complaints/${body.id}`)).status).toBe(
+      404,
+    );
+    expect(
+      (
+        await api(w.ws.slug, w.plain.token).post(`/quality/complaints/${body.id}/answer`, {
+          response: "x",
+          justified: true,
+          respondedOn: "2026-11-03",
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (await api(w.ws.slug, w.guest.token).post("/quality/complaints", complaintInput())).status,
+    ).toBe(403);
+  });
+
+  it("su responsable responde y abre la NC una vez; cerrada no cambia", async () => {
+    const created = await api(w.ws.slug, w.manager.token).post(
+      "/quality/complaints",
+      complaintInput({ ownerId: w.owner.membership.id }),
+    );
+    const id = (created.body as ComplaintBody).complaint.id;
+    const owner = api(w.ws.slug, w.owner.token);
+    expect(
+      ((await owner.get(`/quality/complaints/${id}`)).body as ComplaintBody).complaint.contact,
+    ).toBe("600 123 456");
+    const nc = await owner.post(`/quality/complaints/${id}/nc`, { severity: "MAJOR" });
+    expect(nc.status).toBe(200);
+    const ncId = (nc.body as ComplaintBody).complaint.nc?.id ?? "";
+    expect((await ctx.prisma.qualityNc.findFirstOrThrow({ where: { id: ncId } })).origin).toBe(
+      "COMPLAINT",
+    );
+    expect((await owner.post(`/quality/complaints/${id}/nc`, { severity: "MAJOR" })).status).toBe(
+      409,
+    );
+    const answered = await owner.post(`/quality/complaints/${id}/answer`, {
+      response: "Reponemos el producto.",
+      justified: true,
+      respondedOn: "2026-11-04",
+    });
+    expect((answered.body as ComplaintBody).complaint.status).toBe("ANSWERED");
+    expect((await owner.post(`/quality/complaints/${id}/close`)).status).toBe(200);
+    expect((await owner.patch(`/quality/complaints/${id}`, { product: "x" })).status).toBe(409);
+    // Reassigning is quality.manage's.
+    const other = await api(w.ws.slug, w.manager.token).post(
+      "/quality/complaints",
+      complaintInput({ ownerId: w.owner.membership.id }),
+    );
+    const otherId = (other.body as ComplaintBody).complaint.id;
+    expect(
+      (await owner.patch(`/quality/complaints/${otherId}`, { ownerId: w.plain.membership.id }))
+        .status,
+    ).toBe(403);
+  });
+
+  it("indicadores y unidades: quality.view lee, solo quality.manage carga; un miembro, 403", async () => {
+    expect(
+      (await api(w.ws.slug, w.plain.token).get("/quality/complaints/indicators?year=2026")).status,
+    ).toBe(403);
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).put("/quality/units", {
+          month: "2026-11-01",
+          units: 1000,
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).put("/quality/units", {
+          month: "2026-11-15",
+          units: 1,
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await api(w.ws.slug, w.manager.token).put("/quality/units", {
+          month: "2026-11-01",
+          units: 1_000_000,
+        })
+      ).status,
+    ).toBe(204);
+    const indicators = (
+      await api(w.ws.slug, w.viewer.token).get("/quality/complaints/indicators?year=2026")
+    ).body as { months: { month: string; complaints: number; units: number | null }[] };
+    const november = indicators.months.find((month) => month.month === "2026-11");
+    expect(november?.units).toBe(1_000_000);
+    expect(november?.complaints).toBeGreaterThan(0);
+  });
+
+  it("otra empresa: su reclamación es 404 y su gente no entra en el equipo de crisis", async () => {
+    const other = await world("Calidad reclamación ajena");
+    const theirs = await api(other.ws.slug, other.manager.token).post(
+      "/quality/complaints",
+      complaintInput(),
+    );
+    const theirId = (theirs.body as ComplaintBody).complaint.id;
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await manager.get(`/quality/complaints/${theirId}`)).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/complaints/${theirId}/answer`, {
+          response: "x",
+          justified: true,
+          respondedOn: "2026-11-03",
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (await manager.post(`/quality/complaints/${theirId}/nc`, { severity: "MINOR" })).status,
+    ).toBe(404);
+    expect(
+      (
+        await manager.post("/quality/crisis/members", {
+          membershipId: other.manager.membership.id,
+          role: "x",
+        })
+      ).status,
+    ).toBe(404);
+  });
+});
+
+describe("calidad fase 5: crisis y retirada", () => {
+  it("quality.view lee; solo quality.manage cambia; la prueba fija el aviso del año siguiente", async () => {
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/crisis")).status).toBe(403);
+    expect((await api(w.ws.slug, w.viewer.token).get("/quality/crisis")).status).toBe(200);
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).post("/quality/crisis/contacts", {
+          kind: "LAB",
+          name: "x",
+        })
+      ).status,
+    ).toBe(403);
+    const manager = api(w.ws.slug, w.manager.token);
+    const member = await manager.post("/quality/crisis/members", {
+      membershipId: w.head.membership.id,
+      role: "Coordinación",
+    });
+    expect(member.status).toBe(201);
+    expect(
+      (
+        await manager.post("/quality/crisis/members", {
+          membershipId: w.head.membership.id,
+          role: "Otra",
+        })
+      ).status,
+    ).toBe(409);
+    const test = await manager.post("/quality/recall-tests", {
+      kind: "DRILL",
+      date: "2026-03-10",
+      product: "Jamón cocido",
+      lot: "24-070",
+      direction: "BOTH",
+      minutes: 95,
+      recoveredPercent: 100,
+      result: "Trazabilidad completa.",
+    });
+    expect((test.body as { crisis: { nextTestOn: string } }).crisis.nextTestOn).toBe("2027-03-10");
+    const expiry = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.recall_test" },
+    });
+    expect(expiry?.dueOn.toISOString().slice(0, 10)).toBe("2027-03-10");
+    // Another company's contact or team member: 404.
+    const other = await world("Calidad crisis ajena");
+    const theirs = await api(other.ws.slug, other.manager.token).post("/quality/crisis/contacts", {
+      kind: "LAB",
+      name: "Laboratorio ajeno",
+    });
+    const theirContact =
+      (theirs.body as { crisis: { contacts: { id: string }[] } }).crisis.contacts[0]?.id ?? "";
+    expect((await manager.post(`/quality/crisis/contacts/${theirContact}/archive`)).status).toBe(
+      404,
+    );
+    expect(
+      (await manager.patch(`/quality/crisis/contacts/${theirContact}`, { name: "x" })).status,
+    ).toBe(404);
+  });
+});

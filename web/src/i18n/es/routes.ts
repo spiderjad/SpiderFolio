@@ -58,6 +58,7 @@ export const routes: LocaleRoutes = {
     qualityHaccp: "plan-appcc",
     qualityAudits: "auditorias",
     qualitySuppliers: "proveedores",
+    qualityComplaints: "reclamaciones-y-retirada",
     search: "busqueda",
     bian: "bian",
     security2fa: "seguridad-y-2fa",

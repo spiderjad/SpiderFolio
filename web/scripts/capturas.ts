@@ -1057,6 +1057,25 @@ const CAPTURES: Capture[] = [
     },
   },
   {
+    // Phase 5: complaints, their indicators, and crisis and recall.
+    name: "calidad-reclamaciones",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/reclamaciones`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-reclamaciones-indicadores",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/reclamaciones?pestana=indicadores`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-crisis",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/crisis`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
     name: "calidad-comunicar",
     who: "owner",
     path: (i) => `/app/${i.slug}/calidad/comunicar`,

@@ -1,6 +1,6 @@
 # Módulo de Calidad alimentaria (núcleo) — notas
 
-Estado: spec aprobada el 07/11/2026 (`docs/spec/calidad.md`); fases 1 (no conformidades y CAPA), 2 (APPCC, PCC y producto retenido) 3 (auditorías) y 4 (proveedores) hechas.
+Estado: spec aprobada el 07/11/2026 (`docs/spec/calidad.md`); fases 1 (no conformidades y CAPA), 2 (APPCC, PCC y producto retenido) 3 (auditorías), 4 (proveedores) y 5 (reclamaciones y retirada) hechas.
 
 ## Decisiones
 

@@ -516,6 +516,23 @@ probarlo al menos una vez al año.
 - **Indicadores de reclamaciones** dentro de la lista (pestaña) con las unidades de cada mes.
 - **Crisis y retirada** (`/calidad/crisis`): el equipo, los contactos y las pruebas de retirada.
 
+### Hecho (fase 5)
+
+Hecha el 07/11/2026. Migración `quality_complaints_recall` (`QualityComplaint`, `QualityMonthUnits`,
+`QualityCrisisMember`, `QualityCrisisContact`, `QualityRecallTest`) y `settings.quality.responseDays`. Backend
+en `complaints.service.ts`, `crisis.service.ts` y `complaints.schemas.ts`, vencimientos `quality.complaint` y
+`quality.recall_test`; pantallas **Reclamaciones** (con la pestaña **Indicadores**), su ficha y **Crisis y
+retirada**. Demo (`demoComplaints`), capturas `calidad-reclamaciones`, `calidad-reclamaciones-indicadores` y
+`calidad-crisis`, guía **Reclamaciones y retirada** (es y en) y tests de seguridad.
+
+Simplificaciones:
+
+- Las reclamaciones no tienen código correlativo (se identifican por quién reclama, el producto y la fecha).
+- El aviso de la prueba anual de retirada va a quien registró la última.
+- Las plantillas de comunicación son documentos del espacio Calidad; la pantalla solo lo enlaza.
+- El indicador por millón cuenta solo los meses con unidades cargadas.
+- Quien no tiene `quality.view` ve en el menú «Registrar una reclamación» y la lista con las suyas.
+
 ### API (fase 5)
 
 - `GET/POST /quality/complaints`, `GET/PATCH /quality/complaints/:id`, `POST /quality/complaints/:id/answer`

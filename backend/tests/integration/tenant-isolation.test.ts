@@ -74,6 +74,101 @@ const cases: IsolationCase[] = [
   { method: "get", path: "/admin/safety", url: () => "/admin/safety" },
   // Food quality (docs/spec/calidad.md). B's module is off: its own reads are 404 too.
   { method: "get", path: "/admin/quality", url: () => "/admin/quality" },
+  // Food quality, phase 5: complaints, units sold, crisis and recall.
+  { method: "get", path: "/quality/complaints", url: () => "/quality/complaints", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/complaints",
+    url: () => "/quality/complaints",
+    body: {
+      source: "CUSTOMER",
+      from: "Ajeno",
+      product: "Ajeno",
+      category: "OTHER",
+      description: "Ajeno",
+      receivedOn: "2026-11-01",
+    },
+  },
+  {
+    method: "get",
+    path: "/quality/complaints/indicators",
+    url: () => "/quality/complaints/indicators?year=2026",
+    ownStatus: 404,
+  },
+  {
+    method: "put",
+    path: "/quality/units",
+    url: () => "/quality/units",
+    body: { month: "2026-11-01", units: 1 },
+  },
+  {
+    method: "get",
+    path: "/quality/complaints/:id",
+    url: () => "/quality/complaints/x",
+    ownStatus: 404,
+  },
+  {
+    method: "patch",
+    path: "/quality/complaints/:id",
+    url: () => "/quality/complaints/x",
+    body: { product: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/quality/complaints/:id/answer",
+    url: () => "/quality/complaints/x/answer",
+    body: { response: "Ajena", justified: false, respondedOn: "2026-11-01" },
+  },
+  {
+    method: "post",
+    path: "/quality/complaints/:id/close",
+    url: () => "/quality/complaints/x/close",
+  },
+  {
+    method: "post",
+    path: "/quality/complaints/:id/nc",
+    url: () => "/quality/complaints/x/nc",
+    body: { severity: "MINOR" },
+  },
+  { method: "get", path: "/quality/crisis", url: () => "/quality/crisis", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/crisis/members",
+    url: () => "/quality/crisis/members",
+    body: { membershipId: "x", role: "Ajeno" },
+  },
+  { method: "delete", path: "/quality/crisis/members/:id", url: () => "/quality/crisis/members/x" },
+  {
+    method: "post",
+    path: "/quality/crisis/contacts",
+    url: () => "/quality/crisis/contacts",
+    body: { kind: "OTHER", name: "Ajeno" },
+  },
+  {
+    method: "patch",
+    path: "/quality/crisis/contacts/:id",
+    url: () => "/quality/crisis/contacts/x",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/quality/crisis/contacts/:id/archive",
+    url: () => "/quality/crisis/contacts/x/archive",
+  },
+  {
+    method: "post",
+    path: "/quality/recall-tests",
+    url: () => "/quality/recall-tests",
+    body: {
+      kind: "DRILL",
+      date: "2026-11-01",
+      product: "Ajeno",
+      lot: "Ajeno",
+      direction: "BOTH",
+      minutes: 1,
+      result: "Ajeno",
+    },
+  },
   // Food quality, phase 4: suppliers.
   { method: "get", path: "/quality/suppliers", url: () => "/quality/suppliers", ownStatus: 404 },
   {

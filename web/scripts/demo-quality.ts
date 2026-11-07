@@ -968,7 +968,7 @@ export async function demoSuppliers(
     `SELECT s.id FROM "QualitySupplier" s JOIN "Workspace" w ON w.id = s."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoComplaints(target, counts);
   const members = await call<{ items: { id: string; email: string | null }[] }>(
     "GET",
     "/admin/members?pageSize=100",
@@ -1028,5 +1028,280 @@ export async function demoSuppliers(
       });
     }
   }
+  return await demoComplaints(target, counts);
+}
+
+interface DemoComplaint {
+  source: "CUSTOMER" | "CONSUMER" | "AUTHORITY";
+  from: string;
+  contact?: string;
+  product: string;
+  lot: string;
+  category: "FOREIGN_BODY" | "ALLERGEN" | "MICROBIOLOGICAL" | "QUALITY" | "LABELLING" | "PACKAGING";
+  description: string;
+  received: number;
+  answer?: { text: string; justified: boolean; after: number };
+  nc?: "MINOR" | "MAJOR" | "CRITICAL";
+  close?: true;
+}
+
+const COMPLAINTS: Record<
+  QualityLocale,
+  {
+    items: DemoComplaint[];
+    team: { email: number; role: string }[];
+    contacts: { kind: string; name: string; organization: string; phone: string; email?: string }[];
+    test: { product: string; lot: string; result: string };
+  }
+> = {
+  es: {
+    items: [
+      {
+        source: "CONSUMER",
+        from: "Ana Gómez",
+        contact: "600 123 456",
+        product: "Chorizo picante 250 g",
+        lot: "24-298",
+        category: "FOREIGN_BODY",
+        description: "Encontró un trozo de plástico duro azul al cortar el chorizo.",
+        received: -3,
+        nc: "MAJOR",
+      },
+      {
+        source: "CUSTOMER",
+        from: "Supermercados Norte",
+        product: "Loncheado de jamón cocido 100 g",
+        lot: "24-301",
+        category: "PACKAGING",
+        description: "Doce bandejas con el sellado abierto en la última entrega.",
+        received: -9,
+        answer: {
+          text: "Reponemos las bandejas y revisamos la termoselladora de la línea 3.",
+          justified: true,
+          after: 2,
+        },
+        nc: "MINOR",
+      },
+      {
+        source: "CUSTOMER",
+        from: "Distribuciones Levante",
+        product: "Salchichón extra",
+        lot: "24-260",
+        category: "QUALITY",
+        description: "El cliente percibe el producto más salado que de costumbre.",
+        received: -20,
+        answer: {
+          text: "Los análisis de sal del lote están dentro de especificación.",
+          justified: false,
+          after: 4,
+        },
+        close: true,
+      },
+      {
+        source: "AUTHORITY",
+        from: "Servicio de salud pública",
+        product: "Chorizo picante 250 g",
+        lot: "24-298",
+        category: "ALLERGEN",
+        description: "Consulta por una alerta de alérgeno no declarado (mostaza).",
+        received: -14,
+      },
+    ],
+    team: [
+      { email: 0, role: "Coordinación de la crisis" },
+      { email: 1, role: "Calidad y trazabilidad" },
+    ],
+    contacts: [
+      {
+        kind: "AUTHORITY",
+        name: "Guardia de alertas alimentarias",
+        organization: "Servicio de salud pública",
+        phone: "900 000 112",
+      },
+      {
+        kind: "INSURER",
+        name: "Siniestros de responsabilidad civil",
+        organization: "Aseguradora",
+        phone: "900 000 200",
+      },
+      {
+        kind: "LAB",
+        name: "Laboratorio Agroalimentario",
+        organization: "Laboratorio acreditado ENAC",
+        phone: "900 000 300",
+        email: "urgencias@laboratorio.example",
+      },
+      {
+        kind: "CUSTOMER",
+        name: "Calidad de Supermercados Norte",
+        organization: "Supermercados Norte",
+        phone: "900 000 400",
+      },
+    ],
+    test: {
+      product: "Loncheado de jamón cocido 100 g",
+      lot: "24-070",
+      result: "Trazabilidad completa en los dos sentidos: 3 proveedores y 14 clientes localizados.",
+    },
+  },
+  en: {
+    items: [
+      {
+        source: "CONSUMER",
+        from: "Ann Green",
+        contact: "07700 900123",
+        product: "Spicy chorizo 250 g",
+        lot: "24-298",
+        category: "FOREIGN_BODY",
+        description: "Found a piece of hard blue plastic when cutting the chorizo.",
+        received: -3,
+        nc: "MAJOR",
+      },
+      {
+        source: "CUSTOMER",
+        from: "North Supermarkets",
+        product: "Sliced cooked ham 100 g",
+        lot: "24-301",
+        category: "PACKAGING",
+        description: "Twelve trays with an open seal in the last delivery.",
+        received: -9,
+        answer: {
+          text: "We're replacing the trays and checking line 3's heat sealer.",
+          justified: true,
+          after: 2,
+        },
+        nc: "MINOR",
+      },
+      {
+        source: "CUSTOMER",
+        from: "East Distribution",
+        product: "Extra salami",
+        lot: "24-260",
+        category: "QUALITY",
+        description: "The customer finds the product saltier than usual.",
+        received: -20,
+        answer: {
+          text: "The lot's salt analyses are within specification.",
+          justified: false,
+          after: 4,
+        },
+        close: true,
+      },
+      {
+        source: "AUTHORITY",
+        from: "Public health service",
+        product: "Spicy chorizo 250 g",
+        lot: "24-298",
+        category: "ALLERGEN",
+        description: "Query about an alert for an undeclared allergen (mustard).",
+        received: -14,
+      },
+    ],
+    team: [
+      { email: 0, role: "Crisis coordination" },
+      { email: 1, role: "Quality and traceability" },
+    ],
+    contacts: [
+      {
+        kind: "AUTHORITY",
+        name: "Food alerts on call",
+        organization: "Public health service",
+        phone: "0800 000 112",
+      },
+      { kind: "INSURER", name: "Liability claims", organization: "Insurer", phone: "0800 000 200" },
+      {
+        kind: "LAB",
+        name: "Food Laboratory",
+        organization: "UKAS accredited lab",
+        phone: "0800 000 300",
+        email: "urgent@laboratory.example",
+      },
+      {
+        kind: "CUSTOMER",
+        name: "North Supermarkets quality",
+        organization: "North Supermarkets",
+        phone: "0800 000 400",
+      },
+    ],
+    test: {
+      product: "Sliced cooked ham 100 g",
+      lot: "24-070",
+      result: "Full traceability both ways: 3 suppliers and 14 customers found.",
+    },
+  },
+};
+
+/**
+ * Phase 5 (docs/spec/calidad.md, «Fase 5»): complaints in every state (one with its NC), the units sold
+ * of the year's months, the crisis team and contacts, and a recall test. Idempotent: if the company has
+ * complaints, nothing is done.
+ */
+export async function demoComplaints(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT c.id FROM "QualityComplaint" c JOIN "Workspace" w ON w.id = c."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const t = COMPLAINTS[target.locale];
+  for (const item of t.items) {
+    const { complaint } = await call<{ complaint: { id: string } }>("POST", "/quality/complaints", {
+      source: item.source,
+      from: item.from,
+      contact: item.contact ?? null,
+      product: item.product,
+      lot: item.lot,
+      category: item.category,
+      description: item.description,
+      receivedOn: day(item.received),
+      ownerId: null,
+    });
+    counts.complaints = (counts.complaints ?? 0) + 1;
+    if (item.nc !== undefined) {
+      await call("POST", `/quality/complaints/${complaint.id}/nc`, { severity: item.nc });
+    }
+    if (item.answer !== undefined) {
+      await call("POST", `/quality/complaints/${complaint.id}/answer`, {
+        response: item.answer.text,
+        justified: item.answer.justified,
+        respondedOn: day(item.received + item.answer.after),
+      });
+    }
+    if (item.close === true) await call("POST", `/quality/complaints/${complaint.id}/close`);
+  }
+  // Units sold up to this month: some 240 000 a month.
+  const now = new Date();
+  for (let month = 1; month <= now.getUTCMonth() + 1; month++) {
+    await call("PUT", "/quality/units", {
+      month: `${String(now.getUTCFullYear())}-${String(month).padStart(2, "0")}-01`,
+      units: 220_000 + ((month * 7919) % 40_000),
+    });
+  }
+  const members = await call<{ items: { id: string; email: string | null }[] }>(
+    "GET",
+    "/admin/members?pageSize=100",
+  );
+  for (const member of t.team) {
+    const id = members.items.find((item) => item.email === target.peopleEmails[member.email])?.id;
+    if (id !== undefined) {
+      await call("POST", "/quality/crisis/members", { membershipId: id, role: member.role });
+    }
+  }
+  for (const contact of t.contacts) {
+    await call("POST", "/quality/crisis/contacts", { ...contact, email: contact.email ?? null });
+  }
+  await call("POST", "/quality/recall-tests", {
+    kind: "DRILL",
+    date: day(-240),
+    product: t.test.product,
+    lot: t.test.lot,
+    direction: "BOTH",
+    minutes: 95,
+    recoveredPercent: 100,
+    result: t.test.result,
+  });
   return counts;
 }
