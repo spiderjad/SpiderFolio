@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "e2e": "playwright test --project=chromium && playwright test --project=webkit"
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.3.0",
