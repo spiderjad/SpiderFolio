@@ -8,6 +8,7 @@ import {
   Check,
   CheckCircle2,
   FolderOpen,
+  PackageX,
   Pencil,
   Plus,
   RotateCcw,
@@ -25,6 +26,8 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { cn, formatDateTime, formatUtcDate } from "@/lib/utils";
 import { QualityActionDialog } from "./action-dialog";
+import { DecisionDialog, HoldDialog } from "./hold-dialogs";
+import { HoldStatusBadge } from "./holds-page";
 import { NcFields, formReady, useNcForm } from "./nc-form";
 import {
   ISHIKAWA_BRANCHES,
@@ -34,6 +37,7 @@ import {
   type IshikawaBranch,
   type NcDetail,
   type NcStatus,
+  type Hold,
   type QualityAction,
 } from "./quality-api";
 import { NcStatusBadge, SeverityBadge } from "./quality-common";
@@ -534,6 +538,93 @@ function VerificationCard({ nc }: { nc: NcDetail }) {
   );
 }
 
+function HoldsCard({ nc, editable }: { nc: NcDetail; editable: boolean }) {
+  const h = texts.quality.holds;
+  const [creating, setCreating] = useState(false);
+  const [deciding, setDeciding] = useState<Hold | null>(null);
+  if (nc.holds.length === 0 && !editable) return null;
+  return (
+    <Card className="grid gap-3 p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <CardTitle>{h.inNc}</CardTitle>
+        {editable && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setCreating(true);
+            }}
+          >
+            <PackageX className="size-4" aria-hidden="true" />
+            {h.create}
+          </Button>
+        )}
+      </div>
+      {nc.holds.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{h.inNcEmpty}</p>
+      ) : (
+        <ul className="-my-2 divide-y divide-border">
+          {nc.holds.map((hold) => (
+            <li key={hold.id} className="flex flex-wrap items-start gap-3 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">{hold.product}</span>
+                  <HoldStatusBadge status={hold.status} />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {[hold.lot, hold.quantity, hold.location].filter(Boolean).join(" · ")}
+                </p>
+                {hold.decision !== null && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {h.decision.by(hold.decision.by.name, formatDateTime(hold.decision.at))}
+                    {hold.decision.note !== null && ` · ${hold.decision.note}`}
+                  </p>
+                )}
+              </div>
+              {hold.canDecide && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setDeciding(hold);
+                  }}
+                >
+                  {h.decide}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Dialog open={creating} onOpenChange={setCreating}>
+        {creating && (
+          <HoldDialog
+            ncId={nc.id}
+            onClose={() => {
+              setCreating(false);
+            }}
+          />
+        )}
+      </Dialog>
+      <Dialog
+        open={deciding !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeciding(null);
+        }}
+      >
+        {deciding !== null && (
+          <DecisionDialog
+            hold={deciding}
+            onClose={() => {
+              setDeciding(null);
+            }}
+          />
+        )}
+      </Dialog>
+    </Card>
+  );
+}
+
 function HistoryCard({ nc }: { nc: NcDetail }) {
   const { workspaceSlug = "" } = useParams();
   const events = useQuery({
@@ -830,6 +921,7 @@ export function NcPage() {
       </Card>
       <CauseCard key={`${nc.id}-${nc.causeMethod ?? ""}`} nc={nc} editable={editable} />
       <ActionsCard nc={nc} editable={editable} />
+      <HoldsCard nc={nc} editable={editable} />
       <VerificationCard key={nc.verifyOn ?? "none"} nc={nc} />
       <Card className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
         <div>

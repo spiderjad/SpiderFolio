@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle, Skeleton } from "@/components/ui/display";
 import { Checkbox, FormField, Input, Switch } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { qualityApi, qualityKeys, type QualitySettingsView } from "./quality-api";
+import { haccpApi, qualityApi, qualityKeys, type QualitySettingsView } from "./quality-api";
 import { texts } from "@/i18n";
 
 const t = texts.quality.admin;
@@ -79,6 +79,16 @@ export function QualityAdminCard() {
       toast.success(
         changes.enabled === true ? t.enabled : changes.enabled === false ? t.disabled : t.saved,
       );
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  const template = useMutation({
+    mutationFn: () => haccpApi.template(workspaceSlug),
+    onSuccess: async (result) => {
+      toast.success(texts.quality.templateCard.loaded(result.forms, result.ccps));
+      await queryClient.invalidateQueries({ queryKey: qualityKeys.all(workspaceSlug) });
     },
     onError: (error) => {
       toast.error(adminErrorText(error));
@@ -154,6 +164,22 @@ export function QualityAdminCard() {
                   update.mutate({ verifyDays });
                 }}
               />
+              <div className="grid gap-2 rounded-lg border border-border p-3">
+                <p className="text-sm font-medium">{texts.quality.templateCard.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {texts.quality.templateCard.description}
+                </p>
+                <Button
+                  variant="outline"
+                  className="justify-self-start"
+                  disabled={template.isPending}
+                  onClick={() => {
+                    template.mutate();
+                  }}
+                >
+                  {texts.quality.templateCard.load}
+                </Button>
+              </div>
             </>
           )}
         </div>

@@ -90,6 +90,7 @@ export interface NcDetail extends NcSummary {
   closedBy: Person | null;
   actionItems: QualityAction[];
   verifications: { id: string; effective: boolean; note: string; by: Person; at: string }[];
+  holds: Hold[];
   access: "manage" | "edit" | "read";
 }
 
@@ -275,4 +276,108 @@ export const qualityApi = {
     slug: string,
     body: { enabled?: boolean; standards?: ("IFS8" | "BRCGS9")[]; verifyDays?: number },
   ) => api<{ quality: QualitySettingsView }>(w(slug, "/admin/quality"), { method: "PUT", body }),
+};
+
+// ─── Phase 2: HACCP and product on hold ──────────────────────────────────────────────────
+
+export const HAZARD_TYPES = ["BIOLOGICAL", "CHEMICAL", "PHYSICAL", "ALLERGEN"] as const;
+export type HazardType = (typeof HAZARD_TYPES)[number];
+export const HOLD_DECISIONS = ["RELEASED", "REWORKED", "DIVERTED", "DESTROYED"] as const;
+export type HoldStatus = "HELD" | (typeof HOLD_DECISIONS)[number];
+
+export interface Ccp {
+  id: string;
+  code: string;
+  name: string;
+  step: string;
+  hazard: string;
+  hazardType: HazardType;
+  criticalLimit: string;
+  form: { id: string; name: string; spaceId: string } | null;
+  frequency: string;
+  responsible: Person | null;
+  correctiveAction: string;
+  verification: string;
+  archived: boolean;
+  stats: { records: number; outOfLimits: number; openNcs: number } | null;
+}
+
+export interface CcpInput {
+  code: string;
+  name: string;
+  step: string;
+  hazard: string;
+  hazardType: HazardType;
+  criticalLimit: string;
+  formId: string | null;
+  frequency: string;
+  responsibleId: string | null;
+  correctiveAction: string;
+  verification: string;
+}
+
+export interface HaccpOverview {
+  plan: { nodeId: string; code: string; name: string; spaceId: string; page: boolean } | null;
+  ccps: Ccp[];
+}
+
+export interface Hold {
+  id: string;
+  nc: { id: string; code: string; title: string } | null;
+  product: string;
+  lot: string | null;
+  quantity: string | null;
+  location: string | null;
+  reason: string;
+  status: HoldStatus;
+  decision: { note: string | null; by: Person; at: string; signed: boolean } | null;
+  createdBy: Person;
+  createdAt: string;
+  canDecide: boolean;
+}
+
+export interface HoldInput {
+  ncId: string | null;
+  product: string;
+  lot: string | null;
+  quantity: string | null;
+  location: string | null;
+  reason: string;
+}
+
+export const haccpKeys = {
+  overview: (slug: string, archived: boolean) => ["w", slug, "quality", "haccp", archived] as const,
+  holds: (slug: string, status: string) => ["w", slug, "quality", "holds", status] as const,
+};
+
+export const haccpApi = {
+  overview: (slug: string, archived: boolean) =>
+    api<HaccpOverview>(w(slug, `/quality/haccp${archived ? "?archived=1" : ""}`)),
+  createCcp: (slug: string, body: CcpInput) =>
+    api<{ ccp: Ccp }>(w(slug, "/quality/ccps"), { method: "POST", body }),
+  updateCcp: (slug: string, id: string, body: Partial<CcpInput>) =>
+    api<{ ccp: Ccp }>(w(slug, `/quality/ccps/${id}`), { method: "PATCH", body }),
+  archiveCcp: (slug: string, id: string, archived: boolean) =>
+    api<{ ccp: Ccp }>(w(slug, `/quality/ccps/${id}/archive`), {
+      method: "POST",
+      body: { archived },
+    }),
+  orderCcps: (slug: string, ids: string[]) =>
+    api<undefined>(w(slug, "/quality/ccps/order"), { method: "PUT", body: { ids } }),
+  formOptions: (slug: string, q: string, signal?: AbortSignal) =>
+    api<{ items: { id: string; name: string; space: string }[] }>(
+      w(slug, `/quality/ccps/form-options?${listQuery({ q })}`),
+      signal ? { signal } : {},
+    ),
+  template: (slug: string) =>
+    api<{ forms: number; ccps: number }>(w(slug, "/admin/quality/template"), { method: "POST" }),
+  holds: (slug: string, status: string, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<Hold>>(w(slug, `/quality/holds?${listQuery({ status, cursor })}`), { signal }),
+  createHold: (slug: string, body: HoldInput) =>
+    api<{ hold: Hold }>(w(slug, "/quality/holds"), { method: "POST", body }),
+  decide: (
+    slug: string,
+    id: string,
+    body: { status: (typeof HOLD_DECISIONS)[number]; note: string; signature: string },
+  ) => api<{ hold: Hold }>(w(slug, `/quality/holds/${id}/decision`), { method: "POST", body }),
 };

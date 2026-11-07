@@ -280,6 +280,8 @@ model Workspace {
   qualityVerifications   QualityVerification[]
   qualityNcEvents        QualityNcEvent[]
   qualityNcCounters      QualityNcCounter[]
+  qualityCcps            QualityCcp[]
+  qualityHolds           QualityHold[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -2570,6 +2572,7 @@ model QualityNc {
   actions       QualityAction[]
   verifications QualityVerification[]
   events        QualityNcEvent[]
+  holds         QualityHold[]
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, year, number])
@@ -2645,4 +2648,76 @@ model QualityNcEvent {
   nc        QualityNc @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, ncId, at])
+}
+
+enum QualityHazardType {
+  BIOLOGICAL
+  CHEMICAL
+  PHYSICAL
+  ALLERGEN
+}
+
+enum QualityHoldStatus {
+  HELD
+  RELEASED
+  REWORKED
+  DIVERTED
+  DESTROYED
+}
+
+/// A critical control point of the HACCP plan (docs/spec/calidad.md, «Fase 2»), linked to the form that
+/// monitors it. Archived, never deleted.
+model QualityCcp {
+  id               String            @id @default(cuid())
+  workspaceId      String
+  code             String
+  codeKey          String
+  name             String
+  step             String
+  hazard           String
+  hazardType       QualityHazardType
+  criticalLimit    String
+  /// The monitoring form (node; no FK: forms go to the trash).
+  formId           String?
+  frequency        String
+  /// Membership; no FK.
+  responsibleId    String?
+  correctiveAction String
+  verification     String
+  position         Int
+  archivedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, codeKey])
+  @@index([workspaceId, position])
+}
+
+/// Product put on hold and the decision on it, signed (docs/spec/calidad.md, «Producto retenido»).
+/// The decision is never changed nor deleted.
+model QualityHold {
+  id           String            @id @default(cuid())
+  workspaceId  String
+  ncId         String?
+  product      String
+  lot          String?
+  quantity     String?
+  location     String?
+  reason       String
+  status       QualityHoldStatus @default(HELD)
+  decisionNote String?
+  decidedById  String?
+  decidedAt    DateTime?
+  /// Whoever decides signs on screen: a PNG.
+  signature    Bytes?
+  createdById  String
+  createdAt    DateTime          @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nc        QualityNc? @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([workspaceId, status, createdAt])
+  @@index([workspaceId, ncId])
 }

@@ -4,6 +4,8 @@
 import {
   AlertTriangle,
   BadgeCheck,
+  PackageX,
+  ShieldAlert,
   ClipboardX,
   Megaphone,
   BarChart3,
@@ -139,6 +141,8 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     items.push({ to: `${base}/resumen`, label: q.summary, icon: LayoutDashboard });
     items.push({ to: `${base}/no-conformidades`, label: q.ncs, icon: ClipboardX });
     items.push({ to: `${base}/acciones`, label: q.actions, icon: ListChecks });
+    items.push({ to: `${base}/appcc`, label: q.haccp, icon: ShieldAlert });
+    items.push({ to: `${base}/retenido`, label: q.holds, icon: PackageX });
   }
   items.push({
     to: `${base}/mis-acciones`,

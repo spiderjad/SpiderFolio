@@ -89,7 +89,7 @@ export interface TenantDb {
   >;
   formRecord: TenantDelegate<
     PrismaClient["formRecord"],
-    "findFirst" | "findMany" | "count" | "create" | "updateMany"
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "updateMany"
   >;
   formFile: TenantDelegate<PrismaClient["formFile"], Op>;
   formSettings: TenantDelegate<PrismaClient["formSettings"], Op>;
@@ -223,6 +223,15 @@ export interface TenantDb {
     PrismaClient["qualityNcEvent"],
     "findFirst" | "findMany" | "count" | "create"
   >;
+  // HACCP critical control points are archived, never deleted; a hold's decision is never undone.
+  qualityCcp: TenantDelegate<
+    PrismaClient["qualityCcp"],
+    "findFirst" | "findMany" | "count" | "create" | "createMany" | "update"
+  >;
+  qualityHold: TenantDelegate<
+    PrismaClient["qualityHold"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -308,7 +317,7 @@ const delegates = {
   // Records are never deleted, and their answers never change: updateMany is only for voiding one.
   formRecord: {
     model: "FormRecord",
-    ops: ["findFirst", "findMany", "count", "create", "updateMany"],
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "updateMany"],
   },
   formFile: { model: "FormFile", ops: [...readOps, ...writeOps] },
   formSettings: { model: "FormSettings", ops: [...readOps, ...writeOps] },
@@ -412,6 +421,14 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "create"],
   },
   qualityNcEvent: { model: "QualityNcEvent", ops: ["findFirst", "findMany", "count", "create"] },
+  qualityCcp: {
+    model: "QualityCcp",
+    ops: ["findFirst", "findMany", "count", "create", "createMany", "update"],
+  },
+  qualityHold: {
+    model: "QualityHold",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
+  },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

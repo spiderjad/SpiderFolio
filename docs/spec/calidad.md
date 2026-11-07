@@ -210,15 +210,84 @@ Simplificaciones respecto de lo de arriba:
 - Bian, el conector MCP y la búsqueda general no ven las NC (sí sus archivos, como cualquier archivo).
 - Sin plazos máximos de cierre por gravedad ni escalados automáticos.
 
+## Fase 2: APPCC y registros de PCC
+
+El plan APPCC (HACCP) es el corazón de IFS y BRCGS: los peligros de cada paso, los **puntos de control
+crítico** (PCC) con su límite, cómo se vigilan, qué se hace si se pasa el límite y cómo se verifica. La
+fase 2 lo lleva a la app sin reinventar lo que ya existe: el plan es un documento controlado, la
+vigilancia son formularios periódicos con mínimo y máximo, y un valor fuera de límite abre su no
+conformidad (fase 1).
+
+### El plan APPCC
+
+- Al activar el módulo (y, en una empresa que ya lo tenía, al guardar sus ajustes o abrir el plan) se crea
+  el tipo de documento controlado **APPCC** «Plan APPCC» (revisión cada 12 meses), si no existe. Cada
+  versión del plan es una versión de ese documento, con su aprobación (el equipo APPCC aprueba).
+- El **cuadro de gestión de PCC** es una lista propia del módulo (`QualityCcp`), no un texto del plan: así
+  cada PCC se enlaza con su formulario de vigilancia y se ve su estado.
+
+### PCC
+
+- `QualityCcp` `{ id, workspaceId, code (PCC-1, único por empresa), name (1 a 120), step (el paso del
+  diagrama: «Cocción»), hazard (el peligro, hasta 500), hazardType (BIOLOGICAL | CHEMICAL | PHYSICAL |
+  ALLERGEN), criticalLimit (texto: «≥ 72 °C en el centro del producto», hasta 300), formId? (el formulario
+  de vigilancia; sin FK), frequency (texto: «cada lote», hasta 120), responsibleId? (membership),
+  correctiveAction (hasta 1000), verification (hasta 1000), position, archivedAt?, createdAt, updatedAt }`.
+  Se archiva, no se borra.
+- Pantalla **Plan APPCC** (`/calidad/appcc`): el enlace al documento vigente del plan y el cuadro de PCC
+  (código, paso, peligro, límite crítico, vigilancia, responsable), con, por PCC, los registros de los
+  últimos 30 días, cuántos fuera de límite y sus NC abiertas. **Nuevo PCC**, editar, ordenar y archivar
+  (quality.manage). Quien tiene `quality.view` lo lee.
+- Cada PCC con formulario muestra su **QR** (el del formulario, que ya existe): pegado en la línea, abre
+  el registro y la instrucción vigente.
+
+### Plantilla cárnica
+
+En la tarjeta del módulo, **Cargar la plantilla cárnica** crea, una sola vez y sin pisar nombres:
+
+- la carpeta **Registros de vigilancia (PCC)** en el espacio Calidad con seis formularios periódicos
+  (diarios de lunes a viernes) con sus campos, límites y apertura automática de NC: **Recepción de
+  materia prima** (temperatura ≤ 7 °C en carne fresca, estado, lote de origen, registro sanitario del
+  matadero), **Temperatura de cámaras** (0 a 4 °C), **Curva de secaderos** (temperatura, humedad
+  relativa, aw ≤ 0,92 y pH ≤ 5,3 al salir), **Cocción** (≥ 72 °C en el centro), **Enfriamiento** (≤ 4 °C
+  antes de 6 horas) y **Detector de metales** (piezas patrón Fe 2,0 mm, no Fe 2,5 mm y acero inoxidable
+  3,0 mm detectadas; si no, NC **crítica**);
+- seis PCC en el cuadro, cada uno enlazado con su formulario.
+
+Los límites son ejemplos habituales del sector: la empresa los ajusta a su plan.
+
+### Producto retenido
+
+- `QualityHold` `{ id, workspaceId, ncId? (sin FK compuesta obligatoria: también puede retenerse sin NC),
+  product (1 a 160), lot (hasta 120), quantity (texto: «640 kg», hasta 60), location? (hasta 120),
+  status (HELD | RELEASED | REWORKED | DIVERTED | DESTROYED), reason (hasta 1000), decisionNote?,
+  decidedById?, decidedAt?, signature? (PNG de quien decide), createdById, createdAt }`.
+- **Retener producto** desde la ficha de una NC (o suelto, desde la lista): queda **Retenido**.
+- **Decidir**: liberar, reprocesar, otro destino (por ejemplo, a cocido) o destruir / SANDACH (Reglamento
+  1069/2009), con una nota y la **firma** en pantalla de quien decide (quality.manage). La decisión no se
+  cambia ni se borra; queda en el historial de la NC.
+- Pantalla **Producto retenido** (`/calidad/retenido`): lo retenido primero, filtrable por estado.
+- El retenido de una NC se ve en su ficha.
+
+### API (fase 2)
+
+- `GET/POST /quality/ccps`, `PATCH /quality/ccps/:id`, `POST /quality/ccps/:id/archive`,
+  `PUT /quality/ccps/order`, `GET /quality/haccp` (el plan vigente y el cuadro con sus números).
+- `POST /admin/quality/template` (la plantilla cárnica; solo el propietario, con el módulo activo).
+- `GET/POST /quality/holds`, `GET /quality/holds/:id`, `POST /quality/holds/:id/decision`
+  `{ status, note, signature }`.
+- Auditoría: `quality.ccp.create|update|archive|order`, `quality.template`, `quality.hold.create`,
+  `quality.hold.decide`.
+
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
    verificación de eficacia, evidencias, apertura desde un registro (manual y automática), avisos, listas y
    guías es/en.
-2. **APPCC y registros de PCC** (bloques 1 y 2): plan APPCC como documento controlado (tipo **APPCC**,
-   revisión anual); plantilla cárnica de formularios de vigilancia (recepción, cámaras, secaderos, cocción,
-   enfriamiento, detector de metales) con sus límites y apertura automática de NC; QR en cada PCC; producto
-   no conforme con bloqueo y liberación firmada.
+2. **APPCC y registros de PCC** (bloques 1 y 2, detalle arriba): plan APPCC como documento controlado,
+   cuadro de PCC enlazado con sus formularios, plantilla cárnica y producto retenido con su decisión
+   firmada.
 3. **Auditorías** (bloque 11): programa anual de internas por cláusula de la norma, externas, hallazgos que
    abren NC con su cláusula; el auditor externo ve sus evidencias en una sala de auditoría.
 4. **Proveedores** (bloque 8): homologación, fichas técnicas, certificados IFS/BRCGS con vencimiento,

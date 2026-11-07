@@ -5,6 +5,7 @@ import { withLocale, readWorkspaceLocale } from "../../i18n/locales.ts";
 import { qualityTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { createSpace, freeSpaceName } from "../spaces/spaces.service.ts";
+import { ensureHaccpType, loadMeatTemplate } from "./haccp.service.ts";
 import { readQualitySettings, type QualitySettings } from "../workspaces/settings.ts";
 
 export interface QualityView {
@@ -89,7 +90,11 @@ export async function updateQualitySettings(
     verifyDays: input.verifyDays ?? before.verifyDays,
     ...(before.spaceId === undefined ? {} : { spaceId: before.spaceId }),
   };
-  if (after.enabled) after.spaceId = await ensureSpace(ctx, after, workspace.settings);
+  if (after.enabled) {
+    after.spaceId = await ensureSpace(ctx, after, workspace.settings);
+    // The HACCP plan's document type (phase 2), once.
+    await ensureHaccpType(ctx);
+  }
   const current =
     typeof workspace.settings === "object" && workspace.settings !== null
       ? (workspace.settings as Record<string, unknown>)
@@ -119,4 +124,10 @@ export async function updateQualitySettings(
     });
   }
   return await viewOf(ctx, after);
+}
+
+/** The meat industry HACCP template (phase 2), in the module's space. Only the owner (its route). */
+export async function loadTemplate(ctx: AdminContext): Promise<{ forms: number; ccps: number }> {
+  const settings = readQualitySettings((await workspaceOf(ctx)).settings);
+  return await loadMeatTemplate(ctx, settings.spaceId);
 }

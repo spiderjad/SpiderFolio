@@ -42,11 +42,31 @@ import {
   VerificationSchema,
   VerifyOnSchema,
 } from "./quality.schemas.ts";
-import { getQualitySettings, updateQualitySettings } from "./quality.service.ts";
+import { getQualitySettings, loadTemplate, updateQualitySettings } from "./quality.service.ts";
+import {
+  ArchiveSchema,
+  CcpSchema,
+  DecisionSchema,
+  HaccpQuerySchema,
+  HoldSchema,
+  ListHoldsQuerySchema,
+  OrderSchema,
+  UpdateCcpSchema,
+} from "./haccp.schemas.ts";
+import {
+  ccpFormOptions,
+  createCcp,
+  haccpOverview,
+  orderCcps,
+  setCcpArchived,
+  updateCcp,
+} from "./haccp.service.ts";
+import { createHold, decideHold, getHold, listHolds } from "./holds.service.ts";
 import { FormQualitySchema, getFormQuality, saveFormQuality } from "./quality-forms.ts";
 
 const IdParams = z.object({ id: z.string().min(1).max(64) });
 const HOUR = 3_600_000;
+const FormOptionsQuery = z.object({ q: z.string().trim().max(100).default("") });
 
 export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute[] {
   const byUser = (req: Request) => req.auth?.userId ?? "";
@@ -263,6 +283,102 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         const { id } = IdParams.parse(req.params);
         const { note } = CompleteActionSchema.parse(req.body);
         res.json({ action: await completeQualityAction(adminContextOf(req), id, note ?? null) });
+      },
+    },
+    // Phase 2: the HACCP plan, its critical control points and product on hold.
+    {
+      method: "post",
+      path: "/admin/quality/template",
+      capability: "workspace.settings",
+      ownerOnly: true,
+      handler: async (req, res) => {
+        res.json(await loadTemplate(adminContextOf(req)));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/haccp",
+      handler: async (req, res) => {
+        const { archived } = HaccpQuerySchema.parse(req.query);
+        res.json(await haccpOverview(adminContextOf(req), archived === "1"));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/ccps/form-options",
+      handler: async (req, res) => {
+        const { q } = FormOptionsQuery.parse(req.query);
+        res.json({ items: await ccpFormOptions(adminContextOf(req), q) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/ccps",
+      handler: async (req, res) => {
+        res
+          .status(201)
+          .json({ ccp: await createCcp(adminContextOf(req), CcpSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "put",
+      path: "/quality/ccps/order",
+      handler: async (req, res) => {
+        await orderCcps(adminContextOf(req), OrderSchema.parse(req.body).ids);
+        res.status(204).end();
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/ccps/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          ccp: await updateCcp(adminContextOf(req), id, UpdateCcpSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/ccps/:id/archive",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { archived } = ArchiveSchema.parse(req.body);
+        res.json({ ccp: await setCcpArchived(adminContextOf(req), id, archived) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/holds",
+      handler: async (req, res) => {
+        res.json(await listHolds(adminContextOf(req), ListHoldsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/holds",
+      handler: async (req, res) => {
+        res
+          .status(201)
+          .json({ hold: await createHold(adminContextOf(req), HoldSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/holds/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ hold: await getHold(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/holds/:id/decision",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          hold: await decideHold(adminContextOf(req), id, DecisionSchema.parse(req.body)),
+        });
       },
     },
   ];

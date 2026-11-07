@@ -170,6 +170,14 @@ export const routes = [
                     ),
                   },
                   {
+                    path: "appcc",
+                    lazy: page(() => import("@/features/quality/haccp-page"), "HaccpPage"),
+                  },
+                  {
+                    path: "retenido",
+                    lazy: page(() => import("@/features/quality/holds-page"), "HoldsPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),

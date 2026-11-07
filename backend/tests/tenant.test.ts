@@ -413,6 +413,8 @@ describe("forTenant: transacciones", () => {
           "position",
           "qrCode",
           "qualityAction",
+          "qualityCcp",
+          "qualityHold",
           "qualityNc",
           "qualityNcCounter",
           "qualityNcEvent",

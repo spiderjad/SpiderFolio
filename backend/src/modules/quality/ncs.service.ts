@@ -32,6 +32,7 @@ import {
   requireQuality,
 } from "./quality-access.ts";
 import { ACTION_EXPIRY, VERIFICATION_EXPIRY } from "./quality-expiry.ts";
+import { holdsOfNc, type HoldView } from "./holds.service.ts";
 import {
   analysisOf,
   type ActionInput,
@@ -106,6 +107,8 @@ export interface NcDetail extends NcSummary {
   closedBy: Person | null;
   actionItems: QualityActionView[];
   verifications: { id: string; effective: boolean; note: string; by: Person; at: Date }[];
+  /** Product put on hold for it (phase 2). */
+  holds: HoldView[];
   /** manage: everything; edit: the owner (not the closing); read: only reading. */
   access: Access;
 }
@@ -452,6 +455,7 @@ async function detailOf(ctx: AdminContext, row: NcRow, access: Access): Promise<
       by: person(people, v.verifiedById),
       at: v.verifiedAt,
     })),
+    holds: await holdsOfNc(ctx, row.id),
     access,
   };
 }
