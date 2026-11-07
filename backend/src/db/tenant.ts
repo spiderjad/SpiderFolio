@@ -145,6 +145,11 @@ export interface TenantDb {
     PrismaClient["caeRequirement"],
     "findFirst" | "findMany" | "count" | "create" | "createMany" | "update" | "updateMany"
   >;
+  // Documents are evidence: added, reviewed (an update) and read; never deleted.
+  caeDocument: TenantDelegate<
+    PrismaClient["caeDocument"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -273,6 +278,10 @@ const delegates = {
   caeRequirement: {
     model: "CaeRequirement",
     ops: ["findFirst", "findMany", "count", "create", "createMany", "update", "updateMany"],
+  },
+  caeDocument: {
+    model: "CaeDocument",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },

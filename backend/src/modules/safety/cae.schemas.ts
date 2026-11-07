@@ -117,6 +117,32 @@ export const OrderRequirementsSchema = z.strictObject({
   ids: z.array(Id).min(1).max(200),
 });
 
+/** A file already uploaded to the company's folder, for one requirement. */
+export const CreateDocumentSchema = z.strictObject({
+  requirementId: Id,
+  companyId: Id,
+  workerId: Id.nullable().optional(),
+  nodeId: Id,
+  /** Without it, proposed from the requirement's validity. */
+  validUntil: Day.nullable().optional(),
+  /** Whoever manages CAE accepts it right away. */
+  accept: z.boolean().default(false),
+});
+
+export const AcceptDocumentSchema = z.strictObject({ validUntil: Day.nullable().optional() });
+
+export const RejectDocumentSchema = z.strictObject({ reason: z.string().trim().min(3).max(500) });
+
+export const ListDocumentsQuerySchema = z.object({
+  ...pageShape(["createdAt"], "createdAt"),
+  status: z.enum(["pending", "accepted", "rejected"]).optional(),
+  /** A requirement's history: with the company (its own documents) or with the worker. */
+  requirementId: Id.optional(),
+  companyId: Id.optional(),
+  /** Takes precedence over companyId. */
+  workerId: Id.optional(),
+});
+
 export const IdParamsSchema = z.object({ id: Id });
 
 export type CreateCompanyInput = z.infer<typeof CreateCompanySchema>;
@@ -129,3 +155,5 @@ export type CreateRequirementInput = z.infer<typeof CreateRequirementSchema>;
 export type UpdateRequirementInput = z.infer<typeof UpdateRequirementSchema>;
 export type ListRequirementsQuery = z.infer<typeof ListRequirementsQuerySchema>;
 export type OrderRequirementsInput = z.infer<typeof OrderRequirementsSchema>;
+export type CreateDocumentInput = z.infer<typeof CreateDocumentSchema>;
+export type ListDocumentsQuery = z.infer<typeof ListDocumentsQuerySchema>;

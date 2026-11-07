@@ -32,19 +32,13 @@ import {
   caeApi,
   caeKeys,
   type CaeCompany,
-  type CaeRequirementStatus,
   type CaeStatusSummary,
   type CaeWorkerFilters,
   type CaeWorkerRow,
 } from "./cae-api";
-import {
-  ArchiveDialog,
-  BlockDialog,
-  CaeStateBadge,
-  RequirementStateBadge,
-  useCae,
-} from "./cae-common";
+import { ArchiveDialog, BlockDialog, CaeStateBadge, useCae } from "./cae-common";
 import { CompanyForm } from "./cae-company-form";
+import { DocumentRequirementsCard } from "./cae-documents";
 import { WorkerForm } from "./cae-worker-form";
 import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
@@ -150,10 +144,13 @@ export function CaeCompanyPage() {
       ) : (
         <>
           <CompanyData company={data} slug={workspaceSlug} />
-          <RequirementsCard
+          <DocumentRequirementsCard
             title={t.requirementsTitle}
+            hint={t.requirementsHint}
             empty={t.noRequirements}
             requirements={data.requirements}
+            subject={{ companyId: data.id, workerId: null }}
+            canManage={manage}
           />
         </>
       )}
@@ -310,50 +307,6 @@ function CompanyData({ company, slug }: { company: CaeCompany; slug: string }) {
           )}
         </Field>
       </dl>
-    </Card>
-  );
-}
-
-export function RequirementsCard({
-  title,
-  empty,
-  requirements,
-}: {
-  title: string;
-  empty: string;
-  requirements: CaeRequirementStatus[];
-}) {
-  return (
-    <Card className="p-4 sm:p-5">
-      <CardTitle className="text-base">{title}</CardTitle>
-      <p className="mt-1 text-xs text-muted-foreground">{t.requirementsHint}</p>
-      {requirements.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">{empty}</p>
-      ) : (
-        <ul className="mt-3 divide-y divide-border">
-          {requirements.map((item) => (
-            <li
-              key={item.requirement.id}
-              className="flex flex-wrap items-center justify-between gap-2 py-2"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{item.requirement.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {[
-                    item.requirement.required ? null : t.optional,
-                    item.requirement.validityMonths === null
-                      ? null
-                      : t.validity(item.requirement.validityMonths),
-                  ]
-                    .filter((value): value is string => value !== null)
-                    .join(" · ")}
-                </p>
-              </div>
-              <RequirementStateBadge state={item.state} />
-            </li>
-          ))}
-        </ul>
-      )}
     </Card>
   );
 }

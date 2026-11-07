@@ -21,10 +21,51 @@ export interface CaeStatusSummary {
   reasons: string[];
 }
 
+export type CaeDocumentStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+
+/** A document as the status shows it. */
+export interface CaeDocumentRef {
+  id: string;
+  nodeId: string;
+  /** null once the file went to the trash. */
+  fileName: string | null;
+  status: CaeDocumentStatus;
+  validUntil: string | null;
+  rejectReason: string | null;
+  createdAt: string;
+}
+
 export interface CaeRequirementStatus {
   requirement: { id: string; name: string; required: boolean; validityMonths: number | null };
   state: CaeRequirementState;
   validUntil: string | null;
+  /** The current (accepted) document. */
+  current: CaeDocumentRef | null;
+  /** A newer one, pending or rejected. */
+  latest: CaeDocumentRef | null;
+}
+
+/** A document with who gave it and who reviewed it (history, «Por revisar»). */
+export interface CaeDocument {
+  id: string;
+  status: CaeDocumentStatus;
+  validUntil: string | null;
+  rejectReason: string | null;
+  superseded: boolean;
+  createdAt: string;
+  createdBy: { id: string; name: string };
+  reviewed: { at: string; by: { id: string; name: string } } | null;
+  file: { id: string; name: string | null; spaceId: string | null };
+  requirement: { id: string; name: string; scope: CaeScope };
+  company: { id: string; name: string };
+  worker: { id: string; name: string } | null;
+}
+
+export interface CaeDocumentFilters {
+  status?: "pending" | "accepted" | "rejected" | undefined;
+  requirementId?: string | undefined;
+  companyId?: string | undefined;
+  workerId?: string | undefined;
 }
 
 export interface CaeCompanyRow {
@@ -36,6 +77,8 @@ export interface CaeCompanyRow {
   responsible: { id: string; name: string } | null;
   activity: string | null;
   workers: number | null;
+  /** Documents waiting for review (null for whoever only checks). */
+  pending: number | null;
   status: CaeStatusSummary;
 }
 
@@ -134,11 +177,63 @@ export const caeKeys = {
   workers: (slug: string, companyId: string, filters: CaeWorkerFilters) =>
     ["w", slug, "cae", "workers", companyId, filters] as const,
   worker: (slug: string, id: string) => ["w", slug, "cae", "worker", id] as const,
+  documents: (slug: string, filters: CaeDocumentFilters) =>
+    ["w", slug, "cae", "documents", filters] as const,
   requirements: (slug: string, scope: CaeScope, archived: boolean) =>
     ["w", slug, "cae", "requirements", scope, archived] as const,
 };
 
 export const caeApi = {
+  companyFolder: (slug: string, id: string) =>
+    api<{ target: { spaceId: string; folderId: string } }>(w(slug, `/companies/${id}/folder`), {
+      method: "POST",
+    }),
+  workerFolder: (slug: string, id: string) =>
+    api<{ target: { spaceId: string; folderId: string } }>(w(slug, `/workers/${id}/folder`), {
+      method: "POST",
+    }),
+  documents: (
+    slug: string,
+    filters: CaeDocumentFilters,
+    cursor: string | undefined,
+    signal?: AbortSignal,
+    pageSize?: number,
+  ) =>
+    api<CursorPage<CaeDocument>>(
+      w(
+        slug,
+        `/documents?${listQuery({
+          status: filters.status,
+          requirementId: filters.requirementId,
+          companyId: filters.companyId,
+          workerId: filters.workerId,
+          cursor,
+          pageSize,
+        })}`,
+      ),
+      withSignal(signal),
+    ),
+  createDocument: (
+    slug: string,
+    body: {
+      requirementId: string;
+      companyId: string;
+      workerId: string | null;
+      nodeId: string;
+      validUntil: string | null;
+      accept: boolean;
+    },
+  ) => api<{ document: CaeDocument }>(w(slug, "/documents"), { method: "POST", body }),
+  acceptDocument: (slug: string, id: string, validUntil: string | null) =>
+    api<{ document: CaeDocument }>(w(slug, `/documents/${id}/accept`), {
+      method: "POST",
+      body: { validUntil },
+    }),
+  rejectDocument: (slug: string, id: string, reason: string) =>
+    api<{ document: CaeDocument }>(w(slug, `/documents/${id}/reject`), {
+      method: "POST",
+      body: { reason },
+    }),
   companies: (
     slug: string,
     filters: CaeCompanyFilters,

@@ -975,6 +975,8 @@ export const caeTexts = {
       siteInduction: "Inducción de seguridad del centro",
     },
   },
+  expiryWhat: (requirement: string, subject: string) => `${requirement} de ${subject}`,
+  workerOf: (worker: string, company: string) => `${worker} (${company})`,
   messages: {
     companyNameTaken: "Ya hay una empresa con ese nombre.",
     requirementNameTaken: "Ya hay un documento exigido con ese nombre.",
@@ -990,6 +992,15 @@ export const caeTexts = {
     notBlocked: "No está bloqueado.",
     alreadyArchived: "Ya está archivado.",
     moduleOff: "Primero activa el módulo de seguridad y salud laboral.",
+    nodeNotInFolder:
+      "El archivo tiene que estar en la carpeta de la empresa (o en una dentro de ella).",
+    noFolder: "La empresa no tiene carpeta: revisa que el espacio del módulo exista.",
+    requirementScope:
+      "Ese documento se pide a la empresa o a cada trabajador: elige bien a quién corresponde.",
+    requirementNotApplicable: "Ese documento no se le pide a este tipo de empresa.",
+    requirementArchived: "Ese documento exigido está archivado.",
+    workerNotInCompany: "Ese trabajador no es de esta empresa.",
+    notPending: "Ese documento ya está revisado.",
     orderMismatch: "El orden tiene que incluir todos los documentos exigidos de ese tipo, una vez.",
   },
   /** Why a company or a worker isn't authorized (caeStatus). */

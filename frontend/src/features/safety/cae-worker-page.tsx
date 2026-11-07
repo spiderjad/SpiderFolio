@@ -11,7 +11,8 @@ import { Dialog } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { caeApi, caeKeys } from "./cae-api";
 import { ArchiveDialog, BlockDialog, CaeStateBadge, useCae } from "./cae-common";
-import { AuthorizationCard, RequirementsCard, UnblockButton } from "./cae-company-page";
+import { AuthorizationCard, UnblockButton } from "./cae-company-page";
+import { DocumentRequirementsCard } from "./cae-documents";
 import { WorkerForm } from "./cae-worker-form";
 import { PpeTabs } from "./safety-common";
 import { texts } from "@/i18n";
@@ -123,10 +124,13 @@ export function CaeWorkerPage() {
         </dl>
       </Card>
       {data.full ? (
-        <RequirementsCard
+        <DocumentRequirementsCard
           title={t.requirementsTitle}
+          hint={texts.cae.company.requirementsHint}
           empty={t.noRequirements}
           requirements={data.requirements}
+          subject={{ companyId: data.company.id, workerId: data.id }}
+          canManage={manage}
         />
       ) : (
         <p className="text-sm text-muted-foreground">{texts.cae.limited}</p>

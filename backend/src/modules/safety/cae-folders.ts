@@ -158,9 +158,20 @@ export async function syncCompanyFolder(
   if (root === null) return company.folderId;
   const folder = await liveFolder(ctx, root.spaceId, company.folderId);
   if (folder === null) return await createFolder(ctx, root.spaceId, root.rootId, company.name);
-  const wanted = folderName(company.name);
-  if (nameKeyOf(folder.name) === nameKeyOf(wanted) && folder.name === wanted) return folder.id;
-  const name = await freeName(ctx, root.spaceId, folder.parentId, wanted, folder.id);
+  return await renameFolder(ctx, root.spaceId, folder, company.name);
+}
+
+/** Renames a CAE folder after its company or worker (only if the name changed). */
+async function renameFolder(
+  ctx: AdminContext,
+  spaceId: string,
+  folder: { id: string; name: string; parentId: string | null },
+  wantedName: string,
+): Promise<string> {
+  const wanted = folderName(wantedName);
+  if (folder.name === wanted) return folder.id;
+  const name = await freeName(ctx, spaceId, folder.parentId, wanted, folder.id);
+  if (name === folder.name) return folder.id;
   await ctx.db.node.update({
     where: { id: folder.id },
     data: { name, nameKey: nameKeyOf(name), updatedById: ctx.tenant.membershipId },
@@ -172,4 +183,33 @@ export async function syncCompanyFolder(
     metadata: { renamedFrom: folder.name, nodeType: "FOLDER" },
   });
   return folder.id;
+}
+
+/** The space a live CAE folder is in, or null. */
+export async function folderSpaceOf(
+  ctx: Pick<AdminContext, "db">,
+  folderId: string | null,
+): Promise<string | null> {
+  if (folderId === null) return null;
+  const folder = await ctx.db.node.findFirst({
+    where: { id: folderId, type: "FOLDER", trashedAt: null },
+    select: { spaceId: true },
+  });
+  return folder?.spaceId ?? null;
+}
+
+/**
+ * A worker's folder inside their company's, named after them: created the first time they need it
+ * (their first document), renamed with them. Returns its id, or null without the company's folder.
+ */
+export async function syncWorkerFolder(
+  ctx: AdminContext,
+  worker: { name: string; folderId: string | null },
+  companyFolderId: string | null,
+): Promise<string | null> {
+  const spaceId = await folderSpaceOf(ctx, companyFolderId);
+  if (spaceId === null || companyFolderId === null) return null;
+  const folder = await liveFolder(ctx, spaceId, worker.folderId);
+  if (folder === null) return await createFolder(ctx, spaceId, companyFolderId, worker.name);
+  return await renameFolder(ctx, spaceId, folder, worker.name);
 }

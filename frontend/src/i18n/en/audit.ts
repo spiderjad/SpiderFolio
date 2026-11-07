@@ -59,6 +59,7 @@ export const auditEs: Catalog<typeof EsAudit> = {
     CaeCompany: "Contractors",
     CaeWorker: "Contractors' workers",
     CaeRequirement: "Documents required of contractors",
+    CaeDocument: "Contractors' documents",
   },
   /** Known actions; the rest are shown with their code. */
   actions: {
@@ -147,6 +148,9 @@ export const auditEs: Catalog<typeof EsAudit> = {
     "cae.worker.block": "Blocked a contractor's worker",
     "cae.worker.unblock": "Unblocked a contractor's worker",
     "cae.worker.archive": "Archived a contractor's worker",
+    "cae.document.upload": "Uploaded a contractor's document",
+    "cae.document.accept": "Accepted a contractor's document",
+    "cae.document.reject": "Rejected a contractor's document",
     "cae.requirement.create": "Added a document required of contractors",
     "cae.requirement.update": "Changed a document required of contractors",
     "cae.requirement.restore": "Restored a document required of contractors",

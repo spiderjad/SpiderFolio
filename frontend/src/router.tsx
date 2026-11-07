@@ -249,6 +249,13 @@ export const routes = [
                         ),
                         children: [
                           {
+                            path: "revisar",
+                            lazy: page(
+                              () => import("@/features/safety/cae-review-page"),
+                              "CaeReviewPage",
+                            ),
+                          },
+                          {
                             path: "catalogo",
                             lazy: page(
                               () => import("@/features/safety/cae-catalog-page"),

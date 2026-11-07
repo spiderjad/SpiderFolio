@@ -4,6 +4,18 @@
 import type { TenantRoute } from "../../routes.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import {
+  acceptDocument,
+  companyUploadTarget,
+  createDocument,
+  listDocuments,
+  rejectDocument,
+  workerUploadTarget,
+} from "./cae-documents.service.ts";
+import {
+  AcceptDocumentSchema,
+  CreateDocumentSchema,
+  ListDocumentsQuerySchema,
+  RejectDocumentSchema,
   BlockSchema,
   CreateCompanySchema,
   CreateRequirementSchema,
@@ -182,6 +194,61 @@ export function caeRoutes(): TenantRoute[] {
       handler: async (req, res) => {
         const { id } = IdParamsSchema.parse(req.params);
         res.json({ worker: await archiveWorker(adminContextOf(req), id) });
+      },
+    },
+    // Documents: the file goes first to the company's folder (or its worker's) with the normal upload.
+    {
+      method: "post",
+      path: "/cae/companies/:id/folder",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ target: await companyUploadTarget(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/workers/:id/folder",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ target: await workerUploadTarget(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "get",
+      path: "/cae/documents",
+      handler: async (req, res) => {
+        res.json(
+          await listDocuments(adminContextOf(req), ListDocumentsQuerySchema.parse(req.query)),
+        );
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/documents",
+      handler: async (req, res) => {
+        const document = await createDocument(
+          adminContextOf(req),
+          CreateDocumentSchema.parse(req.body),
+        );
+        res.status(201).json({ document });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/documents/:id/accept",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const input = AcceptDocumentSchema.parse(req.body ?? {});
+        res.json({ document: await acceptDocument(adminContextOf(req), id, input) });
+      },
+    },
+    {
+      method: "post",
+      path: "/cae/documents/:id/reject",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { reason } = RejectDocumentSchema.parse(req.body);
+        res.json({ document: await rejectDocument(adminContextOf(req), id, reason) });
       },
     },
     // Catalog of required documents.

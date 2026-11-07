@@ -264,6 +264,7 @@ model Workspace {
   caeCompanies        CaeCompany[]
   caeWorkers          CaeWorker[]
   caeRequirements     CaeRequirement[]
+  caeDocuments        CaeDocument[]
   pageImages          PageImage[]
   commentThreads      CommentThread[]
   comments            Comment[]
@@ -714,6 +715,7 @@ model CaeCompany {
   parent    CaeCompany?  @relation("CaeCompanyTree", fields: [parentId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
   children  CaeCompany[] @relation("CaeCompanyTree")
   workers   CaeWorker[]
+  documents CaeDocument[]
 
   @@unique([workspaceId, nameKey])
   @@unique([id, workspaceId])
@@ -734,11 +736,14 @@ model CaeWorker {
   blockedAt     DateTime?
   blockedReason String?
   archivedAt    DateTime?
+  /// Their folder inside the company's, for their documents (node; no FK), created when first needed.
+  folderId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  company   CaeCompany @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   CaeCompany    @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  documents CaeDocument[]
 
   @@unique([id, workspaceId])
   @@index([workspaceId, companyId, name, id])
@@ -763,11 +768,52 @@ model CaeRequirement {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  documents CaeDocument[]
 
   @@unique([workspaceId, nameKey])
   @@unique([id, workspaceId])
   @@index([workspaceId, scope, position, id])
+}
+
+enum CaeDocumentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+/// A document given for a requirement (docs/spec/cae.md, «Modelo»): a file in the company's folder.
+/// The ACCEPTED one without supersededAt is the current one of its (requirement, company, worker); the
+/// rest are history. Never deleted.
+model CaeDocument {
+  id            String            @id @default(cuid())
+  workspaceId   String
+  requirementId String
+  companyId     String
+  /// With a WORKER requirement.
+  workerId      String?
+  /// The file (node; no FK: it can go to the trash apart).
+  nodeId        String
+  validUntil    DateTime?         @db.Date
+  status        CaeDocumentStatus @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  rejectReason  String?
+  /// A newer document of the same requirement was accepted.
+  supersededAt  DateTime?
+  createdById   String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  requirement CaeRequirement @relation(fields: [requirementId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  company     CaeCompany     @relation(fields: [companyId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
+  worker      CaeWorker?     @relation(fields: [workerId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, companyId, workerId, requirementId, createdAt])
+  @@index([workspaceId, workerId, requirementId, createdAt])
+  @@index([workspaceId, status, createdAt, id])
 }
 
 /// Cargo de una persona dentro de un departamento. Un solo HEAD por departamento (índice único

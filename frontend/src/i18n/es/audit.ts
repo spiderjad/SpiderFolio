@@ -56,6 +56,7 @@ export const auditEs = {
     CaeCompany: "Contratas",
     CaeWorker: "Trabajadores de contratas",
     CaeRequirement: "Documentos exigidos a contratas",
+    CaeDocument: "Documentos de contratas",
   } as Record<string, string>,
   /** Acciones conocidas; las demás se muestran con su código. */
   actions: {
@@ -144,6 +145,9 @@ export const auditEs = {
     "cae.worker.block": "Bloqueó a un trabajador de una contrata",
     "cae.worker.unblock": "Desbloqueó a un trabajador de una contrata",
     "cae.worker.archive": "Archivó a un trabajador de una contrata",
+    "cae.document.upload": "Subió un documento de una contrata",
+    "cae.document.accept": "Aceptó un documento de una contrata",
+    "cae.document.reject": "Rechazó un documento de una contrata",
     "cae.requirement.create": "Agregó un documento exigido a las contratas",
     "cae.requirement.update": "Cambió un documento exigido a las contratas",
     "cae.requirement.restore": "Recuperó un documento exigido a las contratas",

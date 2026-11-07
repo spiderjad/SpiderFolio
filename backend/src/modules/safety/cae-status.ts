@@ -2,9 +2,9 @@
 // autorización»): computed, never stored, always with readable reasons. The same function serves the
 // API, the lists, the gatehouse and the PDF.
 //
-// Phase 1 has no documents yet: every requirement is «missing», so anything with a required document
-// that applies to it isn't authorized. Phase 2 only has to fill `CurrentDocuments` (loadDocuments) and
-// the list filter (`authorizedCompanyWhere`) with the accepted documents.
+// Each requirement's state comes from its documents (loadDocuments): the current one is the ACCEPTED one
+// not superseded; a newer PENDING or REJECTED one is shown next to it. The list filters
+// (`authorizedCompanyWhere`, `authorizedWorkerWhere`) apply the same rules in the database.
 import type {
   CaeAppliesTo,
   CaeCompanyKind,
@@ -15,6 +15,8 @@ import { caeTexts } from "../../i18n/index.ts";
 import { currentLocale } from "../../i18n/locales.ts";
 import { dayIn, zoneOf } from "../../lib/time-zone.ts";
 import type { AdminContext } from "../admin/admin-context.ts";
+import { DEFAULT_NOTICE_DAYS } from "../expiries/expiries.service.ts";
+import { expiryState } from "../expiries/expiry-rules.ts";
 
 export type CaeRequirementState =
   "ok" | "due_soon" | "expired" | "pending" | "rejected" | "missing";
@@ -31,11 +33,27 @@ export interface CaeRequirementRef {
   validityMonths: number | null;
 }
 
+/** A document as the status shows it. */
+export interface CaeDocumentRef {
+  id: string;
+  nodeId: string;
+  /** The file's name; null once it's gone to the trash. */
+  fileName: string | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  validUntil: string | null;
+  rejectReason: string | null;
+  createdAt: Date;
+}
+
 export interface CaeRequirementStatus {
   requirement: { id: string; name: string; required: boolean; validityMonths: number | null };
   state: CaeRequirementState;
   /** «YYYY-MM-DD» of the current document, if it has one. */
   validUntil: string | null;
+  /** The current (accepted) document. */
+  current: CaeDocumentRef | null;
+  /** A newer one, pending or rejected. */
+  latest: CaeDocumentRef | null;
 }
 
 export interface CaeStatus {
@@ -45,10 +63,12 @@ export interface CaeStatus {
   requirements: CaeRequirementStatus[];
 }
 
-/** The current document of a requirement (phase 2): its state and until when it's valid. */
+/** A requirement's documents for one company or worker: its state and the documents behind it. */
 export interface CurrentDocument {
   state: Exclude<CaeRequirementState, "missing">;
   validUntil: string | null;
+  current: CaeDocumentRef | null;
+  latest: CaeDocumentRef | null;
 }
 
 /** requirementId → its current document, for one company or one worker. */
@@ -91,6 +111,8 @@ function requirementStatuses(
       },
       state: current?.state ?? "missing",
       validUntil: current?.validUntil ?? null,
+      current: current?.current ?? null,
+      latest: current?.latest ?? null,
     };
   });
 }
@@ -248,18 +270,107 @@ export async function statusContext(
   return { today: dayIn(new Date(), zoneOf(workspace?.settings)), requirements };
 }
 
+/** The state of one requirement from its documents, newest first. */
+export function documentState(
+  documents: readonly CaeDocumentRef[],
+  today: string,
+): CurrentDocument | null {
+  if (documents.length === 0) return null;
+  const current = documents.find((doc) => doc.status === "ACCEPTED") ?? null;
+  const latest =
+    documents.find(
+      (doc) => doc.status !== "ACCEPTED" && (current === null || doc.createdAt > current.createdAt),
+    ) ?? null;
+  const validity =
+    current === null
+      ? null
+      : current.validUntil === null
+        ? "valid"
+        : expiryState(today, current.validUntil, DEFAULT_NOTICE_DAYS);
+  const state: CurrentDocument["state"] =
+    validity === "valid"
+      ? "ok"
+      : validity === "due_soon"
+        ? "due_soon"
+        : latest?.status === "PENDING"
+          ? "pending"
+          : current !== null
+            ? "expired"
+            : "rejected";
+  return { state, validUntil: current?.validUntil ?? null, current, latest };
+}
+
 /**
- * The current documents of each company and worker. Phase 1 has none (every requirement is
- * «missing»); phase 2 takes the tenant db here and reads the latest CaeDocument of each requirement.
+ * The documents of each company (its own, not its workers') and of each worker, by requirement: the
+ * current one and the newest pending or rejected one after it. A document whose file went to the trash
+ * still counts until another one replaces it (the file can be restored).
  */
-export function loadDocuments(subjects: {
-  companyIds: readonly string[];
-  workerIds: readonly string[];
-}): Promise<{ companies: Map<string, CurrentDocuments>; workers: Map<string, CurrentDocuments> }> {
-  return Promise.resolve({
-    companies: new Map(subjects.companyIds.map((id) => [id, none])),
-    workers: new Map(subjects.workerIds.map((id) => [id, none])),
-  });
+export async function loadDocuments(
+  ctx: Pick<AdminContext, "db">,
+  today: string,
+  subjects: { companyIds: readonly string[]; workerIds: readonly string[] },
+): Promise<{ companies: Map<string, CurrentDocuments>; workers: Map<string, CurrentDocuments> }> {
+  const or: Prisma.CaeDocumentWhereInput[] = [];
+  if (subjects.companyIds.length > 0) {
+    or.push({ companyId: { in: [...subjects.companyIds] }, workerId: null });
+  }
+  if (subjects.workerIds.length > 0) or.push({ workerId: { in: [...subjects.workerIds] } });
+  const rows =
+    or.length === 0
+      ? []
+      : await ctx.db.caeDocument.findMany({
+          // Superseded ones are history: never the current one nor the latest.
+          where: { OR: or, supersededAt: null },
+          select: {
+            id: true,
+            requirementId: true,
+            companyId: true,
+            workerId: true,
+            nodeId: true,
+            status: true,
+            validUntil: true,
+            rejectReason: true,
+            createdAt: true,
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        });
+  const nodes =
+    rows.length === 0
+      ? []
+      : await ctx.db.node.findMany({
+          where: { id: { in: [...new Set(rows.map((row) => row.nodeId))] }, trashedAt: null },
+          select: { id: true, name: true },
+        });
+  const nameOf = new Map(nodes.map((node) => [node.id, node.name]));
+  const grouped = new Map<string, Map<string, CaeDocumentRef[]>>();
+  for (const row of rows) {
+    const subject = row.workerId === null ? `c:${row.companyId}` : `w:${row.workerId}`;
+    const bySubject = grouped.get(subject) ?? new Map<string, CaeDocumentRef[]>();
+    grouped.set(subject, bySubject);
+    const list = bySubject.get(row.requirementId) ?? [];
+    bySubject.set(row.requirementId, list);
+    list.push({
+      id: row.id,
+      nodeId: row.nodeId,
+      fileName: nameOf.get(row.nodeId) ?? null,
+      status: row.status,
+      validUntil: dayOfDate(row.validUntil),
+      rejectReason: row.rejectReason,
+      createdAt: row.createdAt,
+    });
+  }
+  const statesOf = (subject: string): CurrentDocuments => {
+    const result = new Map<string, CurrentDocument>();
+    for (const [requirementId, list] of grouped.get(subject) ?? []) {
+      const state = documentState(list, today);
+      if (state !== null) result.set(requirementId, state);
+    }
+    return result;
+  };
+  return {
+    companies: new Map(subjects.companyIds.map((id) => [id, statesOf(`c:${id}`)])),
+    workers: new Map(subjects.workerIds.map((id) => [id, statesOf(`w:${id}`)])),
+  };
 }
 
 const statusCompanySelect = {
@@ -298,7 +409,10 @@ export async function companyStatuses(
     });
     for (const parent of parents) known.set(parent.id, parent);
   }
-  const documents = await loadDocuments({ companyIds: [...known.keys()], workerIds: [] });
+  const documents = await loadDocuments(ctx, today, {
+    companyIds: [...known.keys()],
+    workerIds: [],
+  });
   const result = new Map<string, CaeStatus>();
   const statusOf = (company: StatusCompany, depth: number): CaeStatus => {
     const cached = result.get(company.id);
@@ -348,7 +462,7 @@ export async function workerStatuses(
   });
   const byCompany = await companyStatuses(ctx, companies, context);
   const companyOf = new Map(companies.map((company) => [company.id, company]));
-  const documents = await loadDocuments({
+  const documents = await loadDocuments(ctx, context.today, {
     companyIds: [],
     workerIds: workers.map((worker) => worker.id),
   });
@@ -374,51 +488,88 @@ export async function workerStatuses(
 
 const KINDS: readonly CaeCompanyKind[] = ["CONTRACTOR", "SUBCONTRACTOR", "CONCURRENT"];
 
-/**
- * Phase 1: with no documents, a company can only be authorized while no required document applies
- * to it. `scopes` = which requirements count (a worker also needs the worker ones).
- */
-async function kindsWithoutRequirements(
+/** The required active requirements of a scope that apply to each kind of company. */
+async function requiredByKind(
   ctx: Pick<AdminContext, "db">,
-  scopes: readonly CaeScope[],
-): Promise<CaeCompanyKind[]> {
+  scope: CaeScope,
+): Promise<Map<CaeCompanyKind, string[]>> {
   const required = await ctx.db.caeRequirement.findMany({
-    where: { archivedAt: null, required: true, scope: { in: [...scopes] } },
-    select: { appliesTo: true },
+    where: { archivedAt: null, required: true, scope },
+    select: { id: true, appliesTo: true },
   });
-  return KINDS.filter((kind) => !required.some((r) => appliesToKind(r.appliesTo, kind)));
+  return new Map(
+    KINDS.map((kind) => [
+      kind,
+      required.filter((r) => appliesToKind(r.appliesTo, kind)).map((r) => r.id),
+    ]),
+  );
 }
 
-function ownAuthorized(today: Date, kinds: readonly CaeCompanyKind[]): Prisma.CaeCompanyWhereInput {
+/** A current document of the requirement, valid today (ok or due soon). */
+const validDocument = (requirementId: string, day: Date, ownOnly: boolean) => ({
+  some: {
+    requirementId,
+    status: "ACCEPTED" as const,
+    supersededAt: null,
+    ...(ownOnly ? { workerId: null } : {}),
+    OR: [{ validUntil: null }, { validUntil: { gte: day } }],
+  },
+});
+
+/** Not blocked nor archived, within its dates and with every required company document valid. */
+function companyOwnWhere(
+  day: Date,
+  required: Map<CaeCompanyKind, string[]>,
+): Prisma.CaeCompanyWhereInput {
   return {
     blockedAt: null,
     archivedAt: null,
-    kind: { in: [...kinds] },
     AND: [
-      { OR: [{ startsOn: null }, { startsOn: { lte: today } }] },
-      { OR: [{ endsOn: null }, { endsOn: { gte: today } }] },
+      { OR: [{ startsOn: null }, { startsOn: { lte: day } }] },
+      { OR: [{ endsOn: null }, { endsOn: { gte: day } }] },
+      {
+        OR: KINDS.map((kind) => ({
+          kind,
+          AND: (required.get(kind) ?? []).map((id) => ({
+            documents: validDocument(id, day, true),
+          })),
+        })),
+      },
     ],
   };
 }
 
-/** Prisma filter of the companies `caeStatus` would authorize (same rules, phase 1). */
+/** The company's day as the DATE columns store it. */
+async function todayDate(ctx: Pick<AdminContext, "db">): Promise<Date> {
+  const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
+  return new Date(`${dayIn(new Date(), zoneOf(workspace?.settings))}T00:00:00Z`);
+}
+
+/** Prisma filter of the companies `companyStatus` authorizes (the same rules). */
 export async function authorizedCompanyWhere(
   ctx: Pick<AdminContext, "db">,
-  scopes: readonly CaeScope[] = ["COMPANY"],
 ): Promise<Prisma.CaeCompanyWhereInput> {
-  const { today } = await statusContext(ctx);
-  const day = new Date(`${today}T00:00:00Z`);
-  const companyKinds = await kindsWithoutRequirements(ctx, ["COMPANY"]);
-  const kinds = await kindsWithoutRequirements(ctx, scopes);
+  const day = await todayDate(ctx);
+  const required = await requiredByKind(ctx, "COMPANY");
+  const own = companyOwnWhere(day, required);
   return {
-    AND: [
-      ownAuthorized(day, kinds),
-      {
-        OR: [
-          { kind: { not: "SUBCONTRACTOR" } },
-          { parent: { is: ownAuthorized(day, companyKinds) } },
-        ],
-      },
-    ],
+    AND: [own, { OR: [{ kind: { not: "SUBCONTRACTOR" } }, { parent: { is: own } }] }],
+  };
+}
+
+/** Prisma filter of the workers `workerStatus` authorizes (the same rules). */
+export async function authorizedWorkerWhere(
+  ctx: Pick<AdminContext, "db">,
+): Promise<Prisma.CaeWorkerWhereInput> {
+  const day = await todayDate(ctx);
+  const required = await requiredByKind(ctx, "WORKER");
+  return {
+    archivedAt: null,
+    blockedAt: null,
+    company: { is: await authorizedCompanyWhere(ctx) },
+    OR: KINDS.map((kind) => ({
+      company: { is: { kind } },
+      AND: (required.get(kind) ?? []).map((id) => ({ documents: validDocument(id, day, false) })),
+    })),
   };
 }

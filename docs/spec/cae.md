@@ -154,8 +154,23 @@ seguridad del centro). La empresa los edita, agrega o archiva.
    al dar de alta o renombrar). Sin pestaña para el responsable interno sin `cae.manage` ni `cae.check`
    (la API ya le deja ver sus empresas). `GET /workers` y `GET /check` quedan para la portería (fase 3);
    el primero ya existe. Capturas pendientes (docs/plans/pendientes.md).
-2. **Documentos**: subir a la carpeta, aceptar o rechazar, vigente e historial, vencimientos
+2. **Documentos** (hecha): subir a la carpeta, aceptar o rechazar, vigente e historial, vencimientos
    `cae.document` con avisos al responsable interno, bandeja «Por revisar», estado y autorización reales.
+   Migración `cae_documents`: `CaeDocument` (con `supersededAt`: el vigente es el ACCEPTED sin
+   reemplazar, único por requisito, empresa y trabajador) y `CaeWorker.folderId` (cada trabajador tiene
+   una subcarpeta con su nombre dentro de la de su empresa, creada con su primer documento y renombrada con
+   él). Subir: la app pide la carpeta (`POST /companies/:id/folder`, `POST /workers/:id/folder`, que la
+   recrean si falta), sube con la cola normal de archivos y al terminar llama a `POST /documents`; el
+   backend exige un FILE vivo dentro del subárbol de la carpeta de la empresa. «Aceptar ya» en el mismo
+   diálogo (`accept: true`). Sin `validUntil`, se propone hoy + `validityMonths`. Historial:
+   `GET /documents?requirementId&companyId|workerId`. `due_soon` = 30 días o menos (los avisos por
+   defecto, 30/7/0). El filtro de estado de las listas es una consulta exacta en la base (un documento
+   ACCEPTED sin reemplazar y sin vencer por cada requisito obligatorio que aplica a su tipo, también para
+   la contrata de una subcontrata). Simplificaciones: un documento cuyo archivo está en la papelera
+   sigue contando hasta que otro lo reemplace (se puede restaurar); aceptar un PENDING más viejo que el
+   vigente lo reemplaza igual; solo se revisan los PENDING (no se revoca un aceptado; se sube otro); el
+   responsable interno ve los nombres de los archivos de sus empresas aunque no tenga acceso a la carpeta
+   (abrirlos sí lo exige); para subir hace falta poder editar en el espacio del módulo.
 3. **Portería y acceso**: `GET /check`, pantalla de portería, QR por trabajador, registro de entradas y
    salidas opcional, PDF «Autorizados hoy» por empresa.
 4. **Información y permisos de trabajo**: entrega de la información del centro (riesgos, emergencias,

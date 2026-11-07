@@ -8,7 +8,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Combobox, useStaticSource } from "@/components/ui/combobox";
 import { DataTable } from "@/components/ui/data-table";
-import { Card, EmptyState } from "@/components/ui/display";
+import { Badge, Card, EmptyState } from "@/components/ui/display";
 import { SearchField } from "@/components/ui/filter-bar";
 import { useInfiniteList } from "@/components/ui/infinite";
 import { Dialog } from "@/components/ui/overlay";
@@ -96,8 +96,11 @@ export function CaeCompaniesPage() {
         header: t.columns.status,
         cell: ({ row }) => (
           <div className="grid min-w-0 gap-1">
-            <span>
+            <span className="flex flex-wrap gap-1">
               <CaeStateBadge state={row.original.status.state} />
+              {row.original.pending !== null && row.original.pending > 0 && (
+                <Badge tone="primary">{t.pending(row.original.pending)}</Badge>
+              )}
             </span>
             {row.original.status.reasons.length > 0 && (
               <p className="truncate text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 // What the CAE screens share (docs/spec/cae.md): whether it's on and who manages or only checks, the
 // guard that hides it, its sub-navigation, the state badges and the block and archive dialogs.
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
 import { toast } from "sonner";
@@ -33,6 +33,18 @@ export function useCae() {
   };
 }
 
+/** How many documents wait for review (whoever manages CAE). */
+export function usePendingCount(): number {
+  const cae = useCae();
+  const count = useQuery({
+    queryKey: caeKeys.documents(cae.slug, { status: "pending" }),
+    queryFn: () => caeApi.documents(cae.slug, { status: "pending" }, undefined, undefined, 1),
+    select: (page) => page.total,
+    enabled: cae.visible && cae.manage,
+  });
+  return count.data ?? 0;
+}
+
 /** CAE's screens exist only while it's on, for whoever manages or checks it. */
 export function RequireCae() {
   const { visible } = useCae();
@@ -45,9 +57,10 @@ export function RequireCaeManager() {
   return visible && manage ? <Outlet /> : <NotFoundPage />;
 }
 
-/** Companies and, for whoever manages it, the catalog. */
+/** Companies, documents to review and, for whoever manages it, the catalog. */
 export function CaeNav() {
   const { base, manage, terms } = useCae();
+  const pending = usePendingCount();
   if (!manage) return null;
   const tab = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -60,6 +73,9 @@ export function CaeNav() {
     <nav className="flex flex-wrap gap-1" aria-label={terms.tab}>
       <NavLink end to={base} className={tab}>
         {texts.cae.nav.companies}
+      </NavLink>
+      <NavLink to={`${base}/revisar`} className={tab}>
+        {texts.cae.review.tab(pending)}
       </NavLink>
       <NavLink to={`${base}/catalogo`} className={tab}>
         {texts.cae.nav.catalog}

@@ -998,6 +998,8 @@ export const caeTexts: Catalog<typeof Es.caeTexts> = {
       siteInduction: "Site safety induction",
     },
   },
+  expiryWhat: (requirement: string, subject: string) => `${requirement} for ${subject}`,
+  workerOf: (worker: string, company: string) => `${worker} (${company})`,
   messages: {
     companyNameTaken: "There's already a company with that name.",
     requirementNameTaken: "There's already a required document with that name.",
@@ -1013,6 +1015,14 @@ export const caeTexts: Catalog<typeof Es.caeTexts> = {
     notBlocked: "It isn't blocked.",
     alreadyArchived: "It's already archived.",
     moduleOff: "Turn on the occupational health and safety module first.",
+    nodeNotInFolder: "The file has to be in the company's folder (or in one inside it).",
+    noFolder: "The company has no folder: check that the module's space exists.",
+    requirementScope:
+      "That document is asked of the company or of each worker: choose who it belongs to.",
+    requirementNotApplicable: "That document isn't asked of this type of company.",
+    requirementArchived: "That required document is archived.",
+    workerNotInCompany: "That worker isn't from this company.",
+    notPending: "That document has already been reviewed.",
     orderMismatch: "The order has to include every required document of that kind, once.",
   },
   reasons: {

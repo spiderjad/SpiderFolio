@@ -11,9 +11,10 @@ import { cleanName, nameKeyOf } from "../../lib/names.ts";
 import { offsetArgs, pageOf, stableOrder, type Page } from "../../lib/pagination.ts";
 import { caeTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
-import { syncCompanyFolder } from "./cae-folders.ts";
+import { syncCompanyFolder, syncWorkerFolder } from "./cae-folders.ts";
 import {
   authorizedCompanyWhere,
+  authorizedWorkerWhere,
   companyStatusOf,
   companyStatuses,
   dayOfDate,
@@ -55,6 +56,8 @@ export interface CompanyRow {
   responsible: { id: string; name: string } | null;
   activity: string | null;
   workers: number | null;
+  /** Documents waiting for review (null for whoever only checks). */
+  pending: number | null;
   status: StatusSummary;
 }
 
@@ -98,14 +101,14 @@ type CompanyRecord = Prisma.CaeCompanyGetPayload<{ select: typeof companySelect 
 // ─── Access ──────────────────────────────────────────────────────────────────────────────
 
 /** How much the person sees of CAE: everything, their companies, or only the authorization. */
-interface CaeAccess {
+export interface CaeAccess {
   manage: boolean;
   check: boolean;
   /** Companies where they're the internal responsible person. */
   responsibleOf: (company: { responsibleId: string }) => boolean;
 }
 
-async function accessOf(ctx: AdminContext): Promise<CaeAccess> {
+export async function accessOf(ctx: AdminContext): Promise<CaeAccess> {
   await requireCae(ctx);
   const me = ctx.tenant.membershipId;
   return {
@@ -115,7 +118,7 @@ async function accessOf(ctx: AdminContext): Promise<CaeAccess> {
   };
 }
 
-const seesWhole = (access: CaeAccess, company: { responsibleId: string }) =>
+export const seesWhole = (access: CaeAccess, company: { responsibleId: string }) =>
   access.manage || access.responsibleOf(company);
 
 async function requireManager(ctx: AdminContext): Promise<void> {
@@ -137,7 +140,7 @@ async function visibleCompanies(
 }
 
 /** A company the person sees (otherwise 404). */
-async function loadCompany(
+export async function loadCompany(
   ctx: AdminContext,
   access: CaeAccess,
   id: string,
@@ -284,7 +287,7 @@ async function companyRows(
 ): Promise<CompanyRow[]> {
   const ids = rows.map((row) => row.id);
   const parentIds = rows.map((row) => row.parentId).filter((id): id is string => id !== null);
-  const [statuses, names, parents, workers] = await Promise.all([
+  const [statuses, names, parents, workers, pending] = await Promise.all([
     companyStatuses(ctx, rows),
     namesOf(
       ctx,
@@ -301,7 +304,13 @@ async function companyRows(
       where: { companyId: { in: ids }, archivedAt: null },
       _count: { _all: true },
     }),
+    ctx.db.caeDocument.groupBy({
+      by: ["companyId"],
+      where: { companyId: { in: ids }, status: "PENDING" },
+      _count: { _all: true },
+    }),
   ]);
+  const pendingCount = new Map(pending.map((row) => [row.companyId, row._count._all]));
   const parentName = new Map(parents.map((parent) => [parent.id, parent.name]));
   const workerCount = new Map(workers.map((row) => [row.companyId, row._count._all]));
   return rows.map((row) => {
@@ -320,6 +329,7 @@ async function companyRows(
         : null,
       activity: whole ? row.activity : null,
       workers: workerCount.get(row.id) ?? 0,
+      pending: whole ? (pendingCount.get(row.id) ?? 0) : null,
       status:
         status === undefined
           ? { authorized: false, state: "incomplete", reasons: [] }
@@ -596,7 +606,10 @@ const workerSelect = {
   blockedAt: true,
   blockedReason: true,
   archivedAt: true,
-  company: { select: { id: true, name: true, kind: true, responsibleId: true } },
+  folderId: true,
+  company: {
+    select: { id: true, name: true, kind: true, responsibleId: true, folderId: true },
+  },
 } as const;
 
 type WorkerRecord = Prisma.CaeWorkerGetPayload<{ select: typeof workerSelect }>;
@@ -661,17 +674,9 @@ async function workerStateWhere(
     case "blocked":
       return { archivedAt: null, blockedAt: { not: null } };
     case "authorized":
-      return {
-        archivedAt: null,
-        blockedAt: null,
-        company: { is: await authorizedCompanyWhere(ctx, ["COMPANY", "WORKER"]) },
-      };
+      return await authorizedWorkerWhere(ctx);
     case "incomplete":
-      return {
-        archivedAt: null,
-        blockedAt: null,
-        NOT: { company: { is: await authorizedCompanyWhere(ctx, ["COMPANY", "WORKER"]) } },
-      };
+      return { archivedAt: null, blockedAt: null, NOT: await authorizedWorkerWhere(ctx) };
   }
 }
 
@@ -733,7 +738,11 @@ export async function listWorkers(
   );
 }
 
-async function loadWorker(ctx: AdminContext, access: CaeAccess, id: string): Promise<WorkerRecord> {
+export async function loadWorker(
+  ctx: AdminContext,
+  access: CaeAccess,
+  id: string,
+): Promise<WorkerRecord> {
   const row = await ctx.db.caeWorker.findFirst({ where: { id }, select: workerSelect });
   if (row === null) throw notFound();
   if (!access.manage && !access.check && !access.responsibleOf(row.company)) throw notFound();
@@ -799,6 +808,13 @@ export async function updateWorker(
     select: { id: true },
   });
   const row = await loadWorker(ctx, access, id);
+  // Renaming the worker renames their folder, once they have one.
+  if (row.folderId !== null && row.name !== current.name) {
+    const folderId = await syncWorkerFolder(ctx, row, row.company.folderId);
+    if (folderId !== row.folderId) {
+      await ctx.db.caeWorker.update({ where: { id }, data: { folderId }, select: { id: true } });
+    }
+  }
   await auditAdmin(ctx, {
     action: "cae.worker.update",
     entityType: "CaeWorker",
