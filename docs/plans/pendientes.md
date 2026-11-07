@@ -51,8 +51,8 @@ Hay que analizar y decidir con él, sin código todavía:
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
       [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, **módulo aparte en el menú**,
       activable por empresa como Prevención. Spec [docs/spec/calidad.md](../spec/calidad.md) aprobada;
-      **fase 1 hecha** (07/11/2026): no conformidades y CAPA. Sigue la fase 2 (APPCC y PCC). Antes de
-      subir: las rutas `/quality/*` en el test de aislamiento (lo pide el CI de integración).
+      **fase 1 cerrada** (07/11/2026): no conformidades y CAPA, con sus tests de seguridad. Sigue la
+      fase 2 (APPCC y PCC).
 
 ## Migración a spider-ui
 

@@ -199,8 +199,9 @@ Simplificaciones respecto de lo de arriba:
   hasta que alguien la asigne.
 - El **Resumen** responde a cualquiera con lo que ve; en el menú solo aparece para `quality.view`.
 - El texto de una NC abierta desde un registro se escribe en el idioma de la empresa.
-- Falta, para el cierre del módulo: las rutas `/quality/*` en el test de aislamiento entre empresas
-  (`tenant-isolation.test.ts`) y los tests de permisos.
+- Tests de seguridad de la fase 1 (07/11/2026): `tests/integration/quality-security.test.ts` (módulo
+  apagado, solo el propietario lo activa, cada rol, el ciclo, otra empresa y la apertura desde registros) y
+  las rutas `/quality/*` en `tenant-isolation.test.ts`.
 
 ### Fuera de la fase 1
 
