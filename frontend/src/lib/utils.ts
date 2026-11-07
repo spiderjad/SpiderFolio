@@ -38,6 +38,11 @@ export function formatBytes(bytes: number): string {
   return `${value.toLocaleString(locale, { maximumFractionDigits: digits })} ${UNITS[unit] ?? "B"}`;
 }
 
+/** A number in the interface's language: 2.1 → "2,1" in Spanish. */
+export function formatNumber(value: number): string {
+  return value.toLocaleString(locale, { maximumFractionDigits: 3 });
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const letters = parts.length > 1 ? [parts[0], parts.at(-1)] : [parts[0]];

@@ -21,7 +21,7 @@ import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/di
 import { Checkbox, FormField, FormGrid, Input, Textarea } from "@/components/ui/form";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { formatUtcDate } from "@/lib/utils";
+import { formatNumber, formatUtcDate } from "@/lib/utils";
 import { PrpStateBadge } from "./prps-page";
 import {
   SAMPLING_KINDS,
@@ -563,7 +563,9 @@ function valueText(
   unit: string | null,
 ): string | null {
   const parts: string[] = [];
-  if (value !== null) parts.push(unit === null ? String(value) : `${String(value)} ${unit}`);
+  if (value !== null) {
+    parts.push(unit === null ? formatNumber(value) : `${formatNumber(value)} ${unit}`);
+  }
   if (detected !== null) parts.push(detected ? t.detected : t.notDetected);
   return parts.length === 0 ? null : parts.join(" · ");
 }
@@ -579,7 +581,9 @@ function ResultsDialog({ point }: { point: SamplingPoint }) {
     point.maxValue === null
       ? null
       : t.results.limit(
-          point.unit === null ? String(point.maxValue) : `${String(point.maxValue)} ${point.unit}`,
+          point.unit === null
+            ? formatNumber(point.maxValue)
+            : `${formatNumber(point.maxValue)} ${point.unit}`,
         );
   return (
     <DialogContent title={t.results.title(point.name)}>

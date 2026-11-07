@@ -21,7 +21,7 @@ import { Badge, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/di
 import { Checkbox, FormField, FormGrid, Input, Textarea } from "@/components/ui/form";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
-import { formatUtcDate } from "@/lib/utils";
+import { formatNumber, formatUtcDate } from "@/lib/utils";
 import { allergenList, LabelStateBadge, ProductDialog, useProductFiles } from "./products-page";
 import {
   LABEL_CHECKS,
@@ -707,7 +707,9 @@ export function ProductPage() {
               {NUTRITION_FIELDS.map((field) => (
                 <div key={field} className="flex justify-between gap-2">
                   <dt className="text-muted-foreground">{t.nutrition[field]}</dt>
-                  <dd className="tabular-nums">{nutrition[field] ?? "—"}</dd>
+                  <dd className="tabular-nums">
+                    {nutrition[field] === undefined ? "—" : formatNumber(nutrition[field])}
+                  </dd>
                 </div>
               ))}
             </dl>
