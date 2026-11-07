@@ -524,6 +524,8 @@ async function demoQualityOf(locale: Locale, slug: string): Promise<void> {
 const demoAuditIds = new Map<Locale, string>();
 const demoSupplierIds = new Map<Locale, string>();
 const demoProductIds = new Map<Locale, string>();
+const demoSurveyIds = new Map<Locale, string>();
+const demoChangeIds = new Map<Locale, string>();
 const qualityAuditOf = (locale: Locale) => {
   const id = demoAuditIds.get(locale);
   if (id === undefined) throw new Error("La auditoría IFS de la demo todavía no está");
@@ -1108,6 +1110,69 @@ const CAPTURES: Capture[] = [
       const id = rows[0]?.id;
       if (id === undefined) throw new Error("demoQualityOf no dejó el producto JC-02");
       demoProductIds.set(locale, id);
+    },
+  },
+  {
+    name: "calidad-cultura",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/cultura`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-encuesta",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/encuestas/${demoSurveyIds.get(locale) ?? ""}`,
+    before: async ({ slug, locale }) => {
+      await demoQualityOf(locale, slug);
+      const { rows } = await db.query<{ id: string }>(
+        `SELECT s.id FROM "QualityCultureSurvey" s JOIN "Workspace" w ON w.id = s."workspaceId"
+          WHERE w.slug = $1 ORDER BY s."opensOn" DESC LIMIT 1`,
+        [slug],
+      );
+      const id = rows[0]?.id;
+      if (id === undefined) throw new Error("La encuesta de la demo todavía no está");
+      demoSurveyIds.set(locale, id);
+    },
+    then: async (page) => {
+      // A few statements answered, so the scale shows chosen and unchosen.
+      for (const [index, score] of [4, 5, 4].entries()) {
+        await page.getByRole("radiogroup").nth(index).getByRole("radio").nth(score - 1).click();
+      }
+    },
+  },
+  {
+    name: "calidad-encuesta-resultados",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/cultura`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+    then: async (page, locale) => {
+      await page
+        .getByRole("button", { name: locale === "es" ? "Ver resultados" : "See results" })
+        .first()
+        .click();
+      await page.getByRole("dialog").waitFor();
+    },
+  },
+  {
+    name: "calidad-cambios",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/cambios`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-cambio",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/cambios/${demoChangeIds.get(locale) ?? ""}`,
+    before: async ({ slug, locale }) => {
+      await demoQualityOf(locale, slug);
+      const { rows } = await db.query<{ id: string }>(
+        `SELECT c.id FROM "QualityChange" c JOIN "Workspace" w ON w.id = c."workspaceId"
+          WHERE w.slug = $1 AND c.kind = 'RECIPE' LIMIT 1`,
+        [slug],
+      );
+      const id = rows[0]?.id;
+      if (id === undefined) throw new Error("El cambio de la demo todavía no está");
+      demoChangeIds.set(locale, id);
     },
   },
   {

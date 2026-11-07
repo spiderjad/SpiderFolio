@@ -1822,7 +1822,7 @@ export async function demoProducts(
     `SELECT p.id FROM "QualityProduct" p JOIN "Workspace" w ON w.id = p."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoCulture(target, counts);
   const members = await call<{ items: { id: string; email: string | null }[] }>(
     "GET",
     "/admin/members?pageSize=100",
@@ -1918,6 +1918,235 @@ export async function demoProducts(
         openNc: result.nc !== undefined,
         severity: "MAJOR",
       });
+    }
+  }
+  return await demoCulture(target, counts);
+}
+
+const CULTURE = {
+  es: {
+    objectives:
+      "1. Que todo el personal de planta reciba la charla de alérgenos antes de junio.\n2. Subir la participación en la encuesta de cultura por encima del 70 %.\n3. Que cada no conformidad comunicada por planta tenga respuesta en menos de 15 días.",
+    activities: [
+      { title: "Charla de alérgenos en el cambio de turno", kind: "TRAINING", ago: 60, done: true },
+      { title: "Tablón: resultados de la auditoría IFS", kind: "COMMUNICATION", ago: 30, done: true },
+      { title: "Reunión de calidad con los jefes de línea", kind: "MEETING", ago: 5, done: false },
+      { title: "Encuesta de cultura de seguridad alimentaria", kind: "SURVEY", ago: -10, done: false },
+      { title: "Formación en higiene para el personal nuevo", kind: "TRAINING", ago: -40, done: false },
+    ],
+    survey: "Encuesta de cultura de seguridad alimentaria",
+    comments: [
+      "Las charlas cortas en el cambio de turno funcionan mejor que las largas.",
+      "A veces falta tiempo para limpiar bien entre lotes cuando hay prisa.",
+      "Me gustaría saber qué se hizo con lo que comuniqué el mes pasado.",
+    ],
+    changes: [
+      {
+        title: "Nueva receta de chorizo picante",
+        kind: "RECIPE",
+        description:
+          "Se sustituye el pimentón dulce por picante de otro proveedor y se añade ajo en polvo. Hay que revisar alérgenos (el ajo en polvo del proveedor declara trazas de mostaza) y la etiqueta.",
+        status: "APPROVED",
+        planned: 12,
+      },
+      {
+        title: "Nuevo detector de metales en la línea 2",
+        kind: "EQUIPMENT",
+        description: "Sustituye al detector actual, que da falsos rechazos. Hay que validar la sensibilidad con las probetas.",
+        status: "PROPOSED",
+        planned: 30,
+      },
+      {
+        title: "Cambio de proveedor de tripa natural",
+        kind: "SUPPLIER",
+        description: "El proveedor actual deja de servir. El nuevo tiene certificado IFS en vigor.",
+        status: "IMPLEMENTED",
+        planned: -20,
+      },
+      {
+        title: "Reducir el tiempo de secado del salchichón",
+        kind: "PROCESS",
+        description: "Propuesta para pasar de 28 a 21 días de secado.",
+        status: "REJECTED",
+        planned: null,
+      },
+    ],
+    notes: {
+      haccp: "Sin peligros nuevos; el PCC de secado no cambia.",
+      allergens: "Se añade mostaza a «puede contener».",
+      training: "Charla a los operarios de amasado.",
+      rejected: "Sin estudio de vida útil que lo respalde: la aw al día 21 no garantiza la estabilidad.",
+    },
+  },
+  en: {
+    objectives:
+      "1. Every production worker gets the allergen talk before June.\n2. Raise the culture survey turnout above 70%.\n3. Every nonconformity reported from the floor gets an answer within 15 days.",
+    activities: [
+      { title: "Allergen talk at shift change", kind: "TRAINING", ago: 60, done: true },
+      { title: "Notice board: IFS audit results", kind: "COMMUNICATION", ago: 30, done: true },
+      { title: "Quality meeting with line leaders", kind: "MEETING", ago: 5, done: false },
+      { title: "Food safety culture survey", kind: "SURVEY", ago: -10, done: false },
+      { title: "Hygiene training for new staff", kind: "TRAINING", ago: -40, done: false },
+    ],
+    survey: "Food safety culture survey",
+    comments: [
+      "Short talks at shift change work better than long ones.",
+      "Sometimes there isn't enough time to clean properly between batches when we're in a hurry.",
+      "I'd like to know what was done about what I reported last month.",
+    ],
+    changes: [
+      {
+        title: "New spicy chorizo recipe",
+        kind: "RECIPE",
+        description:
+          "Sweet paprika is replaced by hot paprika from another supplier and garlic powder is added. Allergens (the supplier's garlic powder declares traces of mustard) and the label need reviewing.",
+        status: "APPROVED",
+        planned: 12,
+      },
+      {
+        title: "New metal detector on line 2",
+        kind: "EQUIPMENT",
+        description: "Replaces the current detector, which gives false rejects. Sensitivity has to be validated with the test pieces.",
+        status: "PROPOSED",
+        planned: 30,
+      },
+      {
+        title: "New natural casing supplier",
+        kind: "SUPPLIER",
+        description: "The current supplier stops serving us. The new one has a valid IFS certificate.",
+        status: "IMPLEMENTED",
+        planned: -20,
+      },
+      {
+        title: "Shorter drying time for salami",
+        kind: "PROCESS",
+        description: "Proposal to go from 28 to 21 days of drying.",
+        status: "REJECTED",
+        planned: null,
+      },
+    ],
+    notes: {
+      haccp: "No new hazards; the drying CCP doesn't change.",
+      allergens: "Mustard is added to “may contain”.",
+      training: "Talk for the mixing operators.",
+      rejected: "No shelf life study backs it: the aw on day 21 doesn't guarantee stability.",
+    },
+  },
+} as const;
+
+/** Mostly agreed, weaker on time and on hearing back after reporting (statements 7 and 9). */
+export function cultureScores(index: number): number[] {
+  const spread = [4, 5, 4, 3, 5, 4, 2, 4, 5];
+  return Array.from({ length: 10 }, (_, question) => {
+    const score = spread[(index * 4 + question * 7) % spread.length] ?? 4;
+    return Math.max(1, question === 6 || question === 8 ? score - 1 : score);
+  });
+}
+
+/** Food safety culture and change management (phase 6c): the year's plan, a survey with answers, changes. */
+export async function demoCulture(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const member = apiOf(target.base, target.slug, target.memberToken);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT s.id FROM "QualityCultureSurvey" s JOIN "Workspace" w ON w.id = s."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const data = CULTURE[target.locale];
+  const members = await call<{ items: { id: string; email: string | null }[] }>(
+    "GET",
+    "/admin/members?pageSize=100",
+  );
+  const idOf = (index: number) =>
+    members.items.find((item) => item.email === target.peopleEmails[index])?.id ?? null;
+  const year = new Date().getUTCFullYear();
+  await call("PUT", `/quality/culture/plans/${String(year)}`, { objectives: data.objectives });
+  for (const [index, activity] of data.activities.entries()) {
+    const { activity: created } = await call<{ activity: { id: string } }>(
+      "POST",
+      "/quality/culture/activities",
+      {
+        year,
+        title: activity.title,
+        kind: activity.kind,
+        plannedOn: day(-activity.ago),
+        responsibleId: idOf(index % 2),
+        note: null,
+      },
+    );
+    counts.cultureActivities = (counts.cultureActivities ?? 0) + 1;
+    if (activity.done) {
+      await call("POST", `/quality/culture/activities/${created.id}/done`, {
+        doneOn: day(-activity.ago),
+      });
+    }
+  }
+  const { survey } = await call<{ survey: { id: string } }>("POST", "/quality/culture/surveys", {
+    title: `${data.survey} ${String(year)}`,
+    opensOn: day(-14),
+    closesOn: day(14),
+  });
+  // The answers of the demo's other people, written straight to the tables (only the owner and one
+  // member have a session here). The owner leaves it unanswered, so it shows in their «Mis pendientes».
+  const ownerId = idOf(0);
+  const voters = members.items.filter((item) => item.id !== ownerId).slice(0, 9);
+  const { rows: ws } = await target.db.query<{ id: string }>(
+    `SELECT id FROM "Workspace" WHERE slug = $1`,
+    [target.slug],
+  );
+  const workspaceId = ws[0]?.id;
+  if (workspaceId !== undefined) {
+    for (const [index, voter] of voters.entries()) {
+      const scores = cultureScores(index);
+      await target.db.query(
+        `INSERT INTO "QualityCultureVoter" ("workspaceId", "surveyId", "membershipId") VALUES ($1, $2, $3)`,
+        [workspaceId, survey.id, voter.id],
+      );
+      await target.db.query(
+        `INSERT INTO "QualityCultureAnswer" (id, "workspaceId", "surveyId", scores, comment)
+          VALUES (gen_random_uuid()::text, $1, $2, $3, $4)`,
+        [workspaceId, survey.id, scores, data.comments[index] ?? null],
+      );
+      counts.cultureAnswers = (counts.cultureAnswers ?? 0) + 1;
+    }
+  }
+  type Change = { change: { id: string } };
+  const review = (state: "done" | "pending") => ({
+    haccp: { state: "done", note: data.notes.haccp },
+    allergens: { state: "done", note: data.notes.allergens },
+    label: { state, note: "" },
+    training: { state, note: state === "done" ? data.notes.training : "" },
+    validation: { state: "not_applicable", note: "" },
+  });
+  for (const [index, item] of data.changes.entries()) {
+    const proposer = index === 1 ? member : call;
+    const { change } = await proposer<Change>("POST", "/quality/changes", {
+      title: item.title,
+      kind: item.kind,
+      description: item.description,
+      productId: null,
+      plannedOn: item.planned === null ? null : day(item.planned),
+    });
+    counts.changes = (counts.changes ?? 0) + 1;
+    if (item.status === "PROPOSED") continue;
+    if (item.status === "REJECTED") {
+      await call("POST", `/quality/changes/${change.id}/decision`, {
+        decision: "REJECT",
+        note: data.notes.rejected,
+      });
+      continue;
+    }
+    await call("PATCH", `/quality/changes/${change.id}`, {
+      review: review(item.status === "IMPLEMENTED" ? "done" : "pending"),
+      ownerId: idOf(1),
+      impact: item.status === "IMPLEMENTED" ? "LOW" : "HIGH",
+    });
+    await call("POST", `/quality/changes/${change.id}/decision`, { decision: "APPROVE", note: null });
+    if (item.status === "IMPLEMENTED") {
+      await call("POST", `/quality/changes/${change.id}/implemented`, { implementedOn: day(-15) });
     }
   }
   return counts;

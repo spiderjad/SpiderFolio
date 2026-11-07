@@ -1266,11 +1266,12 @@ export const qualityTexts: typeof es = {
         opensOn: "Opens on",
         closesOn: "Closes on",
         questions: "Statements",
-        questionsHint: "One per line, up to 20. Answered from 1 (strongly disagree) to 5 (strongly agree).",
+        questionsHint:
+          "One per line, up to 20. Answered from 1 (strongly disagree) to 5 (strongly agree).",
         defaultsHint:
           "Leave them empty and the survey gets the usual ten statements: management commitment, communication, training, responsibility and reporting problems without fear.",
         lockedHint: "It already has answers: it can only be closed.",
-        created: "Survey created. It shows in everyone's My tasks while it's open.",
+        created: "Survey created. It shows in everyone's My to-dos while it's open.",
         saved: "Survey saved.",
         datesOrder: "The closing date has to be on or after the opening date.",
       },
@@ -1302,7 +1303,7 @@ export const qualityTexts: typeof es = {
       sent: "Thank you: your answer has been recorded.",
       answered: "You have already answered this survey. Thank you.",
       closed: "The survey isn't open.",
-      back: "Back to My tasks",
+      back: "Back to My to-dos",
       notFound: "We couldn't find this survey.",
     },
     pending: {
