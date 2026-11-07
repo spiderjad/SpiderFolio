@@ -1119,11 +1119,344 @@ const cases: IsolationCase[] = [
     url: () => "/admin/members/import/confirm",
     body: { csv: "email" },
   },
+  // CAE (docs/spec/cae.md) and Prevention phases 6 to 9: CAE and the module are off in B, so its own
+  // reads are 404 too; A never reaches B (each family is also checked with real ids, inside one
+  // company and across companies, in cae-security, cae-portal and safety-prevention).
+  {
+    method: "get",
+    path: "/cae/companies/:id/portal",
+    url: () => "/cae/companies/x/portal",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/cae/companies/:id/portal",
+    url: () => "/cae/companies/x/portal",
+    body: { days: 7 },
+  },
+  {
+    method: "post",
+    path: "/cae/companies/:id/portal/revoke",
+    url: () => "/cae/companies/x/portal/revoke",
+  },
+  { method: "get", path: "/cae/info", url: () => "/cae/info", ownStatus: 404 },
+  { method: "put", path: "/cae/info", url: () => "/cae/info", body: { required: true } },
+  { method: "get", path: "/cae/info/options", url: () => "/cae/info/options", ownStatus: 404 },
+  {
+    method: "get",
+    path: "/cae/companies/:id/info",
+    url: () => "/cae/companies/x/info",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/cae/companies/:id/info/deliveries",
+    url: () => "/cae/companies/x/info/deliveries",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/cae/companies/:id/info/deliveries",
+    url: () => "/cae/companies/x/info/deliveries",
+    body: { receivedBy: "Ajeno" },
+  },
+  {
+    method: "get",
+    path: "/cae/info/deliveries/:id/pdf",
+    url: () => "/cae/info/deliveries/x/pdf",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/cae/permits", url: () => "/cae/permits", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/cae/permits",
+    url: () => "/cae/permits",
+    body: {
+      type: "HOT_WORK",
+      location: "Ajena",
+      validFrom: "2099-01-01T08:00:00Z",
+      validTo: "2099-01-01T10:00:00Z",
+      membershipIds: ["x"],
+    },
+  },
+  { method: "get", path: "/cae/permits/:id", url: () => "/cae/permits/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/cae/permits/:id",
+    url: () => "/cae/permits/x",
+    body: { location: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/cae/permits/:id/approve",
+    url: () => "/cae/permits/x/approve",
+    body: { signature: "data:image/png;base64,AA==" },
+  },
+  { method: "post", path: "/cae/permits/:id/close", url: () => "/cae/permits/x/close", body: {} },
+  {
+    method: "post",
+    path: "/cae/permits/:id/cancel",
+    url: () => "/cae/permits/x/cancel",
+    body: { reason: "Ajeno" },
+  },
+  { method: "get", path: "/cae/permits/:id/pdf", url: () => "/cae/permits/x/pdf", ownStatus: 404 },
+  { method: "get", path: "/cae/check", url: () => "/cae/check?q=Ajeno", ownStatus: 404 },
+  { method: "get", path: "/cae/check/:id", url: () => "/cae/check/x", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/cae/access",
+    url: () => "/cae/access",
+    body: { workerId: "x", direction: "IN" },
+  },
+  { method: "get", path: "/cae/access", url: () => "/cae/access", ownStatus: 404 },
+  { method: "get", path: "/cae/workers/:id/qr", url: () => "/cae/workers/x/qr", ownStatus: 404 },
+  {
+    method: "get",
+    path: "/cae/companies/:id/pdf",
+    url: () => "/cae/companies/x/pdf",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/cae/companies", url: () => "/cae/companies", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/cae/companies",
+    url: () => "/cae/companies",
+    body: { name: "Ajena", kind: "CONTRACTOR", responsibleId: "x" },
+  },
+  { method: "get", path: "/cae/companies/:id", url: () => "/cae/companies/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/cae/companies/:id",
+    url: () => "/cae/companies/x",
+    body: { activity: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/cae/companies/:id/block",
+    url: () => "/cae/companies/x/block",
+    body: { reason: "Ajeno" },
+  },
+  { method: "post", path: "/cae/companies/:id/unblock", url: () => "/cae/companies/x/unblock" },
+  { method: "post", path: "/cae/companies/:id/archive", url: () => "/cae/companies/x/archive" },
+  {
+    method: "get",
+    path: "/cae/companies/:id/workers",
+    url: () => "/cae/companies/x/workers",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/cae/companies/:id/workers",
+    url: () => "/cae/companies/x/workers",
+    body: { name: "Ajeno" },
+  },
+  { method: "get", path: "/cae/workers", url: () => "/cae/workers", ownStatus: 404 },
+  { method: "get", path: "/cae/workers/:id", url: () => "/cae/workers/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/cae/workers/:id",
+    url: () => "/cae/workers/x",
+    body: { task: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/cae/workers/:id/block",
+    url: () => "/cae/workers/x/block",
+    body: { reason: "Ajeno" },
+  },
+  { method: "post", path: "/cae/workers/:id/unblock", url: () => "/cae/workers/x/unblock" },
+  { method: "post", path: "/cae/workers/:id/archive", url: () => "/cae/workers/x/archive" },
+  { method: "post", path: "/cae/companies/:id/folder", url: () => "/cae/companies/x/folder" },
+  { method: "post", path: "/cae/workers/:id/folder", url: () => "/cae/workers/x/folder" },
+  { method: "get", path: "/cae/documents", url: () => "/cae/documents", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/cae/documents",
+    url: () => "/cae/documents",
+    body: { requirementId: "x", companyId: "x", nodeId: "x" },
+  },
+  {
+    method: "post",
+    path: "/cae/documents/:id/accept",
+    url: () => "/cae/documents/x/accept",
+    body: {},
+  },
+  {
+    method: "post",
+    path: "/cae/documents/:id/reject",
+    url: () => "/cae/documents/x/reject",
+    body: { reason: "Ajeno" },
+  },
+  { method: "get", path: "/cae/requirements", url: () => "/cae/requirements", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/cae/requirements",
+    url: () => "/cae/requirements",
+    body: { name: "Ajeno", scope: "COMPANY" },
+  },
+  {
+    method: "put",
+    path: "/cae/requirements/order",
+    url: () => "/cae/requirements/order",
+    body: { scope: "COMPANY", ids: ["x"] },
+  },
+  {
+    method: "patch",
+    path: "/cae/requirements/:id",
+    url: () => "/cae/requirements/x",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/cae/requirements/:id/archive",
+    url: () => "/cae/requirements/x/archive",
+  },
+  { method: "get", path: "/safety/emergencies", url: () => "/safety/emergencies", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/safety/emergencies/roles",
+    url: () => "/safety/emergencies/roles",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "patch",
+    path: "/safety/emergencies/roles/:id",
+    url: () => "/safety/emergencies/roles/x",
+    body: { name: "Ajeno" },
+  },
+  {
+    method: "post",
+    path: "/safety/emergencies/roles/:id/members",
+    url: () => "/safety/emergencies/roles/x/members",
+    body: { membershipId: "x" },
+  },
+  {
+    method: "delete",
+    path: "/safety/emergencies/members/:id",
+    url: () => "/safety/emergencies/members/x",
+  },
+  {
+    method: "get",
+    path: "/safety/people/:id/emergency",
+    url: () => "/safety/people/x/emergency",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/safety/drills", url: () => "/safety/drills", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/safety/drills",
+    url: () => "/safety/drills",
+    body: { date: "2026-01-01", scenario: "FIRE" },
+  },
+  { method: "get", path: "/safety/drills/:id", url: () => "/safety/drills/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/safety/drills/:id",
+    url: () => "/safety/drills/x",
+    body: { area: "Ajena" },
+  },
+  {
+    method: "get",
+    path: "/safety/committee/access",
+    url: () => "/safety/committee/access",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/safety/committee", url: () => "/safety/committee", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/safety/committee/members",
+    url: () => "/safety/committee/members",
+    body: { membershipId: "x", role: "DELEGATE" },
+  },
+  {
+    method: "patch",
+    path: "/safety/committee/members/:id",
+    url: () => "/safety/committee/members/x",
+    body: { ended: true },
+  },
+  {
+    method: "get",
+    path: "/safety/committee/minutes-options",
+    url: () => "/safety/committee/minutes-options",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/safety/meetings", url: () => "/safety/meetings", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/safety/meetings",
+    url: () => "/safety/meetings",
+    body: { date: "2026-01-01", kind: "ORDINARY" },
+  },
+  { method: "get", path: "/safety/meetings/:id", url: () => "/safety/meetings/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/safety/meetings/:id",
+    url: () => "/safety/meetings/x",
+    body: { agenda: "Ajena" },
+  },
+  {
+    method: "get",
+    path: "/safety/meetings/:id/agreements",
+    url: () => "/safety/meetings/x/agreements",
+    ownStatus: 404,
+  },
+  { method: "post", path: "/safety/meetings/:id/minutes", url: () => "/safety/meetings/x/minutes" },
+  {
+    method: "get",
+    path: "/safety/indicators",
+    url: () => "/safety/indicators?year=2026",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/safety/indicators/csv",
+    url: () => "/safety/indicators/csv?year=2026",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/safety/indicators/stats",
+    url: () => "/safety/indicators/stats?year=2026",
+    ownStatus: 404,
+  },
+  {
+    method: "put",
+    path: "/safety/indicators/stats",
+    url: () => "/safety/indicators/stats",
+    body: { month: "2026-01-01", departmentId: null, hoursWorked: 1, avgHeadcount: 1 },
+  },
+  {
+    method: "put",
+    path: "/safety/incidents/:id/lost-days",
+    url: () => "/safety/incidents/x/lost-days",
+    body: { lostDays: 1 },
+  },
+  { method: "get", path: "/safety/planning", url: () => "/safety/planning", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/safety/planning",
+    url: () => "/safety/planning",
+    body: { origin: "OTHER", description: "Ajena", responsibleId: "x", dueOn: "2099-01-01" },
+  },
+  {
+    method: "get",
+    path: "/safety/planning/csv",
+    url: () => "/safety/planning/csv",
+    ownStatus: 404,
+  },
+  {
+    method: "patch",
+    path: "/profile/home-area",
+    url: () => "/profile/home-area",
+    body: { homeArea: "WIKI" },
+  },
 ];
 
 let ctx: TestContext;
 let app: ReturnType<typeof createApp>;
 let ownApp: ReturnType<typeof createApp>;
+let sweepApps: ReturnType<typeof createApp>[] = [];
+const SWEEP_PER_APP = 250;
 let a: Awaited<ReturnType<typeof createWorkspace>>;
 let b: Awaited<ReturnType<typeof createWorkspace>>;
 let bDepartmentId = "";
@@ -1137,6 +1470,11 @@ let bFileId = "";
 beforeAll(async () => {
   ctx = await createTestContext();
   app = createApp(ctx.deps);
+  // The 404 sweep goes over every route: one instance (its own in-memory limit of 300 per minute and
+  // IP) for each 250 cases, so the limit never answers instead of the tenant check.
+  sweepApps = Array.from({ length: Math.ceil(cases.length / SWEEP_PER_APP) }, () =>
+    createApp(ctx.deps),
+  );
   // Second instance, with its own in-memory rate limit (300 per minute and IP): the 404 sweep over
   // every route already uses most of the first one.
   ownApp = createApp(ctx.deps);
@@ -1268,7 +1606,7 @@ describe("aislamiento entre tenants", () => {
       recordId: bRecordId,
       fileId: bFileId,
     })}`;
-    const res = await request(app)
+    const res = await request(sweepApps[Math.floor(cases.indexOf(c) / SWEEP_PER_APP)] ?? app)
       [c.method](url)
       .set("Authorization", `Bearer ${a.token}`)
       .send(c.body as object | undefined);

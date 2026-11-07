@@ -25,6 +25,9 @@ services:
 
   mailpit:
     image: axllent/mailpit:v1.31.5
+    # Without the reverse DNS lookup of each SMTP client: a slow resolver (e.g. inside OrbStack)
+    # delays every greeting by ~10 s and the email tests time out.
+    command: --smtp-disable-rdns
     ports:
       - "127.0.0.1:1025:1025" # SMTP
       - "127.0.0.1:8025:8025" # web UI
