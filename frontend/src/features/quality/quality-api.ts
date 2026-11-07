@@ -92,6 +92,7 @@ export interface NcDetail extends NcSummary {
   verifications: { id: string; effective: boolean; note: string; by: Person; at: string }[];
   holds: Hold[];
   audit: { id: string; title: string; clause: string } | null;
+  supplier: { id: string; name: string } | null;
   access: "manage" | "edit" | "read";
 }
 
@@ -138,6 +139,7 @@ export interface CreateInput extends ReportInput {
   severity: Severity;
   ownerId: string;
   departmentId: string | null;
+  supplierId?: string | null;
 }
 
 export interface UpdateInput {
@@ -479,5 +481,152 @@ export const auditsApi = {
     api<{ audit: AuditDetail }>(w(slug, `/quality/findings/${findingId}/nc`), {
       method: "POST",
       body: { ownerId: null },
+    }),
+};
+
+// ─── Phase 4: suppliers ──────────────────────────────────────────────────────────────────
+
+export const SUPPLIER_CATEGORIES = [
+  "RAW_MATERIAL",
+  "INGREDIENT",
+  "PACKAGING",
+  "SERVICE",
+  "OTHER",
+] as const;
+export const RISKS = ["LOW", "MEDIUM", "HIGH"] as const;
+export const SUPPLIER_STATUSES = ["PENDING", "APPROVED", "CONDITIONAL", "BLOCKED"] as const;
+export const SUPPLIER_DOC_KINDS = [
+  "CERT_IFS",
+  "CERT_BRCGS",
+  "CERT_OTHER",
+  "SPEC_SHEET",
+  "QUESTIONNAIRE",
+  "ANALYSIS",
+  "OTHER",
+] as const;
+export type SupplierCategory = (typeof SUPPLIER_CATEGORIES)[number];
+export type Risk = (typeof RISKS)[number];
+export type SupplierStatus = (typeof SUPPLIER_STATUSES)[number];
+export type SupplierDocKind = (typeof SUPPLIER_DOC_KINDS)[number];
+export type DocState = "valid" | "due_soon" | "expired" | "no_expiry";
+
+export interface Supplier {
+  id: string;
+  name: string;
+  taxId: string | null;
+  category: SupplierCategory;
+  supplies: string;
+  risk: Risk;
+  fraudRisk: Risk;
+  fraudNote: string | null;
+  contact: string | null;
+  owner: Person | null;
+  status: SupplierStatus;
+  nextReviewOn: string | null;
+  reviewDue: boolean;
+  archived: boolean;
+  certificates: DocState | null;
+  access: "manage" | "owner" | "read";
+}
+
+export interface SupplierDetail extends Supplier {
+  docs: {
+    id: string;
+    kind: SupplierDocKind;
+    name: string;
+    file: { id: string; name: string; spaceId: string; parentId: string | null } | null;
+    validUntil: string | null;
+    state: DocState;
+    archived: boolean;
+  }[];
+  reviews: {
+    id: string;
+    reviewedOn: string;
+    scores: Record<string, number>;
+    result: SupplierStatus;
+    note: string;
+    by: Person;
+  }[];
+  ncs: { id: string; code: string; title: string; status: NcStatus; severity: Severity }[];
+  folder: { id: string; spaceId: string } | null;
+}
+
+export interface SupplierInput {
+  name: string;
+  taxId: string | null;
+  category: SupplierCategory;
+  supplies: string;
+  risk: Risk;
+  fraudRisk: Risk;
+  fraudNote: string | null;
+  contact: string | null;
+  ownerId: string | null;
+}
+
+export interface SupplierFilters {
+  q?: string | undefined;
+  status?: SupplierStatus | "archived" | undefined;
+  category?: SupplierCategory | undefined;
+  risk?: Risk | undefined;
+}
+
+export const supplierKeys = {
+  list: (slug: string, filters: SupplierFilters) =>
+    ["w", slug, "quality", "suppliers", filters] as const,
+  one: (slug: string, id: string) => ["w", slug, "quality", "supplier", id] as const,
+  files: (slug: string, id: string) => ["w", slug, "quality", "supplier", id, "files"] as const,
+};
+
+export const suppliersApi = {
+  list: (slug: string, filters: SupplierFilters, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<Supplier>>(w(slug, `/quality/suppliers?${listQuery({ ...filters, cursor })}`), {
+      signal,
+    }),
+  get: (slug: string, id: string) =>
+    api<{ supplier: SupplierDetail }>(w(slug, `/quality/suppliers/${id}`)),
+  create: (slug: string, body: SupplierInput) =>
+    api<{ supplier: SupplierDetail }>(w(slug, "/quality/suppliers"), { method: "POST", body }),
+  update: (slug: string, id: string, body: Partial<SupplierInput>) =>
+    api<{ supplier: SupplierDetail }>(w(slug, `/quality/suppliers/${id}`), {
+      method: "PATCH",
+      body,
+    }),
+  archive: (slug: string, id: string, archived: boolean) =>
+    api<{ supplier: SupplierDetail }>(w(slug, `/quality/suppliers/${id}/archive`), {
+      method: "POST",
+      body: { archived },
+    }),
+  folder: (slug: string, id: string) =>
+    api<{ folder: { id: string; spaceId: string } }>(w(slug, `/quality/suppliers/${id}/folder`), {
+      method: "POST",
+    }),
+  files: (slug: string, id: string) =>
+    api<{ items: { id: string; name: string }[] }>(w(slug, `/quality/suppliers/${id}/files`)),
+  addDoc: (
+    slug: string,
+    id: string,
+    body: { kind: SupplierDocKind; name: string; nodeId: string | null; validUntil: string | null },
+  ) =>
+    api<{ supplier: SupplierDetail }>(w(slug, `/quality/suppliers/${id}/docs`), {
+      method: "POST",
+      body,
+    }),
+  archiveDoc: (slug: string, docId: string) =>
+    api<{ supplier: SupplierDetail }>(w(slug, `/quality/supplier-docs/${docId}/archive`), {
+      method: "POST",
+    }),
+  review: (
+    slug: string,
+    id: string,
+    body: {
+      reviewedOn: string;
+      scores: { quality: number; service: number; documents: number; incidents: number };
+      result: Exclude<SupplierStatus, "PENDING">;
+      note: string;
+    },
+  ) =>
+    api<{ supplier: SupplierDetail }>(w(slug, `/quality/suppliers/${id}/reviews`), {
+      method: "POST",
+      body,
     }),
 };

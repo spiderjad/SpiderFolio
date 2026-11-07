@@ -37,17 +37,29 @@ const t = texts.quality.list;
 const DAY = /^\d{4}-\d{2}-\d{2}$/u;
 const STATUS_FILTERS = ["open", "all", ...NC_STATUSES] as const;
 
-function CreateDialog({ onClose }: { onClose: () => void }) {
+export function CreateDialog({
+  onClose,
+  supplier,
+}: {
+  onClose: () => void;
+  /** A nonconformity of this supplier (origin «Proveedor»). */
+  supplier?: { id: string; name: string };
+}) {
   const { workspaceSlug = "" } = useParams();
   const navigate = useNavigate();
   const membership = useMembership();
   const { account } = useAuth();
-  const { state, set } = useNcForm(undefined, {
-    id: membership.id,
-    name: account?.user.name ?? "",
-  });
+  const { state, set } = useNcForm(
+    undefined,
+    { id: membership.id, name: account?.user.name ?? "" },
+    supplier === undefined ? "INTERNAL" : "SUPPLIER",
+  );
   const save = useMutation({
-    mutationFn: () => qualityApi.create(workspaceSlug, createBody(state)),
+    mutationFn: () =>
+      qualityApi.create(workspaceSlug, {
+        ...createBody(state),
+        supplierId: supplier !== undefined && state.origin === "SUPPLIER" ? supplier.id : null,
+      }),
     onSuccess: async ({ nc }) => {
       toast.success(texts.quality.form.created);
       onClose();
@@ -61,6 +73,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
     <DialogContent
       size="lg"
       title={texts.quality.form.createTitle}
+      {...(supplier === undefined ? {} : { description: supplier.name })}
       footer={
         <>
           <DialogClose asChild>

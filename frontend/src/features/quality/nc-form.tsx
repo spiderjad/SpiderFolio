@@ -30,7 +30,11 @@ export interface NcFormState {
   department: { id: string; name: string } | null;
 }
 
-export function useNcForm(nc?: NcDetail, ownerDefault?: { id: string; name: string }) {
+export function useNcForm(
+  nc?: NcDetail,
+  ownerDefault?: { id: string; name: string },
+  originDefault: NcOrigin = "INTERNAL",
+) {
   const [state, setState] = useState<NcFormState>(() => ({
     title: nc?.title ?? "",
     description: nc?.description ?? "",
@@ -39,7 +43,7 @@ export function useNcForm(nc?: NcDetail, ownerDefault?: { id: string; name: stri
     productAffected: nc?.productAffected ?? false,
     productNote: nc?.productNote ?? "",
     correction: nc?.correction ?? "",
-    origin: nc?.origin ?? "INTERNAL",
+    origin: nc?.origin ?? originDefault,
     severity: nc?.severity ?? "MAJOR",
     owner: nc?.owner ?? ownerDefault ?? null,
     department: nc?.department ?? null,

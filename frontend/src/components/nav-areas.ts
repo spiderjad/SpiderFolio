@@ -145,6 +145,7 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     items.push({ to: `${base}/appcc`, label: q.haccp, icon: ShieldAlert });
     items.push({ to: `${base}/retenido`, label: q.holds, icon: PackageX });
     items.push({ to: `${base}/auditorias`, label: q.audits, icon: CalendarSearch });
+    items.push({ to: `${base}/proveedores`, label: q.suppliers, icon: Truck });
   }
   items.push({
     to: `${base}/mis-acciones`,

@@ -186,6 +186,14 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/audit-page"), "AuditPage"),
                   },
                   {
+                    path: "proveedores",
+                    lazy: page(() => import("@/features/quality/suppliers-page"), "SuppliersPage"),
+                  },
+                  {
+                    path: "proveedores/:supplierId",
+                    lazy: page(() => import("@/features/quality/supplier-page"), "SupplierPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),
