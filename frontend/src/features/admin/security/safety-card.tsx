@@ -26,6 +26,7 @@ export function SafetyCard() {
     TERMS.map((id) => ({ id, label: t.termsOptions[id] })),
   );
   const [examples, setExamples] = useState(true);
+  const [caeExamples, setCaeExamples] = useState(true);
   const settings = useQuery({
     queryKey: adminKeys.safety(workspaceSlug),
     queryFn: () => adminApi.safety(workspaceSlug),
@@ -151,7 +152,7 @@ export function SafetyCard() {
                 checked={data.enabled && data.cae.enabled}
                 disabled={update.isPending || !data.enabled}
                 onCheckedChange={(cae) => {
-                  update.mutate({ cae });
+                  update.mutate(cae ? { cae, examples: caeExamples } : { cae });
                 }}
               />
               <div className="min-w-0 break-words">
@@ -181,6 +182,22 @@ export function SafetyCard() {
                   </Link>
                 </p>
               )}
+            {data.enabled && !data.cae.enabled && (
+              <div className="mt-3">
+                <Checkbox
+                  label={t.examples}
+                  aria-describedby="cae-examples-hint"
+                  checked={caeExamples}
+                  disabled={update.isPending}
+                  onChange={(event) => {
+                    setCaeExamples(event.target.checked);
+                  }}
+                />
+                <p id="cae-examples-hint" className="ml-6 mt-1 text-xs text-muted-foreground">
+                  {t.cae.examplesHint}
+                </p>
+              </div>
+            )}
             {data.enabled && data.cae.enabled && (
               <div className="mt-3">
                 <Checkbox

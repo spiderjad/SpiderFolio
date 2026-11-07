@@ -37,6 +37,7 @@ import {
   type Who,
 } from "./demo-app.ts";
 import { BIAN_TEXT, BIAN_USAGE, bianRecording, fakeBian, fakeBianUsage } from "./bian-recording.ts";
+import { demoCae, demoCaeNames } from "./demo-cae.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
 const BASE = `http://localhost:${String(PORT)}`;
@@ -74,6 +75,8 @@ interface Capture {
   license?: boolean;
   /** Where the screen lives, if it's outside the app (the consent screen). */
   prefix?: string;
+  /** Another window size (a phone at the gatehouse); 1440 × 900 otherwise. */
+  viewport?: { width: number; height: number };
   /** Data the screen needs, set right before it (only in this database). */
   before?: (input: {
     workspaceId: string;
@@ -361,6 +364,64 @@ async function demoSafety(locale: Locale, slug: string): Promise<void> {
   demoSafetyPeople.set(locale, { ...people, course: course.id });
 }
 
+/** The CAE demo (web/scripts/demo-cae.ts) through the API, once per company; then its ids. */
+const demoCaeIds = new Map<
+  Locale,
+  { cleaning: string; cold: string; worker: string; deniedWorker: string; permit: string }
+>();
+
+async function demoCaeOf(locale: Locale, slug: string): Promise<void> {
+  if (demoCaeIds.has(locale)) return;
+  await demoSafety(locale, slug);
+  await demoCae({
+    base: BASE,
+    token: await ownerToken(locale),
+    slug,
+    locale,
+    responsibleEmail: PEOPLE[locale].admin,
+    staffEmail: PEOPLE[locale].reader,
+  });
+  const names = demoCaeNames(locale);
+  const one = async (sql: string, values: string[]) => {
+    const { rows } = await db.query<{ id: string }>(sql, [slug, ...values]);
+    const id = rows[0]?.id;
+    if (id === undefined) throw new Error(`CAE demo: nothing for ${values.join(", ")}`);
+    return id;
+  };
+  const company = (key: string) =>
+    one(
+      `SELECT c.id FROM "CaeCompany" c JOIN "Workspace" w ON w.id = c."workspaceId"
+        WHERE w.slug = $1 AND c.name = $2`,
+      [names.find((item) => item.key === key)?.name ?? ""],
+    );
+  const worker = (key: string) =>
+    one(
+      `SELECT k.id FROM "CaeWorker" k JOIN "Workspace" w ON w.id = k."workspaceId"
+        WHERE w.slug = $1 AND k.name = $2`,
+      [names.find((item) => item.key === key)?.workers[0]?.name ?? ""],
+    );
+  demoCaeIds.set(locale, {
+    cleaning: await company("cleaning"),
+    cold: await company("cold"),
+    worker: await worker("cleaning"),
+    deniedWorker: await worker("cold"),
+    permit: await one(
+      `SELECT p.id FROM "CaeWorkPermit" p JOIN "Workspace" w ON w.id = p."workspaceId"
+        WHERE w.slug = $1 AND p.type = $2 ORDER BY p."createdAt" LIMIT 1`,
+      ["HOT_WORK"],
+    ),
+  });
+}
+
+const caeIdsOf = (locale: Locale) => {
+  const ids = demoCaeIds.get(locale);
+  if (ids === undefined) throw new Error("demoCaeOf todavía no corrió");
+  return ids;
+};
+
+/** The worker card's button, in each language. */
+const CAE_CARD: Record<Locale, string> = { es: "Tarjeta con QR", en: "QR card" };
+
 const safetyPeopleOf = (locale: Locale) => {
   const people = demoSafetyPeople.get(locale);
   if (people === undefined) throw new Error("demoSafety todavía no corrió");
@@ -647,44 +708,125 @@ const CAPTURES: Capture[] = [
     name: "epis",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/epis`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "epis-catalogo",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/epis/catalogo`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "epis-nueva",
     who: "owner",
     path: (i, locale) =>
       `/app/${i.slug}/seguridad/epis/nueva?persona=${safetyPeopleOf(locale).next}`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "resumen",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/resumen`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "accidentes",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/incidentes`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "formacion",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/formacion/${safetyPeopleOf(locale).course}`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "epis-ficha",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/personas/${safetyPeopleOf(locale).sheet}`,
-    before: ({ slug, locale }) => demoSafety(locale, slug),
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  // CAE, coordination of business activities (docs/spec/cae.md), with web/scripts/demo-cae.ts.
+  {
+    name: "cae-empresas",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/cae`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-empresa",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/cae/empresas/${caeIdsOf(locale).cleaning}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-empresa-incompleta",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/cae/empresas/${caeIdsOf(locale).cold}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-trabajador",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/cae/trabajadores/${caeIdsOf(locale).worker}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-tarjeta",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/cae/trabajadores/${caeIdsOf(locale).worker}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    then: async (page, locale) => {
+      await page.getByRole("button", { name: CAE_CARD[locale] }).click();
+      await page.getByRole("dialog").locator("img").waitFor();
+    },
+  },
+  {
+    name: "cae-revisar",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/cae/revisar`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-porteria-ok",
+    who: "owner",
+    viewport: { width: 375, height: 812 },
+    path: (i, locale) =>
+      `/app/${i.slug}/seguridad/cae/porteria?trabajador=${caeIdsOf(locale).worker}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-porteria-no",
+    who: "owner",
+    viewport: { width: 375, height: 812 },
+    path: (i, locale) =>
+      `/app/${i.slug}/seguridad/cae/porteria?trabajador=${caeIdsOf(locale).deniedWorker}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-accesos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/cae/accesos`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-permisos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/cae/permisos`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-permiso",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/cae/permisos/${caeIdsOf(locale).permit}`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
+  {
+    name: "cae-catalogo",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/cae/catalogo`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
   },
   {
     name: "puestos",
@@ -693,7 +835,13 @@ const CAPTURES: Capture[] = [
     before: ({ slug, locale }) => demoPositions(locale, slug),
   },
   { name: "roles", who: "owner", path: (i) => `/app/${i.slug}/admin/roles` },
-  { name: "seguridad", who: "owner", path: (i) => `/app/${i.slug}/admin/security` },
+  {
+    // With the module and CAE on (its switch, the examples and the gatehouse log).
+    name: "seguridad",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/admin/security`,
+    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+  },
   {
     name: "seguridad-email",
     who: "owner",
@@ -1009,7 +1157,11 @@ async function shoot(page: Page, file: string): Promise<void> {
   const png = await page.screenshot({ type: "png" });
   await assertNotBlank(png);
   // 1600 px de ancho alcanzan para la web; WebP pesa ~5 veces menos que PNG.
-  await sharp(png).resize({ width: 1600 }).webp({ quality: 82 }).toFile(file);
+  // A phone-sized capture stays its own size (never enlarged).
+  await sharp(png)
+    .resize({ width: 1600, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toFile(file);
 }
 
 const db = new pg.Client({ connectionString: databaseUrl });
@@ -1060,6 +1212,19 @@ const failed: string[] = [];
 // CAPTURAS_SOLO=compartir,qr: rehace solo esas (y CAPTURAS_IDIOMA=es, solo un idioma).
 const only = process.env.CAPTURAS_SOLO ? new Set(process.env.CAPTURAS_SOLO.split(",")) : null;
 const onlyLocale = process.env.CAPTURAS_IDIOMA;
+// The CAE demo makes a few hundred API calls: done before anyone signs in, then a minute's pause, so
+// the API's per-minute limit never logs the browser out mid-run.
+const caeNeeded = CAPTURES.some(
+  (capture) =>
+    (only === null || only.has(capture.name)) && capture.before?.toString().includes("demoCaeOf"),
+);
+if (caeNeeded) {
+  for (const locale of ["es", "en"] as const) {
+    if (onlyLocale !== undefined && onlyLocale !== locale) continue;
+    await demoCaeOf(locale, (await idsOf(db, locale)).slug);
+  }
+  await sleep(61_000);
+}
 const browser = await chromium.launch();
 try {
   for (const locale of ["es", "en"] as const) {
@@ -1112,6 +1277,7 @@ try {
             }
             // Only for this capture: the usage shown elsewhere (home, admin) stays the real one.
             if (capture.bian) await page.route(BIAN_USAGE, fakeBianUsage(bian));
+            await page.setViewportSize(capture.viewport ?? { width: 1440, height: 900 });
             await page.goto(`${BASE}${capture.path(ids, locale)}`);
             // Some screens poll (notifications): instead of "network idle", wait for the content.
             await waitUntilReady(page, capture.prefix);

@@ -1053,6 +1053,18 @@ export const caeTexts = {
       pageFooter: (page: string, total: string) => `Página ${page} de ${total}`,
     },
   },
+  foodCatalog: {
+    es: {
+      pestControl: "Certificado de la empresa de control de plagas (ROESB)",
+      foodHandling: "Formación en manipulación de alimentos",
+      hygieneRules: "Normas de higiene y buenas prácticas de fabricación del centro recibidas",
+    },
+    latam: {
+      pestControl: "Habilitación sanitaria de la empresa de control de plagas",
+      foodHandling: "Capacitación en manipulación de alimentos",
+      hygieneRules: "Normas de higiene y BPM del centro recibidas",
+    },
+  },
   messages: {
     companyNameTaken: "Ya hay una empresa con ese nombre.",
     requirementNameTaken: "Ya hay un documento exigido con ese nombre.",

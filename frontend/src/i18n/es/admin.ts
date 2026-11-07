@@ -181,6 +181,8 @@ export const adminTexts = {
         accessLog: "Registrar entradas y salidas en portería",
         accessLogHint:
           "Portería anota cada entrada y salida de los trabajadores de las contratas. A quien no está autorizado no se le puede registrar la entrada.",
+        examplesHint:
+          "Suma al catálogo la formación en manipulación de alimentos, las normas de higiene y BPF del centro y el certificado de control de plagas. Nunca pisa lo que ya tengas con el mismo nombre.",
         folder: "Carpeta:",
       },
     },

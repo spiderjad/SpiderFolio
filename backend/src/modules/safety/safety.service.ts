@@ -13,7 +13,7 @@ import { AppError } from "../../lib/errors.ts";
 import { caeTexts } from "../../i18n/index.ts";
 import { incidentTemplate } from "./incident-form.ts";
 import { ensureCaeRoot } from "./cae-folders.ts";
-import { seedDefaultCatalog } from "./cae-requirements.service.ts";
+import { seedDefaultCatalog, seedFoodCatalog } from "./cae-requirements.service.ts";
 import { readSafetySettings, type SafetySettings } from "../workspaces/settings.ts";
 
 /** The risk assessment document type (reviewed every 12 months). */
@@ -92,14 +92,15 @@ async function setUpCae(
   ctx: AdminContext,
   settings: SafetySettings,
   companySettings: unknown,
+  examples: boolean,
 ): Promise<string | undefined> {
   const firstTime = settings.cae.folderId === undefined;
   const folderId = await ensureCaeRoot(ctx, settings, companySettings);
-  if (firstTime) {
-    await withLocale(readWorkspaceLocale(companySettings), () =>
-      seedDefaultCatalog(ctx, settings.terms),
-    );
-  }
+  await withLocale(readWorkspaceLocale(companySettings), async () => {
+    if (firstTime) await seedDefaultCatalog(ctx, settings.terms);
+    // The food sector's required documents, when asked (never over existing names).
+    if (examples) await seedFoodCatalog(ctx, settings.terms);
+  });
   return folderId ?? settings.cae.folderId;
 }
 
@@ -234,11 +235,19 @@ export async function updateSafetySettings(
     throw new AppError("BAD_REQUEST", { message: caeTexts.messages.moduleOff });
   }
   if (after.enabled) {
-    const created = await setUp(ctx, after, workspace.settings, input.examples === true);
+    // «examples» with the CAE switch loads only CAE's; with the module (or alone), the module's.
+    const moduleExamples =
+      input.examples === true && (input.enabled === true || input.cae === undefined);
+    const created = await setUp(ctx, after, workspace.settings, moduleExamples);
     after.spaceId = created.spaceId;
     after.incidentFormId = created.incidentFormId;
     if (after.cae.enabled) {
-      const folderId = await setUpCae(ctx, after, workspace.settings);
+      const folderId = await setUpCae(
+        ctx,
+        after,
+        workspace.settings,
+        input.examples === true && input.cae === true,
+      );
       after.cae = { ...after.cae, ...(folderId === undefined ? {} : { folderId }) };
     }
   }

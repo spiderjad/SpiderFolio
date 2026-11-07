@@ -184,6 +184,8 @@ export const adminTexts: Catalog<typeof EsAdmin> = {
         accessLog: "Record entries and exits at the gate",
         accessLogHint:
           "The gatehouse records each entry and exit of the contractors' workers. Someone who isn't authorized can't be checked in.",
+        examplesHint:
+          "Adds food handler training, the site's hygiene and GMP rules and the pest control certificate to the catalog. Never over what you already have with the same name.",
         folder: "Folder:",
       },
     },

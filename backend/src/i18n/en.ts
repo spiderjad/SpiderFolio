@@ -1076,6 +1076,18 @@ export const caeTexts: Catalog<typeof Es.caeTexts> = {
       pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
     },
   },
+  foodCatalog: {
+    es: {
+      pestControl: "Pest control company's certificate (ROESB)",
+      foodHandling: "Food handler training",
+      hygieneRules: "Site hygiene and good manufacturing practice rules received",
+    },
+    latam: {
+      pestControl: "Pest control company's health authorization",
+      foodHandling: "Food handler training",
+      hygieneRules: "Site hygiene and GMP rules received",
+    },
+  },
   messages: {
     companyNameTaken: "There's already a company with that name.",
     requirementNameTaken: "There's already a required document with that name.",

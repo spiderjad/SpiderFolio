@@ -240,21 +240,38 @@ the site without a contract with your company), what it does at the site, the in
 details and, if it works for a while, the start and end dates. Each company gets its own folder inside
 **Contractors**, named after it; renaming the company renames the folder.
 
+<Shot
+  name="cae-empresas"
+  alt="The list of contractors with their status: authorized, incomplete or blocked"
+/>
+
 **The company's record** says in green whether it can work at the site or, in red, every reason it can't
 (“Missing: …”, “Company blocked: …”, “Stopped working on …”). Below are its details, the link to its folder,
 the documents the catalog asks of it by its type, and its workers. **Block** asks for a reason; **Archive**
 takes it off the lists without deleting anything (its workers and documents are kept). A subcontractor is
 only authorized if its contractor is too.
 
+<Shot
+  name="cae-empresa"
+  alt="An authorized contractor's record: details, documents, site information and workers"
+/>
+
 **Workers.** In the company's record, **Add worker** asks for the name, the ID document (optional) and the
 job or task. Contractors' workers aren't members of your company: they have no account and take no seat.
 Don't store health data: for medical fitness only the fact that the certificate was presented is recorded.
 Each worker's record says whether they can come in and why, and they can be edited, blocked or archived.
 
+<Shot name="cae-trabajador" alt="A contractor's worker's record with their documents" />
+
 **Required documents.** The catalog (the **Required documents** tab inside Contractors) has the company's
 documents and each worker's, in order (arrows to move them up or down). Each one says how long it's valid
 (to suggest the expiry date), which companies it's asked of and whether it's mandatory: a missing mandatory
 one keeps them from working at the site. They can be edited, added and archived.
+
+<Shot
+  name="cae-catalogo"
+  alt="The catalog of required documents and the information for contractors"
+/>
 
 **Upload and review documents.** In the company's (or worker's) record, each required document shows its
 status: **Up to date**, **Due soon** (expires within 30 days), **Expired**, **To review**, **Rejected** or
@@ -269,9 +286,16 @@ tick **Accept it now**; otherwise it's left **To review**.
 - **Reject** asks for a reason, shown next to the document.
 - The file's name opens it in another tab; seeing it needs access to the folder, like any file.
 
+<Shot
+  name="cae-empresa-incompleta"
+  alt="An incomplete contractor: an expired document, a rejected one, one to review and the missing ones"
+/>
+
 A mandatory document only counts if it's accepted and hasn't expired. The **To review** tab gathers the
 unreviewed documents of every company, oldest first, and their number shows on the **Contractors (CAE)**
 tab; the list of companies shows how many each one has.
+
+<Shot name="cae-revisar" alt="The To review inbox with every contractor's unreviewed documents" />
 
 **Gatehouse.** The **Gatehouse** tab (inside Contractors) is for whoever has **Check whether a contractor
 can come in** (whoever manages contractors sees it too), and works on the entrance's phone or tablet. Type
@@ -281,15 +305,26 @@ job and the last 3 characters of the ID: never the documents. Whoever only has t
 to the gatehouse when opening the module and doesn't see PPE, training or accidents. Checks with a negative
 answer go into the audit log; positive ones don't.
 
+<Shot name="cae-porteria-ok" alt="The gatehouse on a phone: Can come in, in green" />
+
+<Shot
+  name="cae-porteria-no"
+  alt="The gatehouse on a phone: Can't come in, in red with the reasons"
+/>
+
 **Worker's QR.** On each worker's record, **QR card** shows their card (name, company and QR) to print it.
 The QR opens the gatehouse with that person chosen; seeing it needs signing in to SpiderFolio with
 permission to check contractors, so the code is no use outside the company.
+
+<Shot name="cae-tarjeta" alt="The worker's card with their QR, ready to print" />
 
 **Entry and exit log** (optional). The owner turns it on in **Administration** › **Security** › **General**,
 below CAE, with **Record entries and exits at the gate**. With the log on, the gatehouse answer has **Record
 entry** and **Record exit**; someone who isn't authorized can't be checked in. The **Accesses** tab shows a
 day's entries and exits (today, unless you choose another) and can be filtered by company; each company's
 record shows its **Today's accesses**.
+
+<Shot name="cae-accesos" alt="The day's accesses recorded at the gate" />
 
 **Authorized today (PDF).** On the company's record, **Authorized today (PDF)** downloads a PDF with the
 company, the day, its status and each worker with whether they can come in and why not. The installation
@@ -317,6 +352,10 @@ to sign. Once approved, it's valid between its dates (**Scheduled**, **Active**,
 **closed** when the work ends, with notes, or **cancelled** with a reason. Each permit downloads as a PDF
 with the signature of whoever approved it, and the gatehouse shows each worker's active permits. Whoever
 manages contractors issues them; whoever checks contractors sees them.
+
+<Shot name="cae-permisos" alt="The list of work permits with its filters" />
+
+<Shot name="cae-permiso" alt="An active hot work permit, with its people and precautions" />
 
 ## Food industry examples
 

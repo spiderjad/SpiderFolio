@@ -41,6 +41,29 @@ const latam = [
   { key: "siteInduction", scope: "WORKER", validityMonths: null, appliesTo: "ALL" },
 ] as const satisfies readonly DefaultRequirement<string>[];
 
+/**
+ * The food sector's examples (loaded with «Cargar ejemplos del sector alimentario»): food handling and
+ * the site's hygiene rules for the workers, and the pest control certificate (optional: only the pest
+ * control contractor has it). Names in `caeTexts.foodCatalog`.
+ */
+export const foodCatalog = [
+  {
+    key: "pestControl",
+    scope: "COMPANY",
+    validityMonths: 12,
+    appliesTo: "CONTRACTOR",
+    required: false,
+  },
+  {
+    key: "foodHandling",
+    scope: "WORKER",
+    validityMonths: null,
+    appliesTo: "CONTRACTOR",
+    required: true,
+  },
+  { key: "hygieneRules", scope: "WORKER", validityMonths: null, appliesTo: "ALL", required: true },
+] as const satisfies readonly (DefaultRequirement<string> & { required: boolean })[];
+
 export const defaultCatalog = { es: spain, latam } as const satisfies Record<
   SafetySettings["terms"],
   readonly DefaultRequirement<string>[]

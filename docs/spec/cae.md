@@ -217,7 +217,18 @@ seguridad del centro). La empresa los edita, agrega o archiva.
 5. **Portal de contratas**: que la contrata suba sus propios documentos con un acceso propio. **Toca
    seguridad (acceso externo): se decide con el mantenedor antes de empezar** (opciones: enlace con código
    como las salas de auditoría, o cuentas de invitado).
-6. Ejemplos del sector alimentario, guías es/en, capturas y versión.
+6. Ejemplos del sector alimentario, guías es/en, capturas y versión (hecha, salvo la versión).
+   Con «Cargar ejemplos del sector alimentario» junto al interruptor de la CAE (`examples` con `cae: true`
+   en `PUT /admin/safety`; solo carga los de la CAE, no los del módulo) se suman al catálogo, sin pisar
+   nombres: formación en manipulación de alimentos (trabajador, contratas), normas de higiene y BPF del
+   centro recibidas (trabajador, todas) y el certificado de la empresa de control de plagas (ROESB en
+   España; empresa, contratas, **opcional**, porque solo lo tiene la de plagas). Nunca crea empresas
+   externas en una instalación real. Datos de demo: `web/scripts/demo-cae.ts` (por la API, con PDF
+   pequeños subidos con el flujo normal): cuatro contratas y una subcontrata con documentos en todos los
+   estados, información entregada, dos permisos y accesos de hoy; lo usan `capturas.ts` (su base
+   `*_capturas`) y un script local para la base de desarrollo. Capturas `cae-*` (la portería, a 375 px) en
+   la guía de Seguridad y salud laboral. La versión la publica quien mantiene el proyecto, con la suite
+   completa en verde.
 
 Cada fase: commit propio y guías es/en de las pantallas que cambian. Tests de permisos y de aislamiento
 entre empresas: todos juntos al cerrar el módulo (CLAUDE.md, «Pruebas»).

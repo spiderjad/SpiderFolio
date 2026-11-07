@@ -6,7 +6,7 @@ import { cleanName, nameKeyOf } from "../../lib/names.ts";
 import { offsetArgs, pageOf, type Page } from "../../lib/pagination.ts";
 import { caeTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
-import { defaultCatalog } from "./cae-catalog.ts";
+import { defaultCatalog, foodCatalog } from "./cae-catalog.ts";
 import type {
   CreateRequirementInput,
   ListRequirementsQuery,
@@ -95,8 +95,40 @@ export async function seedDefaultCatalog(
 ): Promise<void> {
   const items =
     terms === "es"
-      ? defaultCatalog.es.map((item) => ({ ...item, name: caeTexts.catalog.es[item.key] }))
-      : defaultCatalog.latam.map((item) => ({ ...item, name: caeTexts.catalog.latam[item.key] }));
+      ? defaultCatalog.es.map((item) => ({
+          ...item,
+          name: caeTexts.catalog.es[item.key],
+          required: true,
+        }))
+      : defaultCatalog.latam.map((item) => ({
+          ...item,
+          name: caeTexts.catalog.latam[item.key],
+          required: true,
+        }));
+  await seedCatalog(ctx, items);
+}
+
+/** The food sector's examples, never over what the company already has with the same name. */
+export async function seedFoodCatalog(
+  ctx: Pick<AdminContext, "db">,
+  terms: SafetySettings["terms"],
+): Promise<void> {
+  await seedCatalog(
+    ctx,
+    foodCatalog.map((item) => ({ ...item, name: caeTexts.foodCatalog[terms][item.key] })),
+  );
+}
+
+async function seedCatalog(
+  ctx: Pick<AdminContext, "db">,
+  items: readonly {
+    name: string;
+    scope: "COMPANY" | "WORKER";
+    validityMonths: number | null;
+    appliesTo: "ALL" | "CONTRACTOR" | "CONCURRENT";
+    required: boolean;
+  }[],
+): Promise<void> {
   const start = {
     COMPANY: await nextPosition(ctx, "COMPANY"),
     WORKER: await nextPosition(ctx, "WORKER"),
@@ -113,7 +145,7 @@ export async function seedDefaultCatalog(
         scope: item.scope,
         validityMonths: item.validityMonths,
         appliesTo: item.appliesTo,
-        required: true,
+        required: item.required,
         position,
       };
     }),
