@@ -16,9 +16,17 @@ test("CSP estricta en el HTML y sin violaciones en el recorrido", async ({ page 
   await page.getByRole("menuitem", { name: "Tema oscuro" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await page.setViewportSize({ width: 375, height: 800 });
-  await page.getByRole("button", { name: "Abrir menú" }).click();
+  // On the phone the area's menu opens from the title (a Sheet) and the areas are at the bottom.
+  await page.getByRole("button", { name: /^Abrir el menú de / }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const areas = page.getByRole("navigation", { name: "Áreas" }).last();
+  await expect(areas).toBeVisible();
+  await areas.getByRole("button", { name: "Más áreas" }).click();
+  await expect(page.getByRole("menuitem", { name: "Administración" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
 
   expect(await violations()).toEqual([]);
 });

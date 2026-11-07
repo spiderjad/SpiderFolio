@@ -28,7 +28,14 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Link, NavLink, useLocation, useMatch, useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { Account, Membership } from "@/auth/types";
@@ -83,6 +90,7 @@ import { isDarkTheme, setThemePreference } from "@/lib/theme";
 import { cn, formatToday, setAppTimeZone } from "@/lib/utils";
 import { texts } from "@/i18n";
 import { RestartBanner } from "./restart-banner";
+import { MENU_COLLAPSED_WIDTH, MENU_WIDTH, RAIL_WIDTH } from "./shell-sizes";
 
 /** Transiciones con los tokens de movimiento (se anulan con prefers-reduced-motion). */
 const ease =
@@ -898,7 +906,8 @@ function AreaRail({ nav }: { nav: AreaNav }) {
   return (
     <nav
       aria-label={texts.shell.areas.label}
-      className="flex h-full w-16 flex-col items-center gap-1 border-r border-border bg-surface pb-3 pt-4"
+      style={{ width: RAIL_WIDTH }}
+      className="flex h-full flex-col items-center gap-1 border-r border-border bg-surface pb-3 pt-4"
     >
       {nav.work.map((area) => (
         <RailItem
@@ -1031,6 +1040,7 @@ function SidebarContent({
   onSearch,
   onNewPage,
   className,
+  style,
 }: {
   account: Account;
   membership: Membership;
@@ -1040,6 +1050,7 @@ function SidebarContent({
   onSearch: () => void;
   onNewPage: () => void;
   className?: string;
+  style?: CSSProperties;
 }) {
   const slug = membership.workspace.slug;
   const area = nav.active;
@@ -1063,7 +1074,7 @@ function SidebarContent({
   const favoriteSpaces = favorites.data?.items ?? [];
   const recentItems = recents.data ?? [];
   return (
-    <div className={cn("flex h-full flex-col", className)}>
+    <div className={cn("flex h-full flex-col", className)} style={style}>
       <WorkspaceHeader
         account={account}
         membership={membership}
@@ -1340,10 +1351,10 @@ export function AppShell({
         </div>
       )}
       <div
+        style={{ width: collapsed ? MENU_COLLAPSED_WIDTH : MENU_WIDTH }}
         className={cn(
           "sticky top-0 z-40 hidden h-dvh shrink-0 transition-[width] will-change-[width] lg:block print:hidden",
           ease,
-          collapsed ? "w-[72px]" : "w-[260px]",
         )}
       >
         <aside className="h-full overflow-hidden border-r border-border bg-background">
@@ -1357,11 +1368,8 @@ export function AppShell({
             onNewPage={openNewPage}
             // El contenido sigue el ancho del panel: con un ancho fijo de 260 px, las filas centradas
             // del modo contraído quedarían fuera de los 72 px visibles (íconos invisibles).
-            className={cn(
-              "transition-[width] will-change-[width]",
-              ease,
-              collapsed ? "w-[72px]" : "w-[260px]",
-            )}
+            className={cn("transition-[width] will-change-[width]", ease)}
+            style={{ width: collapsed ? MENU_COLLAPSED_WIDTH : MENU_WIDTH }}
           />
         </aside>
         <EdgeHandle

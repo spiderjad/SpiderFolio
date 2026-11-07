@@ -16,8 +16,33 @@ export function isChunkLoadError(error: unknown): boolean {
   return error instanceof Error && CHUNK_ERROR.test(error.message);
 }
 
+/**
+ * The page is being left (another navigation started): the browser aborts the chunks still loading,
+ * and Safari reports that as a failed load. Reloading then would hijack the navigation the person (or
+ * the app) asked for, so nothing is reloaded while leaving.
+ */
+let leaving = false;
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    leaving = true;
+    // If the navigation was cancelled (a «leave the page?» prompt), the page is still in use.
+    window.setTimeout(() => {
+      leaving = false;
+    }, 3000);
+  });
+  window.addEventListener("pagehide", () => {
+    leaving = true;
+  });
+  // Back from the back/forward cache: the page is in use again.
+  window.addEventListener("pageshow", () => {
+    leaving = false;
+  });
+}
+
 /** Recarga la página una vez; devuelve false si ya se había recargado. */
 export function reloadOnce(): boolean {
+  // Leaving anyway: the next page loads its own chunks (true: show nothing meanwhile).
+  if (leaving) return true;
   const url = new URL(window.location.href);
   if (url.searchParams.has(RELOAD_PARAM)) return false;
   url.searchParams.set(RELOAD_PARAM, "1");
