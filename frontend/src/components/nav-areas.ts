@@ -8,6 +8,7 @@ import {
   PackageX,
   ShieldAlert,
   SprayCan,
+  FlaskConical,
   ClipboardX,
   Megaphone,
   MessageSquareWarning,
@@ -151,6 +152,8 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     items.push({ to: `${base}/reclamaciones`, label: q.complaints, icon: MessageSquareWarning });
     items.push({ to: `${base}/crisis`, label: q.crisis, icon: Siren });
     items.push({ to: `${base}/prerrequisitos`, label: q.prps, icon: SprayCan });
+    items.push({ to: `${base}/plan-analitico`, label: q.sampling, icon: FlaskConical });
+    items.push({ to: `${base}/productos`, label: q.products, icon: Package });
   }
   items.push({
     to: `${base}/mis-acciones`,
@@ -175,6 +178,12 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     });
     // The prerequisite controls in their charge (the list only shows those).
     items.push({ to: `${base}/prerrequisitos`, label: q.myPrps, icon: SprayCan, group: q.mine });
+    items.push({
+      to: `${base}/plan-analitico`,
+      label: q.mySamples,
+      icon: FlaskConical,
+      group: q.mine,
+    });
   }
   items.push(...spaceItems(slug, context.spaces.QUALITY, texts.shell.areas.areaSpaces));
   return items;

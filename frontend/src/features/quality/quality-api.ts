@@ -881,6 +881,8 @@ export interface QualityDashboard {
     coverage: { standard: "IFS8" | "BRCGS9"; covered: number; chapters: number }[];
   };
   prps: { overdue: number; dueSoon: number; nonConforming: number };
+  sampling: { overdue: number; nonConforming: number };
+  products: { labelsOutdated: number; labelsInReview: number; withoutStudy: number };
 }
 
 export const prpKeys = {
@@ -920,4 +922,321 @@ export const prpsApi = {
     },
   ) => api<{ prp: Prp }>(w(slug, `/quality/prps/${id}/checks`), { method: "POST", body }),
   dashboard: (slug: string) => api<QualityDashboard>(w(slug, "/quality/dashboard")),
+};
+
+// ─── Phase 6b: products, labels and the sampling plan ────────────────────────────────────
+
+export const ALLERGENS = [
+  "GLUTEN",
+  "CRUSTACEANS",
+  "EGGS",
+  "FISH",
+  "PEANUTS",
+  "SOY",
+  "MILK",
+  "NUTS",
+  "CELERY",
+  "MUSTARD",
+  "SESAME",
+  "SULPHITES",
+  "LUPIN",
+  "MOLLUSCS",
+] as const;
+export type Allergen = (typeof ALLERGENS)[number];
+
+export const NUTRITION_FIELDS = [
+  "energyKj",
+  "energyKcal",
+  "fat",
+  "saturates",
+  "carbs",
+  "sugars",
+  "protein",
+  "salt",
+] as const;
+export type NutritionField = (typeof NUTRITION_FIELDS)[number];
+
+export const LABEL_CHECKS = [
+  "name",
+  "ingredients",
+  "allergens",
+  "netQuantity",
+  "date",
+  "storage",
+  "operator",
+  "lot",
+  "origin",
+  "nutrition",
+] as const;
+export type LabelCheck = (typeof LABEL_CHECKS)[number];
+export const OPTIONAL_LABEL_CHECKS: readonly LabelCheck[] = ["origin", "nutrition"];
+export type LabelCheckValue = "ok" | "missing" | "na";
+
+export type LabelState = "approved" | "outdated" | "in_review" | "none";
+
+export interface Product {
+  id: string;
+  code: string | null;
+  name: string;
+  family: string | null;
+  allergens: Allergen[];
+  mayContain: Allergen[];
+  shelfLifeDays: number | null;
+  readyToEat: boolean;
+  labelState: LabelState;
+  needsStudy: boolean;
+  archived: boolean;
+}
+
+interface NodeRef {
+  id: string;
+  name: string;
+  spaceId: string;
+}
+
+export interface ShelfLifeStudy {
+  id: string;
+  startedOn: string;
+  targetDays: number;
+  listeria: boolean;
+  result: "PENDING" | "PASSED" | "FAILED";
+  resultOn: string | null;
+  conclusion: string | null;
+  report: NodeRef | null;
+  nc: { id: string; code: string } | null;
+}
+
+export interface ProductLabel {
+  id: string;
+  version: number;
+  status: "IN_REVIEW" | "APPROVED" | "REJECTED" | "SUPERSEDED";
+  specVersion: number;
+  file: NodeRef | null;
+  checks: Partial<Record<LabelCheck, LabelCheckValue>> | null;
+  note: string | null;
+  submittedBy: { id: string; name: string };
+  submittedAt: string;
+  reviewedBy: { id: string; name: string } | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+}
+
+export interface ProductDetail extends Product {
+  ingredients: string;
+  nutrition: Partial<Record<NutritionField, number>> | null;
+  storage: string | null;
+  spec: NodeRef | null;
+  folder: { id: string; spaceId: string } | null;
+  notes: string | null;
+  specVersion: number;
+  studies: ShelfLifeStudy[];
+  labels: ProductLabel[];
+  canManage: boolean;
+}
+
+export interface ProductBody {
+  code: string | null;
+  name: string;
+  family: string | null;
+  ingredients: string;
+  allergens: Allergen[];
+  mayContain: Allergen[];
+  nutrition: Record<NutritionField, number> | null;
+  shelfLifeDays: number | null;
+  storage: string | null;
+  readyToEat: boolean;
+  specNodeId?: string | null;
+  notes: string | null;
+}
+
+export interface ProductFilters {
+  q?: string | undefined;
+  archived?: "1" | undefined;
+}
+
+export const productKeys = {
+  list: (slug: string, filters: ProductFilters) =>
+    ["w", slug, "quality", "products", filters] as const,
+  one: (slug: string, id: string) => ["w", slug, "quality", "product", id] as const,
+  files: (slug: string, id: string) => ["w", slug, "quality", "product", id, "files"] as const,
+};
+
+export const productsApi = {
+  list: (slug: string, filters: ProductFilters, cursor: string | undefined, signal: AbortSignal) =>
+    api<CursorPage<Product>>(w(slug, `/quality/products?${listQuery({ ...filters, cursor })}`), {
+      signal,
+    }),
+  search: (slug: string, q: string, ids?: string[]) =>
+    api<CursorPage<Product>>(
+      w(slug, `/quality/products?${listQuery({ q, ids: ids?.join(","), pageSize: 25 })}`),
+    ),
+  get: (slug: string, id: string) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/products/${id}`)),
+  create: (slug: string, body: ProductBody) =>
+    api<{ product: ProductDetail }>(w(slug, "/quality/products"), { method: "POST", body }),
+  update: (slug: string, id: string, body: Partial<ProductBody>) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/products/${id}`), {
+      method: "PATCH",
+      body,
+    }),
+  archive: (slug: string, id: string, archived: boolean) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/products/${id}/archive`), {
+      method: "POST",
+      body: { archived },
+    }),
+  folder: (slug: string, id: string) =>
+    api<{ folder: { id: string; spaceId: string } }>(w(slug, `/quality/products/${id}/folder`), {
+      method: "POST",
+    }),
+  files: (slug: string, id: string) =>
+    api<{ items: { id: string; name: string; type: "FILE" | "PAGE" }[] }>(
+      w(slug, `/quality/products/${id}/files`),
+    ),
+  addStudy: (
+    slug: string,
+    id: string,
+    body: { startedOn: string; targetDays: number; listeria: boolean },
+  ) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/products/${id}/studies`), {
+      method: "POST",
+      body,
+    }),
+  studyResult: (
+    slug: string,
+    studyId: string,
+    body: {
+      result: "PASSED" | "FAILED";
+      resultOn: string;
+      conclusion: string | null;
+      reportNodeId: string | null;
+      openNc: boolean;
+      severity: Severity;
+    },
+  ) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/studies/${studyId}/result`), {
+      method: "POST",
+      body,
+    }),
+  submitLabel: (slug: string, id: string, body: { nodeId: string | null; note: string | null }) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/products/${id}/labels`), {
+      method: "POST",
+      body,
+    }),
+  reviewLabel: (
+    slug: string,
+    labelId: string,
+    body: {
+      decision: "APPROVE" | "REJECT";
+      checks: Record<LabelCheck, LabelCheckValue>;
+      reviewNote: string | null;
+    },
+  ) =>
+    api<{ product: ProductDetail }>(w(slug, `/quality/labels/${labelId}/review`), {
+      method: "POST",
+      body,
+    }),
+};
+
+export const SAMPLING_KINDS = ["PRODUCT", "SURFACE", "ENVIRONMENT", "WATER"] as const;
+export type SamplingKind = (typeof SAMPLING_KINDS)[number];
+
+export interface SamplingPoint {
+  id: string;
+  kind: SamplingKind;
+  name: string;
+  product: { id: string; name: string } | null;
+  zone: string | null;
+  parameter: string;
+  criterion: string | null;
+  maxValue: number | null;
+  unit: string | null;
+  everyDays: number;
+  laboratory: string | null;
+  responsible: { id: string; name: string } | null;
+  lastSampledOn: string | null;
+  nextDueOn: string;
+  state: PrpState;
+  last: { value: number | null; detected: boolean | null; conforming: boolean } | null;
+  repeated: boolean;
+  archived: boolean;
+  access: "manage" | "responsible" | "read";
+}
+
+export interface LabResult {
+  id: string;
+  sampledOn: string;
+  value: number | null;
+  detected: boolean | null;
+  conforming: boolean;
+  note: string | null;
+  report: NodeRef | null;
+  nc: { id: string; code: string } | null;
+  by: { id: string; name: string };
+}
+
+export interface SamplingBody {
+  kind: SamplingKind;
+  name: string;
+  productId: string | null;
+  zone: string | null;
+  parameter: string;
+  criterion: string | null;
+  maxValue: number | null;
+  unit: string | null;
+  everyDays: number;
+  laboratory: string | null;
+  responsibleId: string | null;
+  nextDueOn: string;
+}
+
+export const samplingKeys = {
+  list: (slug: string, filters: { archived?: boolean }) =>
+    ["w", slug, "quality", "sampling", filters] as const,
+  results: (slug: string, id: string) => ["w", slug, "quality", "sampling", id, "results"] as const,
+  files: (slug: string, id: string) => ["w", slug, "quality", "sampling", id, "files"] as const,
+};
+
+export const samplingApi = {
+  list: (slug: string, filters: { archived?: boolean }) =>
+    api<{ items: SamplingPoint[] }>(
+      w(
+        slug,
+        `/quality/sampling?${listQuery({ archived: filters.archived === true ? "1" : undefined })}`,
+      ),
+    ),
+  create: (slug: string, body: SamplingBody) =>
+    api<{ point: SamplingPoint }>(w(slug, "/quality/sampling"), { method: "POST", body }),
+  update: (slug: string, id: string, body: SamplingBody) =>
+    api<{ point: SamplingPoint }>(w(slug, `/quality/sampling/${id}`), { method: "PATCH", body }),
+  archive: (slug: string, id: string, archived: boolean) =>
+    api<{ point: SamplingPoint }>(
+      w(slug, `/quality/sampling/${id}/${archived ? "archive" : "restore"}`),
+      { method: "POST" },
+    ),
+  folder: (slug: string, id: string) =>
+    api<{ folder: { id: string; spaceId: string } }>(w(slug, `/quality/sampling/${id}/folder`), {
+      method: "POST",
+    }),
+  files: (slug: string, id: string) =>
+    api<{ items: { id: string; name: string }[] }>(w(slug, `/quality/sampling/${id}/files`)),
+  results: (slug: string, id: string) =>
+    api<{ results: LabResult[] }>(w(slug, `/quality/sampling/${id}/results`)),
+  addResult: (
+    slug: string,
+    id: string,
+    body: {
+      sampledOn: string;
+      value: number | null;
+      detected: boolean | null;
+      conforming: boolean;
+      reportNodeId: string | null;
+      note: string | null;
+      openNc: boolean;
+      severity: Severity;
+    },
+  ) =>
+    api<{ point: SamplingPoint }>(w(slug, `/quality/sampling/${id}/results`), {
+      method: "POST",
+      body,
+    }),
 };

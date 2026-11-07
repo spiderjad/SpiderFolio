@@ -152,6 +152,43 @@ export function QualitySummaryPage() {
               />
             </div>
           </Section>
+          <Section title={b.sampling}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Stat
+                label={b.samplingOverdue}
+                value={board.sampling.overdue}
+                to={`${base}/plan-analitico`}
+                alert
+              />
+              <Stat
+                label={b.samplingNonConforming}
+                value={board.sampling.nonConforming}
+                to={`${base}/plan-analitico`}
+                alert
+              />
+            </div>
+          </Section>
+          <Section title={b.products}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Stat
+                label={b.labelsOutdated}
+                value={board.products.labelsOutdated}
+                to={`${base}/productos`}
+                alert
+              />
+              <Stat
+                label={b.labelsInReview}
+                value={board.products.labelsInReview}
+                to={`${base}/productos`}
+              />
+              <Stat
+                label={b.withoutStudy}
+                value={board.products.withoutStudy}
+                to={`${base}/productos`}
+                alert
+              />
+            </div>
+          </Section>
           <Section title={b.haccp}>
             <div className="grid gap-3 sm:grid-cols-3">
               <Stat label={b.records} value={board.haccp.records} to={`${base}/appcc`} />

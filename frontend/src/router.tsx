@@ -213,6 +213,18 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/prps-page"), "PrpsPage"),
                   },
                   {
+                    path: "plan-analitico",
+                    lazy: page(() => import("@/features/quality/sampling-page"), "SamplingPage"),
+                  },
+                  {
+                    path: "productos",
+                    lazy: page(() => import("@/features/quality/products-page"), "ProductsPage"),
+                  },
+                  {
+                    path: "productos/:productId",
+                    lazy: page(() => import("@/features/quality/product-page"), "ProductPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),

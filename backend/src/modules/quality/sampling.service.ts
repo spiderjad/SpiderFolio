@@ -152,7 +152,8 @@ async function views(ctx: AdminContext, rows: Row[]): Promise<SamplingPointView[
         last === undefined
           ? null
           : { value: last.value, detected: last.detected, conforming: last.conforming },
-      repeated: last !== undefined && before !== undefined && !last.conforming && !before.conforming,
+      repeated:
+        last !== undefined && before !== undefined && !last.conforming && !before.conforming,
       archived: row.archivedAt !== null,
       access: accessOf(ctx, row),
     };
@@ -279,7 +280,11 @@ export async function updateSamplingPoint(
   );
   if (input.nextDueOn !== undefined) data.nextDueOn = dateOf(input.nextDueOn);
   await ctx.db.$transaction(async (tx) => {
-    const updated = await tx.qualitySamplingPoint.update({ where: { id }, data, select: dueSelect });
+    const updated = await tx.qualitySamplingPoint.update({
+      where: { id },
+      data,
+      select: dueSelect,
+    });
     await setDue(tx, updated);
   });
   await auditAdmin(ctx, {
@@ -524,4 +529,3 @@ export async function samplingFigures(
   ]);
   return { overdue, nonConforming };
 }
-

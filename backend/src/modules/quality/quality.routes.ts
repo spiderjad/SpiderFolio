@@ -901,11 +901,9 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
       method: "post",
       path: "/quality/products",
       handler: async (req, res) => {
-        res
-          .status(201)
-          .json({
-            product: await createProduct(adminContextOf(req), ProductSchema.parse(req.body)),
-          });
+        res.status(201).json({
+          product: await createProduct(adminContextOf(req), ProductSchema.parse(req.body)),
+        });
       },
     },
     {
@@ -980,11 +978,9 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
       path: "/quality/products/:id/labels",
       handler: async (req, res) => {
         const { id } = IdParams.parse(req.params);
-        res
-          .status(201)
-          .json({
-            product: await submitLabel(adminContextOf(req), id, LabelSchema.parse(req.body)),
-          });
+        res.status(201).json({
+          product: await submitLabel(adminContextOf(req), id, LabelSchema.parse(req.body)),
+        });
       },
     },
     {

@@ -277,7 +277,9 @@ export async function getProduct(ctx: AdminContext, id: string): Promise<Product
     names(
       ctx,
       labels.flatMap((label) =>
-        label.reviewedById === null ? [label.submittedById] : [label.submittedById, label.reviewedById],
+        label.reviewedById === null
+          ? [label.submittedById]
+          : [label.submittedById, label.reviewedById],
       ),
     ),
   ]);
@@ -342,12 +344,20 @@ async function assertInFolder(
     folderId === null
       ? 0
       : await ctx.db.node.count({
-          where: { id: nodeId, parentId: folderId, type: { in: ["FILE", "PAGE"] }, trashedAt: null },
+          where: {
+            id: nodeId,
+            parentId: folderId,
+            type: { in: ["FILE", "PAGE"] },
+            trashedAt: null,
+          },
         });
   if (found === 0) throw notFound();
 }
 
-export async function createProduct(ctx: AdminContext, input: ProductInput): Promise<ProductDetail> {
+export async function createProduct(
+  ctx: AdminContext,
+  input: ProductInput,
+): Promise<ProductDetail> {
   await requireManage(ctx);
   // A new product has no folder yet: its sheet is linked once the folder exists.
   if (input.specNodeId !== undefined && input.specNodeId !== null) throw notFound();
@@ -466,7 +476,11 @@ export async function productFiles(
     orderBy: [{ name: "asc" }, { id: "asc" }],
     take: 200,
   });
-  return rows.map((row) => ({ id: row.id, name: row.name, type: row.type === "PAGE" ? "PAGE" : "FILE" }));
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    type: row.type === "PAGE" ? "PAGE" : "FILE",
+  }));
 }
 
 export async function addStudy(
@@ -613,7 +627,8 @@ export async function reviewLabel(
       const value = input.checks[check];
       return value === "ok" || (value === "na" && optionalChecks.includes(check));
     });
-    if (!complete) throw new AppError("BAD_REQUEST", { message: qualityTexts.labels.checksMissing });
+    if (!complete)
+      throw new AppError("BAD_REQUEST", { message: qualityTexts.labels.checksMissing });
   } else if ((input.reviewNote ?? "").trim() === "") {
     throw new AppError("BAD_REQUEST", { message: qualityTexts.labels.reasonRequired });
   }
@@ -657,7 +672,12 @@ export async function reviewLabel(
 
 async function notifyLabel(ctx: AdminContext, membershipId: string, productId: string) {
   await ctx.db.notification.create({
-    data: { membershipId, kind: "quality_label", actorId: ctx.tenant.membershipId, detail: productId },
+    data: {
+      membershipId,
+      kind: "quality_label",
+      actorId: ctx.tenant.membershipId,
+      detail: productId,
+    },
     select: { id: true },
   });
 }
