@@ -139,6 +139,54 @@ export const routes = [
                 lazy: page(() => import("@/features/expiries/expiries-page"), "ExpiriesPage"),
               },
               {
+                // Food quality (docs/spec/calidad.md): only while it's on.
+                path: "calidad",
+                lazy: page(() => import("@/features/quality/quality-common"), "RequireQuality"),
+                children: [
+                  {
+                    index: true,
+                    lazy: page(() => import("@/features/quality/quality-common"), "QualityHome"),
+                  },
+                  {
+                    path: "resumen",
+                    lazy: page(
+                      () => import("@/features/quality/summary-page"),
+                      "QualitySummaryPage",
+                    ),
+                  },
+                  {
+                    path: "no-conformidades",
+                    lazy: page(() => import("@/features/quality/ncs-page"), "NcsPage"),
+                  },
+                  {
+                    path: "no-conformidades/:ncId",
+                    lazy: page(() => import("@/features/quality/nc-page"), "NcPage"),
+                  },
+                  {
+                    path: "acciones",
+                    lazy: page(
+                      () => import("@/features/quality/actions-page"),
+                      "QualityActionsPage",
+                    ),
+                  },
+                  {
+                    path: "mis-acciones",
+                    lazy: page(
+                      () => import("@/features/quality/actions-page"),
+                      "MyQualityActionsPage",
+                    ),
+                  },
+                  {
+                    path: "comunicadas",
+                    lazy: page(() => import("@/features/quality/ncs-page"), "ReportedNcsPage"),
+                  },
+                  {
+                    path: "comunicar",
+                    lazy: page(() => import("@/features/quality/report-page"), "ReportNcPage"),
+                  },
+                ],
+              },
+              {
                 // Occupational health and safety (docs/spec/seguridad-salud.md): only while it's on.
                 path: "seguridad",
                 lazy: page(() => import("@/features/safety/safety-common"), "RequireSafety"),

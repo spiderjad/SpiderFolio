@@ -57,6 +57,9 @@ export const NOTIFICATION_KINDS = [
   /** A contractor uploaded a document through its portal (to the internal responsible; `detail` =
    * the company's id). */
   "cae_portal_upload",
+  /** Food quality (docs/spec/calidad.md): a nonconformity reported, assigned, reopened or closed (to
+   * its owner, whoever has quality.manage or whoever reported it; `detail` = the NC's id). */
+  "quality_nc",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

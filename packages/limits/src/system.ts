@@ -44,3 +44,22 @@ export const caeLimits = {
   /** A document uploaded through the portal (the company's own limits apply too). */
   portalMaxFileMb: 20,
 } as const;
+
+/** Food quality (docs/spec/calidad.md): nonconformities and CAPA. */
+export const qualityLimits = {
+  /** Days from the last action done to the proposed effectiveness check. */
+  verifyDaysDefault: 30,
+  verifyDaysMin: 1,
+  verifyDaysMax: 365,
+  /** Lines of a «5 whys» analysis. */
+  whysMax: 7,
+  /** Characters of each free text. */
+  titleMax: 160,
+  descriptionMax: 4000,
+  analysisMax: 2000,
+  actionMax: 1000,
+  /** Actions in one nonconformity. */
+  actionsPerNc: 50,
+  /** Rows in a CSV export. */
+  csvMax: 10_000,
+} as const;

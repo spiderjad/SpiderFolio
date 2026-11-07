@@ -3,7 +3,7 @@
 // Prevention measures, PPE and training. Each block comes from what the app already had and hides when
 // there's nothing in it.
 import { useQuery } from "@tanstack/react-query";
-import { ListChecks } from "lucide-react";
+import { BadgeCheck, ListChecks } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/display";
@@ -11,6 +11,7 @@ import { ExpiriesHomeCard } from "@/features/expiries/home-card";
 import { PendingFormsCard } from "@/features/forms/pending-forms";
 import { incidentsApi, incidentsKeys } from "@/features/safety/safety-api";
 import { SafetyHomeAlert } from "@/features/safety/home-alert";
+import { qualityApi, qualityKeys } from "@/features/quality/quality-api";
 import { formatUtcDate } from "@/lib/utils";
 import { PendingCard } from "./dashboard-page";
 import { useHome } from "./home-api";
@@ -56,6 +57,46 @@ function MyActionsCard({ slug }: { slug: string }) {
   );
 }
 
+/** The quality actions assigned to the person, not done yet (docs/spec/calidad.md). */
+function MyQualityActionsCard({ slug }: { slug: string }) {
+  const membership = useMembership();
+  const enabled = membership.workspace.quality.enabled && membership.role.base !== "GUEST";
+  const filters = { status: "open" as const, mine: "1" as const };
+  const query = useQuery({
+    queryKey: qualityKeys.actions(slug, filters),
+    queryFn: ({ signal }) => qualityApi.actions(slug, filters, undefined, signal),
+    select: (data) => data.items,
+    enabled,
+  });
+  const items = query.data ?? [];
+  if (!enabled || items.length === 0) return null;
+  const t = texts.quality;
+  return (
+    <Card className="grid gap-3 p-4 sm:p-5">
+      <div className="flex items-center gap-2">
+        <BadgeCheck className="size-5 text-primary" aria-hidden="true" />
+        <h2 className="text-base font-semibold">{t.pending.title}</h2>
+      </div>
+      <ul className="-my-2 divide-y divide-border">
+        {items.slice(0, SHOWN).map((action) => (
+          <li key={action.id} className="flex min-h-14 items-center gap-3 py-2 text-sm">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{action.description}</p>
+              <p className="text-xs text-muted-foreground">
+                {action.nc.code} · {formatUtcDate(action.dueOn)}
+              </p>
+            </div>
+            {action.overdue && <Badge tone="danger">{t.detail.actions.overdue}</Badge>}
+          </li>
+        ))}
+      </ul>
+      <Button asChild size="sm" variant="outline" className="justify-self-start">
+        <Link to={`/app/${slug}/calidad/mis-acciones`}>{t.pending.all}</Link>
+      </Button>
+    </Card>
+  );
+}
+
 export function PendingPage() {
   const { workspaceSlug = "" } = useParams();
   const overview = useHome(workspaceSlug);
@@ -69,6 +110,7 @@ export function PendingPage() {
       <PendingFormsCard slug={workspaceSlug} />
       <ExpiriesHomeCard slug={workspaceSlug} />
       <MyActionsCard slug={workspaceSlug} />
+      <MyQualityActionsCard slug={workspaceSlug} />
       <SafetyHomeAlert slug={workspaceSlug} />
     </div>
   );

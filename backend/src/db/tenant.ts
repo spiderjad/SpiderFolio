@@ -204,6 +204,25 @@ export interface TenantDb {
     PrismaClient["safetyMeeting"],
     "findFirst" | "findMany" | "count" | "create" | "update"
   >;
+  // Food quality (docs/spec/calidad.md): a nonconformity is cancelled, never deleted; its history and
+  // effectiveness checks are only added.
+  qualityNc: TenantDelegate<
+    PrismaClient["qualityNc"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
+  >;
+  qualityNcCounter: TenantDelegate<PrismaClient["qualityNcCounter"], "upsert">;
+  qualityAction: TenantDelegate<
+    PrismaClient["qualityAction"],
+    "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update"
+  >;
+  qualityVerification: TenantDelegate<
+    PrismaClient["qualityVerification"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
+  qualityNcEvent: TenantDelegate<
+    PrismaClient["qualityNcEvent"],
+    "findFirst" | "findMany" | "count" | "create"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -379,6 +398,20 @@ const delegates = {
     model: "SafetyMeeting",
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
+  qualityNc: {
+    model: "QualityNc",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
+  },
+  qualityNcCounter: { model: "QualityNcCounter", ops: ["upsert"] },
+  qualityAction: {
+    model: "QualityAction",
+    ops: ["findFirst", "findMany", "count", "groupBy", "create", "update"],
+  },
+  qualityVerification: {
+    model: "QualityVerification",
+    ops: ["findFirst", "findMany", "count", "create"],
+  },
+  qualityNcEvent: { model: "QualityNcEvent", ops: ["findFirst", "findMany", "count", "create"] },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },

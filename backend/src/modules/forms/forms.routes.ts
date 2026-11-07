@@ -42,7 +42,7 @@ const VersionsQuerySchema = z.object(pageShape(["version"], "version"));
 const HOUR = 3_600_000;
 
 export function formRoutes(
-  deps: Pick<AppDeps, "storage" | "jobs" | "prisma" | "env">,
+  deps: Pick<AppDeps, "storage" | "jobs" | "prisma" | "env" | "logger">,
 ): TenantRoute[] {
   const fileDeps = { storage: deps.storage };
   const byUser = (req: Request) => req.auth?.userId ?? "";
@@ -152,7 +152,7 @@ export function formRoutes(
         const { id } = FormParamsSchema.parse(req.params);
         const record = await submitRecord(
           adminContextOf(req),
-          { jobs: deps.jobs },
+          { jobs: deps.jobs, logger: deps.logger },
           id,
           SubmitRecordSchema.parse(req.body),
         );

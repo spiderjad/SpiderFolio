@@ -121,6 +121,16 @@ export const capabilityTexts = {
     description:
       "Solo ve si una empresa externa o un trabajador está autorizado y por qué, sin sus documentos ni sus datos de contacto. Pensada para portería y jefes de equipo.",
   },
+  "quality.manage": {
+    label: "Gestionar calidad",
+    description:
+      "Gestiona las no conformidades de cualquier origen, su análisis, sus acciones, la verificación de eficacia y el cierre, y los ajustes del módulo de calidad.",
+  },
+  "quality.view": {
+    label: "Ver calidad",
+    description:
+      "Lee todas las no conformidades y sus acciones sin poder cambiarlas. Pensada para dirección o para preparar una auditoría.",
+  },
 } as const;
 
 export const capabilityGroupTexts = {
@@ -130,6 +140,7 @@ export const capabilityGroupTexts = {
   documents: "Documentos controlados",
   audit: "Auditoría",
   safety: "Seguridad y salud laboral",
+  quality: "Calidad",
   administration: "Administración",
   plugins: "Plugins",
 } as const;

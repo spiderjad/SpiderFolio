@@ -125,6 +125,16 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
     description:
       "Only sees whether an external company or worker is authorized and why, without their documents or contact details. Meant for the gatehouse and team leads.",
   },
+  "quality.manage": {
+    label: "Manage quality",
+    description:
+      "Handles nonconformities from any origin, their analysis, actions, effectiveness check and closing, and the quality module's settings.",
+  },
+  "quality.view": {
+    label: "View quality",
+    description:
+      "Reads every nonconformity and its actions without changing them. Meant for management or for preparing an audit.",
+  },
 };
 
 export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
@@ -134,6 +144,7 @@ export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
   documents: "Controlled documents",
   audit: "Audit log",
   safety: "Occupational health and safety",
+  quality: "Quality",
   administration: "Administration",
   plugins: "Plugins",
 };

@@ -3,6 +3,9 @@
 // exists. Routes don't change: the active area is deduced from the address.
 import {
   AlertTriangle,
+  BadgeCheck,
+  ClipboardX,
+  Megaphone,
   BarChart3,
   BookMarked,
   BookOpen,
@@ -124,6 +127,36 @@ function preventionItems(slug: string, person: Membership, context: AreaContext)
   return items;
 }
 
+/** The Quality area (docs/spec/calidad.md): only while the module is on, never for guests. */
+function qualityItems(slug: string, person: Membership, context: AreaContext): AreaItem[] {
+  if (!person.workspace.quality.enabled || person.role.base === "GUEST") return [];
+  const caps = person.capabilities;
+  const view = caps.includes("quality.manage") || caps.includes("quality.view");
+  const base = `/app/${slug}/calidad`;
+  const q = texts.quality.nav;
+  const items: AreaItem[] = [];
+  if (view) {
+    items.push({ to: `${base}/resumen`, label: q.summary, icon: LayoutDashboard });
+    items.push({ to: `${base}/no-conformidades`, label: q.ncs, icon: ClipboardX });
+    items.push({ to: `${base}/acciones`, label: q.actions, icon: ListChecks });
+  }
+  items.push({
+    to: `${base}/mis-acciones`,
+    label: q.myActions,
+    icon: ClipboardCheck,
+    group: q.mine,
+  });
+  items.push({
+    to: `${base}/comunicadas`,
+    label: q.reported,
+    icon: FileSearch,
+    group: q.mine,
+  });
+  items.push({ to: `${base}/comunicar`, label: q.report, icon: Megaphone, group: q.mine });
+  items.push(...spaceItems(slug, context.spaces.QUALITY, texts.shell.areas.areaSpaces));
+  return items;
+}
+
 /** The person's areas, in the rail's order (Administración last), each with its menu. */
 export function areasOf(
   slug: string,
@@ -207,7 +240,16 @@ export function areasOf(
       items: prevention,
     });
   }
-  // QUALITY: defined, never shown until the Quality module exists.
+  const quality = qualityItems(slug, person, context);
+  if (quality.length > 0) {
+    areas.push({
+      id: "QUALITY",
+      label: texts.quality.module,
+      short: texts.quality.short,
+      icon: BadgeCheck,
+      items: quality,
+    });
+  }
 
   const moved = movedOutOfAdmin(slug);
   const admin = adminNavItems(slug, person, plugins).filter(

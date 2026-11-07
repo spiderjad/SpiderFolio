@@ -727,7 +727,10 @@ function useAreaNav(membership: Membership) {
   const areaSpaces = useQuery({
     queryKey: [...filesKeys.spaces(slug), "areas"],
     queryFn: () =>
-      filesApi.spaces(slug, { area: ["DOCUMENTS", "PREVENTION"], pageSize: AREA_SPACES_SHOWN }),
+      filesApi.spaces(slug, {
+        area: ["DOCUMENTS", "PREVENTION", "QUALITY"],
+        pageSize: AREA_SPACES_SHOWN,
+      }),
     select: (page) => page.items,
     staleTime: 60_000,
   });
@@ -739,6 +742,11 @@ function useAreaNav(membership: Membership) {
     () => (safetyOn ? areaSpaces.data?.filter((space) => space.area === "PREVENTION") : []),
     [areaSpaces.data, safetyOn],
   );
+  const qualityOn = membership.workspace.quality.enabled && role !== "GUEST";
+  const qualitySpaces = useMemo(
+    () => (qualityOn ? areaSpaces.data?.filter((space) => space.area === "QUALITY") : []),
+    [areaSpaces.data, qualityOn],
+  );
   const areas = useMemo(
     () =>
       areasOf(slug, membership, plugins, {
@@ -746,9 +754,19 @@ function useAreaNav(membership: Membership) {
         spaces: {
           ...(documentSpaces === undefined ? {} : { DOCUMENTS: documentSpaces }),
           ...(preventionSpaces === undefined ? {} : { PREVENTION: preventionSpaces }),
+          ...(qualitySpaces === undefined ? {} : { QUALITY: qualitySpaces }),
         },
       }),
-    [slug, membership, plugins, managesSafety, committee.data, documentSpaces, preventionSpaces],
+    [
+      slug,
+      membership,
+      plugins,
+      managesSafety,
+      committee.data,
+      documentSpaces,
+      preventionSpaces,
+      qualitySpaces,
+    ],
   );
   const active = activeAreaOf(pathname, slug, areas);
 

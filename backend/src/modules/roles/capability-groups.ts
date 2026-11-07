@@ -40,6 +40,7 @@ export const capabilityGroups = [
   },
   { id: "audit", capabilities: ["audit.view", "audit.export"] },
   { id: "safety", capabilities: ["safety.manage", "safety.health", "cae.manage", "cae.check"] },
+  { id: "quality", capabilities: ["quality.manage", "quality.view"] },
   {
     id: "administration",
     capabilities: ["security.manage", "workspace.settings"],

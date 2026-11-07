@@ -26,6 +26,8 @@ export interface Membership {
       /** CAE's gate records entries and exits. */
       caeAccessLog: boolean;
     };
+    /** The food quality module (docs/spec/calidad.md): on or off. */
+    quality: { enabled: boolean };
   };
   role: { id: string; name: string; base: SystemRole };
   capabilities: string[];

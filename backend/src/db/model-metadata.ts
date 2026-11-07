@@ -92,6 +92,11 @@ export const modelMetadata = {
       safetyMeetings: "SafetyMeeting",
       caePortalSessions: "CaePortalSession",
       caePortalUploads: "CaePortalUpload",
+      qualityNcs: "QualityNc",
+      qualityActions: "QualityAction",
+      qualityVerifications: "QualityVerification",
+      qualityNcEvents: "QualityNcEvent",
+      qualityNcCounters: "QualityNcCounter",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -417,6 +422,19 @@ export const modelMetadata = {
     },
   },
   AuditLog: { scope: "tenant", relations: { workspace: "Workspace" } },
+  QualityNc: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      actions: "QualityAction",
+      verifications: "QualityVerification",
+      events: "QualityNcEvent",
+    },
+  },
+  QualityNcCounter: { scope: "tenant", relations: { workspace: "Workspace" } },
+  QualityAction: { scope: "tenant", relations: { workspace: "Workspace", nc: "QualityNc" } },
+  QualityVerification: { scope: "tenant", relations: { workspace: "Workspace", nc: "QualityNc" } },
+  QualityNcEvent: { scope: "tenant", relations: { workspace: "Workspace", nc: "QualityNc" } },
 } as const satisfies Record<Prisma.ModelName, ModelMeta>;
 
 export type ModelName = keyof typeof modelMetadata;

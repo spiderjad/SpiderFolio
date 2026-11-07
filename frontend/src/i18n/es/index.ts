@@ -17,6 +17,7 @@ import { connectorTexts } from "./connector";
 import { formsTexts } from "./forms";
 import { safetyTexts } from "./safety";
 import { caeTexts } from "./cae";
+import { qualityTexts } from "./quality";
 import { expiriesTexts } from "./expiries";
 import { auditRoomsTexts } from "./audit-rooms";
 import { termsTexts } from "./terms";
@@ -40,6 +41,7 @@ export const es = {
   forms: formsTexts,
   safety: safetyTexts,
   cae: caeTexts,
+  quality: qualityTexts,
   expiries: expiriesTexts,
   auditRooms: auditRoomsTexts,
   terms: termsTexts,
@@ -329,6 +331,10 @@ export const es = {
     safetyIncident: (who: string) => `${who} comunicó un accidente o incidente.`,
     auditRoomAccess: "El auditor entró por primera vez a una sala de auditoría.",
     caePortalUpload: "Una contrata subió un documento desde su portal: está por revisar.",
+    qualityNc: (who: string) =>
+      who === ""
+        ? "Una no conformidad de calidad te necesita."
+        : `${who}: una no conformidad de calidad te necesita.`,
     expiryGone: "Un vencimiento que ya no existe.",
     formOverdue: (what: string) => `«${what}» quedó sin llenar en el período anterior.`,
     directorySyncStopped:

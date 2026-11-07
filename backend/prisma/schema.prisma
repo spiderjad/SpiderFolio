@@ -275,6 +275,11 @@ model Workspace {
   safetyDrills           SafetyDrill[]
   safetyCommitteeMembers SafetyCommitteeMember[]
   safetyMeetings         SafetyMeeting[]
+  qualityNcs             QualityNc[]
+  qualityActions         QualityAction[]
+  qualityVerifications   QualityVerification[]
+  qualityNcEvents        QualityNcEvent[]
+  qualityNcCounters      QualityNcCounter[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -1299,22 +1304,27 @@ model FormRecord {
 /// periods left without a record) and, for periodic forms, how often and who fills it in. Not part of the
 /// template's versions: changing it doesn't change what was filled in.
 model FormSettings {
-  nodeId                  String   @id
+  nodeId                  String           @id
   workspaceId             String
   /// A person in charge, or a department whose heads are; neither: the heads of the space's department
   /// (or whoever created the form).
   responsibleMembershipId String?
   responsibleDepartmentId String?
   /// none | daily | weekly | monthly
-  frequency               String   @default("none")
+  frequency               String           @default("none")
   /// daily: the ISO weekdays it's due on (1 = Monday … 7 = Sunday).
   weekdays                Int[]
   /// Who fills it in each period (one record per period, from any of them).
   assigneeMembershipIds   String[]
   assigneeDepartmentIds   String[]
   /// The fields shown as columns in the records list (empty: the first number, choice or yes/no ones).
-  listFieldIds            String[] @default([])
-  updatedAt               DateTime @updatedAt
+  listFieldIds            String[]         @default([])
+  /// Food quality (docs/spec/calidad.md): a non-conforming record opens a nonconformity by itself.
+  qualityAutoNc           Boolean          @default(false)
+  qualitySeverity         QualitySeverity?
+  /// Membership in charge of the nonconformities it opens (none: the form's first responsible).
+  qualityOwnerId          String?
+  updatedAt               DateTime         @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   node      Node      @relation(fields: [nodeId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
@@ -2475,4 +2485,164 @@ enum HomeArea {
   PREVENTION
   QUALITY
   ADMIN
+}
+
+// ─── Food quality (docs/spec/calidad.md) ─────────────────────────────────────────────────
+
+enum QualityNcOrigin {
+  INTERNAL
+  CCP
+  AUDIT_INTERNAL
+  AUDIT_EXTERNAL
+  COMPLAINT
+  SUPPLIER
+  OTHER
+}
+
+enum QualitySeverity {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+enum QualityNcStatus {
+  OPEN
+  ANALYSIS
+  ACTIONS
+  VERIFICATION
+  CLOSED
+  CANCELLED
+}
+
+enum QualityCauseMethod {
+  FIVE_WHYS
+  ISHIKAWA
+  OTHER
+}
+
+enum QualityActionKind {
+  CORRECTION
+  CORRECTIVE
+  PREVENTIVE
+}
+
+/// A nonconformity (NC): what went wrong, its root cause, its CAPA and the effectiveness check. Never
+/// deleted: it's cancelled with a reason.
+model QualityNc {
+  id              String              @id @default(cuid())
+  workspaceId     String
+  /// NC-<year>-<number>, consecutive per company and year (QualityNcCounter).
+  year            Int
+  number          Int
+  title           String
+  description     String
+  origin          QualityNcOrigin
+  severity        QualitySeverity
+  detectedOn      DateTime            @db.Date
+  location        String?
+  /// The department it's assigned to (no FK: departments can be deleted).
+  departmentId    String?
+  /// The form record it came from (no FK: records are never deleted) and its non-conforming fields.
+  recordId        String?
+  fieldIds        String[]
+  productAffected Boolean             @default(false)
+  productNote     String?
+  /// The immediate correction, done at the moment.
+  correction      String?
+  causeMethod     QualityCauseMethod?
+  /// The analysis, by method (validated by the service): { whys: string[] } or { branches: {…} }.
+  causeAnalysis   Json?
+  rootCause       String?
+  status          QualityNcStatus     @default(OPEN)
+  /// Membership in charge.
+  ownerId         String
+  verifyOn        DateTime?           @db.Date
+  cancelReason    String?
+  /// Its evidence folder in the module's space, once created.
+  folderId        String?
+  reportedById    String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  closedAt        DateTime?
+  closedById      String?
+
+  workspace     Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actions       QualityAction[]
+  verifications QualityVerification[]
+  events        QualityNcEvent[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, year, number])
+  @@index([workspaceId, status, detectedOn])
+  @@index([workspaceId, createdAt, id])
+  @@index([workspaceId, ownerId, status])
+  @@index([workspaceId, recordId])
+}
+
+/// The last number given to a nonconformity of a company in a year.
+model QualityNcCounter {
+  workspaceId String
+  year        Int
+  last        Int
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, year])
+}
+
+/// A correction, corrective or preventive action of a nonconformity.
+model QualityAction {
+  id            String            @id @default(cuid())
+  workspaceId   String
+  ncId          String
+  kind          QualityActionKind
+  description   String
+  /// Membership; no FK.
+  responsibleId String
+  dueOn         DateTime          @db.Date
+  doneAt        DateTime?
+  doneById      String?
+  note          String?
+  createdById   String
+  createdAt     DateTime          @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nc        QualityNc @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, ncId])
+  @@index([workspaceId, responsibleId, doneAt])
+  @@index([workspaceId, dueOn, id])
+}
+
+/// An effectiveness check: only added. The last effective one closes the nonconformity.
+model QualityVerification {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  ncId         String
+  effective    Boolean
+  note         String
+  verifiedById String
+  verifiedAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nc        QualityNc @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, ncId, verifiedAt])
+}
+
+/// A nonconformity's history: only added, never changed.
+model QualityNcEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  ncId        String
+  /// created | updated | status | action_added | action_done | verified | cancelled | reopened
+  kind        String
+  actorId     String?
+  data        Json
+  at          DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nc        QualityNc @relation(fields: [ncId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, ncId, at])
 }

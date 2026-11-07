@@ -17,9 +17,11 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { assertStorageRoom, lockWorkspace } from "../files/files.service.ts";
 import { assertSpaceWritable } from "../spaces/spaces.service.ts";
 import type { Jobs } from "../../jobs/boss.ts";
+import type { Logger } from "pino";
 import { companyZone, dayIn, endOfDayIn, startOfDayIn } from "../../lib/time-zone.ts";
 import { checkAnswers, type Answers } from "./answers.ts";
 import { notifyNonConforming } from "./form-notices.ts";
+import { autoNcFromRecord } from "../quality/ncs.service.ts";
 import { isIncidentForm } from "../safety/incident-form.ts";
 import { recordIncident } from "../safety/incidents.service.ts";
 import { periodOf } from "./periods.ts";
@@ -40,6 +42,8 @@ export interface RecordDeps {
 
 export interface SubmitDeps {
   jobs: Pick<Jobs, "enqueue">;
+  /** Where a failed automatic nonconformity is noted (docs/spec/calidad.md). */
+  logger?: Pick<Logger, "warn">;
 }
 
 async function formOf(ctx: AdminContext, id: string) {
@@ -346,6 +350,13 @@ export async function submitRecord(
       version: input.version,
       submittedById: ctx.tenant.membershipId,
     });
+    // Food quality (docs/spec/calidad.md): the form may open a nonconformity by itself. It never
+    // fails the record: whoever is in charge can still open it by hand.
+    await autoNcFromRecord(ctx, { id, nodeId: formId, nonConforming: checked.nonConforming }).catch(
+      (error: unknown) => {
+        deps.logger?.warn({ err: error, recordId: id }, "quality: automatic nonconformity failed");
+      },
+    );
   }
   return await getRecord(ctx, formId, id).then((detail) => detail.record);
 }

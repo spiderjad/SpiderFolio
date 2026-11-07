@@ -59,6 +59,7 @@ import {
   listFieldsOf,
 } from "./forms-api";
 import { FormSettingsCard } from "./form-settings";
+import { FormQualityCard } from "@/features/quality/form-quality-card";
 import { RecordsList } from "./records";
 import { texts } from "@/i18n";
 
@@ -427,6 +428,7 @@ function Editor({ form }: { form: FormDetail }) {
       {tab === "ajustes" && (
         <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
           <FormSettingsCard form={form} />
+          <FormQualityCard formId={form.node.id} canEdit={form.canEdit} />
           <Card className="grid gap-3 p-4 sm:p-5">
             <CardTitle className="flex items-center gap-2 text-base">
               <QrCode className="size-4 text-muted-foreground" aria-hidden="true" />

@@ -58,13 +58,15 @@ export function departmentRoutes(): TenantRoute[] {
       // Antes de /:id para que "options" no se lea como un id.
       method: "get",
       path: "/admin/departments/options",
-      // Also the health and safety managers: the module's people filter by department.
+      // Also the health and safety managers (the module's people filter by department) and the quality
+      // ones (a nonconformity is assigned to a department).
       anyCapability: [
         "departments.manage",
         "members.view",
         "members.invite",
         "members.manage",
         "safety.manage",
+        "quality.manage",
       ],
       leaderAccess: true,
       handler: async (req, res) => {

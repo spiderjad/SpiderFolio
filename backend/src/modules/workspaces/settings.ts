@@ -1,7 +1,7 @@
 // Workspace.settings (CLAUDE.md, secciones 9.3 y 12A.2): zona horaria e idioma del workspace;
 // las políticas de seguridad se agregan con su módulo.
 import { z } from "zod";
-import { caeLimits } from "@spiderfolio/limits";
+import { caeLimits, qualityLimits } from "@spiderfolio/limits";
 import { LOCALES } from "../../i18n/locales.ts";
 import { validationMessages } from "../../i18n/index.ts";
 import { isTimeZone } from "../../lib/time-zone.ts";
@@ -117,6 +117,33 @@ export function readSafetySettings(settings: unknown): SafetySettings {
 export const caeEnabled = (settings: SafetySettings): boolean =>
   settings.enabled && settings.cae.enabled;
 
+/**
+ * The food quality module (docs/spec/calidad.md): on or off, its space once it's created, the standards
+ * the company is audited against and the days to the effectiveness check of a nonconformity.
+ */
+export const QualitySettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  spaceId: z.string().min(1).max(64).optional(),
+  standards: z.array(z.enum(["IFS8", "BRCGS9"])).max(2).default([]),
+  verifyDays: z
+    .number()
+    .int()
+    .min(qualityLimits.verifyDaysMin)
+    .max(qualityLimits.verifyDaysMax)
+    .default(qualityLimits.verifyDaysDefault),
+});
+
+export type QualitySettings = z.infer<typeof QualitySettingsSchema>;
+
+/** The module's settings; off with data missing or not valid. */
+export function readQualitySettings(settings: unknown): QualitySettings {
+  const raw = (settings as { quality?: unknown } | null | undefined)?.quality;
+  const parsed = QualitySettingsSchema.safeParse(raw ?? {});
+  return parsed.success
+    ? parsed.data
+    : { enabled: false, standards: [], verifyDays: qualityLimits.verifyDaysDefault };
+}
+
 export const WorkspaceSettingsSchema = z.object({
   timezone: z.string().refine(isTimeZone, { error: () => validationMessages.invalidTimeZone }),
   locale: z.enum(LOCALES),
@@ -127,6 +154,7 @@ export const WorkspaceSettingsSchema = z.object({
   bianEnabled: z.boolean().optional(),
   bianGuests: z.boolean().optional(),
   safety: SafetySettingsSchema.optional(),
+  quality: QualitySettingsSchema.optional(),
 });
 
 export type WorkspaceSettings = z.infer<typeof WorkspaceSettingsSchema>;

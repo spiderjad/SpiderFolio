@@ -29,7 +29,7 @@ import type {
   UpdateProfileSchema,
 } from "./auth.schemas.ts";
 import { MAX_PIN_FAILURES, pinLockMs } from "../pin/pin-rules.ts";
-import { readPinLoginSettings, readSafetySettings } from "../workspaces/settings.ts";
+import { readPinLoginSettings, readQualitySettings, readSafetySettings } from "../workspaces/settings.ts";
 import { randomToken, sha256 } from "../../lib/crypto.ts";
 import { userMediaUrl } from "../profile-media/profile-media.service.ts";
 import {
@@ -111,6 +111,8 @@ export interface Account {
       locale: Locale;
       /** The occupational health and safety module: on or off, and the country's terms. */
       safety: { enabled: boolean; terms: "es" | "latam"; cae: boolean; caeAccessLog: boolean };
+      /** The food quality module (docs/spec/calidad.md): on or off. */
+      quality: { enabled: boolean };
     };
     role: { id: string; name: string; base: string };
     capabilities: string[];
@@ -269,6 +271,7 @@ export function createAuthService(deps: AppDeps) {
               cae: enabled && cae.enabled,
               caeAccessLog: enabled && cae.enabled && cae.accessLog,
             }))(readSafetySettings(m.workspace.settings)),
+            quality: { enabled: readQualitySettings(m.workspace.settings).enabled },
           },
           role: { id: m.role.id, name: m.role.name, base: m.role.base },
           // El propietario tiene también las capacidades de los plugins instalados.

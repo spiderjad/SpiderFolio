@@ -49,6 +49,7 @@ import {
   type RecordFilters,
 } from "./forms-api";
 import { useMembership } from "@/features/home/workspace-layout";
+import { RecordNcButton } from "@/features/quality/record-nc";
 import { ActionDialog } from "@/features/safety/action-dialog";
 import { locale, texts } from "@/i18n";
 
@@ -469,6 +470,11 @@ export function RecordPage() {
               {texts.safety.planning.fromRecord}
             </Button>
           )}
+          <RecordNcButton
+            recordId={recordId}
+            nonConforming={record.voided === null && record.nonConforming.length > 0}
+            canHandle={canVoid}
+          />
           {canVoid && (
             <Button
               variant="outline"

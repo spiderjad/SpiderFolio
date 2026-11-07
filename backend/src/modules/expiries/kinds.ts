@@ -8,4 +8,5 @@ import "../safety/fitness-expiry.ts";
 import "../safety/drill-expiry.ts";
 import "../safety/committee-expiry.ts";
 import "../safety/cae-expiry.ts";
+import "../quality/quality-expiry.ts";
 import "./node-expiry.ts";

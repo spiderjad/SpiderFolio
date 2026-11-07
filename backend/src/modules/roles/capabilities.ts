@@ -32,6 +32,10 @@ export const capabilities = [
   "cae.manage",
   /** CAE: only whether a contractor or a worker is authorized (gatehouse, team leads). */
   "cae.check",
+  /** Food quality (docs/spec/calidad.md): nonconformities, their CAPA, verification and settings. */
+  "quality.manage",
+  /** Food quality: read every nonconformity and action, without changing anything. */
+  "quality.view",
 ] as const;
 
 /** Las del núcleo. */
