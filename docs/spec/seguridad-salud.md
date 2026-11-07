@@ -192,10 +192,11 @@ después se apoyan en él la pantalla general de Vencimientos (docs/spec/adopcio
 Cada fase: commit propio, tests de lo tocado (permisos y aislamiento entre empresas incluidos) y guías
 es/en de las pantallas que cambian.
 
-## Lo que falta (relevado el 07/11/2026)
+## Lo que falta (relevado el 07/11/2026) — hecho
 
 Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después de la CAE
-(docs/spec/cae.md, que va dentro de este módulo):
+(docs/spec/cae.md, que va dentro de este módulo). **Todas hechas (07/11/2026)**: las fases 6 a 9 están
+completas; lo que quedó simplificado se anota en cada una.
 
 6. **Planificación de la actividad preventiva** (Ley 31/1995, art. 16) (hecha): las medidas dejan de ser solo de
    los accidentes. `SafetyAction` suma un origen (`INCIDENT | RISK_ASSESSMENT | INSPECTION | OTHER`) y la
@@ -279,8 +280,44 @@ Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después 
    acepta en la API pero la pantalla no lo elige todavía (solo lo muestra); el centro o turno es texto
    libre; la lista de roles no pagina (son pocos por empresa); el selector de curso no busca (pagina los
    cursos tal como vienen).
-9. **Consulta y participación**: delegados de prevención y comité de seguridad y salud (miembros), con
+9. **Consulta y participación** (hecha): delegados de prevención y comité de seguridad y salud (miembros), con
    sus reuniones como actas (página o documento) y los acuerdos como medidas (origen `COMMITTEE`).
+   Migración `safety_committee`: enums `SafetyCommitteeRole` (`DELEGATE | COMPANY_REP | ADVISOR |
+   SECRETARY`) y `SafetyMeetingKind` (`ORDINARY | EXTRAORDINARY`); `SafetyCommitteeMember` (`membershipId`,
+   función, `termStart?`, `termEnd?`, `endedAt`: sacar del comité guarda la fila, sin borrado; una sola fila
+   vigente por persona, lo controla el servicio); `SafetyMeeting` (fecha, tipo, `attendeeIds` = ids de
+   miembros del comité, orden del día, `minutesNodeId?` sin FK, `createdById`; sin borrado);
+   `SafetyAction.meetingId` con FK compuesta a la reunión y el valor `COMMITTEE` en `SafetyActionOrigin`.
+   Como `DRILL`, «`COMMITTEE` ⇔ `meetingId`» lo garantiza el servicio (valor de enum nuevo en la misma
+   migración). Términos: es «Comité de seguridad y salud» y «Delegado de prevención»; latam «Comité
+   paritario», «Representante de los trabajadores» y «Representante del empleador» (en `safetyTexts` del
+   backend y del frontend, según `terms`).
+   **Avisos** (motor de vencimientos, tipos registrados en `committee-expiry.ts`): `safety.mandate`, uno por
+   miembro (`subjectId` = id del miembro), al fin del mandato de un **delegado** con fecha de fin y vigente,
+   con avisos 60, 30, 7 y 0 días antes; se resuelve si deja de ser delegado, pierde la fecha o sale del
+   comité. `safety.meeting` (`subjectId` fijo `quarterly`), tres meses después de la última reunión
+   **ordinaria** (art. 38.3: al menos trimestral); se recalcula al crear o cambiar fecha o tipo de una
+   reunión. Los dos avisan a quienes tienen `safety.manage` y quedan en pausa con el módulo apagado.
+   **Acta**: elegir una página o un archivo del espacio del módulo (`GET /safety/committee/minutes-options`,
+   paginado, solo `safety.manage`; el servicio exige que sea del espacio del módulo y no esté en la
+   papelera) o `POST /safety/meetings/:id/minutes`, que crea una página en ese espacio desde una plantilla
+   con fecha, tipo, asistentes (con su función) y orden del día, en el idioma de la empresa, y la liga
+   (pasa por `createPage`, con sus permisos).
+   **Permisos**: `safety.manage` gestiona todo. Los **miembros vigentes del comité** leen sin
+   `safety.manage`: miembros (sin los anteriores), reuniones, actas y acuerdos (`GET /safety/committee`,
+   `GET /safety/meetings`, `GET /safety/meetings/:id`, `GET /safety/meetings/:id/agreements`); nada más del
+   módulo. A cualquier otra persona, esas rutas le responden 404. `GET /safety/committee/access` dice si la
+   persona gestiona o es miembro (la pestaña «Comité» se muestra con eso; el backend vuelve a comprobarlo
+   en cada ruta). El acta se abre con los permisos de su espacio (el del módulo lo ve toda la empresa salvo
+   que se cambie); no se tocan permisos de documentos. Los acuerdos se crean con `POST /safety/planning`
+   (`safety.manage`); el responsable marca los suyos en «Mis medidas». Auditoría
+   `safety.committee.member.add|update`, `safety.meeting.create|update`.
+   Pantalla: pestaña «Comité» dentro del módulo (sin entrada en el menú lateral), con «Miembros» y
+   «Reuniones» (lista con filtros de tipo y fechas en la dirección y cursor; detalle con asistentes, orden
+   del día, acta y acuerdos). Simplificaciones: los asistentes son miembros del comité (no invitados
+   externos); los acuerdos de una reunión se listan sin paginar (hasta 200, son pocos por reunión); la
+   lista de miembros no pagina (hasta 200); el acta no se firma ni se aprueba en la app (si hace falta, se
+   convierte en documento controlado); sin convocatoria por email.
 
 Los permisos de trabajo (caliente, altura, espacios confinados, eléctricos) van en la fase 4 de la CAE y
 sirven también para los trabajadores propios.

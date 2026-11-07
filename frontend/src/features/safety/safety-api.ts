@@ -162,7 +162,8 @@ export interface Incident {
 /** Open (just reported), under investigation, or closed. */
 export type IncidentStatus = "OPEN" | "INVESTIGATING" | "CLOSED";
 
-export type ActionOrigin = "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "DRILL" | "OTHER";
+export type ActionOrigin =
+  "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "DRILL" | "COMMITTEE" | "OTHER";
 export type ActionPriority = "LOW" | "MEDIUM" | "HIGH";
 
 export const ACTION_ORIGINS: readonly ActionOrigin[] = [
@@ -170,6 +171,7 @@ export const ACTION_ORIGINS: readonly ActionOrigin[] = [
   "RISK_ASSESSMENT",
   "INSPECTION",
   "DRILL",
+  "COMMITTEE",
   "OTHER",
 ];
 export const ACTION_PRIORITIES: readonly ActionPriority[] = ["HIGH", "MEDIUM", "LOW"];
@@ -187,6 +189,7 @@ export type ActionReference =
     }
   | { kind: "record"; id: string; formId: string | null; spaceId: string | null; label: string }
   | { kind: "drill"; id: string; label: string }
+  | { kind: "meeting"; id: string; label: string }
   | null;
 
 export interface SafetyAction {
@@ -217,6 +220,7 @@ export type PlannedActionInput = ActionInput &
     | { origin: "RISK_ASSESSMENT"; nodeId: string }
     | { origin: "INSPECTION"; recordId: string }
     | { origin: "DRILL"; drillId: string }
+    | { origin: "COMMITTEE"; meetingId: string }
     | { origin: "OTHER" }
   );
 
@@ -229,6 +233,8 @@ export interface PlanningFilters {
   to?: string | undefined;
   /** One drill's measures. */
   drill?: string | undefined;
+  /** One committee meeting's agreements. */
+  meeting?: string | undefined;
 }
 
 // ─── Emergencies and drills ──────────────────────────────────────────────────────────────
@@ -653,4 +659,134 @@ export const peopleApi = {
         signal,
       },
     ),
+};
+
+// ─── Committee (consultation and participation) ──────────────────────────────────────────
+
+export type CommitteeRole = "DELEGATE" | "COMPANY_REP" | "ADVISOR" | "SECRETARY";
+export const COMMITTEE_ROLES: readonly CommitteeRole[] = [
+  "DELEGATE",
+  "COMPANY_REP",
+  "ADVISOR",
+  "SECRETARY",
+];
+export type MeetingKind = "ORDINARY" | "EXTRAORDINARY";
+export const MEETING_KINDS: readonly MeetingKind[] = ["ORDINARY", "EXTRAORDINARY"];
+
+export interface CommitteeMember {
+  id: string;
+  person: { id: string; name: string };
+  role: CommitteeRole;
+  termStart: string | null;
+  termEnd: string | null;
+  term: "valid" | "due_soon" | "expired" | null;
+  ended: boolean;
+}
+
+export interface Committee {
+  members: CommitteeMember[];
+  lastMeeting: { id: string; date: string } | null;
+  nextMeetingBy: string | null;
+  canManage: boolean;
+}
+
+export interface MeetingInput {
+  date: string;
+  kind: MeetingKind;
+  attendeeIds: string[];
+  agenda: string | null;
+  minutesNodeId: string | null;
+}
+
+export interface Meeting extends Omit<MeetingInput, "attendeeIds" | "minutesNodeId"> {
+  id: string;
+  attendees: { id: string; name: string; role: CommitteeRole }[];
+  minutes: {
+    id: string;
+    spaceId: string;
+    name: string;
+    type: "PAGE" | "FILE" | "FOLDER" | "FORM";
+    parentId: string | null;
+  } | null;
+  actions: { total: number; open: number };
+  createdBy: { id: string; name: string };
+  createdAt: string;
+}
+
+export interface MeetingFilters {
+  kind?: MeetingKind | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
+}
+
+export const committeeKeys = {
+  all: (slug: string) => ["w", slug, "safety", "incidents", "committee"] as const,
+  access: (slug: string) => ["w", slug, "safety", "incidents", "committee", "access"] as const,
+  committee: (slug: string, ended: boolean) =>
+    ["w", slug, "safety", "incidents", "committee", "members", ended] as const,
+  meetings: (slug: string, filters: MeetingFilters) =>
+    ["w", slug, "safety", "incidents", "committee", "meetings", filters] as const,
+  meeting: (slug: string, id: string) =>
+    ["w", slug, "safety", "incidents", "committee", "meeting", id] as const,
+  agreements: (slug: string, id: string) =>
+    ["w", slug, "safety", "incidents", "committee", "agreements", id] as const,
+  minutesOptions: (slug: string) =>
+    ["w", slug, "safety", "incidents", "committee", "minutes-options"] as const,
+};
+
+export const committeeApi = {
+  access: (slug: string) =>
+    api<{ manage: boolean; member: boolean }>(w(slug, "/safety/committee/access")),
+  committee: (slug: string, ended: boolean) =>
+    api<{ committee: Committee }>(
+      w(slug, `/safety/committee?${listQuery({ ended: ended ? "1" : undefined })}`),
+    ),
+  addMember: (
+    slug: string,
+    body: {
+      membershipId: string;
+      role: CommitteeRole;
+      termStart: string | null;
+      termEnd: string | null;
+    },
+  ) => api<undefined>(w(slug, "/safety/committee/members"), { method: "POST", body }),
+  updateMember: (
+    slug: string,
+    id: string,
+    body: {
+      role?: CommitteeRole;
+      termStart?: string | null;
+      termEnd?: string | null;
+      ended?: boolean;
+    },
+  ) => api<undefined>(w(slug, `/safety/committee/members/${id}`), { method: "PATCH", body }),
+  minutesOptions: (
+    slug: string,
+    q: string,
+    cursor: string | undefined,
+    signal: AbortSignal | undefined,
+  ) =>
+    api<CursorPage<{ id: string; name: string; type: "PAGE" | "FILE" }>>(
+      w(slug, `/safety/committee/minutes-options?${listQuery({ q, cursor })}`),
+      signal === undefined ? {} : { signal },
+    ),
+  meetings: (
+    slug: string,
+    filters: MeetingFilters,
+    cursor: string | undefined,
+    signal: AbortSignal,
+  ) =>
+    api<CursorPage<Meeting>>(w(slug, `/safety/meetings?${listQuery({ ...filters, cursor })}`), {
+      signal,
+    }),
+  meeting: (slug: string, id: string) =>
+    api<{ meeting: Meeting }>(w(slug, `/safety/meetings/${id}`)),
+  agreements: (slug: string, id: string) =>
+    api<{ items: SafetyAction[] }>(w(slug, `/safety/meetings/${id}/agreements`)),
+  createMeeting: (slug: string, body: MeetingInput) =>
+    api<{ meeting: Meeting }>(w(slug, "/safety/meetings"), { method: "POST", body }),
+  updateMeeting: (slug: string, id: string, body: Partial<MeetingInput>) =>
+    api<{ meeting: Meeting }>(w(slug, `/safety/meetings/${id}`), { method: "PATCH", body }),
+  createMinutes: (slug: string, id: string) =>
+    api<{ meeting: Meeting }>(w(slug, `/safety/meetings/${id}/minutes`), { method: "POST" }),
 };

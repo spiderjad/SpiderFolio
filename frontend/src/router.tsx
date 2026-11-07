@@ -227,6 +227,28 @@ export const routes = [
                     ],
                   },
                   {
+                    // The health and safety committee: safety.manage, or its members (read only).
+                    path: "comite",
+                    lazy: page(() => import("@/features/safety/safety-common"), "RequireCommittee"),
+                    children: [
+                      {
+                        index: true,
+                        lazy: page(
+                          () => import("@/features/safety/committee-page"),
+                          "CommitteePage",
+                        ),
+                      },
+                      {
+                        path: "reuniones",
+                        lazy: page(() => import("@/features/safety/meetings-page"), "MeetingsPage"),
+                      },
+                      {
+                        path: "reuniones/:meetingId",
+                        lazy: page(() => import("@/features/safety/meeting-page"), "MeetingPage"),
+                      },
+                    ],
+                  },
+                  {
                     // Accident rates (safety.manage or safety.health; the page and the API check).
                     path: "indicadores",
                     lazy: page(() => import("@/features/safety/indicators-page"), "IndicatorsPage"),

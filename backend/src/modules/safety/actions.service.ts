@@ -32,7 +32,7 @@ const EVR = "EVR";
 const CSV_MAX = 10_000;
 const NOTICE_DAYS = [7, 1, 0] as const;
 
-type Origin = "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "OTHER" | "DRILL";
+type Origin = "INCIDENT" | "RISK_ASSESSMENT" | "INSPECTION" | "OTHER" | "DRILL" | "COMMITTEE";
 
 const canSeeHealth = (ctx: Pick<AdminContext, "tenant">) =>
   ctx.tenant.capabilities.includes("safety.health");
@@ -51,6 +51,7 @@ export type ActionReference =
     }
   | { kind: "record"; id: string; formId: string | null; spaceId: string | null; label: string }
   | { kind: "drill"; id: string; label: string }
+  | { kind: "meeting"; id: string; label: string }
   | null;
 
 export interface ActionView {
@@ -95,6 +96,7 @@ type ActionRow = Prisma.SafetyActionGetPayload<{
     nodeId: true;
     recordId: true;
     drillId: true;
+    meetingId: true;
     description: true;
     priority: true;
     estimatedCost: true;
@@ -113,6 +115,7 @@ const actionSelect = {
   nodeId: true,
   recordId: true,
   drillId: true,
+  meetingId: true,
   description: true,
   priority: true,
   estimatedCost: true,
@@ -141,7 +144,10 @@ async function views(ctx: AdminContext, rows: ActionRow[]): Promise<ActionView[]
   const drillIds = [
     ...new Set(rows.map((row) => row.drillId).filter((id): id is string => id !== null)),
   ];
-  const [people, incidents, nodes, codes, records, drills] = await Promise.all([
+  const meetingIds = [
+    ...new Set(rows.map((row) => row.meetingId).filter((id): id is string => id !== null)),
+  ];
+  const [people, incidents, nodes, codes, records, drills, meetings] = await Promise.all([
     names(
       ctx,
       rows.flatMap((row) => [row.responsibleId, row.doneById]),
@@ -187,7 +193,14 @@ async function views(ctx: AdminContext, rows: ActionRow[]): Promise<ActionView[]
           where: { id: { in: drillIds } },
           select: { id: true, date: true, scenario: true },
         }),
+    meetingIds.length === 0
+      ? Promise.resolve([])
+      : ctx.db.safetyMeeting.findMany({
+          where: { id: { in: meetingIds } },
+          select: { id: true, date: true, kind: true },
+        }),
   ]);
+  const meetingOf = new Map(meetings.map((row) => [row.id, row]));
   const drillOf = new Map(drills.map((row) => [row.id, row]));
   const incidentOf = new Map(incidents.map((row) => [row.id, row]));
   const nodeOf = new Map(nodes.map((row) => [row.id, row]));
@@ -247,6 +260,21 @@ async function views(ctx: AdminContext, rows: ActionRow[]): Promise<ActionView[]
               : t.drillOf(
                   safetyTexts.drills.scenarios[drill.scenario],
                   formatUtcDay(drill.date, locale),
+                ),
+        };
+      }
+      case "COMMITTEE": {
+        if (row.meetingId === null) return null;
+        const meeting = meetingOf.get(row.meetingId);
+        return {
+          kind: "meeting",
+          id: row.meetingId,
+          label:
+            meeting === undefined
+              ? t.origins.COMMITTEE
+              : t.meetingOf(
+                  safetyTexts.committee.kinds[meeting.kind],
+                  formatUtcDay(meeting.date, locale),
                 ),
         };
       }
@@ -313,6 +341,7 @@ async function insertAction(
     nodeId?: string;
     recordId?: string;
     drillId?: string;
+    meetingId?: string;
   },
   input: ActionInput,
 ): Promise<string> {
@@ -376,7 +405,7 @@ export async function createPlannedAction(
   await requireSafety(ctx);
   if (!canManageSafety(ctx)) throw forbidden();
   const m = safetyTexts.planning.messages;
-  let reference: { nodeId?: string; recordId?: string; drillId?: string } = {};
+  let reference: { nodeId?: string; recordId?: string; drillId?: string; meetingId?: string } = {};
   if (input.origin === "RISK_ASSESSMENT") {
     const document = await ctx.db.controlledDocument.findFirst({
       where: { nodeId: input.nodeId, node: { trashedAt: null } },
@@ -400,6 +429,11 @@ export async function createPlannedAction(
     const drill = await ctx.db.safetyDrill.count({ where: { id: input.drillId } });
     if (drill === 0) throw notFound();
     reference = { drillId: input.drillId };
+  } else if (input.origin === "COMMITTEE") {
+    // An agreement of a committee meeting (the meeting is checked here: no CHECK in the database).
+    const meeting = await ctx.db.safetyMeeting.count({ where: { id: input.meetingId } });
+    if (meeting === 0) throw notFound();
+    reference = { meetingId: input.meetingId };
   }
   const id = await insertAction(ctx, { origin: input.origin, ...reference }, input);
   await auditAdmin(ctx, {
@@ -507,6 +541,7 @@ function planningWhere(filters: ActionFilters, day: string): Prisma.SafetyAction
   return {
     ...(filters.origin === undefined ? {} : { origin: filters.origin }),
     ...(filters.drill === undefined ? {} : { drillId: filters.drill }),
+    ...(filters.meeting === undefined ? {} : { meetingId: filters.meeting }),
     ...(filters.responsible === undefined ? {} : { responsibleId: filters.responsible }),
     ...(filters.priority === undefined ? {} : { priority: filters.priority }),
     ...(filters.status === "open"

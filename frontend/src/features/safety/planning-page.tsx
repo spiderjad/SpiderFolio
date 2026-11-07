@@ -66,6 +66,8 @@ export function referenceHref(slug: string, reference: ActionReference): string 
   }
   if (reference.kind === "drill")
     return `/app/${slug}/seguridad/emergencias/simulacros/${reference.id}`;
+  if (reference.kind === "meeting")
+    return `/app/${slug}/seguridad/comite/reuniones/${reference.id}`;
   return reference.spaceId === null || reference.formId === null
     ? null
     : `/app/${slug}/files/${reference.spaceId}/form/${reference.formId}/r/${reference.id}`;

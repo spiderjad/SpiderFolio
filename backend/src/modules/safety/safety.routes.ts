@@ -57,10 +57,30 @@ import {
   TeamQuerySchema,
   UpdateDrillSchema,
   UpdateEmergencyRoleSchema,
+  CommitteeMemberSchema,
+  CommitteeQuerySchema,
+  ListMeetingsQuerySchema,
+  MeetingSchema,
+  MinutesOptionsQuerySchema,
+  UpdateCommitteeMemberSchema,
+  UpdateMeetingSchema,
   LostDaysSchema,
   MonthStatSchema,
   StatsQuerySchema,
 } from "./incidents.schemas.ts";
+import {
+  addCommitteeMember,
+  committeeAccess,
+  createMeeting,
+  createMinutes,
+  getCommittee,
+  getMeeting,
+  listMeetings,
+  meetingAgreements,
+  minutesOptions,
+  updateCommitteeMember,
+  updateMeeting,
+} from "./committee.service.ts";
 import { exportIndicatorsCsv, getIndicators, listStats, setStat } from "./indicators.service.ts";
 import {
   addMember,
@@ -446,6 +466,105 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         res.json({
           drill: await updateDrill(adminContextOf(req), id, UpdateDrillSchema.parse(req.body)),
         });
+      },
+    },
+    // The health and safety committee (safety.manage manages; its members read).
+    {
+      method: "get",
+      path: "/safety/committee/access",
+      handler: async (req, res) => {
+        res.json(await committeeAccess(adminContextOf(req)));
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/committee",
+      handler: async (req, res) => {
+        const { ended } = CommitteeQuerySchema.parse(req.query);
+        res.json({ committee: await getCommittee(adminContextOf(req), ended === "1") });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/committee/members",
+      handler: async (req, res) => {
+        await addCommitteeMember(adminContextOf(req), CommitteeMemberSchema.parse(req.body));
+        res.status(204).end();
+      },
+    },
+    {
+      method: "patch",
+      path: "/safety/committee/members/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        await updateCommitteeMember(
+          adminContextOf(req),
+          id,
+          UpdateCommitteeMemberSchema.parse(req.body),
+        );
+        res.status(204).end();
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/committee/minutes-options",
+      handler: async (req, res) => {
+        res.json(
+          await minutesOptions(adminContextOf(req), MinutesOptionsQuerySchema.parse(req.query)),
+        );
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/meetings",
+      handler: async (req, res) => {
+        res.json(await listMeetings(adminContextOf(req), ListMeetingsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/meetings",
+      handler: async (req, res) => {
+        const meeting = await createMeeting(adminContextOf(req), MeetingSchema.parse(req.body));
+        res.status(201).json({ meeting });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/meetings/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ meeting: await getMeeting(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/safety/meetings/:id",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({
+          meeting: await updateMeeting(
+            adminContextOf(req),
+            id,
+            UpdateMeetingSchema.parse(req.body),
+          ),
+        });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/meetings/:id/agreements",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.json({ items: await meetingAgreements(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "post",
+      path: "/safety/meetings/:id/minutes",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        res.status(201).json({ meeting: await createMinutes(adminContextOf(req), id) });
       },
     },
     // Accident rates (safety.manage or safety.health; by department, only safety.health).

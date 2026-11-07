@@ -41,6 +41,7 @@ export const PlannedActionSchema = z.discriminatedUnion("origin", [
   z.strictObject({ origin: z.literal("RISK_ASSESSMENT"), nodeId: Id, ...ActionSchema.shape }),
   z.strictObject({ origin: z.literal("INSPECTION"), recordId: Id, ...ActionSchema.shape }),
   z.strictObject({ origin: z.literal("DRILL"), drillId: Id, ...ActionSchema.shape }),
+  z.strictObject({ origin: z.literal("COMMITTEE"), meetingId: Id, ...ActionSchema.shape }),
   z.strictObject({ origin: z.literal("OTHER"), ...ActionSchema.shape }),
 ]);
 
@@ -62,6 +63,7 @@ export const actionOrigins = [
   "RISK_ASSESSMENT",
   "INSPECTION",
   "DRILL",
+  "COMMITTEE",
   "OTHER",
 ] as const;
 
@@ -70,6 +72,8 @@ export const ActionFiltersSchema = z.object({
   origin: z.enum(actionOrigins).optional(),
   /** One drill's measures. */
   drill: Id.optional(),
+  /** One committee meeting's agreements. */
+  meeting: Id.optional(),
   /** open (not done, any day), overdue (open and past its day), done, all. */
   status: z.enum(["open", "overdue", "done", "all"]).default("open"),
   responsible: Id.optional(),
@@ -168,6 +172,70 @@ export const ListDrillsQuerySchema = z.object({
   scenario: z.enum(drillScenarios).optional(),
   from: Day.optional(),
   to: Day.optional(),
+});
+
+// ─── Committee (consultation and participation) ──────────────────────────────────────────
+
+export const committeeRoles = ["DELEGATE", "COMPANY_REP", "ADVISOR", "SECRETARY"] as const;
+export const meetingKinds = ["ORDINARY", "EXTRAORDINARY"] as const;
+
+export const CommitteeMemberSchema = z.strictObject({
+  membershipId: Id,
+  role: z.enum(committeeRoles),
+  termStart: Day.nullable().default(null),
+  termEnd: Day.nullable().default(null),
+});
+
+export const UpdateCommitteeMemberSchema = z
+  .strictObject({
+    role: z.enum(committeeRoles),
+    termStart: Day.nullable(),
+    termEnd: Day.nullable(),
+    /** Ends (true) or restores (false) the person's place in the committee. */
+    ended: z.boolean(),
+  })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    error: () => validationMessages.noChanges,
+  });
+
+export const CommitteeQuerySchema = z.object({ ended: z.enum(["0", "1"]).default("0") });
+
+const MeetingShape = {
+  date: Day,
+  kind: z.enum(meetingKinds),
+  /** Committee member ids. */
+  attendeeIds: z.array(Id).max(100),
+  agenda: z.string().trim().max(8000).nullable(),
+  minutesNodeId: Id.nullable(),
+};
+
+export const MeetingSchema = z.strictObject({
+  ...MeetingShape,
+  attendeeIds: MeetingShape.attendeeIds.default([]),
+  agenda: MeetingShape.agenda.default(null),
+  minutesNodeId: MeetingShape.minutesNodeId.default(null),
+});
+
+export const UpdateMeetingSchema = z
+  .strictObject(MeetingShape)
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    error: () => validationMessages.noChanges,
+  });
+
+export const ListMeetingsQuerySchema = z.object({
+  ...pageShape(["date"], "date"),
+  dir: z.enum(["asc", "desc"]).default("desc"),
+  kind: z.enum(meetingKinds).optional(),
+  from: Day.optional(),
+  to: Day.optional(),
+});
+
+/** Pages and files of the module's space, to pick a meeting's minutes. */
+export const MinutesOptionsQuerySchema = z.object({
+  ...pageShape(["name"], "name"),
+  q: z.string().trim().max(100).optional(),
 });
 
 export type IncidentFilters = z.infer<typeof IncidentFiltersSchema>;

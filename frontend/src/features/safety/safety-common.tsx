@@ -15,6 +15,8 @@ import { useMembership } from "@/features/home/workspace-layout";
 import { cn } from "@/lib/utils";
 import { useCae, usePendingCount } from "./cae-common";
 import {
+  committeeApi,
+  committeeKeys,
   incidentsApi,
   incidentsKeys,
   safetyApi,
@@ -40,6 +42,29 @@ export function useSafety() {
     membershipId: membership.id,
     slug: membership.workspace.slug,
   };
+}
+
+/**
+ * Whether the person sees the committee (docs/spec/seguridad-salud.md, «Consulta y participación»):
+ * whoever manages the module, or a current member of the committee (asked to the server).
+ */
+export function useCommitteeAccess(): { visible: boolean; pending: boolean } {
+  const { enabled, canManage, slug } = useSafety();
+  const query = useQuery({
+    queryKey: committeeKeys.access(slug),
+    queryFn: () => committeeApi.access(slug),
+    enabled: enabled && !canManage,
+    staleTime: 60_000,
+  });
+  if (canManage) return { visible: true, pending: false };
+  return { visible: query.data?.member === true, pending: enabled && query.isPending };
+}
+
+/** The committee's screens: for whoever manages the module and for the committee's members. */
+export function RequireCommittee() {
+  const { visible, pending } = useCommitteeAccess();
+  if (pending) return null;
+  return visible ? <Outlet /> : <NotFoundPage />;
 }
 
 /** The module's screens exist only while it's on. */
@@ -113,9 +138,10 @@ export function PpeTabs() {
   const { slug, canManage, health, leads } = useSafety();
   const cae = useCae();
   const caePending = usePendingCount();
+  const committee = useCommitteeAccess();
   // Only for whoever manages the module (or its health data), the heads and whoever checks
   // contractors (CAE): the rest go to their sheet.
-  if (!canManage && !health && !leads && !cae.visible) return null;
+  if (!canManage && !health && !leads && !cae.visible && !committee.visible) return null;
   // Whoever only checks contractors sees only CAE: their own sheet stays at «Mi ficha» in their profile.
   const safetyTabs = canManage || health || leads;
   const t = texts.safety.tabs;
@@ -162,6 +188,11 @@ export function PpeTabs() {
       {canManage && (
         <NavLink to={`${base}/emergencias`} className={tab}>
           {texts.safety.emergencies.tab}
+        </NavLink>
+      )}
+      {committee.visible && (
+        <NavLink to={`${base}/comite`} className={tab}>
+          {texts.safety.committee.tab}
         </NavLink>
       )}
       {(canManage || health) && (

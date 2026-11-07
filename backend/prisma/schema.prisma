@@ -273,6 +273,8 @@ model Workspace {
   safetyEmergencyRoles   SafetyEmergencyRole[]
   safetyEmergencyMembers SafetyEmergencyMember[]
   safetyDrills           SafetyDrill[]
+  safetyCommitteeMembers SafetyCommitteeMember[]
+  safetyMeetings         SafetyMeeting[]
   caePortalSessions      CaePortalSession[]
   caePortalUploads       CaePortalUpload[]
   pageImages             PageImage[]
@@ -569,6 +571,7 @@ enum SafetyActionOrigin {
   INSPECTION
   OTHER
   DRILL
+  COMMITTEE
 }
 
 enum SafetyActionPriority {
@@ -592,6 +595,8 @@ model SafetyAction {
   recordId      String?
   /// With origin DRILL: the drill it comes from.
   drillId       String?
+  /// With origin COMMITTEE: the committee meeting whose agreement it is.
+  meetingId     String?
   description   String
   priority      SafetyActionPriority @default(MEDIUM)
   /// Estimated cost in cents of the company's currency, optional.
@@ -607,6 +612,7 @@ model SafetyAction {
 
   workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   drill     SafetyDrill?    @relation(fields: [drillId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+  meeting   SafetyMeeting?  @relation(fields: [meetingId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
   incident  SafetyIncident? @relation(fields: [incidentId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, incidentId])
@@ -2384,4 +2390,63 @@ model SafetyDrill {
 
   @@unique([id, workspaceId])
   @@index([workspaceId, date, id])
+}
+
+/// A role in the health and safety committee (docs/spec/seguridad-salud.md, «Consulta y participación»).
+enum SafetyCommitteeRole {
+  /// Prevention delegate (es) / workers' representative (latam).
+  DELEGATE
+  COMPANY_REP
+  /// The prevention technician, as an adviser (with a voice, without a vote).
+  ADVISOR
+  SECRETARY
+}
+
+/// Someone in the committee, with their term. Ending it keeps the row (it's the committee's history).
+model SafetyCommitteeMember {
+  id           String              @id @default(cuid())
+  workspaceId  String
+  membershipId String
+  role         SafetyCommitteeRole
+  termStart    DateTime?           @db.Date
+  /// A delegate's term end: the `safety.mandate` expiry warns before it.
+  termEnd      DateTime?           @db.Date
+  endedAt      DateTime?
+  createdById  String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, membershipId])
+  @@index([workspaceId, endedAt])
+}
+
+enum SafetyMeetingKind {
+  ORDINARY
+  EXTRAORDINARY
+}
+
+/// A committee meeting: its attendees, its agenda, its minutes and the agreements (planning actions).
+model SafetyMeeting {
+  id            String            @id @default(cuid())
+  workspaceId   String
+  date          DateTime          @db.Date
+  kind          SafetyMeetingKind
+  /// Committee member ids (SafetyCommitteeMember) who attended.
+  attendeeIds   String[]
+  agenda        String?
+  /// The minutes: a page or file (node; no FK).
+  minutesNodeId String?
+  createdById   String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actions   SafetyAction[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, date, id])
+  @@index([workspaceId, kind, date])
 }

@@ -194,6 +194,16 @@ export interface TenantDb {
     PrismaClient["safetyDrill"],
     "findFirst" | "findMany" | "count" | "create" | "update"
   >;
+  // The committee's history: a term is ended, never deleted.
+  safetyCommitteeMember: TenantDelegate<
+    PrismaClient["safetyCommitteeMember"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  // Meetings are a record: added and corrected, never deleted.
+  safetyMeeting: TenantDelegate<
+    PrismaClient["safetyMeeting"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -359,6 +369,14 @@ const delegates = {
   safetyEmergencyMember: { model: "SafetyEmergencyMember", ops: [...readOps, ...writeOps] },
   safetyDrill: {
     model: "SafetyDrill",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  safetyCommitteeMember: {
+    model: "SafetyCommitteeMember",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  safetyMeeting: {
+    model: "SafetyMeeting",
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },

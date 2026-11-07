@@ -38,6 +38,7 @@ import {
 } from "./demo-app.ts";
 import { BIAN_TEXT, BIAN_USAGE, bianRecording, fakeBian, fakeBianUsage } from "./bian-recording.ts";
 import { demoCae, demoCaeNames } from "./demo-cae.ts";
+import { demoCommittee } from "./demo-committee.ts";
 import { demoEmergencies } from "./demo-emergencies.ts";
 import { demoIndicators } from "./demo-indicators.ts";
 import { demoPlanning } from "./demo-planning.ts";
@@ -462,8 +463,32 @@ async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
   const drillId = drill.rows[0]?.id;
   if (drillId === undefined) throw new Error("demoEmergencies no dejó simulacros");
   demoDrillIds.set(locale, drillId);
+  // The committee: members, three meetings with minutes and the last one's agreements.
+  await demoCommittee({
+    base: BASE,
+    token: await ownerToken(locale),
+    slug,
+    locale,
+    peopleEmails: [PEOPLE[locale].admin, PEOPLE[locale].reader, PEOPLE[locale].owner],
+  });
+  const meeting = await db.query<{ id: string }>(
+    `SELECT m.id FROM "SafetyMeeting" m JOIN "Workspace" w ON w.id = m."workspaceId"
+      WHERE w.slug = $1 ORDER BY m.date DESC, m.id DESC LIMIT 1`,
+    [slug],
+  );
+  const meetingId = meeting.rows[0]?.id;
+  if (meetingId === undefined) throw new Error("demoCommittee no dejó reuniones");
+  demoMeetingIds.set(locale, meetingId);
   demoPlanningDone.add(locale);
 }
+
+/** The latest demo committee meeting of each language, for its capture. */
+const demoMeetingIds = new Map<Locale, string>();
+const meetingIdOf = (locale: Locale) => {
+  const id = demoMeetingIds.get(locale);
+  if (id === undefined) throw new Error("demoPlanningOf todavía no corrió");
+  return id;
+};
 
 /** The latest demo drill of each language, for its capture. */
 const demoDrillIds = new Map<Locale, string>();
@@ -838,6 +863,32 @@ const CAPTURES: Capture[] = [
     name: "simulacro",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/emergencias/simulacros/${drillIdOf(locale)}`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    // The health and safety committee (docs/spec/seguridad-salud.md, «Consulta y participación»).
+    name: "comite",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/comite`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    name: "reuniones",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/comite/reuniones`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    name: "reunion",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/seguridad/comite/reuniones/${meetingIdOf(locale)}`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
+  {
+    // A committee member without safety.manage: only the committee.
+    name: "comite-miembro",
+    who: "reader",
+    path: (i, locale) => `/app/${i.slug}/seguridad/comite/reuniones/${meetingIdOf(locale)}`,
     before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   // CAE, coordination of business activities (docs/spec/cae.md), with web/scripts/demo-cae.ts.
