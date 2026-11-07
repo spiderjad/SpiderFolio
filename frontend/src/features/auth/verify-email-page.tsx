@@ -16,7 +16,7 @@ export function VerifyEmailPage() {
   const { status, reloadAccount } = useAuth();
   const [state, setState] = useState<State>("verifying");
   const [resent, setResent] = useState(false);
-  // El token es de un solo uso: el efecto no puede correr dos veces (StrictMode).
+  // The token is single-use: the effect must not run twice (StrictMode).
   const started = useRef(false);
 
   useEffect(() => {
@@ -36,8 +36,12 @@ export function VerifyEmailPage() {
       });
   }, []);
 
+  // Once: reloadAccount changes with every account update, so depending on it alone would loop.
+  const reloaded = useRef(false);
   useEffect(() => {
-    if (state === "done" && status === "authenticated") void reloadAccount();
+    if (reloaded.current || state !== "done" || status !== "authenticated") return;
+    reloaded.current = true;
+    void reloadAccount();
   }, [state, status, reloadAccount]);
 
   const resend = async () => {
