@@ -51,7 +51,7 @@ test("efectos de entrada: todo queda visible después de recorrer la página", a
   await page.goto("/es");
   await scrollThrough(page);
   const cards = page.locator("#funciones article");
-  await expect(cards).toHaveCount(6);
+  await expect(cards).toHaveCount(9);
   for (const card of await cards.all()) {
     await expect(card).toHaveCSS("opacity", "1");
   }
