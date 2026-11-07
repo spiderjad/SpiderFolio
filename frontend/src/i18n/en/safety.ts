@@ -72,7 +72,61 @@ export const safetyTexts: typeof es = {
     fromDocument: "New preventive measure",
     fromRecord: "Create preventive measure",
   },
+  indicators: {
+    tab: "Rates",
+    title: "Accident rates",
+    subtitle:
+      "The company's frequency, severity and incidence rates, from each month's hours worked and average headcount and the accidents with leave.",
+    year: "Year",
+    csv: "Export CSV",
+    ytd: (year: number) => `${String(year)} to date`,
+    last12: "Last 12 months",
+    frequency: "Frequency rate",
+    severity: "Severity rate",
+    incidence: "Incidence rate",
+    formulas: {
+      frequency: "Accidents with leave × 1,000,000 / hours worked",
+      severity: "Days of leave × 1,000 / hours worked",
+      incidence: "Accidents with leave × 100,000 / average headcount",
+    },
+    definitionsNote: {
+      es: "Definitions of Spain's INSST.",
+      latam: "Definitions of Spain's INSST: each country may define the rates differently.",
+    },
+    accidents: (n: number) =>
+      n === 1 ? "1 accident with leave" : `${String(n)} accidents with leave`,
+    lostDays: (n: number) => (n === 1 ? "1 day of leave" : `${String(n)} days of leave`),
+    missing: (n: number) =>
+      n === 1
+        ? "1 month has no hours or headcount: the rate leaves it out."
+        : `${String(n)} months have no hours or headcount: the rate leaves them out.`,
+    chartTitle: "By month",
+    series: { frequency: "Frequency rate", accidents: "Accidents with leave" },
+    monthsTitle: "Hours and headcount of each month",
+    monthsText:
+      "Each month's hours worked and average headcount, for the whole company or a department. Without them the rates aren't calculated.",
+    scope: "For",
+    wholeCompany: "The whole company",
+    columns: {
+      month: "Month",
+      hours: "Hours worked",
+      headcount: "Average headcount",
+      accidents: "Accidents with leave",
+      lostDays: "Days of leave",
+    },
+    save: (month: string) => `Save ${month}`,
+    saved: "Month saved.",
+    departmentsTitle: "By department",
+    departmentsText:
+      "Only for whoever sees health data: with few accidents, a department can point at a person.",
+    noDepartments: "No hours or accidents by department this year.",
+  },
   incidents: {
+    lostDays: {
+      title: "Days of leave",
+      label: "Days of leave",
+      hint: "Only the number of days, no medical data. It counts for the severity rate.",
+    },
     tab: "Accidents",
     title: "Accidents and incidents",
     subtitle:

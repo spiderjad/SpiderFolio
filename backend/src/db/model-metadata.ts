@@ -84,6 +84,7 @@ export const modelMetadata = {
       caeInfoDeliveries: "CaeInfoDelivery",
       caeWorkPermits: "CaeWorkPermit",
       caePortalAccesses: "CaePortalAccess",
+      safetyMonthStats: "SafetyMonthStat",
       caePortalSessions: "CaePortalSession",
       caePortalUploads: "CaePortalUpload",
       pageImages: "PageImage",
@@ -294,6 +295,7 @@ export const modelMetadata = {
     scope: "tenant",
     relations: { workspace: "Workspace", documents: "CaeDocument" },
   },
+  SafetyMonthStat: { scope: "tenant", relations: { workspace: "Workspace" } },
   CaePortalAccess: {
     scope: "tenant",
     relations: {

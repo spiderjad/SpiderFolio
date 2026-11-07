@@ -155,6 +155,8 @@ export interface Incident {
   status: IncidentStatus;
   closed: { at: string; by: { id: string; name: string } | null } | null;
   actions: { total: number; done: number };
+  /** Days of sick leave (a number only), for the severity rate. */
+  lostDays: number | null;
 }
 
 /** Open (just reported), under investigation, or closed. */
@@ -223,6 +225,69 @@ export interface PlanningFilters {
   from?: string | undefined;
   to?: string | undefined;
 }
+
+// ─── Accident rates ──────────────────────────────────────────────────────────────────────
+
+export interface RateFigures {
+  hours: number | null;
+  headcount: number | null;
+  accidents: number;
+  lostDays: number;
+  frequency: number | null;
+  severity: number | null;
+  incidence: number | null;
+}
+
+export interface RatePeriod extends RateFigures {
+  from: string;
+  to: string;
+  missing: number;
+}
+
+export interface Indicators {
+  year: number;
+  months: (RateFigures & { month: string })[];
+  ytd: RatePeriod;
+  last12: RatePeriod;
+  departments: { id: string; name: string; ytd: RatePeriod }[] | null;
+}
+
+export interface MonthStat {
+  month: string;
+  hoursWorked: number | null;
+  avgHeadcount: number | null;
+}
+
+export const indicatorsKeys = {
+  all: (slug: string) => ["w", slug, "safety", "incidents", "indicators"] as const,
+  year: (slug: string, year: number) =>
+    ["w", slug, "safety", "incidents", "indicators", year] as const,
+  stats: (slug: string, year: number, department: string | null) =>
+    ["w", slug, "safety", "incidents", "indicators", "stats", year, department] as const,
+};
+
+export const indicatorsApi = {
+  get: (slug: string, year: number) =>
+    api<{ indicators: Indicators }>(w(slug, `/safety/indicators?${listQuery({ year })}`)),
+  csv: (slug: string, year: number) =>
+    apiBlob(w(slug, `/safety/indicators/csv?${listQuery({ year })}`)),
+  stats: (slug: string, year: number, department: string | null) =>
+    api<{ items: MonthStat[] }>(
+      w(
+        slug,
+        `/safety/indicators/stats?${listQuery({ year, department: department ?? undefined })}`,
+      ),
+    ),
+  setStat: (
+    slug: string,
+    body: { month: string; departmentId: string | null; hoursWorked: number; avgHeadcount: number },
+  ) => api<{ stat: MonthStat }>(w(slug, "/safety/indicators/stats"), { method: "PUT", body }),
+  setLostDays: (slug: string, incidentId: string, lostDays: number | null) =>
+    api<{ incident: Incident }>(w(slug, `/safety/incidents/${incidentId}/lost-days`), {
+      method: "PUT",
+      body: { lostDays },
+    }),
+};
 
 export const planningKeys = {
   list: (slug: string, filters: PlanningFilters) =>

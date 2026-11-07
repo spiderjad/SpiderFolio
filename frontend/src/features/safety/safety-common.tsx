@@ -30,6 +30,8 @@ export function useSafety() {
   return {
     enabled,
     terms: texts.safety.terms[terms],
+    /** The country's terms: es (Spain) or latam. */
+    termsKey: terms,
     canManage: membership.capabilities.includes("safety.manage"),
     /** Health data (accidents, fitness): safety.health. */
     health: membership.capabilities.includes("safety.health"),
@@ -155,6 +157,11 @@ export function PpeTabs() {
       {canManage && (
         <NavLink to={`${base}/planificacion`} className={tab}>
           {texts.safety.planning.tab}
+        </NavLink>
+      )}
+      {(canManage || health) && (
+        <NavLink to={`${base}/indicadores`} className={tab}>
+          {texts.safety.indicators.tab}
         </NavLink>
       )}
       {health && (

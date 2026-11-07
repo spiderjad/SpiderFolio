@@ -217,10 +217,29 @@ Pedido del mantenedor: sumar lo que le falte al módulo. Fases nuevas, después 
    planificación crea origen «Otra» (las de EVR e inspección se crean desde su documento o registro);
    `DRILL` y `COMMITTEE` llegan con sus fases (fases 8 y 9); la pestaña va dentro del módulo, sin
    entrada nueva en el menú lateral.
-7. **Indicadores de siniestralidad**: horas trabajadas y plantilla media por mes (las carga quien
+7. **Indicadores de siniestralidad** (hecha): horas trabajadas y plantilla media por mes (las carga quien
    gestiona el módulo), e índices de frecuencia, gravedad e incidencia calculados con los accidentes con
    baja (días de baja: campo nuevo, opcional, del caso, sin datos médicos). Panel en Resumen y CSV. Sin
    Delt@ ni partes oficiales.
+   Migración `safety_indicators`: `SafetyMonthStat` (mes como primer día, `departmentId` opcional sin FK,
+   `hoursWorked`, `avgHeadcount`; único por mes y departamento, y un índice parcial para una sola fila de
+   empresa por mes) y `SafetyIncident.lostDays` (entero ≥ 0, CHECK). Fórmulas (INSST), en
+   `indicators.ts` (funciones puras): frecuencia = accidentes con baja × 10⁶ / horas; gravedad = días de
+   baja × 10³ / horas; incidencia = accidentes con baja × 10⁵ / plantilla media; sin denominador, el
+   índice es nulo (no 0). En `latam` la pantalla avisa que cada país puede definirlos de otra forma.
+   Periodos: cada mes del año, el año hasta el mes actual y los últimos 12 meses; los accidentes y sus
+   días cuentan en el mes en que ocurrieron; la plantilla de un periodo es la media de sus meses con dato;
+   los meses sin horas o plantilla quedan fuera y se avisa cuántos. Quién ve qué: las cifras de la
+   empresa (agregadas) las ven `safety.manage` y `safety.health`; **el desglose por departamento solo
+   `safety.health`** (regla elegida en vez de un mínimo de casos: con pocos accidentes un departamento
+   señala a una persona); cargar horas y plantilla, `safety.manage`; los días de baja, `safety.health`
+   desde el caso (solo en los «Accidente con baja»). API: `GET /safety/indicators?year`, `GET
+   /safety/indicators/csv?year`, `GET/PUT /safety/indicators/stats`, `PUT /safety/incidents/:id/lost-days`;
+   auditoría `safety.stats.update`, `safety.indicators.export`, `safety.incident.lost_days`. Pantalla:
+   pestaña «Indicadores» dentro del módulo (sin entrada en el menú lateral), con gráfico (Recharts, ya en la
+   app). Simplificaciones: la incidencia de un periodo no se anualiza (se calcula sobre la plantilla
+   media del periodo); la tabla de meses es fija (12 filas por año, sin paginar); sin Delt@ ni partes
+   oficiales.
 8. **Emergencias y simulacros**: el plan de autoprotección o de emergencia como documento controlado
    (tipo PEM, revisión anual), equipos de emergencia (personas con su función: jefe de emergencia,
    primeros auxilios, evacuación…, con formación exigida) y registro de simulacros (fecha, escenario,

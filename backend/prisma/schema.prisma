@@ -269,6 +269,7 @@ model Workspace {
   caeInfoDeliveries   CaeInfoDelivery[]
   caeWorkPermits      CaeWorkPermit[]
   caePortalAccesses   CaePortalAccess[]
+  safetyMonthStats    SafetyMonthStat[]
   caePortalSessions   CaePortalSession[]
   caePortalUploads    CaePortalUpload[]
   pageImages          PageImage[]
@@ -543,6 +544,8 @@ model SafetyIncident {
   status       String    @default("OPEN")
   closedAt     DateTime?
   closedById   String?
+  /// Days of sick leave (only the number: no medical data), for the severity index. safety.health.
+  lostDays     Int?
   createdAt    DateTime  @default(now())
 
   workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -604,7 +607,6 @@ model SafetyAction {
   @@index([workspaceId, dueOn, id])
   @@index([workspaceId, origin, dueOn])
 }
-
 
 /// A course (docs/spec/seguridad-salud.md, «Formación»): a controlled document whose reading counts as
 /// training, valid for some months. Who has to do it comes from the document's required readings.
@@ -2276,4 +2278,26 @@ model CaePortalUpload {
   access    CaePortalAccess @relation(fields: [accessId, workspaceId], references: [id, workspaceId], onDelete: NoAction)
 
   @@index([workspaceId, accessId])
+}
+
+/// Hours worked and average headcount of one month (docs/spec/seguridad-salud.md, «Indicadores de
+/// siniestralidad»), for the whole company (departmentId null) or one department: what the accident
+/// rates are calculated with. Entered by safety.manage.
+model SafetyMonthStat {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  /// The month's first day.
+  month        DateTime @db.Date
+  /// Null: the whole company (department; no FK).
+  departmentId String?
+  hoursWorked  Int
+  avgHeadcount Float
+  updatedById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, month, departmentId])
+  @@index([workspaceId, departmentId, month])
 }

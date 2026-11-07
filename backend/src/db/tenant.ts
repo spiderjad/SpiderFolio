@@ -178,6 +178,11 @@ export interface TenantDb {
     PrismaClient["caePortalUpload"],
     "findFirst" | "count" | "create" | "updateMany"
   >;
+  // Monthly hours and headcount: entered and corrected, never deleted.
+  safetyMonthStat: TenantDelegate<
+    PrismaClient["safetyMonthStat"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
@@ -331,6 +336,10 @@ const delegates = {
   caePortalUpload: {
     model: "CaePortalUpload",
     ops: ["findFirst", "count", "create", "updateMany"],
+  },
+  safetyMonthStat: {
+    model: "SafetyMonthStat",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },

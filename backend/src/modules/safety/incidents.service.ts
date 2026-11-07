@@ -124,6 +124,8 @@ export interface IncidentView {
   status: IncidentStatus;
   closed: { at: Date; by: { id: string; name: string } | null } | null;
   actions: { total: number; done: number };
+  /** Days of sick leave (a number only), for the severity index. */
+  lostDays: number | null;
 }
 
 const incidentSelect = {
@@ -139,6 +141,7 @@ const incidentSelect = {
   status: true,
   closedAt: true,
   closedById: true,
+  lostDays: true,
   actions: { select: { doneAt: true } },
 } as const;
 
@@ -181,6 +184,7 @@ async function incidentViews(ctx: AdminContext, rows: IncidentRow[]): Promise<In
       total: row.actions.length,
       done: row.actions.filter((action) => action.doneAt !== null).length,
     },
+    lostDays: row.lostDays,
   }));
 }
 
@@ -370,4 +374,23 @@ export async function incidentFormOf(
     select: { id: true, spaceId: true },
   });
   return node === null ? null : { formId: node.id, spaceId: node.spaceId };
+}
+
+/** The days of sick leave of an accident (only the number: no medical data). safety.health. */
+export async function setLostDays(
+  ctx: AdminContext,
+  id: string,
+  lostDays: number | null,
+): Promise<IncidentView> {
+  const row = await loadIncident(ctx, id);
+  await ctx.db.safetyIncident.update({ where: { id }, data: { lostDays }, select: { id: true } });
+  await auditAdmin(ctx, {
+    action: "safety.incident.lost_days",
+    entityType: "SafetyIncident",
+    entityId: id,
+    metadata: { before: row.lostDays, after: lostDays },
+  });
+  const [view] = await incidentViews(ctx, [await loadIncident(ctx, id)]);
+  if (view === undefined) throw notFound();
+  return view;
 }

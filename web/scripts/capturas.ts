@@ -38,6 +38,7 @@ import {
 } from "./demo-app.ts";
 import { BIAN_TEXT, BIAN_USAGE, bianRecording, fakeBian, fakeBianUsage } from "./bian-recording.ts";
 import { demoCae, demoCaeNames } from "./demo-cae.ts";
+import { demoIndicators } from "./demo-indicators.ts";
 import { demoPlanning } from "./demo-planning.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
@@ -429,6 +430,8 @@ async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
     db,
     responsibleEmails: [PEOPLE[locale].admin, PEOPLE[locale].reader],
   });
+  // The accident rates: hours, headcount, accidents with leave and their days.
+  await demoIndicators({ base: BASE, token: await ownerToken(locale), slug, locale, db });
   demoPlanningDone.add(locale);
 }
 
@@ -773,36 +776,43 @@ const CAPTURES: Capture[] = [
     path: (i) => `/app/${i.slug}/seguridad/planificacion?estado=all`,
     before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
+  {
+    // Accident rates (docs/spec/seguridad-salud.md, «Indicadores de siniestralidad»).
+    name: "indicadores",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/seguridad/indicadores`,
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
+  },
   // CAE, coordination of business activities (docs/spec/cae.md), with web/scripts/demo-cae.ts.
   {
     name: "cae-empresas",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/cae`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-empresa",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/cae/empresas/${caeIdsOf(locale).cleaning}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-empresa-incompleta",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/cae/empresas/${caeIdsOf(locale).cold}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-trabajador",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/cae/trabajadores/${caeIdsOf(locale).worker}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-tarjeta",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/cae/trabajadores/${caeIdsOf(locale).worker}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
     then: async (page, locale) => {
       await page.getByRole("button", { name: CAE_CARD[locale] }).click();
       await page.getByRole("dialog").locator("img").waitFor();
@@ -812,7 +822,7 @@ const CAPTURES: Capture[] = [
     name: "cae-revisar",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/cae/revisar`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-porteria-ok",
@@ -820,7 +830,7 @@ const CAPTURES: Capture[] = [
     viewport: { width: 375, height: 812 },
     path: (i, locale) =>
       `/app/${i.slug}/seguridad/cae/porteria?trabajador=${caeIdsOf(locale).worker}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-porteria-no",
@@ -828,31 +838,31 @@ const CAPTURES: Capture[] = [
     viewport: { width: 375, height: 812 },
     path: (i, locale) =>
       `/app/${i.slug}/seguridad/cae/porteria?trabajador=${caeIdsOf(locale).deniedWorker}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-accesos",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/cae/accesos`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-permisos",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/cae/permisos`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-permiso",
     who: "owner",
     path: (i, locale) => `/app/${i.slug}/seguridad/cae/permisos/${caeIdsOf(locale).permit}`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "cae-catalogo",
     who: "owner",
     path: (i) => `/app/${i.slug}/seguridad/cae/catalogo`,
-    before: ({ slug, locale }) => demoCaeOf(locale, slug),
+    before: ({ slug, locale }) => demoPlanningOf(locale, slug),
   },
   {
     name: "puestos",

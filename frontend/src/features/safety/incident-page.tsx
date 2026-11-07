@@ -12,7 +12,13 @@ import { Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/d
 import { FormField, Input } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
-import { incidentsApi, incidentsKeys, type IncidentStatus } from "./safety-api";
+import {
+  incidentsApi,
+  incidentsKeys,
+  indicatorsApi,
+  type Incident,
+  type IncidentStatus,
+} from "./safety-api";
 import { IncidentStatusBadge, usePeopleSource } from "./safety-common";
 import { texts } from "@/i18n";
 
@@ -187,6 +193,7 @@ export function IncidentPage() {
           {t.closedBy(incident.closed.by?.name ?? "", formatDateTime(incident.closed.at))}
         </Banner>
       )}
+      {incident.type === "leave" && <LostDaysCard incident={incident} />}
       <Card className="grid gap-3 p-4 sm:p-5">
         <CardTitle className="text-base">{t.actionsTitle}</CardTitle>
         {actions.length === 0 ? (
@@ -281,5 +288,60 @@ export function IncidentPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+/** The days of sick leave (only the number, never medical data): for the severity rate. */
+function LostDaysCard({ incident }: { incident: Incident }) {
+  const { workspaceSlug = "" } = useParams();
+  const queryClient = useQueryClient();
+  const [days, setDays] = useState(incident.lostDays === null ? "" : String(incident.lostDays));
+  const save = useMutation({
+    mutationFn: () => {
+      const value = Number.parseInt(days, 10);
+      return indicatorsApi.setLostDays(
+        workspaceSlug,
+        incident.id,
+        Number.isInteger(value) && value >= 0 ? value : null,
+      );
+    },
+    onSuccess: async () => {
+      toast.success(texts.admin.common.saved);
+      await queryClient.invalidateQueries({ queryKey: incidentsKeys.all(workspaceSlug) });
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  const current = incident.lostDays === null ? "" : String(incident.lostDays);
+  return (
+    <Card className="grid gap-3 p-4 sm:p-5">
+      <CardTitle className="text-base">{t.lostDays.title}</CardTitle>
+      <div className="flex flex-wrap items-end gap-2">
+        <FormField label={t.lostDays.label} hint={t.lostDays.hint} className="w-full max-w-xs">
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={days}
+              onChange={(event) => {
+                setDays(event.target.value.replace(/\D/gu, ""));
+              }}
+            />
+          )}
+        </FormField>
+        <Button
+          variant="outline"
+          disabled={save.isPending || days === current}
+          onClick={() => {
+            save.mutate();
+          }}
+        >
+          {texts.admin.common.save}
+        </Button>
+      </div>
+    </Card>
   );
 }

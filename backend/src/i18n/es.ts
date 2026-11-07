@@ -852,6 +852,22 @@ export const safetyTexts = {
       done: "Hecha",
     },
   },
+  indicators: {
+    messages: { notMonth: "El mes tiene que ser su primer día (AAAA-MM-01)." },
+    csv: {
+      fileName: (year: number) => `indicadores-siniestralidad-${String(year)}.csv`,
+      period: "Periodo",
+      hours: "Horas trabajadas",
+      headcount: "Plantilla media",
+      accidents: "Accidentes con baja",
+      lostDays: "Días de baja",
+      frequency: "Índice de frecuencia",
+      severity: "Índice de gravedad",
+      incidence: "Índice de incidencia",
+      ytd: (year: number) => `Año ${String(year)} hasta la fecha`,
+      last12: "Últimos 12 meses",
+    },
+  },
   training: {
     alreadyCourse: "Ese documento ya es un curso.",
     stillValid: "Tu formación de este curso sigue vigente.",

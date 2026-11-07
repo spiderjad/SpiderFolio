@@ -70,7 +70,61 @@ export const safetyTexts = {
     fromDocument: "Nueva medida preventiva",
     fromRecord: "Crear medida preventiva",
   },
+  indicators: {
+    tab: "Indicadores",
+    title: "Indicadores de siniestralidad",
+    subtitle:
+      "Los índices de frecuencia, gravedad e incidencia de la empresa, con las horas trabajadas y la plantilla media de cada mes y los accidentes con baja.",
+    year: "Año",
+    csv: "Exportar CSV",
+    ytd: (year: number) => `${String(year)} hasta la fecha`,
+    last12: "Últimos 12 meses",
+    frequency: "Índice de frecuencia",
+    severity: "Índice de gravedad",
+    incidence: "Índice de incidencia",
+    formulas: {
+      frequency: "Accidentes con baja × 1 000 000 / horas trabajadas",
+      severity: "Días de baja × 1 000 / horas trabajadas",
+      incidence: "Accidentes con baja × 100 000 / plantilla media",
+    },
+    definitionsNote: {
+      es: "Definiciones del INSST.",
+      latam: "Definiciones del INSST (España): cada país puede definir los índices de otra forma.",
+    },
+    accidents: (n: number) =>
+      n === 1 ? "1 accidente con baja" : `${String(n)} accidentes con baja`,
+    lostDays: (n: number) => (n === 1 ? "1 día de baja" : `${String(n)} días de baja`),
+    missing: (n: number) =>
+      n === 1
+        ? "Falta 1 mes con horas o plantilla: el índice no lo cuenta."
+        : `Faltan ${String(n)} meses con horas o plantilla: el índice no los cuenta.`,
+    chartTitle: "Por mes",
+    series: { frequency: "Índice de frecuencia", accidents: "Accidentes con baja" },
+    monthsTitle: "Horas y plantilla de cada mes",
+    monthsText:
+      "Las horas trabajadas y la plantilla media de cada mes, de toda la empresa o de un departamento. Sin ellas no se calculan los índices.",
+    scope: "Para",
+    wholeCompany: "Toda la empresa",
+    columns: {
+      month: "Mes",
+      hours: "Horas trabajadas",
+      headcount: "Plantilla media",
+      accidents: "Accidentes con baja",
+      lostDays: "Días de baja",
+    },
+    save: (month: string) => `Guardar ${month}`,
+    saved: "Mes guardado.",
+    departmentsTitle: "Por departamento",
+    departmentsText:
+      "Solo para quien ve los datos de salud: con pocos accidentes, un departamento puede señalar a una persona.",
+    noDepartments: "No hay horas ni accidentes por departamento este año.",
+  },
   incidents: {
+    lostDays: {
+      title: "Días de baja",
+      label: "Días de baja",
+      hint: "Solo el número de días, sin datos médicos. Cuenta para el índice de gravedad.",
+    },
     tab: "Accidentes",
     title: "Accidentes e incidentes",
     subtitle: "Datos de salud: los ves porque tienes «Datos de salud: accidentes y aptitud».",

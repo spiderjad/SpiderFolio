@@ -873,6 +873,22 @@ export const safetyTexts: Catalog<typeof Es.safetyTexts> = {
       done: "Done",
     },
   },
+  indicators: {
+    messages: { notMonth: "The month has to be its first day (YYYY-MM-01)." },
+    csv: {
+      fileName: (year: number) => `accident-rates-${String(year)}.csv`,
+      period: "Period",
+      hours: "Hours worked",
+      headcount: "Average headcount",
+      accidents: "Accidents with leave",
+      lostDays: "Days of leave",
+      frequency: "Frequency rate",
+      severity: "Severity rate",
+      incidence: "Incidence rate",
+      ytd: (year: number) => `${String(year)} to date`,
+      last12: "Last 12 months",
+    },
+  },
   training: {
     alreadyCourse: "That document is already a course.",
     stillValid: "Your training for this course is still valid.",

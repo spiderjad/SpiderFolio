@@ -211,6 +211,11 @@ export const routes = [
                     ],
                   },
                   {
+                    // Accident rates (safety.manage or safety.health; the page and the API check).
+                    path: "indicadores",
+                    lazy: page(() => import("@/features/safety/indicators-page"), "IndicatorsPage"),
+                  },
+                  {
                     path: "comunicar",
                     lazy: page(() => import("@/features/safety/report-page"), "ReportPage"),
                   },

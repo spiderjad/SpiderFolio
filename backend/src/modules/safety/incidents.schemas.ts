@@ -76,6 +76,25 @@ export const CompleteActionSchema = z.strictObject({
   note: z.string().trim().max(500).nullable().optional(),
 });
 
+/** The days of sick leave of an accident (a number only). */
+export const LostDaysSchema = z.strictObject({
+  lostDays: z.number().int().min(0).max(3650).nullable(),
+});
+
+const Year = z.coerce.number().int().min(2000).max(2100);
+
+export const IndicatorsQuerySchema = z.object({ year: Year });
+
+export const StatsQuerySchema = z.object({ year: Year, department: Id.optional() });
+
+/** One month's hours worked and average headcount (company, or a department). */
+export const MonthStatSchema = z.strictObject({
+  month: Day,
+  departmentId: Id.nullable().default(null),
+  hoursWorked: z.number().int().min(0).max(1_000_000_000),
+  avgHeadcount: z.number().min(0).max(10_000_000),
+});
+
 export type IncidentFilters = z.infer<typeof IncidentFiltersSchema>;
 export type ListIncidentsQuery = z.infer<typeof ListIncidentsQuerySchema>;
 export type ActionInput = z.infer<typeof ActionSchema>;

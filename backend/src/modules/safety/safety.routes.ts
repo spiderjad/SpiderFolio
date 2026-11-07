@@ -49,7 +49,12 @@ import {
   ListIncidentsQuerySchema,
   PlannedActionSchema,
   UpdateActionSchema,
+  IndicatorsQuerySchema,
+  LostDaysSchema,
+  MonthStatSchema,
+  StatsQuerySchema,
 } from "./incidents.schemas.ts";
+import { exportIndicatorsCsv, getIndicators, listStats, setStat } from "./indicators.service.ts";
 import {
   completeAction,
   createAction,
@@ -65,6 +70,7 @@ import {
   incidentFormOf,
   listIncidents,
   setIncidentStatus,
+  setLostDays,
 } from "./incidents.service.ts";
 import {
   CreateDeliverySchema,
@@ -336,6 +342,57 @@ export function safetyRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRoute
         const { id } = IdParamsSchema.parse(req.params);
         const action = await createAction(adminContextOf(req), id, ActionSchema.parse(req.body));
         res.status(201).json({ action });
+      },
+    },
+    // Accident rates (safety.manage or safety.health; by department, only safety.health).
+    {
+      method: "get",
+      path: "/safety/indicators",
+      handler: async (req, res) => {
+        const { year } = IndicatorsQuerySchema.parse(req.query);
+        res.json({ indicators: await getIndicators(adminContextOf(req), year) });
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/indicators/csv",
+      guards: [
+        sensitiveRateLimit(deps, { name: "safety-csv", windowMs: HOUR, limit: 30, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const { year } = IndicatorsQuerySchema.parse(req.query);
+        const file = await exportIndicatorsCsv(adminContextOf(req), year);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="indicadores.csv"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(file.body);
+      },
+    },
+    {
+      method: "get",
+      path: "/safety/indicators/stats",
+      handler: async (req, res) => {
+        const { year, department } = StatsQuerySchema.parse(req.query);
+        res.json({ items: await listStats(adminContextOf(req), year, department ?? null) });
+      },
+    },
+    {
+      method: "put",
+      path: "/safety/indicators/stats",
+      handler: async (req, res) => {
+        res.json({ stat: await setStat(adminContextOf(req), MonthStatSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "put",
+      path: "/safety/incidents/:id/lost-days",
+      handler: async (req, res) => {
+        const { id } = IdParamsSchema.parse(req.params);
+        const { lostDays } = LostDaysSchema.parse(req.body);
+        res.json({ incident: await setLostDays(adminContextOf(req), id, lostDays) });
       },
     },
     // The planning of the preventive activity (safety.manage; the service checks).
