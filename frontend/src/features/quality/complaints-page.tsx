@@ -30,6 +30,7 @@ import {
   type ComplaintStatus,
 } from "./quality-api";
 import { todayDay, useQuality, usePeopleSource } from "./quality-common";
+import { LotPicker } from "./lot-picker";
 import { locale, texts } from "@/i18n";
 
 const t = texts.quality.complaints;
@@ -69,6 +70,7 @@ export function ComplaintDialog({ onClose }: { onClose: () => void }) {
     contact: "",
     product: "",
     lot: "",
+    traced: null as { id: string; code: string } | null,
     category: "QUALITY" as ComplaintCategory,
     description: "",
     receivedOn: todayDay(),
@@ -86,6 +88,7 @@ export function ComplaintDialog({ onClose }: { onClose: () => void }) {
         contact: blank(state.contact),
         product: state.product.trim(),
         lot: blank(state.lot),
+        lotId: state.traced?.id ?? null,
         category: state.category,
         description: state.description.trim(),
         receivedOn: state.receivedOn,
@@ -168,6 +171,12 @@ export function ComplaintDialog({ onClose }: { onClose: () => void }) {
           {text("product", f.product, 160)}
           {text("lot", f.lot, 120)}
         </div>
+        <LotPicker
+          value={state.traced}
+          onChange={(picked) => {
+            set(picked === null ? { traced: null } : { traced: picked, lot: picked.code });
+          }}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label={f.category}>
             {(control) => (

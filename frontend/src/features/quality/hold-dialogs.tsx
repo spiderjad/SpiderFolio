@@ -13,6 +13,7 @@ import { SignaturePad } from "@/components/signature-pad";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { dataUrlOf } from "@/features/safety/cae-common";
 import { HOLD_DECISIONS, haccpApi, qualityKeys, type Hold } from "./quality-api";
+import { LotPicker } from "./lot-picker";
 import { texts } from "@/i18n";
 
 const t = texts.quality.holds;
@@ -22,6 +23,7 @@ export function HoldDialog({ ncId, onClose }: { ncId: string | null; onClose: ()
   const queryClient = useQueryClient();
   const [product, setProduct] = useState("");
   const [lot, setLot] = useState("");
+  const [traced, setTraced] = useState<{ id: string; code: string } | null>(null);
   const [quantity, setQuantity] = useState("");
   const [location, setLocation] = useState("");
   const [reason, setReason] = useState("");
@@ -32,6 +34,7 @@ export function HoldDialog({ ncId, onClose }: { ncId: string | null; onClose: ()
         ncId,
         product: product.trim(),
         lot: blank(lot),
+        lotId: traced?.id ?? null,
         quantity: blank(quantity),
         location: blank(location),
         reason: reason.trim(),
@@ -119,6 +122,13 @@ export function HoldDialog({ ncId, onClose }: { ncId: string | null; onClose: ()
             )}
           </FormField>
         </div>
+        <LotPicker
+          value={traced}
+          onChange={(picked) => {
+            setTraced(picked);
+            if (picked !== null) setLot(picked.code);
+          }}
+        />
         <FormField label={t.form.reason}>
           {(control) => (
             <Textarea

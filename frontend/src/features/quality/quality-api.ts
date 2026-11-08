@@ -336,6 +336,7 @@ export interface Hold {
   nc: { id: string; code: string; title: string } | null;
   product: string;
   lot: string | null;
+  lotId: string | null;
   quantity: string | null;
   location: string | null;
   reason: string;
@@ -350,6 +351,7 @@ export interface HoldInput {
   ncId: string | null;
   product: string;
   lot: string | null;
+  lotId: string | null;
   quantity: string | null;
   location: string | null;
   reason: string;
@@ -669,6 +671,7 @@ export interface Complaint {
   contact: string | null;
   product: string;
   lot: string | null;
+  lotId: string | null;
   category: ComplaintCategory;
   description: string;
   receivedOn: string;
@@ -712,6 +715,7 @@ export interface Crisis {
     date: string;
     product: string;
     lot: string;
+    lotId: string | null;
     direction: "BACKWARD" | "FORWARD" | "BOTH";
     minutes: number;
     recoveredPercent: number | null;
@@ -752,6 +756,7 @@ export const complaintsApi = {
       contact: string | null;
       product: string;
       lot: string | null;
+      lotId: string | null;
       category: ComplaintCategory;
       description: string;
       receivedOn: string;
@@ -808,6 +813,7 @@ export const complaintsApi = {
       date: string;
       product: string;
       lot: string;
+      lotId: string | null;
       direction: "BACKWARD" | "FORWARD" | "BOTH";
       minutes: number;
       recoveredPercent: number | null;

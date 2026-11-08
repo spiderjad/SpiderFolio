@@ -217,7 +217,21 @@ function ContactDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-function TestDialog({ onClose }: { onClose: () => void }) {
+/** What a trace already knows when it opens the test (docs/spec/calidad.md, «Fase 7»). */
+export interface TestStart {
+  product: string;
+  lot: { id: string; code: string };
+  direction: "BACKWARD" | "FORWARD";
+  minutes: number;
+}
+
+export function TestDialog({
+  start,
+  onClose,
+}: {
+  start?: TestStart | undefined;
+  onClose: () => void;
+}) {
   const { workspaceSlug = "" } = useParams();
   const f = t.tests.form;
   const kinds = useStaticSource(
@@ -231,10 +245,10 @@ function TestDialog({ onClose }: { onClose: () => void }) {
   const [state, setState] = useState({
     kind: "DRILL" as (typeof KINDS)[number],
     date: todayDay(),
-    product: "",
-    lot: "",
-    direction: "BOTH" as (typeof DIRECTIONS)[number],
-    minutes: "",
+    product: start?.product ?? "",
+    lot: start?.lot.code ?? "",
+    direction: (start?.direction ?? "BOTH"),
+    minutes: start === undefined ? "" : String(start.minutes),
     recovered: "",
     result: "",
   });
@@ -245,6 +259,7 @@ function TestDialog({ onClose }: { onClose: () => void }) {
         date: state.date,
         product: state.product.trim(),
         lot: state.lot.trim(),
+        lotId: start !== undefined && state.lot.trim() === start.lot.code ? start.lot.id : null,
         direction: state.direction,
         minutes: Number(state.minutes),
         recoveredPercent: state.recovered === "" ? null : Number(state.recovered),

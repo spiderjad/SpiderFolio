@@ -2,6 +2,7 @@
 // only appears with something to show the person; Quality stays defined but hidden until its module
 // exists. Routes don't change: the active area is deduced from the address.
 import {
+  Route,
   GitPullRequestArrow,
   HeartHandshake,
   AlertTriangle,
@@ -156,6 +157,7 @@ function qualityItems(slug: string, person: Membership, context: AreaContext): A
     items.push({ to: `${base}/prerrequisitos`, label: q.prps, icon: SprayCan });
     items.push({ to: `${base}/plan-analitico`, label: q.sampling, icon: FlaskConical });
     items.push({ to: `${base}/productos`, label: q.products, icon: Package });
+    items.push({ to: `${base}/trazabilidad`, label: q.traceability, icon: Route });
     items.push({ to: `${base}/cultura`, label: q.culture, icon: HeartHandshake });
     items.push({ to: `${base}/cambios`, label: q.changes, icon: GitPullRequestArrow });
   }

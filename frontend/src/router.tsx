@@ -244,6 +244,17 @@ export const routes = [
                     lazy: page(() => import("@/features/quality/change-page"), "ChangePage"),
                   },
                   {
+                    path: "trazabilidad",
+                    lazy: page(
+                      () => import("@/features/quality/traceability-page"),
+                      "TraceabilityPage",
+                    ),
+                  },
+                  {
+                    path: "trazabilidad/:lotId",
+                    lazy: page(() => import("@/features/quality/lot-page"), "LotPage"),
+                  },
+                  {
                     path: "mis-acciones",
                     lazy: page(
                       () => import("@/features/quality/actions-page"),
