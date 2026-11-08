@@ -190,7 +190,7 @@ export function QualitySummaryPage() {
             </div>
           </Section>
           <Section title={b.culture}>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-3">
               <Stat
                 label={b.overdueActivities}
                 value={board.culture.overdueActivities}
@@ -200,23 +200,25 @@ export function QualitySummaryPage() {
               <Stat
                 label={b.lastSurvey}
                 value={
-                  board.culture.lastSurvey?.participation === null ||
-                  board.culture.lastSurvey === null
+                  board.culture.lastSurvey === null || board.culture.lastSurvey.participation === null
                     ? b.noSurvey
-                    : `${formatNumber(board.culture.lastSurvey.participation)} %`
+                    : `${String(Math.round(board.culture.lastSurvey.participation))} %`
                 }
                 to={`${base}/cultura`}
               />
               <Stat
                 label={b.lastSurveyAverage}
                 value={
-                  board.culture.lastSurvey?.average === null ||
-                  board.culture.lastSurvey === null
+                  board.culture.lastSurvey === null || board.culture.lastSurvey.average === null
                     ? b.noSurvey
-                    : formatNumber(board.culture.lastSurvey.average)
+                    : formatNumber(Math.round(board.culture.lastSurvey.average * 10) / 10)
                 }
                 to={`${base}/cultura`}
               />
+            </div>
+          </Section>
+          <Section title={b.changes}>
+            <div className="grid gap-3 sm:grid-cols-2">
               <Stat
                 label={b.proposedChanges}
                 value={board.changes.proposed}

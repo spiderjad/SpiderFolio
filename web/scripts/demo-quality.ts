@@ -2037,9 +2037,10 @@ const CULTURE = {
 /** Mostly agreed, weaker on time and on hearing back after reporting (statements 7 and 9). */
 export function cultureScores(index: number): number[] {
   const spread = [4, 5, 4, 3, 5, 4, 2, 4, 5];
+  const bias = [0, 1, 0, -1, 0, 0, -1, 1, -1, 0];
   return Array.from({ length: 10 }, (_, question) => {
-    const score = spread[(index * 4 + question * 7) % spread.length] ?? 4;
-    return Math.max(1, question === 6 || question === 8 ? score - 1 : score);
+    const score = (spread[(index * 4 + question * 7) % spread.length] ?? 4) + (bias[question] ?? 0);
+    return Math.min(5, Math.max(1, score));
   });
 }
 
@@ -2091,13 +2092,18 @@ export async function demoCulture(
   });
   // The answers of the demo's other people, written straight to the tables (only the owner and one
   // member have a session here). The owner leaves it unanswered, so it shows in their «Mis pendientes».
-  const ownerId = idOf(0);
-  const voters = members.items.filter((item) => item.id !== ownerId).slice(0, 9);
   const { rows: ws } = await target.db.query<{ id: string }>(
     `SELECT id FROM "Workspace" WHERE slug = $1`,
     [target.slug],
   );
   const workspaceId = ws[0]?.id;
+  // Everyone who can answer (active, not a guest) but the owner, who signs in for the screenshots.
+  const { rows: voters } = await target.db.query<{ id: string }>(
+    `SELECT m.id FROM "Membership" m JOIN "Role" r ON r.id = m."roleId" JOIN "Workspace" w ON w.id = m."workspaceId"
+      WHERE w.slug = $1 AND m.status = 'ACTIVE' AND r.base NOT IN ('GUEST', 'OWNER')
+      ORDER BY m."createdAt" LIMIT 9`,
+    [target.slug],
+  );
   if (workspaceId !== undefined) {
     for (const [index, voter] of voters.entries()) {
       const scores = cultureScores(index);

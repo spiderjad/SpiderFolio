@@ -493,7 +493,7 @@ function ResultsDialog({ survey }: { survey: SurveySummary }) {
             <div className="rounded-xl border border-border p-3">
               <dt className="text-xs text-muted-foreground">{r.participation}</dt>
               <dd className="mt-1 text-xl font-semibold tabular-nums">
-                {data.participation === null ? "—" : `${formatNumber(data.participation)} %`}
+                {data.participation === null ? "—" : `${String(Math.round(data.participation))} %`}
               </dd>
               <dd className="text-xs text-muted-foreground">
                 {r.participationValue(data.answers, data.eligible)}
@@ -502,7 +502,7 @@ function ResultsDialog({ survey }: { survey: SurveySummary }) {
             <div className="rounded-xl border border-border p-3">
               <dt className="text-xs text-muted-foreground">{r.average}</dt>
               <dd className="mt-1 text-xl font-semibold tabular-nums">
-                {data.average === null ? "—" : formatNumber(data.average)}
+                {data.average === null ? "—" : formatNumber(Math.round(data.average * 10) / 10)}
               </dd>
             </div>
           </dl>
@@ -521,7 +521,7 @@ function ResultsDialog({ survey }: { survey: SurveySummary }) {
                         {String(index + 1)}. {question.text}
                       </span>
                       <span className="shrink-0 font-semibold tabular-nums">
-                        {formatNumber(question.average)}
+                        {formatNumber(Math.round(question.average * 10) / 10)}
                       </span>
                     </div>
                     <Distribution counts={question.distribution} />
