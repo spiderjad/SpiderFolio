@@ -16,7 +16,16 @@ export const ConvertSchema = z.strictObject({
     .regex(/^[A-Z0-9]+$/u),
   /** Departamento responsable; sin él, el del espacio (o ninguno). */
   ownerDepartmentId: Id.nullable().optional(),
+  /** External types only: who issues it and its own reference. */
+  issuer: z.string().trim().max(120).optional(),
+  externalRef: z.string().trim().max(120).optional(),
 });
+/** An external document's issuer and reference (empty clears it). */
+export const ExternalInfoSchema = z.strictObject({
+  issuer: z.string().trim().max(120),
+  externalRef: z.string().trim().max(120),
+});
+export type ExternalInfoInput = z.infer<typeof ExternalInfoSchema>;
 export const OwnerDepartmentSchema = z.strictObject({ ownerDepartmentId: Id.nullable() });
 
 export type ConvertInput = z.infer<typeof ConvertSchema>;
@@ -54,6 +63,8 @@ export type RequirementInput = z.infer<typeof RequirementSchema>;
 export const PublishSchema = z.strictObject({
   requestReading: z.boolean().optional(),
   reason: z.string().trim().max(500).optional(),
+  /** External documents: the issuer's edition or date of this version. */
+  edition: z.string().trim().max(60).optional(),
 });
 export type PublishInput = z.infer<typeof PublishSchema>;
 

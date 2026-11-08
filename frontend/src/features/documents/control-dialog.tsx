@@ -83,6 +83,8 @@ function ControlBody({ target }: { target: ControlTarget }) {
   });
   const [docType, setDocType] = useState("PRC");
   const [department, setDepartment] = useState<{ id: string; label: string } | null>(null);
+  const [issuer, setIssuer] = useState("");
+  const [externalRef, setExternalRef] = useState("");
   const departments = useDepartmentSource(workspaceSlug);
   const [limit, setLimit] = useState<ReturnType<typeof limitReachedOf>>(null);
   // Todo lo que cambia un documento invalida lo del workspace (páginas, archivos, bandeja).
@@ -92,6 +94,9 @@ function ControlBody({ target }: { target: ControlTarget }) {
       documentsApi.convert(workspaceSlug, target.id, {
         docType,
         ...(department === null ? {} : { ownerDepartmentId: department.id }),
+        ...(selectedType?.external === true
+          ? { issuer: issuer.trim(), externalRef: externalRef.trim() }
+          : {}),
       }),
     onSuccess: async () => {
       toast.success(t.converted);
@@ -194,7 +199,39 @@ function ControlBody({ target }: { target: ControlTarget }) {
                 )}
               </p>
             )}
-            <p className="text-xs text-muted-foreground">{t.dialog.draftNote}</p>
+            {selectedType?.external === true && (
+              <FormGrid columns={2}>
+                <FormField label={t.dialog.issuer}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      maxLength={120}
+                      placeholder={t.dialog.issuerPlaceholder}
+                      value={issuer}
+                      onChange={(event) => {
+                        setIssuer(event.target.value);
+                      }}
+                    />
+                  )}
+                </FormField>
+                <FormField label={t.dialog.externalRef}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      maxLength={120}
+                      placeholder={t.dialog.externalRefPlaceholder}
+                      value={externalRef}
+                      onChange={(event) => {
+                        setExternalRef(event.target.value);
+                      }}
+                    />
+                  )}
+                </FormField>
+              </FormGrid>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {selectedType?.external === true ? t.dialog.externalNote : t.dialog.draftNote}
+            </p>
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">{t.dialog.notControlled}</p>
@@ -296,6 +333,14 @@ function ControlledPanel({
           </div>
         )}
       </dl>
+      {controlled.external !== null && (
+        <ExternalInfo
+          nodeId={nodeId}
+          external={controlled.external}
+          canEdit={actions.canEditExternal}
+          onChanged={onChanged}
+        />
+      )}
       {controlled.retired !== null && (
         <div className="v-banner v-banner--warning grid gap-1 text-sm">
           <p className="font-medium">
@@ -359,7 +404,7 @@ function ControlledPanel({
                 setPublishing(true);
               }}
             >
-              {t.actions.publish}
+              {controlled.external === null ? t.actions.publish : t.actions.register}
             </Button>
           )}
           {actions.canWithdraw && (
@@ -420,6 +465,9 @@ function ControlledPanel({
               <div className="flex items-center gap-3">
                 <span className="w-10 shrink-0 font-medium">{`v${String(version.version)}`}</span>
                 <StatusBadge status={version.status} />
+                {version.edition !== null && (
+                  <Badge tone="neutral">{t.dialog.edition(version.edition)}</Badge>
+                )}
                 {version.minorChange && (
                   <Badge tone="neutral" title={t.history.minorChangeHint}>
                     {t.history.minorChange}
@@ -527,6 +575,7 @@ function ControlledPanel({
       {publishing && (
         <PublishDialog
           hasPrevious={controlled.publishedVersion !== null}
+          external={controlled.external !== null}
           onClose={() => {
             setPublishing(false);
           }}
@@ -542,16 +591,35 @@ function ControlledPanel({
 
 function PublishDialog({
   hasPrevious,
+  external,
   onClose,
   onConfirm,
 }: {
   hasPrevious: boolean;
+  /** An external document: registered in force without approval, with the issuer's edition. */
+  external: boolean;
   onClose: () => void;
-  onConfirm: (body: { requestReading: boolean; reason?: string }) => Promise<void>;
+  onConfirm: (body: {
+    requestReading: boolean;
+    reason?: string;
+    edition?: string;
+  }) => Promise<void>;
 }) {
-  const t = texts.documents.publish;
+  const base = texts.documents.publish;
+  const ext = texts.documents.registerExternal;
+  const t = external
+    ? {
+        ...base,
+        title: ext.title,
+        textFirst: ext.textFirst,
+        text: ext.text,
+        action: ext.action,
+        pending: ext.pending,
+      }
+    : base;
   const [request, setRequest] = useState(true);
   const [reason, setReason] = useState("");
+  const [edition, setEdition] = useState("");
   const [pending, setPending] = useState(false);
   return (
     <Dialog
@@ -576,6 +644,7 @@ function PublishDialog({
                 void onConfirm({
                   requestReading: request,
                   ...(trimmed === "" ? {} : { reason: trimmed }),
+                  ...(external && edition.trim() !== "" ? { edition: edition.trim() } : {}),
                 }).catch(() => {
                   setPending(false);
                 });
@@ -586,6 +655,20 @@ function PublishDialog({
           </>
         }
       >
+        {external && (
+          <FormField label={ext.edition} hint={ext.editionHint} className="mb-4">
+            {(control) => (
+              <Input
+                {...control}
+                maxLength={60}
+                value={edition}
+                onChange={(event) => {
+                  setEdition(event.target.value);
+                }}
+              />
+            )}
+          </FormField>
+        )}
         {hasPrevious && (
           <FormGrid>
             <Checkbox
@@ -1074,5 +1157,116 @@ function RetireDialog({
         </FormField>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** An external document's issuer and reference; whoever manages it can change them. */
+function ExternalInfo({
+  nodeId,
+  external,
+  canEdit,
+  onChanged,
+}: {
+  nodeId: string;
+  external: { issuer: string | null; externalRef: string | null };
+  canEdit: boolean;
+  onChanged: () => Promise<unknown>;
+}) {
+  const t = texts.documents.dialog;
+  const { workspaceSlug = "" } = useParams();
+  const [editing, setEditing] = useState(false);
+  const [issuer, setIssuer] = useState(external.issuer ?? "");
+  const [externalRef, setExternalRef] = useState(external.externalRef ?? "");
+  const save = useMutation({
+    mutationFn: () =>
+      documentsApi.setExternal(workspaceSlug, nodeId, {
+        issuer: issuer.trim(),
+        externalRef: externalRef.trim(),
+      }),
+    onSuccess: async () => {
+      toast.success(t.externalSaved);
+      setEditing(false);
+      await onChanged();
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
+  if (!editing) {
+    return (
+      <div className="grid gap-1 rounded-md border border-border p-3 text-sm">
+        <p className="font-medium">{t.externalInfo}</p>
+        <p>
+          <span className="text-muted-foreground">{t.issuer}:</span> {external.issuer ?? "—"}
+        </p>
+        <p>
+          <span className="text-muted-foreground">{t.externalRef}:</span>{" "}
+          {external.externalRef ?? "—"}
+        </p>
+        {canEdit && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="justify-self-start"
+            onClick={() => {
+              setEditing(true);
+            }}
+          >
+            {t.externalEdit}
+          </Button>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-3 rounded-md border border-border p-3">
+      <FormGrid columns={2}>
+        <FormField label={t.issuer}>
+          {(control) => (
+            <Input
+              {...control}
+              maxLength={120}
+              value={issuer}
+              onChange={(event) => {
+                setIssuer(event.target.value);
+              }}
+            />
+          )}
+        </FormField>
+        <FormField label={t.externalRef}>
+          {(control) => (
+            <Input
+              {...control}
+              maxLength={120}
+              value={externalRef}
+              onChange={(event) => {
+                setExternalRef(event.target.value);
+              }}
+            />
+          )}
+        </FormField>
+      </FormGrid>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={save.isPending}
+          onClick={() => {
+            setEditing(false);
+          }}
+        >
+          {texts.common.cancel}
+        </Button>
+        <Button
+          size="sm"
+          disabled={save.isPending}
+          onClick={() => {
+            save.mutate();
+          }}
+        >
+          {t.externalSave}
+        </Button>
+      </div>
+    </div>
   );
 }

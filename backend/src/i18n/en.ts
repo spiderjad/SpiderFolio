@@ -362,7 +362,10 @@ export const memberMessages: Catalog<typeof Es.memberMessages> = {
 
 /** Spaces, folders and files (module 3). */
 export const contentMessages: Catalog<typeof Es.contentMessages> = {
-  retireBusy: "There's a version in review or approved and not published: withdraw or decide it before retiring.",
+  externalOnly: "Only external documents have an issuer and a reference.",
+  externalNoReview: "An external document doesn't go through approval: register it as in force.",
+  retireBusy:
+    "There's a version in review or approved and not published: withdraw or decide it before retiring.",
   retireNothing: "The document has no version in force to retire.",
   controlledPdfUnavailable:
     "This server doesn't generate the PDF for controlled pages (Gotenberg is missing). " +
@@ -735,6 +738,7 @@ export const defaultDataTexts: Catalog<typeof Es.defaultDataTexts> = {
     FOR: "Form",
     POL: "Policy",
     MAN: "Manual",
+    EXT: "External document",
   },
 };
 
@@ -1888,6 +1892,7 @@ export const masterListTexts: Catalog<typeof Es.masterListTexts> = {
     "Responsible department",
     "Next review",
     "Space",
+    "External reference",
   ],
   statuses: {
     DRAFT: "Draft",

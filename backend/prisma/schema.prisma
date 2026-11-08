@@ -1553,18 +1553,21 @@ enum DocStatus {
 
 /// Tipo de documento controlado (PRC, INS, FOR, POL, MAN…): numeración y regla de aprobadores.
 model DocumentType {
-  id           String @id @default(cuid())
+  id           String  @id @default(cuid())
   workspaceId  String
   code         String // PRC, INS…
   name         String
   prefix       String
-  padding      Int    @default(3)
+  padding      Int     @default(3)
   /// Próximo número; se toma con un UPDATE (sin saltos ni repetidos).
-  nextNumber   Int    @default(1)
-  reviewMonths Int    @default(12)
+  nextNumber   Int     @default(1)
+  reviewMonths Int     @default(12)
   /// Quiénes aprueban por defecto: OWNER_HEAD = jefe del departamento responsable.
-  approverRule String @default("OWNER_HEAD")
-  position     Int    @default(0)
+  approverRule String  @default("OWNER_HEAD")
+  position     Int     @default(0)
+  /// External documents (standards, legislation, customers' documents): registered in force by whoever
+  /// manages them, without the approval cycle. The default EXT type is one.
+  external     Boolean @default(false)
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -1583,6 +1586,9 @@ model ControlledDocument {
   reviewDueAt       DateTime?
   /// Número de la versión vigente; null si todavía no hay ninguna publicada.
   publishedVersion  Int?
+  /// External document: who issues it (ISO, BOE, a customer…) and its own reference (ISO 9001).
+  issuer            String?
+  externalRef       String?
   /// Retired without a replacement (docs/plans/pendientes.md, controlled documents): its last version is obsolete and
   /// it has no version in force (publishedVersion null). Publishing a new version brings it back.
   retiredAt         DateTime?
@@ -1610,6 +1616,8 @@ model DocumentVersion {
   version       Int
   status        DocStatus @default(DRAFT)
   title         String
+  /// External document: the issuer's edition or date of this version (2015, Rev. 3…).
+  edition       String?
   changeNote    String?
   /// Página: instantánea del texto al enviar a revisión (null mientras es borrador).
   content       Json?

@@ -340,7 +340,10 @@ export const memberMessages = {
 
 /** Espacios, carpetas y archivos (módulo 3). */
 export const contentMessages = {
-  retireBusy: "Hay una versión en revisión o aprobada sin publicar: retírala o decídela antes de dar de baja.",
+  externalOnly: "Solo los documentos externos llevan emisor y referencia.",
+  externalNoReview: "Un documento externo no pasa por aprobación: regístralo como vigente.",
+  retireBusy:
+    "Hay una versión en revisión o aprobada sin publicar: retírala o decídela antes de dar de baja.",
   retireNothing: "El documento no tiene una versión vigente para dar de baja.",
   controlledPdfUnavailable:
     "Este servidor no genera el PDF de las páginas controladas (falta Gotenberg). Quien administra la instalación puede activarlo.",
@@ -711,6 +714,7 @@ export const defaultDataTexts = {
     FOR: "Formulario",
     POL: "Política",
     MAN: "Manual",
+    EXT: "Documento externo",
   },
 } as const;
 
@@ -1893,6 +1897,7 @@ export const masterListTexts = {
     "Departamento responsable",
     "Próxima revisión",
     "Espacio",
+    "Referencia externa",
   ],
   statuses: {
     DRAFT: "Borrador",

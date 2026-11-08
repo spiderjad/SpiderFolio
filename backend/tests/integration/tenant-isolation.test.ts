@@ -1286,6 +1286,12 @@ const cases: IsolationCase[] = [
     body: { reason: "Ajeno" },
   },
   {
+    method: "put",
+    path: "/nodes/:id/controlled/external",
+    url: (ids) => `/nodes/${ids.nodeId}/controlled/external`,
+    body: { issuer: "Ajeno", externalRef: "Ajeno" },
+  },
+  {
     method: "post",
     path: "/nodes/:id/controlled/publish",
     url: (ids) => `/nodes/${ids.nodeId}/controlled/publish`,

@@ -5,6 +5,7 @@ import { sharingDepsOf } from "../access/sharing.service.ts";
 import {
   AccessGapsQuerySchema,
   PublishSchema,
+  ExternalInfoSchema,
   RetireSchema,
   ApproversQuerySchema,
   GrantReadingAccessSchema,
@@ -49,7 +50,12 @@ import { recentDocuments } from "./recent.service.ts";
 import { documentNews } from "./news.service.ts";
 import { downloadControlledPdf } from "./pdf.service.ts";
 import { compareSinceReview, compareVersions } from "./compare.service.ts";
-import { getControlled, listDocumentTypes, makeControlled } from "./documents.service.ts";
+import {
+  getControlled,
+  listDocumentTypes,
+  makeControlled,
+  setExternalInfo,
+} from "./documents.service.ts";
 
 export function documentRoutes(deps: AppDeps): TenantRoute[] {
   return [
@@ -86,6 +92,16 @@ export function documentRoutes(deps: AppDeps): TenantRoute[] {
         const { ownerDepartmentId } = OwnerDepartmentSchema.parse(req.body);
         await setOwnerDepartment(adminContextOf(req), id, ownerDepartmentId);
         res.status(204).end();
+      },
+    },
+    {
+      method: "put",
+      path: "/nodes/:id/controlled/external",
+      handler: async (req, res) => {
+        const { id } = DocumentNodeParamsSchema.parse(req.params);
+        res.json(
+          await setExternalInfo(adminContextOf(req), id, ExternalInfoSchema.parse(req.body)),
+        );
       },
     },
     {

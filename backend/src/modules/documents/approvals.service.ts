@@ -53,6 +53,15 @@ async function controlledNode(ctx: AdminContext, nodeId: string) {
   return { node, controlled };
 }
 
+/** External documents (standards, legislation…) skip the approval cycle. */
+async function isExternal(ctx: AdminContext, docType: string): Promise<boolean> {
+  const type = await ctx.db.documentType.findFirst({
+    where: { code: docType },
+    select: { external: true },
+  });
+  return type?.external === true;
+}
+
 async function allowSelfApproval(ctx: AdminContext): Promise<boolean> {
   const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
   return readAllowSelfApproval(workspace?.settings);
@@ -146,6 +155,9 @@ export async function submitForReview(
   const { node, controlled } = await controlledNode(ctx, nodeId);
   requireLevel(await levelOfNode(ctx, nodeId), "EDIT");
   await assertSpaceWritable(ctx, node.spaceId);
+  if (await isExternal(ctx, controlled.docType)) {
+    throw new AppError("CONFLICT", { message: contentMessages.externalNoReview });
+  }
   const latest = await latestVersion(ctx.db, nodeId);
   if (latest?.status !== "DRAFT") {
     throw new AppError("CONFLICT", { message: contentMessages.nothingToSubmit });
@@ -455,12 +467,23 @@ export async function publish(
     orderBy: { version: "desc" },
     select: { id: true, version: true, status: true },
   });
-  if (latest?.status !== "APPROVED") {
-    throw new AppError("CONFLICT", { message: contentMessages.notApproved });
+  // An external document is registered in force straight from its draft by whoever manages it.
+  const external = await isExternal(ctx, controlled.docType);
+  if (external) {
+    if (latest?.status !== "DRAFT") {
+      throw new AppError("CONFLICT", { message: contentMessages.notApproved });
+    }
+    if (!atLeast(requireLevel(await levelOfNode(ctx, nodeId), "VIEW"), "MANAGE")) throw forbidden();
+  } else {
+    if (latest?.status !== "APPROVED") {
+      throw new AppError("CONFLICT", { message: contentMessages.notApproved });
+    }
+    if (!(await canApprove(ctx, nodeId, controlled.ownerDepartmentId, ctx.tenant.membershipId))) {
+      throw forbidden();
+    }
   }
-  if (!(await canApprove(ctx, nodeId, controlled.ownerDepartmentId, ctx.tenant.membershipId))) {
-    throw forbidden();
-  }
+  const edition =
+    external && input.edition !== undefined && input.edition !== "" ? input.edition : null;
   const type = await ctx.db.documentType.findFirst({
     where: { code: controlled.docType },
     select: { reviewMonths: true },
@@ -483,6 +506,7 @@ export async function publish(
         effectiveAt: now,
         minorChange: !renew,
         changeReason: reason,
+        ...(external ? { edition, approvedAt: now } : {}),
       },
     });
     const reviewDueAt = dayMonthsLater(now, type?.reviewMonths ?? 12, zone);
@@ -521,6 +545,7 @@ export async function publish(
           version: latest.version,
           ...(renew ? {} : { minorChange: true }),
           ...(reason === null ? {} : { reason }),
+          ...(external ? { external: true, edition } : {}),
         },
       },
     );

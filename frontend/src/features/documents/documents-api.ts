@@ -9,6 +9,8 @@ export type Decision = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
 export interface DocumentTypeView {
   code: string;
   name: string;
+  /** Registered in force without approval (standards, legislation…). */
+  external: boolean;
   prefix: string;
   reviewMonths: number;
   padding: number;
@@ -43,6 +45,8 @@ export interface DocumentVersionView {
   approvedAt: string | null;
   publishedAt: string | null;
   obsoletedAt: string | null;
+  /** External documents: the issuer's edition of this version. */
+  edition: string | null;
   submittedBy: string | null;
   approvals: ApprovalView[];
 }
@@ -53,6 +57,7 @@ export interface ControlledActions {
   canPublish: boolean;
   canWithdraw: boolean;
   canRetire: boolean;
+  canEditExternal: boolean;
 }
 
 export interface ReadingMine {
@@ -108,6 +113,7 @@ export interface ControlledView {
   ownerDepartment: { id: string; name: string } | null;
   reviewDueAt: string | null;
   retired: { at: string; reason: string; by: string | null; version: number | null } | null;
+  external: { issuer: string | null; externalRef: string | null } | null;
   versions: DocumentVersionView[];
   actions: ControlledActions;
   /** Solo para quien tiene la aprobación pendiente. */
@@ -277,8 +283,15 @@ export const documentsApi = {
   convert: (
     slug: string,
     nodeId: string,
-    body: { docType: string; ownerDepartmentId?: string | null },
+    body: {
+      docType: string;
+      ownerDepartmentId?: string | null;
+      issuer?: string;
+      externalRef?: string;
+    },
   ) => api<ControlledInfo>(w(slug, `/nodes/${nodeId}/controlled`), { method: "POST", body }),
+  setExternal: (slug: string, nodeId: string, body: { issuer: string; externalRef: string }) =>
+    api<ControlledInfo>(w(slug, `/nodes/${nodeId}/controlled/external`), { method: "PUT", body }),
   compare: (
     slug: string,
     nodeId: string,
@@ -463,7 +476,7 @@ export const documentsApi = {
   publish: (
     slug: string,
     nodeId: string,
-    body: { requestReading?: boolean; reason?: string } = {},
+    body: { requestReading?: boolean; reason?: string; edition?: string } = {},
   ) => api<undefined>(w(slug, `/nodes/${nodeId}/controlled/publish`), { method: "POST", body }),
   myApprovals: (slug: string, cursor?: string, signal?: AbortSignal) =>
     api<Page<MyApproval>>(

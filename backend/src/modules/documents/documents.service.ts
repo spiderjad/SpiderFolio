@@ -11,7 +11,7 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { assertSpaceWritable } from "../spaces/spaces.service.ts";
 import { canApprove } from "./approvers.ts";
 import { myReadingOf, type ReadingMine } from "./readings.service.ts";
-import type { ConvertInput } from "./documents.schemas.ts";
+import type { ConvertInput, ExternalInfoInput } from "./documents.schemas.ts";
 
 /** Tipos que se crean la primera vez que una empresa los necesita. */
 const DEFAULT_TYPES = ["PRC", "INS", "FOR", "POL", "MAN"] as const;
@@ -19,14 +19,23 @@ const DEFAULT_TYPES = ["PRC", "INS", "FOR", "POL", "MAN"] as const;
 export interface DocumentTypeView {
   code: string;
   name: string;
+  /** Registered in force without the approval cycle (standards, legislation…). */
+  external: boolean;
   prefix: string;
   reviewMonths: number;
   padding: number;
   nextNumber: number;
 }
 
+/** The external documents' type, added to every company (also to those that already have types). */
+const EXTERNAL_TYPE = "EXT";
+
 export async function ensureTypes(ctx: AdminContext): Promise<void> {
-  if ((await ctx.db.documentType.count()) > 0) return;
+  const [total, external] = await Promise.all([
+    ctx.db.documentType.count(),
+    ctx.db.documentType.count({ where: { code: EXTERNAL_TYPE } }),
+  ]);
+  if (total > 0 && external > 0) return;
   // Named in the company's language, not in the language of whoever opens the screen first.
   const workspace = await ctx.db.workspace.findFirst({ where: {}, select: { settings: true } });
   const names = withLocale(readWorkspaceLocale(workspace?.settings), () => ({
@@ -34,12 +43,23 @@ export async function ensureTypes(ctx: AdminContext): Promise<void> {
   }));
   await ctx.db.documentType.createMany({
     skipDuplicates: true,
-    data: DEFAULT_TYPES.map((code, index) => ({
-      code,
-      name: names[code],
-      prefix: code,
-      position: index,
-    })),
+    data: [
+      ...(total > 0
+        ? []
+        : DEFAULT_TYPES.map((code, index) => ({
+            code,
+            name: names[code],
+            prefix: code,
+            position: index,
+          }))),
+      {
+        code: EXTERNAL_TYPE,
+        name: names[EXTERNAL_TYPE],
+        prefix: EXTERNAL_TYPE,
+        position: total > 0 ? total : DEFAULT_TYPES.length,
+        external: true,
+      },
+    ],
   });
 }
 
@@ -50,6 +70,7 @@ export async function listDocumentTypes(ctx: AdminContext): Promise<DocumentType
     select: {
       code: true,
       name: true,
+      external: true,
       prefix: true,
       reviewMonths: true,
       padding: true,
@@ -73,6 +94,8 @@ export interface DocumentVersionView {
   approvedAt: Date | null;
   publishedAt: Date | null;
   obsoletedAt: Date | null;
+  /** External documents: the issuer's edition or date of this version. */
+  edition: string | null;
   submittedBy: string | null;
   /** Aprobaciones pedidas, la más reciente ronda al final. */
   approvals: {
@@ -101,6 +124,8 @@ export interface ControlledActions {
   canWithdraw: boolean;
   /** Retire it without a replacement (it has a version in force and nothing in review). */
   canRetire: boolean;
+  /** Change an external document's issuer and reference. */
+  canEditExternal: boolean;
 }
 
 /** Para quien está revisando: el estado de sus comentarios y si ya revisó una ronda anterior. */
@@ -128,6 +153,8 @@ export interface ControlledView {
   publishedVersion: number | null;
   ownerDepartment: { id: string; name: string } | null;
   reviewDueAt: Date | null;
+  /** External document (standards, legislation…): issuer and reference; null for internal ones. */
+  external: { issuer: string | null; externalRef: string | null } | null;
   /** Retired without a replacement: when, why, by whom and its last version. */
   retired: { at: Date; reason: string; by: string | null; version: number | null } | null;
   /** De la más nueva a la más vieja. */
@@ -158,6 +185,7 @@ const versionSelect = {
   approvedAt: true,
   publishedAt: true,
   obsoletedAt: true,
+  edition: true,
 } as const;
 
 /** El control de un documento: su código, estados e historial. Pide poder ver el nodo. */
@@ -189,7 +217,10 @@ export async function getControlled(ctx: AdminContext, nodeId: string): Promise<
       omit: { snapshot: true },
       orderBy: [{ round: "asc" }, { createdAt: "asc" }],
     }),
-    ctx.db.documentType.findFirst({ where: { code: row.docType }, select: { name: true } }),
+    ctx.db.documentType.findFirst({
+      where: { code: row.docType },
+      select: { name: true, external: true },
+    }),
     row.ownerDepartmentId === null
       ? null
       : ctx.db.department.findFirst({
@@ -277,12 +308,17 @@ export async function getControlled(ctx: AdminContext, nodeId: string): Promise<
           ),
       }
     : null;
+  const external = type?.external === true;
   const actions: ControlledActions = {
-    canSubmit: status === "DRAFT" && atLeast(level, "EDIT"),
+    // An external document is registered in force by whoever manages it: no approval cycle.
+    canSubmit: !external && status === "DRAFT" && atLeast(level, "EDIT"),
     canDecide: pendingMine,
-    canPublish: status === "APPROVED" && (await canApprove(ctx, nodeId, row.ownerDepartmentId, me)),
+    canPublish: external
+      ? status === "DRAFT" && atLeast(level, "MANAGE")
+      : status === "APPROVED" && (await canApprove(ctx, nodeId, row.ownerDepartmentId, me)),
     canWithdraw:
       status === "IN_REVIEW" && (latest?.submittedById === me || atLeast(level, "MANAGE")),
+    canEditExternal: external && atLeast(level, "MANAGE"),
     canRetire:
       row.publishedVersion !== null &&
       status !== "IN_REVIEW" &&
@@ -305,6 +341,7 @@ export async function getControlled(ctx: AdminContext, nodeId: string): Promise<
       publishedVersion: row.publishedVersion,
       ownerDepartment: department,
       reviewDueAt: row.reviewDueAt,
+      external: external ? { issuer: row.issuer, externalRef: row.externalRef } : null,
       retired:
         row.retiredAt === null
           ? null
@@ -357,6 +394,12 @@ export async function makeControlled(
   if (type === null) {
     throw new AppError("BAD_REQUEST", { message: contentMessages.unknownDocType });
   }
+  const issuer = input.issuer === undefined || input.issuer === "" ? null : input.issuer;
+  const externalRef =
+    input.externalRef === undefined || input.externalRef === "" ? null : input.externalRef;
+  if (!type.external && (issuer !== null || externalRef !== null)) {
+    throw new AppError("BAD_REQUEST", { message: contentMessages.externalOnly });
+  }
   // Responsable: el departamento elegido o, si no, el dueño del espacio.
   const space = await ctx.db.space.findFirst({
     where: { id: node.spaceId },
@@ -381,6 +424,8 @@ export async function makeControlled(
         typeId: type.id,
         ownerDepartmentId,
         fileVersion: node.currentVersion,
+        issuer,
+        externalRef,
       },
     );
   });
@@ -400,6 +445,9 @@ export async function controlNode(
     typeId: string;
     ownerDepartmentId: string | null;
     fileVersion?: number | null;
+    /** External documents: who issues it and its own reference. */
+    issuer?: string | null;
+    externalRef?: string | null;
   },
 ): Promise<string> {
   const taken = await ctx.db.documentType.update({
@@ -415,6 +463,8 @@ export async function controlNode(
       code,
       docType: taken.code,
       ownerDepartmentId: input.ownerDepartmentId,
+      issuer: input.issuer ?? null,
+      externalRef: input.externalRef ?? null,
       createdById: ctx.tenant.membershipId,
     },
   });
@@ -451,4 +501,42 @@ export async function publishedPageSnapshot(
   return published === null || published.content === null
     ? null
     : { version: published.version, content: published.content };
+}
+
+/** An external document's issuer and reference. Whoever manages the document changes them. */
+export async function setExternalInfo(
+  ctx: AdminContext,
+  nodeId: string,
+  input: ExternalInfoInput,
+): Promise<ControlledInfo> {
+  const row = await ctx.db.controlledDocument.findFirst({
+    where: { nodeId, node: { trashedAt: null } },
+    select: { id: true, code: true, docType: true },
+  });
+  if (row === null) throw notFound();
+  requireLevel(await levelOfNode(ctx, nodeId), "MANAGE");
+  const type = await ctx.db.documentType.findFirst({
+    where: { code: row.docType },
+    select: { external: true },
+  });
+  if (type?.external !== true) {
+    throw new AppError("BAD_REQUEST", { message: contentMessages.externalOnly });
+  }
+  const data = {
+    issuer: input.issuer === "" ? null : input.issuer,
+    externalRef: input.externalRef === "" ? null : input.externalRef,
+  };
+  await ctx.db.$transaction(async (tx) => {
+    await tx.controlledDocument.update({ where: { id: row.id }, data });
+    await auditAdmin(
+      { db: tx, info: ctx.info },
+      {
+        action: "document.external_info",
+        entityType: "Node",
+        entityId: nodeId,
+        metadata: { code: row.code, ...data },
+      },
+    );
+  });
+  return await getControlled(ctx, nodeId);
 }

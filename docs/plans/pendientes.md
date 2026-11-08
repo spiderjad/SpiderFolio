@@ -77,8 +77,9 @@ Hay que analizar y decidir con él, sin código todavía:
       app registrada en Microsoft Entra (la registra el mantenedor).
 - [ ] **Documentos controlados** (pedido 08/11/2026): hechos el listado maestro (CSV y PDF con los filtros
       de la lista) y dar de baja sin reemplazo (motivo, última versión obsoleta, sin lecturas ni revisión;
-      publicar una versión nueva lo reactiva). Faltan los documentos externos (normas, legislación,
-      documentos de clientes) y, opcional, el registro de copias impresas controladas. Tests de seguridad
+      publicar una versión nueva lo reactiva). También los documentos externos (tipo EXT: emisor,
+      referencia y edición, registrados como vigentes sin aprobación). Falta, opcional, el registro de
+      copias impresas controladas. Tests de seguridad
       de ambos al cerrar el módulo.
 
 - [ ] **«Licencia y plugins» (subir plugins) no aparece en el menú** para el admin: hoy solo lo ve la

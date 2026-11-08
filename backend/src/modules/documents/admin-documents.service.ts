@@ -229,6 +229,8 @@ export async function exportMasterList(
       ownerDepartmentId: true,
       publishedVersion: true,
       reviewDueAt: true,
+      issuer: true,
+      externalRef: true,
       node: { select: { name: true, space: { select: { name: true } } } },
     },
   });
@@ -238,7 +240,14 @@ export async function exportMasterList(
     ctx.db.documentVersion.findMany({
       where: { nodeId: { in: ids } },
       orderBy: { version: "desc" },
-      select: { nodeId: true, version: true, status: true, effectiveAt: true, publishedAt: true },
+      select: {
+        nodeId: true,
+        version: true,
+        status: true,
+        effectiveAt: true,
+        publishedAt: true,
+        edition: true,
+      },
     }),
     listDocumentTypes(ctx),
     departmentNames(ctx),
@@ -248,11 +257,13 @@ export async function exportMasterList(
   const typeName = new Map(types.map((type) => [type.code, type.name]));
   const newest = new Map<string, DocStatus>();
   const since = new Map<string, Date | null>();
+  const editionOf = new Map<string, string | null>();
   const published = new Map(rows.map((row) => [row.nodeId, row.publishedVersion]));
   for (const version of versions) {
     if (!newest.has(version.nodeId)) newest.set(version.nodeId, version.status);
     if (published.get(version.nodeId) === version.version) {
       since.set(version.nodeId, version.effectiveAt ?? version.publishedAt);
+      editionOf.set(version.nodeId, version.edition);
     }
   }
   const day = (date: Date | null | undefined) =>
@@ -267,6 +278,9 @@ export async function exportMasterList(
     row.ownerDepartmentId === null ? "" : (names.get(row.ownerDepartmentId) ?? ""),
     day(row.reviewDueAt),
     row.node.space.name,
+    [row.issuer, row.externalRef, editionOf.get(row.nodeId) ?? null]
+      .filter((part) => part !== null && part !== "")
+      .join(" · "),
   ]);
   const filtered =
     (query.q !== undefined && query.q !== "") ||
@@ -558,6 +572,7 @@ export async function listTypes(ctx: AdminContext): Promise<DocumentTypeAdmin[]>
   const used = new Map(counts.map((row) => [row.docType, row._count._all]));
   return types.map((type) => ({
     code: type.code,
+    external: type.external,
     name: type.name,
     prefix: type.prefix,
     reviewMonths: type.reviewMonths,
