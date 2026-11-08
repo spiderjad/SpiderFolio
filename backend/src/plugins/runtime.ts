@@ -11,7 +11,9 @@ import type {
   PluginSettings,
   PluginWorkspaceContext,
   LicenseStatus,
+  PluginLocale,
   SharedPluginData,
+  TemplatePack,
 } from "@spiderfolio/plugin-sdk/backend";
 import { pluginSchemaName } from "@spiderfolio/plugin-sdk";
 import { directorySignInLimits } from "@spiderfolio/limits";
@@ -62,6 +64,11 @@ export interface PluginRuntime {
   isActive(workspaceId: string, pluginId: string): Promise<boolean>;
   /** Si algún plugin activo agrega la función. */
   hasFeature(workspaceId: string, feature: string): Promise<boolean>;
+  /** Industry packs of the active plugins (pluginApi 4), in `locale`; a plugin that throws gives none. */
+  templatePacks(
+    workspaceId: string,
+    locale: PluginLocale,
+  ): Promise<readonly { pluginId: string; pack: TemplatePack }[]>;
   /** `actor`: who directory changes are recorded for (the person of a plugin route). */
   contextFor(workspaceId: string, pluginId: string, actor?: DirectoryActor): PluginWorkspaceContext;
   /**
@@ -286,6 +293,19 @@ export function createPluginRuntime(deps: RuntimeDeps): PluginRuntime {
         (plugin) =>
           active.has(plugin.manifest.id) && (plugin.backend?.features ?? []).includes(feature),
       );
+    },
+    async templatePacks(workspaceId, locale) {
+      const active = await activeIds(workspaceId);
+      return installed.flatMap((plugin) => {
+        const packs = plugin.backend?.templatePacks;
+        if (packs === undefined || !active.has(plugin.manifest.id)) return [];
+        try {
+          return packs(locale).map((pack) => ({ pluginId: plugin.manifest.id, pack }));
+        } catch (error) {
+          logger.error({ err: error, plugin: plugin.manifest.id }, "templatePacks failed");
+          return [];
+        }
+      });
     },
     contextFor,
     async signInProviders(workspaceId) {

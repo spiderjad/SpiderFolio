@@ -45,8 +45,9 @@ export type PluginDistribution = z.infer<typeof PluginDistributionSchema>;
  * plugin declares the one it needs (`pluginApi`) and a core older than that doesn't load it.
  * 2: authProviders, ctx.secrets, ctx.directory and ctx.notify.
  * 3: «free» distribution, `replaces`, `guide`, shared sign-in providers (sharedWith) and ctx.shared.
+ * 4: templatePacks (industry packs for company templates).
  */
-export const PLUGIN_API_VERSION = 3;
+export const PLUGIN_API_VERSION = 4;
 
 /**
  * Modules the app shares with built plugins (frontendBundle): the plugin marks them as external and

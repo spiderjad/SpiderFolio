@@ -159,6 +159,12 @@ function validateBackend(manifest: PluginManifest, value: unknown): BackendPlugi
   if (providers.size > 0 && manifest.pluginApi < 2) {
     throw new Error("authProviders necesita pluginApi 2 en el manifiesto");
   }
+  if (plugin.templatePacks !== undefined) {
+    if (typeof plugin.templatePacks !== "function")
+      throw new Error("templatePacks debe ser una función");
+    if (manifest.pluginApi < 4)
+      throw new Error("templatePacks necesita pluginApi 4 en el manifiesto");
+  }
   return plugin;
 }
 

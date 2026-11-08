@@ -317,6 +317,46 @@ export interface RedirectAuthProvider extends AuthProviderBase {
 
 export type AuthProvider = PasswordAuthProvider | RedirectAuthProvider;
 
+/** A page of an industry pack, written in Markdown (packages/content turns it into a page). */
+export interface TemplatePackPage {
+  type: "page";
+  name: string;
+  icon?: string;
+  markdown: string;
+  /** Created as a controlled document of this type (PRC, INS…) where the person can manage them. */
+  docType?: string;
+  /** Also saved as a company template when the pack is installed. */
+  template?: { description?: string; category?: string };
+  children?: readonly TemplatePackNode[];
+}
+
+export interface TemplatePackFolder {
+  type: "folder";
+  name: string;
+  icon?: string;
+  template?: { description?: string; category?: string };
+  children: readonly TemplatePackNode[];
+}
+
+export type TemplatePackNode = TemplatePackPage | TemplatePackFolder;
+
+/**
+ * A ready-made set for an industry (pluginApi 4, docs/spec/plantillas.md): installed in a space from
+ * Admin › Templates › Packs. The core checks it like any other content.
+ */
+export interface TemplatePack {
+  /** Unique in the plugin, lowercase with dashes. */
+  id: string;
+  name: string;
+  description: string;
+  /** The folder created in the chosen space. */
+  root: TemplatePackFolder;
+  /** Document types created if the company doesn't have them (its own are never changed). */
+  documentTypes?: readonly { code: string; name: string; prefix?: string; reviewMonths?: number }[];
+  /** Departments offered with tick boxes; none is created unless the person picks it. */
+  departments?: readonly string[];
+}
+
 export interface BackendPlugin {
   id: PluginId;
   version: string;
@@ -333,6 +373,11 @@ export interface BackendPlugin {
   hooks?: CoreHooks;
   /** Ways to sign in to a company (pluginApi 2). Only offered where the plugin is active. */
   authProviders?: readonly AuthProvider[];
+  /**
+   * Industry packs (pluginApi 4), in the language asked for: the app's to list them, the company's to
+   * install them. Only offered where the plugin is active.
+   */
+  templatePacks?: (locale: PluginLocale) => readonly TemplatePack[];
 }
 
 /** Idiomas de la app (docs/spec/i18n.md). */

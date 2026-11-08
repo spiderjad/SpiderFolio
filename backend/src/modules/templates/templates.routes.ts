@@ -10,8 +10,8 @@ import {
   templateCategories,
   updateTemplate,
   useTemplate,
-  type TemplateDeps,
 } from "./templates.service.ts";
+import type { PackDeps } from "./packs.service.ts";
 import {
   SaveTemplateSchema,
   TemplateParams,
@@ -19,10 +19,30 @@ import {
   UpdateTemplateSchema,
   UseTemplateSchema,
 } from "./templates.schemas.ts";
+import { InstallPackSchema, installPack, listPacks, PackParams } from "./packs.service.ts";
 
 export function templateRoutes(deps: AppDeps): TenantRoute[] {
-  const templateDeps: TemplateDeps = { storage: deps.storage, plugins: deps.plugins };
+  const templateDeps: PackDeps = { storage: deps.storage, plugins: deps.plugins };
   return [
+    // Before /templates/:id, so «packs» isn't read as an id.
+    {
+      method: "get",
+      path: "/templates/packs",
+      handler: async (req, res) => {
+        res.json({ packs: await listPacks(adminContextOf(req), templateDeps) });
+      },
+    },
+    {
+      method: "post",
+      path: "/templates/packs/:pluginId/:packId/install",
+      handler: async (req, res) => {
+        const { pluginId, packId } = PackParams.parse(req.params);
+        const input = InstallPackSchema.parse(req.body);
+        res
+          .status(201)
+          .json(await installPack(adminContextOf(req), templateDeps, pluginId, packId, input));
+      },
+    },
     {
       method: "get",
       path: "/templates",

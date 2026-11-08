@@ -1375,6 +1375,13 @@ const cases: IsolationCase[] = [
   },
   { method: "get", path: "/pages/:id", url: (ids) => `/pages/${ids.pageId}` },
   // Company templates: off without the templates plugin (404 for everyone, B included).
+  { method: "get", path: "/templates/packs", url: () => "/templates/packs", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/templates/packs/:pluginId/:packId/install",
+    url: () => "/templates/packs/templates/industria/install",
+    body: { spaceId: "x", parentId: null },
+  },
   { method: "get", path: "/templates", url: () => "/templates", ownStatus: 404 },
   {
     method: "get",
