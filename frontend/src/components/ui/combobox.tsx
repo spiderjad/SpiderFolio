@@ -363,8 +363,9 @@ export interface MultiComboboxProps extends CommonProps {
 
 export type ComboboxProps = SingleComboboxProps | MultiComboboxProps;
 
+/** Looks like spider-ui's v-input (same height as an Input), with the focus ring of its button. */
 const fieldClass =
-  "flex min-h-9 w-full items-center gap-2 rounded-lg border border-input bg-background px-3 py-1.5 text-left text-sm text-foreground focus-within:ring-2 focus-within:ring-ring/40 aria-invalid:border-danger has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50";
+  "v-input flex min-h-9 items-center gap-2 py-0.5 text-left focus-within:border-[var(--sp-focus)] focus-within:shadow-[0_0_0_3px_var(--sp-focus-ring)] has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50";
 
 export function Combobox(props: ComboboxProps) {
   const {
@@ -571,7 +572,7 @@ export function Combobox(props: ComboboxProps) {
             event.preventDefault();
             triggerRef.current?.focus();
           }}
-          className="motion-pop z-50 flex max-h-[min(24rem,var(--radix-popover-content-available-height))] w-[var(--radix-popover-trigger-width)] min-w-56 origin-[var(--radix-popover-content-transform-origin)] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-pop"
+          className="v-menu motion-pop z-50 flex max-h-[min(24rem,var(--radix-popover-content-available-height))] w-[var(--radix-popover-trigger-width)] min-w-56 origin-[var(--radix-popover-content-transform-origin)] flex-col overflow-hidden p-0"
         >
           {panel}
         </PopoverPrimitive.Content>

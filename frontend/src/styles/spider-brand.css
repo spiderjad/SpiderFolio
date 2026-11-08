@@ -1,0 +1,14 @@
+/* SpiderFolio's panel keeps the brand violet on its main action (decision 2026-11-07, docs/spec/diseno.md
+   10.1): spider-ui's primary button is black, so `sf-brand` gives it the primary colour — spider-ui's
+   violet, or the company's accent when it chose one (lib/accent.ts). Used by components/ui/button.tsx. */
+@layer spider {
+  .v-btn-primary.sf-brand {
+    color: var(--primary-foreground);
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .v-btn-primary.sf-brand:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 88%, var(--sp-text-primary));
+    border-color: color-mix(in srgb, var(--primary) 88%, var(--sp-text-primary));
+  }
+}

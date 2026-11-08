@@ -94,7 +94,7 @@ export function DropdownMenuContent({
       <DropdownPrimitive.Content
         sideOffset={6}
         className={cn(
-          "motion-pop z-50 min-w-44 origin-[var(--radix-dropdown-menu-content-transform-origin)] rounded-xl border border-border bg-background p-1 shadow-pop",
+          "v-menu motion-pop z-50 origin-[var(--radix-dropdown-menu-content-transform-origin)]",
           className,
         )}
         {...props}
@@ -110,7 +110,7 @@ export function DropdownMenuItem({
   return (
     <DropdownPrimitive.Item
       className={cn(
-        "flex h-9 cursor-pointer select-none items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-muted [&_svg]:size-4",
+        "v-menu__item cursor-pointer select-none [&_svg]:size-4",
         className,
       )}
       {...props}
@@ -200,18 +200,18 @@ export function DialogContent({
 }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="motion-fade fixed inset-0 z-50 bg-foreground/25 backdrop-blur-[2px]" />
+      <DialogPrimitive.Overlay className="motion-fade fixed inset-0 z-50 bg-[var(--sp-backdrop)]" />
       <DialogPrimitive.Content
         className={cn(
-          "motion-pop fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border border-border bg-background shadow-pop focus:outline-none",
+          "v-dialog motion-pop fixed left-1/2 top-1/2 z-50 m-0 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col focus:outline-none",
           dialogSizes[size],
           className,
         )}
         {...(description === undefined ? { "aria-describedby": undefined } : {})}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
+        <div className="v-card__header items-start">
           <div className="min-w-0">
-            <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
+            <DialogPrimitive.Title className="v-card__title">
               {title}
             </DialogPrimitive.Title>
             {description !== undefined && (
@@ -227,9 +227,9 @@ export function DialogContent({
             <X className="size-4" strokeWidth={1.75} />
           </DialogPrimitive.Close>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="v-card__body min-h-0 flex-1 overflow-y-auto">{children}</div>
         {footer !== undefined && (
-          <div className="flex flex-col-reverse gap-2 border-t border-border px-6 py-4 sm:flex-row sm:justify-end">
+          <div className="v-card__footer flex-col-reverse sm:flex-row">
             {footer}
           </div>
         )}

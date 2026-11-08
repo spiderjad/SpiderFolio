@@ -1,4 +1,6 @@
-// Campos de formulario: Input, Label, FormField (con error accesible) y PasswordInput.
+// Form fields on spider-ui's panel (v-input, v-label, v-help, v-error): Input, Label, FormField (with an
+// accessible error) and PasswordInput. The spacing comes from FormField's grid, so the margins spider-ui
+// gives labels and messages are reset here.
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Eye, EyeOff } from "lucide-react";
 import {
@@ -18,10 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
   ({ className, ...props }, ref) => (
     <input
       ref={ref}
-      className={cn(
-        "flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger",
-        className,
-      )}
+      className={cn("v-input h-9 py-0", className)}
       {...props}
     />
   ),
@@ -34,7 +33,7 @@ export function Label({
 }: ComponentPropsWithoutRef<typeof LabelPrimitive.Root>) {
   return (
     <LabelPrimitive.Root
-      className={cn("text-sm font-medium text-foreground", className)}
+      className={cn("v-label mb-0", className)}
       {...props}
     />
   );
@@ -70,7 +69,7 @@ export function FormField({ label, error, hint, children, className }: FormField
       {message !== undefined && (
         <p
           id={messageId}
-          className={cn("text-xs", error === undefined ? "text-muted-foreground" : "text-danger")}
+          className={cn("mt-0", error === undefined ? "v-help" : "v-error")}
           {...(error === undefined ? {} : { role: "alert" })}
         >
           {message}
@@ -119,10 +118,7 @@ export const Textarea = forwardRef<
 >(({ className, ...props }, ref) => (
   <textarea
     ref={ref}
-    className={cn(
-      "flex min-h-24 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger",
-      className,
-    )}
+    className={cn("v-input min-h-24", className)}
     {...props}
   />
 ));

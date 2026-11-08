@@ -118,11 +118,11 @@ export function DataTable<T>({
     <div>
       <div ref={scrollRef} className={cn("relative overflow-auto", maxHeightClass)}>
         <table
-          className="w-full min-w-[720px] border-collapse text-left text-sm"
+          className="v-table min-w-[720px] text-left"
           aria-label={label}
         >
-          <thead className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_var(--border)]">
-            <tr className="border-b border-border">
+          <thead className="sticky top-0 z-10 shadow-[0_1px_0_0_var(--border)]">
+            <tr>
               {selection !== undefined && (
                 <th scope="col" className="w-12 px-4 py-3">
                   <Checkbox
@@ -144,12 +144,12 @@ export function DataTable<T>({
                     key={header.id}
                     scope="col"
                     aria-sort={active ? (sort.desc ? "descending" : "ascending") : undefined}
-                    className="px-4 py-2.5 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground"
+                    className="font-medium"
                   >
                     {header.isPlaceholder ? null : sortable ? (
                       <button
                         type="button"
-                        className="-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase tracking-[0.12em] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                        className="-mx-1 inline-flex items-center gap-1 rounded px-1 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                         onClick={() => {
                           onSortChange({ id: header.column.id, desc: active ? !sort.desc : false });
                         }}
@@ -192,7 +192,7 @@ export function DataTable<T>({
                     key={row.id}
                     data-selected={row.getIsSelected() || undefined}
                     className={cn(
-                      "h-12 border-b border-border last:border-0 hover:bg-muted/40",
+                      "h-12",
                       row.getIsSelected() && "bg-primary-soft/50",
                     )}
                   >
@@ -206,7 +206,7 @@ export function DataTable<T>({
                       </td>
                     )}
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-2 align-middle">
+                      <td key={cell.id} className="py-2 align-middle">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}

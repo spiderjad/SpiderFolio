@@ -9,7 +9,7 @@ import { cn, initials } from "@/lib/utils";
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-2xl border border-border bg-background shadow-card", className)}
+      className={cn("v-card", className)}
       {...props}
     />
   );
@@ -19,32 +19,34 @@ export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingEle
   return <h2 className={cn("text-base font-semibold", className)} {...props} />;
 }
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium tracking-wide",
-  {
-    variants: {
-      tone: {
-        primary: "bg-primary-soft text-primary-soft-foreground",
-        solid: "bg-primary text-primary-foreground",
-        success: "bg-success-soft text-success-soft-foreground",
-        warning: "bg-warning-soft text-warning-soft-foreground",
-        /** Ámbar suave: un escalón por debajo de "warning" (ej. subjefe frente a jefe). */
-        warningSoft:
-          "bg-warning-soft/40 text-warning-soft-foreground ring-1 ring-inset ring-warning-soft-foreground/20",
-        danger: "bg-danger-soft text-danger-soft-foreground",
-        neutral: "bg-muted text-muted-foreground",
-      },
-    },
-    defaultVariants: { tone: "neutral" },
-  },
-);
+/** spider-ui's status badges (v-badge); "solid" (the primary filled) and "warningSoft" have no
+ * v-badge variant and stay on the preset's tokens. */
+const badgeTone = {
+  primary: "v-badge v-badge--brand",
+  solid: "rounded-full px-2 py-0.5 text-[11px] font-medium bg-primary text-primary-foreground",
+  success: "v-badge v-badge--success",
+  warning: "v-badge v-badge--warning",
+  /** A step below "warning" (e.g. a deputy head next to the head). */
+  warningSoft: "v-badge border-warning-soft-foreground/20 bg-warning-soft/40 text-warning-soft-foreground",
+  danger: "v-badge v-badge--danger",
+  neutral: "v-badge",
+} as const;
 
 export function Badge({
   className,
   tone,
   ...props
-}: HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>) {
-  return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
+}: HTMLAttributes<HTMLSpanElement> & { tone?: keyof typeof badgeTone | null | undefined }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 whitespace-nowrap",
+        badgeTone[tone ?? "neutral"],
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 /** Avatar con iniciales sobre el color primario (10.4). */
@@ -77,18 +79,7 @@ export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>
   );
 }
 
-const bannerVariants = cva(
-  "flex flex-col gap-3 rounded-2xl border px-4 py-3 sm:flex-row sm:items-center",
-  {
-    variants: {
-      tone: {
-        warning: "border-warning/40 bg-warning-soft text-warning-soft-foreground",
-        info: "border-primary/20 bg-primary-soft text-primary-soft-foreground",
-      },
-    },
-    defaultVariants: { tone: "warning" },
-  },
-);
+const bannerTone = { warning: "v-banner v-banner--warning", info: "v-banner v-banner--info" } as const;
 
 /**
  * Banner (10.5): ícono, texto y acción a la derecha. "warning" (ámbar) para lo que pide
@@ -103,9 +94,16 @@ export function Banner({
   children: ReactNode;
   action?: ReactNode;
   icon?: LucideIcon;
-} & VariantProps<typeof bannerVariants>) {
+  tone?: keyof typeof bannerTone | null | undefined;
+}) {
   return (
-    <div role="status" className={bannerVariants({ tone })}>
+    <div
+      role="status"
+      className={cn(
+        "flex flex-col gap-3 sm:flex-row sm:items-center",
+        bannerTone[tone ?? "warning"],
+      )}
+    >
       <div className="flex flex-1 items-start gap-3 sm:items-center">
         <Icon className="size-5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
         <p className="flex-1 text-sm">{children}</p>

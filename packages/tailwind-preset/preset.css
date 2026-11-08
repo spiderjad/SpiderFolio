@@ -1,6 +1,7 @@
 /*
  * Preset de diseño de SpiderFolio (sobre spider-ui) para Tailwind 4 (CLAUDE.md, sección 10.2). App y web lo usan así:
  *
+ *   @layer theme, base, spider, components, utilities;
  *   @import "tailwindcss";
  *   @import "@spiderfolio/tailwind-preset/preset.css";
  *
@@ -8,8 +9,10 @@
  * --primary, --border… sobre --sp-* y borra la paleta de Tailwind (bg-purple-600 no existe).
  */
 @import "tw-animate-css";
-/* spider-ui: the only source of the design system (tokens --sp-*, panel v-* and access auth-*). */
-@import "spider-ui/spider-ui.css";
+/* spider-ui: the only source of the design system (tokens --sp-*, panel v-* and access auth-*). It goes
+   in its own layer, under Tailwind's utilities: a utility in a className (pr-10, h-8…) can still adjust a
+   v-* component. The order of the layers is declared by each entry stylesheet (see the header). */
+@import "spider-ui/spider-ui.css" layer(spider);
 @import "./tokens.css";
 @import "spider-ui/tailwind-v4.css";
 

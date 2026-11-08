@@ -1,3 +1,5 @@
+/* spider-ui under the utilities (see packages/tailwind-preset/preset.css). */
+@layer theme, base, spider, components, utilities;
 @import "tailwindcss";
 @import "@spiderfolio/tailwind-preset/preset.css";
 @import "./code-theme.css";
