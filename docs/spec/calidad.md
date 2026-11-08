@@ -899,6 +899,28 @@ función `quality.traceability` en su manifiesto y con el módulo de Calidad act
 
 La parte del núcleo no depende de estas respuestas y se puede hacer antes.
 
+### Hecho (fase 7a)
+
+Hecha el 08/11/2026. Migración `quality_traceability` (`QualityLot`, `QualityLotLink`, `QualityShipment` y
+`lotId` en `QualityHold`, `QualityComplaint` y `QualityRecallTest`). Backend en `lots.service.ts`,
+`lots-import.ts` y `lots.schemas.ts`; límites `qualityLimits.traceDepth`, `traceLots`, `traceImportRows` y
+`traceImportChars`. Pantallas **Trazabilidad** y la ficha de cada lote con su traza; selector de lote en
+producto retenido y reclamaciones; **Registrar como simulacro** desde la traza. Demo (`demoTraceability`),
+capturas `calidad-trazabilidad` y `calidad-lote`, guía **Trazabilidad** (es y en) y tests de seguridad.
+
+Cambios respecto a lo de arriba:
+
+- El punto de extensión `ctx.traceability` pasa a la **7b**, con el plugin que lo usa: sin él no tiene a quién
+  servir. El modelo ya tiene `source`, `sourceId` y `externalId` para recibirlo.
+- La traza recorre los niveles con consultas normales (una por nivel, por el cliente con aislamiento entre
+  empresas), no con una CTE: el límite de profundidad y de lotes la mantiene corta.
+- La importación busca el lote por tipo y código (no por `externalId`), lee las cabeceras en los dos idiomas
+  y acepta los tipos en palabras («materia prima», «finished product»). Una celda vacía no borra el dato al
+  actualizar. Hasta `traceImportRows` filas (el cuerpo de la petición es de 1 MB como máximo).
+- Las no conformidades no llevan selector de lote: lo llevan su producto retenido y su reclamación.
+- Eliminar un lote (cargado a mano o importado) elimina sus enlaces y entregas; lo que lo mencionaba conserva
+  el código como texto.
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
@@ -916,7 +938,7 @@ La parte del núcleo no depende de estas respuestas y se puede hacer antes.
 6. **Panel de indicadores** (bloque 14) y el resto, en tres partes: 6a panel y prerrequisitos (bloque 3);
    6b productos, etiquetado y plan analítico (9 y 10); 6c cultura de seguridad alimentaria y gestión de
    cambios (12 y 13).
-7. **Trazabilidad** (bloque 4, detalle arriba): 7a núcleo (lotes, enlaces, entregas, traza, CSV y enlaces con
+7. **Trazabilidad** (bloque 4, detalle arriba): 7a núcleo (hecha) (lotes, enlaces, entregas, traza, CSV y enlaces con
    retenido, reclamaciones y simulacros); 7b el plugin `erp-traceability` con SAP y ADA MES, cuando estén
    respondidas las preguntas abiertas.
 

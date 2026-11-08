@@ -49,12 +49,14 @@ Hay que analizar y decidir con él, sin código todavía:
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
       [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, **módulo aparte en el menú**,
       activable por empresa como Prevención. Spec [docs/spec/calidad.md](../spec/calidad.md) aprobada;
-      **fases 1 a 5, 6a, 6b y 6c cerradas** (08/11/2026): no conformidades y CAPA; plan APPCC, PCC, plantilla
+      **fases 1 a 5, 6a, 6b, 6c y 7a cerradas** (08/11/2026): no conformidades y CAPA; plan APPCC, PCC, plantilla
       cárnica y producto retenido; auditorías con su cobertura y hallazgos; proveedores con documentos,
       vencimientos y evaluación; reclamaciones, crisis y retirada; panel de indicadores y prerrequisitos;
       productos con su ficha, estudios de vida útil, aprobación de etiquetas y plan analítico; cultura de
       seguridad alimentaria con encuestas anónimas y gestión de cambios. Con sus tests de seguridad. Sigue
-      la fase 7 (trazabilidad, con el conector de SAP y ADA MES; primero su spec).
+      la fase 7: la **7a** (lotes, enlaces, entregas, traza, CSV) está hecha (08/11/2026); la **7b** (plugin
+      `erp-traceability` con SAP y ADA MES y el punto de extensión `ctx.traceability`) espera las respuestas
+      del mantenedor sobre SAP y ADA MES (preguntas abiertas en calidad.md, «Fase 7»).
 
 ## Migración a spider-ui
 

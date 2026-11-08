@@ -428,6 +428,60 @@ const cases: IsolationCase[] = [
     path: "/quality/changes/:id/cancel",
     url: () => "/quality/changes/x/cancel",
   },
+  // Food quality, phase 7a: traceability.
+  { method: "get", path: "/quality/lots", url: () => "/quality/lots", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/quality/lots",
+    url: () => "/quality/lots",
+    body: { kind: "RAW", code: "AJENO", date: "2026-11-01" },
+  },
+  {
+    method: "get",
+    path: "/quality/lots/template/:kind",
+    url: () => "/quality/lots/template/lots",
+    ownStatus: 404,
+  },
+  {
+    method: "post",
+    path: "/quality/lots/import",
+    url: () => "/quality/lots/import",
+    body: { kind: "lots", csv: "tipo,lote,fecha\nmateria prima,AJENO,2026-11-01" },
+  },
+  { method: "get", path: "/quality/lots/:id", url: () => "/quality/lots/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/quality/lots/:id",
+    url: () => "/quality/lots/x",
+    body: { code: "AJENO" },
+  },
+  { method: "delete", path: "/quality/lots/:id", url: () => "/quality/lots/x" },
+  {
+    method: "post",
+    path: "/quality/lots/:id/inputs",
+    url: () => "/quality/lots/x/inputs",
+    body: { inputId: "y" },
+  },
+  { method: "delete", path: "/quality/lot-links/:id", url: () => "/quality/lot-links/x" },
+  {
+    method: "post",
+    path: "/quality/lots/:id/shipments",
+    url: () => "/quality/lots/x/shipments",
+    body: { customer: "Ajeno", shippedOn: "2026-11-01" },
+  },
+  { method: "delete", path: "/quality/shipments/:id", url: () => "/quality/shipments/x" },
+  {
+    method: "get",
+    path: "/quality/lots/:id/trace",
+    url: () => "/quality/lots/x/trace?direction=forward",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/quality/lots/:id/trace/export/:format",
+    url: () => "/quality/lots/x/trace/export/csv?direction=forward",
+    ownStatus: 404,
+  },
   // Food quality, phase 4: suppliers.
   { method: "get", path: "/quality/suppliers", url: () => "/quality/suppliers", ownStatus: 404 },
   {

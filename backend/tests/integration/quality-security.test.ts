@@ -40,6 +40,8 @@ const api = (slug: string, token: string) => ({
       .send(body),
   put: (path: string, body?: object) =>
     request(app).put(`/api/v1/w/${slug}${path}`).set("Authorization", `Bearer ${token}`).send(body),
+  delete: (path: string) =>
+    request(app).delete(`/api/v1/w/${slug}${path}`).set("Authorization", `Bearer ${token}`),
 });
 
 type Member = Awaited<ReturnType<typeof addMember>>;
@@ -2009,5 +2011,171 @@ describe("calidad fase 6c: cultura de seguridad alimentaria y gestión de cambio
     expect((pending.body as { items: { id: string }[] }).items.map((s) => s.id)).not.toContain(
       surveyId,
     );
+  });
+});
+
+describe("calidad fase 7a: trazabilidad", () => {
+  // A fresh app: the global limit (per minute, in memory) would count the requests of the blocks above.
+  beforeAll(() => {
+    app = createApp(ctx.deps);
+  });
+
+  interface LotBody {
+    lot: { id: string; code: string; editable: boolean; holds: unknown[] };
+  }
+  interface TraceBody {
+    lots: { id: string; code: string; depth: number }[];
+    shipments: { customer: string }[];
+    totals: { lots: number; customers: number };
+  }
+  const lot = (kind: string, code: string) => ({ kind, code, date: "2026-11-01" });
+
+  it("lotes: quality.view lee y traza, solo quality.manage carga; ni miembros ni invitados entran", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const viewer = api(w.ws.slug, w.viewer.token);
+    expect((await viewer.post("/quality/lots", lot("RAW", "V-1"))).status).toBe(403);
+    expect((await api(w.ws.slug, w.plain.token).get("/quality/lots")).status).toBe(403);
+    expect((await api(w.ws.slug, w.guest.token).get("/quality/lots")).status).toBe(403);
+    const raw = await manager.post("/quality/lots", lot("RAW", "T-MP-1"));
+    expect(raw.status).toBe(201);
+    const rawId = (raw.body as LotBody).lot.id;
+    expect((await manager.post("/quality/lots", lot("RAW", "T-MP-1"))).status).toBe(409);
+    expect((await viewer.get(`/quality/lots/${rawId}`)).status).toBe(200);
+    expect((await viewer.get(`/quality/lots/${rawId}/trace?direction=forward`)).status).toBe(200);
+    expect((await api(w.ws.slug, w.plain.token).get(`/quality/lots/${rawId}/trace?direction=forward`)).status).toBe(403);
+    expect((await viewer.patch(`/quality/lots/${rawId}`, { code: "X" })).status).toBe(403);
+    expect((await viewer.delete(`/quality/lots/${rawId}`)).status).toBe(403);
+    expect(
+      (await viewer.post("/quality/lots/import", { kind: "lots", csv: "tipo,lote,fecha\nmp,A,2026-11-01" }))
+        .status,
+    ).toBe(403);
+    // Exporting is audited.
+    const csv = await viewer.get(`/quality/lots/${rawId}/trace/export/csv?direction=forward`);
+    expect(csv.status).toBe(200);
+    const audited = await ctx.prisma.auditLog.count({
+      where: { workspaceId: w.ws.workspaceId, action: "quality.trace.export", entityId: rawId },
+    });
+    expect(audited).toBe(1);
+  });
+
+  it("traza: hacia atrás y hacia adelante, sin ciclos, con las entregas", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const ids: string[] = [];
+    for (const [kind, code] of [
+      ["RAW", "C-MP"],
+      ["INTERMEDIATE", "C-AM"],
+      ["FINISHED", "C-PT"],
+    ] as const) {
+      ids.push(((await manager.post("/quality/lots", lot(kind, code))).body as LotBody).lot.id);
+    }
+    const [raw = "", mix = "", finished = ""] = ids;
+    expect((await manager.post(`/quality/lots/${mix}/inputs`, { inputId: raw })).status).toBe(201);
+    expect((await manager.post(`/quality/lots/${finished}/inputs`, { inputId: mix })).status).toBe(
+      201,
+    );
+    expect((await manager.post(`/quality/lots/${mix}/inputs`, { inputId: raw })).status).toBe(409);
+    expect((await manager.post(`/quality/lots/${raw}/inputs`, { inputId: finished })).status).toBe(
+      400,
+    );
+    expect((await manager.post(`/quality/lots/${raw}/inputs`, { inputId: raw })).status).toBe(400);
+    await manager.post(`/quality/lots/${finished}/shipments`, {
+      customer: "Cliente A",
+      shippedOn: "2026-11-05",
+      quantity: 10,
+      unit: "kg",
+    });
+    const forward = (await manager.get(`/quality/lots/${raw}/trace?direction=forward`))
+      .body as TraceBody;
+    expect(forward.lots.map((item) => `${String(item.depth)}:${item.code}`)).toEqual([
+      "0:C-MP",
+      "1:C-AM",
+      "2:C-PT",
+    ]);
+    expect(forward.shipments.map((item) => item.customer)).toEqual(["Cliente A"]);
+    const backward = (await manager.get(`/quality/lots/${finished}/trace?direction=backward`))
+      .body as TraceBody;
+    expect(backward.totals.lots).toBe(3);
+    expect(backward.shipments).toEqual([]);
+  });
+
+  it("importar: comprueba sin escribir, después escribe lo válido; no toca lo de un sistema externo", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const external = await ctx.prisma.qualityLot.create({
+      data: {
+        workspaceId: w.ws.workspaceId,
+        kind: "RAW",
+        code: "EXT-1",
+        date: new Date("2026-11-01T00:00:00Z"),
+        source: "PLUGIN",
+        sourceId: "erp-traceability",
+      },
+    });
+    const csv =
+      "tipo;lote;materia;cantidad;unidad;fecha\nmateria prima;I-MP-1;Paleta;1.234,5;kg;2026-11-02\nmateria prima;EXT-1;Otro;;;2026-11-02\nraro;X;;;;2026-11-02";
+    const dry = await manager.post("/quality/lots/import", { kind: "lots", csv });
+    expect(dry.status).toBe(200);
+    expect(dry.body).toMatchObject({ dryRun: true, total: 3, created: 1, errorCount: 2 });
+    expect(await ctx.prisma.qualityLot.count({ where: { workspaceId: w.ws.workspaceId, code: "I-MP-1" } })).toBe(0);
+    const real = await manager.post("/quality/lots/import", { kind: "lots", csv, dryRun: false });
+    expect(real.body).toMatchObject({ created: 1, errorCount: 2 });
+    const created = await ctx.prisma.qualityLot.findFirst({
+      where: { workspaceId: w.ws.workspaceId, code: "I-MP-1" },
+    });
+    expect(created?.quantity?.toNumber()).toBe(1234.5);
+    expect(created?.source).toBe("CSV");
+    const untouched = await ctx.prisma.qualityLot.findFirst({ where: { id: external.id } });
+    expect(untouched?.material).toBeNull();
+    // What an external system loaded isn't edited or deleted by hand.
+    expect((await manager.patch(`/quality/lots/${external.id}`, { code: "X" })).status).toBe(409);
+    expect((await manager.delete(`/quality/lots/${external.id}`)).status).toBe(409);
+    const detail = await manager.get(`/quality/lots/${external.id}`);
+    expect((detail.body as LotBody).lot.editable).toBe(false);
+  });
+
+  it("enlaces: retenido, reclamación y simulacro solo con lotes de la empresa", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const mine = ((await manager.post("/quality/lots", lot("FINISHED", "E-PT"))).body as LotBody).lot
+      .id;
+    const other = await world("Calidad lotes ajenos");
+    const theirs = (
+      (await api(other.ws.slug, other.manager.token).post("/quality/lots", lot("FINISHED", "AJ-1")))
+        .body as LotBody
+    ).lot.id;
+    const hold = { product: "Chorizo", lot: "E-PT", reason: "Prueba" };
+    expect((await manager.post("/quality/holds", { ...hold, lotId: theirs })).status).toBe(404);
+    expect((await manager.post("/quality/holds", { ...hold, lotId: mine })).status).toBe(201);
+    const complaint = {
+      source: "CUSTOMER",
+      from: "Cliente",
+      product: "Chorizo",
+      lot: "E-PT",
+      category: "QUALITY",
+      description: "Sabor raro",
+      receivedOn: "2026-11-02",
+    };
+    expect((await manager.post("/quality/complaints", { ...complaint, lotId: theirs })).status).toBe(
+      404,
+    );
+    expect((await manager.post("/quality/complaints", { ...complaint, lotId: mine })).status).toBe(
+      201,
+    );
+    const test = {
+      kind: "DRILL",
+      date: "2026-11-03",
+      product: "Chorizo",
+      lot: "E-PT",
+      direction: "FORWARD",
+      minutes: 25,
+      result: "Bien",
+    };
+    expect((await manager.post("/quality/recall-tests", { ...test, lotId: theirs })).status).toBe(404);
+    expect((await manager.post("/quality/recall-tests", { ...test, lotId: mine })).status).toBe(201);
+    const detail = (await manager.get(`/quality/lots/${mine}`)).body as LotBody;
+    expect(detail.lot.holds).toHaveLength(1);
+    // The other company's lot, its trace and its export are 404.
+    expect((await manager.get(`/quality/lots/${theirs}`)).status).toBe(404);
+    expect((await manager.get(`/quality/lots/${theirs}/trace?direction=backward`)).status).toBe(404);
+    expect((await manager.post(`/quality/lots/${mine}/inputs`, { inputId: theirs })).status).toBe(404);
+    expect((await manager.delete(`/quality/lots/${theirs}`)).status).toBe(404);
   });
 });
