@@ -14,16 +14,20 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/utils";
+import { useAuthSurface } from "./surface";
 import { texts } from "@/i18n";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, ...props }, ref) => (
-    <input
-      ref={ref}
-      className={cn("v-input h-9 py-0", className)}
-      {...props}
-    />
-  ),
+  ({ className, ...props }, ref) => {
+    const auth = useAuthSurface();
+    return (
+      <input
+        ref={ref}
+        className={cn(auth ? "auth-input" : "v-input h-9 py-0", className)}
+        {...props}
+      />
+    );
+  },
 );
 Input.displayName = "Input";
 
@@ -31,9 +35,10 @@ export function Label({
   className,
   ...props
 }: ComponentPropsWithoutRef<typeof LabelPrimitive.Root>) {
+  const auth = useAuthSurface();
   return (
     <LabelPrimitive.Root
-      className={cn("v-label mb-0", className)}
+      className={cn(auth ? "auth-label mb-0" : "v-label mb-0", className)}
       {...props}
     />
   );
@@ -58,6 +63,15 @@ export function FormField({ label, error, hint, children, className }: FormField
   const id = useId();
   const messageId = `${id}-mensaje`;
   const message = error ?? hint;
+  const auth = useAuthSurface();
+  const messageClass =
+    error !== undefined
+      ? auth
+        ? "auth-error"
+        : "v-error"
+      : auth
+        ? "text-[13px] text-[var(--auth-muted)]"
+        : "v-help";
   return (
     <div className={cn("grid gap-1.5", className)}>
       <Label htmlFor={id}>{label}</Label>
@@ -69,7 +83,7 @@ export function FormField({ label, error, hint, children, className }: FormField
       {message !== undefined && (
         <p
           id={messageId}
-          className={cn("mt-0", error === undefined ? "v-help" : "v-error")}
+          className={cn("mt-0", messageClass)}
           {...(error === undefined ? {} : { role: "alert" })}
         >
           {message}
@@ -82,13 +96,14 @@ export function FormField({ label, error, hint, children, className }: FormField
 export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => {
     const [visible, setVisible] = useState(false);
+    const auth = useAuthSurface();
     const label = visible ? texts.common.hidePassword : texts.common.showPassword;
     return (
-      <div className="relative">
+      <div className={auth ? "auth-input-wrap" : "relative"}>
         <Input
           ref={ref}
           type={visible ? "text" : "password"}
-          className={cn("pr-10", className)}
+          className={cn(!auth && "pr-10", className)}
           {...props}
         />
         <button
@@ -98,7 +113,11 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HT
           }}
           aria-label={label}
           title={label}
-          className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className={
+            auth
+              ? "auth-eye"
+              : "absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          }
         >
           {visible ? (
             <EyeOff className="size-4" strokeWidth={1.75} />
@@ -129,6 +148,7 @@ export const Checkbox = forwardRef<
   HTMLInputElement,
   Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label?: ReactNode }
 >(({ className, label, ...props }, ref) => {
+  const auth = useAuthSurface();
   const box = (
     <input
       ref={ref}
@@ -142,7 +162,13 @@ export const Checkbox = forwardRef<
   );
   if (label === undefined) return box;
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 text-sm has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+    <label
+      className={
+        auth
+          ? "auth-check"
+          : "flex cursor-pointer items-center gap-2.5 text-sm has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60"
+      }
+    >
       {box}
       <span>{label}</span>
     </label>

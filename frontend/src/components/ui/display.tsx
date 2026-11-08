@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { AlertTriangle, type LucideIcon } from "lucide-react";
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn, initials } from "@/lib/utils";
+import { useAuthSurface } from "./surface";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
@@ -96,14 +97,14 @@ export function Banner({
   icon?: LucideIcon;
   tone?: keyof typeof bannerTone | null | undefined;
 }) {
+  const auth = useAuthSurface();
+  const toneClass = auth
+    ? (tone ?? "warning") === "warning"
+      ? "auth-aviso-amarillo m-0"
+      : "auth-banner auth-banner--info m-0"
+    : bannerTone[tone ?? "warning"];
   return (
-    <div
-      role="status"
-      className={cn(
-        "flex flex-col gap-3 sm:flex-row sm:items-center",
-        bannerTone[tone ?? "warning"],
-      )}
-    >
+    <div role="status" className={cn("flex flex-col gap-3 sm:flex-row sm:items-center", toneClass)}>
       <div className="flex flex-1 items-start gap-3 sm:items-center">
         <Icon className="size-5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
         <p className="flex-1 text-sm">{children}</p>

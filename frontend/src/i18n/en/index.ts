@@ -110,16 +110,6 @@ export const en: Messages = {
     nameLength: "Between 2 and 80 characters.",
   },
   auth: {
-    benefits: {
-      eyebrow: "Internal documentation",
-      title: "Your company’s documentation, in order.",
-      subtitle: "Folders, pages and controlled documents with permissions that make sense.",
-      items: [
-        "Department permissions you can understand at a glance",
-        "Controlled documents with a single current version",
-        "Read confirmation and an audit log ready to export",
-      ],
-    },
     login: {
       title: "Sign in",
       subtitle: "Access your company’s documentation.",

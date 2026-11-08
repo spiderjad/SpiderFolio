@@ -1,12 +1,28 @@
-// Pantallas de auth (10.6): formulario de 400 px a la izquierda con el logo; a la derecha,
-// degradado violeta tenue, etiqueta con ícono, título display y tres beneficios con checks.
-// En móvil, solo el formulario.
-import { Check, FolderCheck } from "lucide-react";
-import type { ReactNode } from "react";
-import { Eyebrow, Logo } from "@/components/ui/display";
+// Access screens (docs/spec/diseno.md 10.6) on spider-ui's auth-*: the dark animated background, the white
+// card with the logo, the title and the form, and the language switch in the card. They look the same in
+// light and dark (spider-ui's rule), so the light theme is forced while one is open: whatever isn't an
+// auth-* piece inside the card keeps its contrast on white. The shared components (Button, Input,
+// FormField…) draw themselves with auth-* inside it (components/ui/surface.tsx).
+import { useEffect, type ReactNode } from "react";
+import { Logo } from "@/components/ui/display";
 import { LanguageSwitch } from "@/components/ui/language-switch";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { texts } from "@/i18n";
+import { AuthSurface, useAuthSurface } from "@/components/ui/surface";
+
+/** While an access screen is open, the page is light; on leaving, the person's theme comes back. */
+function useForcedLight() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains("dark");
+    const theme = root.getAttribute("data-theme");
+    root.classList.remove("dark");
+    root.setAttribute("data-theme", "light");
+    return () => {
+      root.classList.toggle("dark", wasDark);
+      if (theme === null) root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", theme);
+    };
+  }, []);
+}
 
 export function AuthLayout({
   title,
@@ -19,68 +35,43 @@ export function AuthLayout({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  useForcedLight();
   return (
-    <div className="grid min-h-dvh bg-background lg:grid-cols-2">
-      <div className="flex flex-col px-4 py-6 sm:px-8">
-        <div className="flex items-center justify-between">
-          <Logo />
-          <div className="flex items-center gap-2">
-            <LanguageSwitch />
-            <ThemeToggle />
-          </div>
+    <AuthSurface>
+      <div className="auth-page">
+        <div className="auth-bg" aria-hidden="true">
+          <div className="auth-blob auth-blob--violeta" />
+          <div className="auth-blob auth-blob--ambar" />
+          <div className="auth-blob auth-blob--oscuro" />
+          <div className="auth-blob auth-blob--rosa" />
         </div>
-        <main className="flex flex-1 items-center justify-center py-10">
-          <div className="page-enter w-full max-w-[400px]">
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            {subtitle !== undefined && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
-            <div className="mt-8">{children}</div>
-            {footer !== undefined && (
-              <div className="mt-8 text-xs text-muted-foreground">{footer}</div>
-            )}
-          </div>
+        <main className="auth-card">
+          <LanguageSwitch className="absolute right-4 top-4" />
+          <header className="auth-header">
+            <span className="flex justify-center">
+              <Logo />
+            </span>
+            <h1 className="auth-title">{title}</h1>
+            {subtitle !== undefined && <p className="auth-subtitle">{subtitle}</p>}
+          </header>
+          {children}
+          {footer !== undefined && <div className="auth-alt mt-6">{footer}</div>}
         </main>
       </div>
-      <aside className="relative hidden overflow-hidden border-l border-border bg-surface lg:flex lg:items-center lg:justify-center">
-        {/* Degradado violeta tenue (≤ 6 %, 10.1), más intenso arriba y desvanecido hacia abajo. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-radial-[at_85%_0%] from-primary/[0.06] via-primary/[0.02] to-transparent"
-        />
-        <div className="relative max-w-lg px-12">
-          <Eyebrow icon={FolderCheck}>{texts.auth.benefits.eyebrow}</Eyebrow>
-          <p className="mt-4 font-display text-5xl leading-[1.05] tracking-tight xl:text-6xl">
-            {texts.auth.benefits.title}
-          </p>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            {texts.auth.benefits.subtitle}
-          </p>
-          <ul className="mt-10 grid gap-4">
-            {texts.auth.benefits.items.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
-    </div>
+    </AuthSurface>
   );
 }
 
-/** Mensaje de error o de éxito a nivel formulario. */
+/** A message for the whole form, error or success. */
 export function FormAlert({ tone, children }: { tone: "danger" | "success"; children: ReactNode }) {
+  const auth = useAuthSurface();
+  const className = auth
+    ? tone === "danger"
+      ? "auth-banner mb-0"
+      : "auth-banner auth-banner--success mb-0"
+    : `v-banner v-banner--${tone}`;
   return (
-    <p
-      role={tone === "danger" ? "alert" : "status"}
-      className={
-        tone === "danger"
-          ? "rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-soft-foreground"
-          : "rounded-lg border border-success/30 bg-success-soft px-3 py-2 text-sm text-success-soft-foreground"
-      }
-    >
+    <p role={tone === "danger" ? "alert" : "status"} className={className}>
       {children}
     </p>
   );

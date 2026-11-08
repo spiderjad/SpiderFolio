@@ -3,6 +3,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { useAuthSurface } from "./surface";
 
 type Variant = "primary" | "secondary" | "outline" | "ghost" | "destructive" | "warning" | "link";
 type Size = "sm" | "md" | "lg" | "icon";
@@ -47,13 +48,24 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
 }
 
+/** On an access screen: the main action is auth-btn, the rest are its quieter buttons and links. */
+function authButtonClass(variant: Variant | null | undefined): string | null {
+  const v = variant ?? "primary";
+  if (v === "primary") return "auth-btn";
+  if (v === "link" || v === "ghost") return "auth-link inline-flex items-center gap-1";
+  if (v === "outline" || v === "secondary") return "auth-secondary-btn mt-0 text-center";
+  return null;
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, type, ...props }, ref) => {
     const Component = asChild ? Slot : "button";
+    const auth = useAuthSurface();
+    const authClass = auth ? authButtonClass(variant) : null;
     return (
       <Component
         ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(authClass ?? buttonVariants({ variant, size }), className)}
         {...(asChild ? {} : { type: type ?? "button" })}
         {...props}
       />

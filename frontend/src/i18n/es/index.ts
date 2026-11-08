@@ -109,16 +109,6 @@ export const es = {
     nameLength: "Entre 2 y 80 caracteres.",
   },
   auth: {
-    benefits: {
-      eyebrow: "Documentación interna",
-      title: "La documentación de tu empresa, en orden.",
-      subtitle: "Carpetas, páginas y documentos controlados con permisos que se entienden.",
-      items: [
-        "Permisos por departamento que se entienden de un vistazo",
-        "Documentos controlados con versión vigente única",
-        "Confirmación de lectura y auditoría lista para exportar",
-      ],
-    },
     login: {
       title: "Inicia sesión",
       subtitle: "Entra a la documentación de tu empresa.",
