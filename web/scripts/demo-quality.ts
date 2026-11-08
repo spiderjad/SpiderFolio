@@ -2309,7 +2309,6 @@ export async function demoTraceability(
       expiresOn: day(-item.ago + 10),
     });
     raws.push(lot.id);
-    counts.lots = (counts.lots ?? 0) + 1;
   }
   const { lot: mix } = await call<Created>("POST", "/quality/lots", {
     kind: "INTERMEDIATE",
@@ -2319,7 +2318,6 @@ export async function demoTraceability(
     unit: "kg",
     date: day(-data.intermediate.ago),
   });
-  counts.lots = (counts.lots ?? 0) + 1;
   const used = [1100, 22, 0];
   for (const [index, id] of raws.entries()) {
     if (index === 2) continue;
@@ -2341,7 +2339,6 @@ export async function demoTraceability(
       expiresOn: day(-item.ago + 120),
     });
     finished.push(lot.id);
-    counts.lots = (counts.lots ?? 0) + 1;
     await call("POST", `/quality/lots/${lot.id}/inputs`, {
       inputId: mix.id,
       quantity: Math.round(item.quantity * 1.08),
@@ -2356,6 +2353,7 @@ export async function demoTraceability(
       });
     }
   }
+  counts.lots = raws.length + 1 + finished.length;
   for (const shipment of data.customers) {
     const lotId = finished[shipment.lot];
     if (lotId === undefined) continue;

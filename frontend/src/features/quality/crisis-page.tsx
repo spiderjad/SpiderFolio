@@ -242,12 +242,13 @@ export function TestDialog({
     "quality-recall-directions",
     DIRECTIONS.map((id) => ({ id, label: t.tests.directions[id] })),
   );
+  const direction: (typeof DIRECTIONS)[number] = start?.direction ?? "BOTH";
   const [state, setState] = useState({
     kind: "DRILL" as (typeof KINDS)[number],
     date: todayDay(),
     product: start?.product ?? "",
     lot: start?.lot.code ?? "",
-    direction: (start?.direction ?? "BOTH"),
+    direction,
     minutes: start === undefined ? "" : String(start.minutes),
     recovered: "",
     result: "",
