@@ -17,15 +17,6 @@ html {
   }
 }
 
-/* Degradado violeta muy tenue (≤ 6 %) detrás de héroes y cabeceras de docs. */
-.hero-glow {
-  background-image: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--primary) 6%, transparent),
-    transparent 420px
-  );
-}
-
 details > summary {
   list-style: none;
 }
@@ -222,22 +213,9 @@ details > summary::-webkit-details-marker {
   }
 }
 
-/* Captura del héroe: con profundidad (sombra y resplandor violeta detrás). */
+/* Hero screenshot: with depth (its shadow). */
 .hero-shot {
   position: relative;
-}
-.hero-shot::before {
-  content: "";
-  position: absolute;
-  inset: 8% 6% -4%;
-  z-index: -1;
-  border-radius: 2rem;
-  background: radial-gradient(
-    60% 60% at 50% 40%,
-    color-mix(in srgb, var(--primary) 35%, transparent),
-    transparent 70%
-  );
-  filter: blur(40px);
 }
 .hero-shot .shot {
   margin: 0;

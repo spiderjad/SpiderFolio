@@ -11,7 +11,7 @@ const t = texts(DEFAULT_LOCALE).notFound;
     {
       LOCALES.map((locale, index) =>
         index === 0 ? (
-          <h1 class="font-display text-5xl tracking-tight">{texts(locale).notFound.title}</h1>
+          <h1 class="font-semibold text-5xl tracking-tight">{texts(locale).notFound.title}</h1>
         ) : (
           <p lang={LOCALE_INFO[locale].hreflang} class="mt-4 text-lg text-muted-foreground">
             {texts(locale).notFound.title}

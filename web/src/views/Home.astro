@@ -68,7 +68,7 @@ const jsonLd = [
   },
 ];
 const eyebrow = "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground";
-const h2 = "mt-3 max-w-3xl font-display text-4xl tracking-tight md:text-5xl";
+const h2 = "mt-3 max-w-3xl font-semibold text-4xl tracking-tight md:text-5xl";
 const primaryButton =
   "inline-flex h-12 items-center gap-2 rounded-full bg-foreground px-7 font-medium text-background transition-[opacity,transform] hover:-translate-y-0.5 hover:opacity-90";
 const secondaryButton =
@@ -82,10 +82,10 @@ const secondaryButton =
   alternates={pageAlternates("home")}
   jsonLd={jsonLd}
 >
-  <section class="hero-glow overflow-hidden">
+  <section class="overflow-hidden">
     <div class="hero-stagger mx-auto max-w-6xl px-4 pb-10 pt-16 text-center sm:px-6 md:pt-24">
       <p class={eyebrow}>{t.eyebrow}</p>
-      <h1 class="mx-auto mt-4 max-w-4xl font-display text-5xl tracking-tight md:text-7xl">
+      <h1 class="mx-auto mt-4 max-w-4xl font-semibold text-5xl tracking-tight md:text-7xl">
         {t.title}
       </h1>
       <p class="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">{t.subtitle}</p>
@@ -172,7 +172,7 @@ const secondaryButton =
             <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
               {feature.items.map((item) => (
                 <li class="flex gap-3">
-                  <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+                  <Icon name="check" size={18} class="mt-0.5 shrink-0 text-muted-foreground" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -279,7 +279,7 @@ const secondaryButton =
             {
               t.why.after.items.map((item) => (
                 <li class="flex gap-3">
-                  <Icon name="check" size={18} class="mt-1 shrink-0 text-primary" />
+                  <Icon name="check" size={18} class="mt-1 shrink-0 text-muted-foreground" />
                   <span>{item}</span>
                 </li>
               ))
@@ -385,7 +385,7 @@ const secondaryButton =
               <ul class="mt-6 flex-1 space-y-3 text-sm">
                 {plan.items.map((item) => (
                   <li class="flex gap-3">
-                    <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+                    <Icon name="check" size={18} class="mt-0.5 shrink-0 text-muted-foreground" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -420,7 +420,7 @@ const secondaryButton =
 
   <section class="border-t bg-surface">
     <div class="mx-auto max-w-3xl px-4 py-20 sm:px-6">
-      <h2 class="font-display text-4xl tracking-tight">{all.faq.title}</h2>
+      <h2 class="font-semibold text-4xl tracking-tight">{all.faq.title}</h2>
       <div class="mt-8"><Faq locale={locale} limit={5} /></div>
       <a href={pagePath("faq", locale)} class="mt-6 inline-flex items-center gap-2 font-medium text-primary">
         {all.faq.title}
@@ -429,9 +429,9 @@ const secondaryButton =
     </div>
   </section>
 
-  <section class="hero-glow border-t">
+  <section class="border-t">
     <div class="reveal mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
-      <h2 class="font-display text-4xl tracking-tight md:text-5xl">{t.finalTitle}</h2>
+      <h2 class="font-semibold text-4xl tracking-tight md:text-5xl">{t.finalTitle}</h2>
       <p class="mt-4 text-lg text-muted-foreground">{t.finalText}</p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
         <a href={installHref} class={primaryButton}>

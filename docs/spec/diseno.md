@@ -28,7 +28,7 @@ El bloque @theme inline borra la paleta de Tailwind (--color-*: initial) y mapea
 
 Color de acento por workspace: Workspace.accentColor es null por defecto (= violeta de spider-ui) y solo se guarda si el cliente elige otro, como #rrggbb en minúsculas. El backend lo valida con HEX_COLOR_RE (#RRGGBB) y lo normaliza con normalizeHex (@spiderfolio/tailwind-preset/accent, sin dependencias de Tailwind). La app calcula las variables con accentTokens(hex) (--primary, --primary-foreground, --primary-soft, --primary-soft-foreground y --ring, distintas para claro y oscuro; primaryForegroundFor elige blanco o casi negro según el contraste) y las aplica como hsl(...) con document.documentElement.style.setProperty, volviendo a aplicarlas al cambiar de tema. Nunca con <style> en línea (CSP). Si accentIsLowContrastText(hex) es true, la configuración avisa que los enlaces se leerán mal, sin bloquear. Los valores HSL de src/tokens.ts quedan solo para esas cuentas de contraste.
 
-Preset (Tailwind 4, configurado en CSS): app y web hacen @import "tailwindcss"; y @import "@spiderfolio/tailwind-preset/preset.css";. preset.css no contiene valores de color: importa tw-animate-css, spider-ui/spider-ui.css (tokens, v-* y auth-*), tokens.css y spider-ui/tailwind-v4.css (clases spider-*), carga @tailwindcss/typography con @plugin, define la variante dark por clase (@custom-variant dark (&:where(.dark, .dark *))), las fuentes (--font-sans y --font-mono de spider-ui; --font-display "Instrument Serif" solo en la web, pendiente de pasar a spider-ui), los radios, las sombras, los estilos base (bordes, body, prefers-reduced-motion) y el tema de prose con los tokens (@utility prose).
+Preset (Tailwind 4, configurado en CSS): app y web hacen @import "tailwindcss"; y @import "@spiderfolio/tailwind-preset/preset.css";. preset.css no contiene valores de color: importa tw-animate-css, spider-ui/spider-ui.css (tokens, v-* y auth-*), tokens.css y spider-ui/tailwind-v4.css (clases spider-*), carga @tailwindcss/typography con @plugin, define la variante dark por clase (@custom-variant dark (&:where(.dark, .dark *))), las fuentes (--font-sans y --font-mono de spider-ui; sin fuente de títulos: la web usa Inter en seminegrita, decisión del 08/11/2026), los radios, las sombras, los estilos base (bordes, body, prefers-reduced-motion) y el tema de prose con los tokens (@utility prose).
 
 10.3 Tipografía
 Uso Clases
@@ -109,9 +109,9 @@ FAQ: acordeón (Radix vía isla React o <details> estilizado).
 CTA final y footer con columnas (Producto, Recursos, Legal, Contacto).
 Documentación (/docs), tres columnas:
 Izquierda: navegación agrupada con etiquetas en mayúsculas (EMPEZAR, USO DIARIO, ADMINISTRACIÓN, SEGURIDAD), ítem activo con bg-primary-soft e ícono por guía.
-Centro: breadcrumb "Docs", buscador con atajo ⌘K (Pagefind), etiqueta con ícono, título en font-display, introducción en gris grande, tarjetas de acceso rápido con ícono violeta sólido y enlace "Empezar →", y el contenido en prose.
+Centro: breadcrumb "Docs", buscador con atajo ⌘K (Pagefind), etiqueta con ícono, título en Inter seminegrita, introducción en gris grande, tarjetas de acceso rápido con ícono violeta sólido y enlace "Empezar →", y el contenido en prose.
 Derecha: "EN ESTA PÁGINA" con la tabla de contenidos, marcador violeta en la sección visible y "↑ Volver arriba".
-Fondo con degradado violeta tenue arriba.
+Fondo liso, sin degradados (los checks de las listas van en gris).
 Seguridad y Plantillas: ver 9C.10.
 Legales, en español e inglés y enlazadas desde el pie con su fecha de última actualización (`LEGAL_UPDATED` en web/src/config/site.ts): aviso legal, privacidad (RGPD), términos de uso y cookies. La web no usa cookies (solo guarda en el navegador el tema y el idioma elegidos), así que no hay banner de cookies.
 SEO: título y descripción por página, Open Graph con imagen, sitemap, robots.txt, datos estructurados SoftwareApplication y FAQPage, URLs limpias en español, Lighthouse ≥ 95 en todo.

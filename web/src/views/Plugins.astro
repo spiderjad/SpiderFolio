@@ -20,7 +20,7 @@ const contact = (title: string): string | null =>
     ? null
     : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t.contactSubject(title))}`;
 const enterpriseHref = contact(t.enterprise.title);
-const h2 = "font-display text-4xl tracking-tight";
+const h2 = "font-semibold text-4xl tracking-tight";
 const contactLink =
   "mt-6 inline-flex h-10 w-fit items-center gap-2 rounded-full border px-5 text-sm font-medium transition-colors hover:bg-muted";
 ---
@@ -31,15 +31,15 @@ const contactLink =
   description={t.subtitle}
   alternates={pageAlternates("plugins")}
 >
-  <section class="hero-glow">
+  <section>
     <div class="mx-auto max-w-6xl px-4 pb-12 pt-16 sm:px-6 md:pt-20">
-      <h1 class="font-display text-5xl tracking-tight md:text-6xl">{t.title}</h1>
+      <h1 class="font-semibold text-5xl tracking-tight md:text-6xl">{t.title}</h1>
       <p class="mt-5 max-w-3xl text-lg text-muted-foreground">{t.subtitle}</p>
       <ul class="mt-8 grid max-w-3xl gap-2 text-sm">
         {
           t.how.map((item) => (
             <li class="flex gap-3">
-              <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+              <Icon name="check" size={18} class="mt-0.5 shrink-0 text-muted-foreground" />
               <span>{item}</span>
             </li>
           ))
@@ -136,7 +136,7 @@ const contactLink =
         {
           t.enterprise.items.map((item) => (
             <li class="flex gap-3">
-              <Icon name="check" size={18} class="mt-0.5 shrink-0 text-primary" />
+              <Icon name="check" size={18} class="mt-0.5 shrink-0 text-muted-foreground" />
               <span>{item}</span>
             </li>
           ))

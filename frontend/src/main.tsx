@@ -1,6 +1,5 @@
 import "./lib/zod-config";
 import "@fontsource-variable/inter";
-import "@fontsource/instrument-serif";
 import "@fontsource-variable/jetbrains-mono";
 import "./styles/globals.css";
 import { activateLocale, initialLocale } from "@/i18n";

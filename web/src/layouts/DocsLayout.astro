@@ -66,7 +66,7 @@ const toc = headings
       </nav>
     </aside>
 
-    <main class="hero-glow min-w-0 flex-1 border-l px-0 py-8 lg:px-12" data-pagefind-body>
+    <main class="min-w-0 flex-1 border-l px-0 py-8 lg:px-12" data-pagefind-body>
       <div class="mx-auto max-w-3xl">
         <div class="flex items-center justify-between gap-4" data-pagefind-ignore>
           <a href={docPath("intro", locale)} class="text-sm text-muted-foreground hover:text-foreground">
@@ -91,7 +91,7 @@ const toc = headings
             {t.docs.groups[entry.data.group]}
           </p>
         </div>
-        <h1 class="mt-5 font-display text-5xl tracking-tight md:text-6xl">{entry.data.title}</h1>
+        <h1 class="mt-5 font-semibold text-5xl tracking-tight md:text-6xl">{entry.data.title}</h1>
         <p class="mt-5 text-xl text-muted-foreground">{entry.data.description}</p>
 
         <div class="prose mt-10 max-w-none">

@@ -22,7 +22,6 @@
 
 @theme inline {
   --font-sans: var(--sp-font);
-  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: var(--sp-font-mono);
 
   --radius-sm: calc(var(--radius) - 4px);

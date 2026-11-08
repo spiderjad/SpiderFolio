@@ -17,12 +17,12 @@ const t = texts(locale).security;
   description={t.description}
   alternates={pageAlternates("security")}
 >
-  <section class="hero-glow">
+  <section>
     <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
       <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {t.eyebrow}
       </p>
-      <h1 class="mt-3 max-w-3xl font-display text-5xl tracking-tight md:text-6xl">
+      <h1 class="mt-3 max-w-3xl font-semibold text-5xl tracking-tight md:text-6xl">
         {t.heading}
       </h1>
       <p class="mt-4 max-w-2xl text-lg text-muted-foreground">{t.intro}</p>
@@ -40,12 +40,12 @@ const t = texts(locale).security;
         }
       </div>
 
-      <h2 class="mt-16 font-display text-4xl tracking-tight">{t.yourPartTitle}</h2>
+      <h2 class="mt-16 font-semibold text-4xl tracking-tight">{t.yourPartTitle}</h2>
       <ul class="mt-6 grid max-w-3xl gap-2">
         {
           t.yourPart.map((item) => (
             <li class="flex gap-3">
-              <Icon name="check" size={18} class="mt-1 shrink-0 text-primary" />
+              <Icon name="check" size={18} class="mt-1 shrink-0 text-muted-foreground" />
               <span>{item}</span>
             </li>
           ))
@@ -53,7 +53,7 @@ const t = texts(locale).security;
       </ul>
       <p class="mt-4 max-w-3xl text-sm text-muted-foreground">{t.dataNote}</p>
 
-      <h2 class="mt-16 font-display text-4xl tracking-tight">{t.reportTitle}</h2>
+      <h2 class="mt-16 font-semibold text-4xl tracking-tight">{t.reportTitle}</h2>
       <p class="mt-3 max-w-3xl text-muted-foreground">
         <RichText value={t.report} linkClass="text-primary underline" />
       </p>

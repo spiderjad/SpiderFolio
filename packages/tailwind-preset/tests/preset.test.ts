@@ -113,7 +113,6 @@ describe("preset.css compilado", () => {
   it("fuentes, radios y sombras de spider-ui", () => {
     const css = build([
       "font-sans",
-      "font-display",
       "font-mono",
       "rounded-lg",
       "rounded-xl",
@@ -122,7 +121,8 @@ describe("preset.css compilado", () => {
     ]);
     expect(rule(css, ".font-sans")).toContain("var(--sp-font)");
     expect(rule(css, ".font-mono")).toContain("var(--sp-font-mono)");
-    expect(css).toContain('"Instrument Serif"');
+    // No display font: titles are Inter, like spider-ui (decision 2026-11-08).
+    expect(css).not.toContain("Instrument Serif");
     expect(rule(css, ".rounded-lg")).toContain("var(--sp-radius)");
     expect(rule(css, ".rounded-xl")).toContain("var(--sp-radius-lg)");
     expect(rule(css, ".shadow-card")).toContain("var(--sp-shadow)");
