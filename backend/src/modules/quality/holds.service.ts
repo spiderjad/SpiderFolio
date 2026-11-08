@@ -10,12 +10,14 @@ import { signatureBytes } from "../safety/ppe.service.ts";
 import { canManageQuality, canViewQuality, requireQuality } from "./quality-access.ts";
 import type { DecisionInput, HoldInput, ListHoldsQuery } from "./haccp.schemas.ts";
 import { getNc } from "./ncs.service.ts";
+import { assertLot } from "./lots.service.ts";
 
 export interface HoldView {
   id: string;
   nc: { id: string; code: string; title: string } | null;
   product: string;
   lot: string | null;
+  lotId: string | null;
   quantity: string | null;
   location: string | null;
   reason: string;
@@ -36,6 +38,7 @@ const holdSelect = {
   id: true,
   product: true,
   lot: true,
+  lotId: true,
   quantity: true,
   location: true,
   reason: true,
@@ -80,6 +83,7 @@ export async function holdViews(ctx: AdminContext, rows: HoldRow[]): Promise<Hol
           },
     product: row.product,
     lot: row.lot,
+    lotId: row.lotId,
     quantity: row.quantity,
     location: row.location,
     reason: row.reason,
@@ -164,6 +168,7 @@ export async function createHold(ctx: AdminContext, input: HoldInput): Promise<H
       throw new AppError("CONFLICT", { message: qualityTexts.messages.closed });
     }
   }
+  await assertLot(ctx.db, input.lotId);
   const created = await ctx.db.$transaction(async (tx) => {
     const hold = await tx.qualityHold.create({
       data: { ...input, createdById: ctx.tenant.membershipId },

@@ -123,6 +123,9 @@ export const modelMetadata = {
       qualityCultureVoters: "QualityCultureVoter",
       qualityChanges: "QualityChange",
       qualityChangeCounters: "QualityChangeCounter",
+      qualityLots: "QualityLot",
+      qualityLotLinks: "QualityLotLink",
+      qualityShipments: "QualityShipment",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -517,6 +520,23 @@ export const modelMetadata = {
   },
   QualityChange: { scope: "tenant", relations: { workspace: "Workspace" } },
   QualityChangeCounter: { scope: "tenant", relations: { workspace: "Workspace" } },
+  QualityLot: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      inputs: "QualityLotLink",
+      outputs: "QualityLotLink",
+      shipments: "QualityShipment",
+    },
+  },
+  QualityLotLink: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", input: "QualityLot", output: "QualityLot" },
+  },
+  QualityShipment: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", lot: "QualityLot" },
+  },
   QualitySupplierDoc: {
     scope: "tenant",
     relations: { workspace: "Workspace", supplier: "QualitySupplier" },

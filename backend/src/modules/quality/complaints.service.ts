@@ -13,6 +13,7 @@ import type { TenantDb } from "../../db/tenant.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { dayOf, resolveExpiry, setExpiry } from "../expiries/expiries.service.ts";
 import { canManageQuality, canViewQuality, requireQuality } from "./quality-access.ts";
+import { assertLot } from "./lots.service.ts";
 import { COMPLAINT_EXPIRY } from "./quality-expiry.ts";
 import { insertNc, managers, notifyNc } from "./ncs.service.ts";
 import type {
@@ -33,6 +34,7 @@ export interface ComplaintView {
   contact: string | null;
   product: string;
   lot: string | null;
+  lotId: string | null;
   category: string;
   description: string;
   receivedOn: string;
@@ -54,6 +56,7 @@ const select = {
   contact: true,
   product: true,
   lot: true,
+  lotId: true,
   category: true,
   description: true,
   receivedOn: true,
@@ -123,6 +126,7 @@ async function views(ctx: AdminContext, rows: Row[]): Promise<ComplaintView[]> {
       contact: access === "read" ? null : row.contact,
       product: row.product,
       lot: row.lot,
+      lotId: row.lotId,
       category: row.category,
       description: row.description,
       receivedOn: dayOf(row.receivedOn),
@@ -224,6 +228,7 @@ export async function createComplaint(
       ? ctx.tenant.membershipId
       : ((await managers(ctx.db))[0] ?? ctx.tenant.membershipId);
   }
+  await assertLot(ctx.db, input.lotId);
   const respondBy = addDays(input.receivedOn, settings.responseDays);
   const created = await ctx.db.$transaction(async (tx) => {
     const row = await tx.qualityComplaint.create({
@@ -233,6 +238,7 @@ export async function createComplaint(
         contact: input.contact ?? null,
         product: input.product,
         lot: input.lot ?? null,
+        lotId: input.lotId,
         category: input.category,
         description: input.description,
         receivedOn: dateOf(input.receivedOn),
@@ -270,6 +276,7 @@ export async function updateComplaint(
   input: UpdateComplaintInput,
 ): Promise<ComplaintView> {
   await loadEditable(ctx, id);
+  await assertLot(ctx.db, input.lotId);
   if (input.ownerId !== undefined) {
     if (!canManageQuality(ctx)) throw forbidden();
     await assertMember(ctx.db, input.ownerId);

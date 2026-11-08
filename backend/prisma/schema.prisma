@@ -335,6 +335,9 @@ model Workspace {
   externalIdentities       ExternalIdentity[]
   ssoFlows                 SsoFlow[]
   oauthGrants              OAuthGrant[]
+  qualityLots              QualityLot[]
+  qualityLotLinks          QualityLotLink[]
+  qualityShipments         QualityShipment[]
 }
 
 model Role {
@@ -2732,6 +2735,8 @@ model QualityHold {
   ncId         String?
   product      String
   lot          String?
+  /// The traced lot, if picked (no FK); `lot` keeps its code as text.
+  lotId        String?
   quantity     String?
   location     String?
   reason       String
@@ -2973,6 +2978,8 @@ model QualityComplaint {
   contact     String?
   product     String
   lot         String?
+  /// The traced lot, if picked (no FK); `lot` keeps its code as text.
+  lotId       String?
   category    QualityComplaintCategory
   description String
   receivedOn  DateTime                 @db.Date
@@ -3046,6 +3053,8 @@ model QualityRecallTest {
   date             DateTime              @db.Date
   product          String
   lot              String
+  /// The traced lot it was run on, if any (no FK).
+  lotId            String?
   direction        QualityTraceDirection
   minutes          Int
   recoveredPercent Int?
@@ -3446,4 +3455,96 @@ model QualityChangeCounter {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@id([workspaceId, year])
+}
+
+// ─── Food quality, phase 7: traceability (docs/spec/calidad.md, «Fase 7») ──────────────────────
+
+enum QualityLotKind {
+  RAW
+  INTERMEDIATE
+  FINISHED
+}
+
+enum QualityTraceSource {
+  MANUAL
+  CSV
+  PLUGIN
+}
+
+model QualityLot {
+  id          String             @id @default(cuid())
+  workspaceId String
+  kind        QualityLotKind
+  code        String
+  /// A product (no FK).
+  productId   String?
+  material    String?
+  /// A supplier (no FK); raw materials.
+  supplierId  String?
+  supplierLot String?
+  origin      String?
+  quantity    Decimal?           @db.Decimal(14, 3)
+  unit        String?
+  date        DateTime           @db.Date
+  expiresOn   DateTime?          @db.Date
+  source      QualityTraceSource @default(MANUAL)
+  /// The plugin that loaded it.
+  sourceId    String?
+  externalId  String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inputs    QualityLotLink[]  @relation("LotOutput")
+  outputs   QualityLotLink[]  @relation("LotInput")
+  shipments QualityShipment[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, kind, code])
+  @@index([workspaceId, date, id])
+  @@index([workspaceId, source, sourceId, externalId])
+}
+
+/// The input lot went into the output lot (a production order and its consumption are N links).
+model QualityLotLink {
+  id          String             @id @default(cuid())
+  workspaceId String
+  inputId     String
+  outputId    String
+  quantity    Decimal?           @db.Decimal(14, 3)
+  unit        String?
+  source      QualityTraceSource @default(MANUAL)
+  sourceId    String?
+  externalId  String?
+  createdAt   DateTime           @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  input     QualityLot @relation("LotInput", fields: [inputId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  output    QualityLot @relation("LotOutput", fields: [outputId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([inputId, outputId])
+  @@index([workspaceId, outputId])
+  @@index([workspaceId, inputId])
+}
+
+/// A lot that went out to a customer.
+model QualityShipment {
+  id          String             @id @default(cuid())
+  workspaceId String
+  lotId       String
+  customer    String
+  document    String?
+  shippedOn   DateTime           @db.Date
+  quantity    Decimal?           @db.Decimal(14, 3)
+  unit        String?
+  source      QualityTraceSource @default(MANUAL)
+  sourceId    String?
+  externalId  String?
+  createdAt   DateTime           @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lot       QualityLot @relation(fields: [lotId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, lotId])
+  @@index([workspaceId, shippedOn, id])
 }

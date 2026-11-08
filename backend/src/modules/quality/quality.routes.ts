@@ -182,6 +182,31 @@ import {
 } from "./audits.service.ts";
 import { FormQualitySchema, getFormQuality, saveFormQuality } from "./quality-forms.ts";
 import {
+  addInput,
+  addShipment,
+  createLot,
+  deleteLot,
+  exportTrace,
+  getLot,
+  listLots,
+  removeLink,
+  removeShipment,
+  traceLot,
+  updateLot,
+} from "./lots.service.ts";
+import { importTemplate, importTrace } from "./lots-import.ts";
+import {
+  ImportSchema,
+  LinkSchema,
+  LotSchema,
+  LotsQuerySchema,
+  ShipmentSchema,
+  TemplateParams,
+  TraceExportParams,
+  TraceQuerySchema,
+  UpdateLotSchema,
+} from "./lots.schemas.ts";
+import {
   archiveCultureActivity,
   answerSurvey,
   closeSurvey,
@@ -1311,6 +1336,140 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
       handler: async (req, res) => {
         const { id } = IdParams.parse(req.params);
         res.json({ change: await cancelChange(adminContextOf(req), id) });
+      },
+    },
+    // ─── Phase 7: traceability ───
+    {
+      method: "get",
+      path: "/quality/lots",
+      handler: async (req, res) => {
+        res.json(await listLots(adminContextOf(req), LotsQuerySchema.parse(req.query)));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/lots",
+      handler: async (req, res) => {
+        res.status(201).json({ lot: await createLot(adminContextOf(req), LotSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/lots/template/:kind",
+      handler: async (req, res) => {
+        const { kind } = TemplateParams.parse(req.params);
+        const file = await importTemplate(adminContextOf(req), kind);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${kind}.csv"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(file.body);
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/lots/import",
+      guards: [
+        sensitiveRateLimit(deps, { name: "quality-trace-import", windowMs: HOUR, limit: 60, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        res.json(await importTrace(adminContextOf(req), ImportSchema.parse(req.body)));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/lots/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ lot: await getLot(adminContextOf(req), id) });
+      },
+    },
+    {
+      method: "patch",
+      path: "/quality/lots/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ lot: await updateLot(adminContextOf(req), id, UpdateLotSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "delete",
+      path: "/quality/lots/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json(await deleteLot(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/lots/:id/inputs",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res
+          .status(201)
+          .json({ lot: await addInput(adminContextOf(req), id, LinkSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "delete",
+      path: "/quality/lot-links/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json(await removeLink(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "post",
+      path: "/quality/lots/:id/shipments",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res
+          .status(201)
+          .json({ lot: await addShipment(adminContextOf(req), id, ShipmentSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "delete",
+      path: "/quality/shipments/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json(await removeShipment(adminContextOf(req), id));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/lots/:id/trace",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { direction } = TraceQuerySchema.parse(req.query);
+        res.json(await traceLot(adminContextOf(req), id, direction));
+      },
+    },
+    {
+      method: "get",
+      path: "/quality/lots/:id/trace/export/:format",
+      guards: [
+        sensitiveRateLimit(deps, { name: "quality-trace-export", windowMs: HOUR, limit: 60, key: byUser }),
+      ],
+      handler: async (req, res) => {
+        const { id, format } = TraceExportParams.parse(req.params);
+        const { direction } = TraceQuerySchema.parse(req.query);
+        const file = await exportTrace(
+          adminContextOf(req),
+          { gotenbergUrl: deps.env.GOTENBERG_URL },
+          id,
+          direction,
+          format,
+        );
+        res.setHeader("Content-Type", file.contentType);
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="trazabilidad.${format}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(typeof file.body === "string" ? file.body : Buffer.from(file.body));
       },
     },
   ];

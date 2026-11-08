@@ -324,6 +324,20 @@ export interface TenantDb {
     "findFirst" | "findMany" | "count" | "create" | "update"
   >;
   qualityChangeCounter: TenantDelegate<PrismaClient["qualityChangeCounter"], "upsert">;
+  // Traceability: manual and imported lots are corrected or deleted; what a plugin loaded is only
+  // changed by that plugin.
+  qualityLot: TenantDelegate<
+    PrismaClient["qualityLot"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "delete"
+  >;
+  qualityLotLink: TenantDelegate<
+    PrismaClient["qualityLotLink"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "delete"
+  >;
+  qualityShipment: TenantDelegate<
+    PrismaClient["qualityShipment"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "delete"
+  >;
   qualityHold: TenantDelegate<
     PrismaClient["qualityHold"],
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
@@ -596,6 +610,18 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
   qualityChangeCounter: { model: "QualityChangeCounter", ops: ["upsert"] },
+  qualityLot: {
+    model: "QualityLot",
+    ops: ["findFirst", "findMany", "count", "create", "update", "delete"],
+  },
+  qualityLotLink: {
+    model: "QualityLotLink",
+    ops: ["findFirst", "findMany", "count", "create", "update", "delete"],
+  },
+  qualityShipment: {
+    model: "QualityShipment",
+    ops: ["findFirst", "findMany", "count", "create", "update", "delete"],
+  },
   qualityHold: {
     model: "QualityHold",
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],

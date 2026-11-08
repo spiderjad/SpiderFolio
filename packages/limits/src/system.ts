@@ -71,4 +71,10 @@ export const qualityLimits = {
   surveyQuestionsMax: 20,
   surveyQuestionMax: 200,
   objectivesMax: 4000,
+  /** Phase 7: how deep and how wide a trace goes before it says it was cut. */
+  traceDepth: 20,
+  traceLots: 2000,
+  /** Rows of one traceability CSV import (the body is at most 1 MB). */
+  traceImportRows: 5000,
+  traceImportChars: 900_000,
 } as const;

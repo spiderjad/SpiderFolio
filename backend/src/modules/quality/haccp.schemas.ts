@@ -49,6 +49,8 @@ export const HoldSchema = z.strictObject({
   ncId: Id.nullable().default(null),
   product: Text(160),
   lot: z.string().trim().max(120).nullable().default(null),
+  /** The traced lot, if picked from the lots (docs/spec/calidad.md, «Fase 7»). */
+  lotId: z.string().min(1).max(64).nullable().default(null),
   quantity: z.string().trim().max(60).nullable().default(null),
   location: z.string().trim().max(120).nullable().default(null),
   reason: Text(1000),

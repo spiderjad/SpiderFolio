@@ -26,6 +26,8 @@ export const ComplaintSchema = z.strictObject({
   contact: Optional(300),
   product: Text(160),
   lot: Optional(120),
+  /** The traced lot, if picked from the lots (docs/spec/calidad.md, «Fase 7»). */
+  lotId: z.string().min(1).max(64).nullable().default(null),
   category: z.enum(complaintCategories),
   description: Text(4000),
   receivedOn: Day,
@@ -40,6 +42,7 @@ export const UpdateComplaintSchema = z
     contact: Optional(300),
     product: Text(160).optional(),
     lot: Optional(120),
+    lotId: z.string().min(1).max(64).nullable().optional(),
     category: z.enum(complaintCategories).optional(),
     description: Text(4000).optional(),
     respondBy: Day.optional(),
@@ -113,6 +116,8 @@ export const RecallTestSchema = z.strictObject({
   date: Day,
   product: Text(160),
   lot: Text(120),
+  /** The traced lot, if picked from the lots (docs/spec/calidad.md, «Fase 7»). */
+  lotId: z.string().min(1).max(64).nullable().default(null),
   direction: z.enum(["BACKWARD", "FORWARD", "BOTH"]),
   minutes: z.number().int().min(0).max(100_000),
   recoveredPercent: z.number().int().min(0).max(100).nullable().default(null),

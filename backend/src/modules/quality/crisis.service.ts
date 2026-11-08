@@ -6,6 +6,7 @@ import { qualityTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { dayOf, setExpiry } from "../expiries/expiries.service.ts";
 import { canManageQuality, canViewQuality, requireQuality } from "./quality-access.ts";
+import { assertLot } from "./lots.service.ts";
 import { RECALL_TEST_EXPIRY } from "./quality-expiry.ts";
 import type {
   CrisisContactInput,
@@ -42,6 +43,7 @@ export interface CrisisView {
     date: string;
     product: string;
     lot: string;
+    lotId: string | null;
     direction: string;
     minutes: number;
     recoveredPercent: number | null;
@@ -84,6 +86,7 @@ export async function getCrisis(ctx: AdminContext): Promise<CrisisView> {
         date: true,
         product: true,
         lot: true,
+        lotId: true,
         direction: true,
         minutes: true,
         recoveredPercent: true,
@@ -119,6 +122,7 @@ export async function getCrisis(ctx: AdminContext): Promise<CrisisView> {
       date: dayOf(test.date),
       product: test.product,
       lot: test.lot,
+      lotId: test.lotId,
       direction: test.direction,
       minutes: test.minutes,
       recoveredPercent: test.recoveredPercent,
@@ -241,6 +245,7 @@ export async function addRecallTest(
   input: RecallTestInput,
 ): Promise<CrisisView> {
   await requireManager(ctx);
+  await assertLot(ctx.db, input.lotId);
   await ctx.db.$transaction(async (tx) => {
     await tx.qualityRecallTest.create({
       data: { ...input, date: dateOf(input.date), createdById: ctx.tenant.membershipId },
