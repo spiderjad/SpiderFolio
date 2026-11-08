@@ -1,0 +1,84 @@
+---
+title: "Trazabilidad"
+description: "Cada lote, de qué materias primas viene y a qué clientes se entregó: la búsqueda hacia atrás y hacia adelante, exportable para la autoridad o el cliente."
+group: calidad
+order: 12
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+IFS Food 8 (4.18) y BRCGS 9 (3.9) piden seguir un lote desde la materia prima, y su proveedor, hasta el
+cliente, y al revés, en poco tiempo, y probarlo una vez al año. En el área Calidad, **Trazabilidad** reúne los
+lotes, qué lote entró en cuál y qué salió hacia cada cliente.
+
+<Shot
+  name="calidad-trazabilidad"
+  alt="La lista de lotes: materias primas con su proveedor, el amasado y los lotes de producto terminado"
+/>
+
+Cada lote es de un **tipo**: materia prima, intermedio o producto terminado. Se busca por el código del lote,
+el lote del proveedor o la materia, y se filtra por tipo.
+
+## Cargar los lotes
+
+Hay dos formas, y se pueden combinar:
+
+- **A mano**: **Nuevo lote** pide el tipo, el código (el mismo del ERP, del MES o de la etiqueta), el producto
+  o la materia, y para la materia prima el **proveedor**, el **lote del proveedor** y el **origen** (matadero,
+  país). En la ficha del lote, **Añadir lote de entrada** dice qué lote entró en este, y **Añadir entrega**
+  registra a qué cliente salió, con su albarán.
+- **Importar un CSV**: **Importar** recibe tres archivos, uno por vez: primero los **lotes**, después los
+  **enlaces** (qué lote entró en cuál) y por último las **entregas**. Cada uno tiene su **plantilla**.
+  **Comprobar** revisa el archivo fila por fila y dice cuántas filas son nuevas, cuántas se actualizan y
+  cuáles tienen error y por qué; **Importar** escribe las válidas. Un lote del mismo tipo y código se
+  actualiza, y una celda vacía no borra lo que ya tiene.
+
+Un enlace que haría que un lote se compusiera de sí mismo se rechaza.
+
+## Trazar
+
+La ficha de cada lote muestra sus datos y su **traza**:
+
+- **Hacia atrás**: de qué lotes viene, hasta las materias primas, con su proveedor y su lote.
+- **Hacia adelante**: en qué lotes se usó, hasta los productos terminados, y sus **entregas**: a qué clientes,
+  con qué albarán y cuánto.
+
+<Shot
+  name="calidad-lote"
+  alt="La traza hacia adelante de una materia prima: el amasado, los dos lotes de chorizo y sus clientes"
+/>
+
+Arriba están los totales (lotes, materias primas y proveedores, o clientes y cantidad entregada) y lo que tardó
+la consulta. **Exportar CSV** y **Exportar PDF** generan el informe para mandarlo a la autoridad sanitaria o a
+un cliente; la exportación queda en el registro de auditoría.
+
+Debajo, la ficha lista de qué viene el lote, en qué se usó, sus entregas y lo que lo menciona: producto
+retenido, reclamaciones y simulacros de retirada.
+
+## Simulacro de retirada
+
+Quien gestiona calidad puede pulsar **Registrar como simulacro** en la traza: abre la prueba de retirada con el
+producto, el lote, el sentido y los **minutos** que pasaron desde que abrió la traza. Solo falta el %
+recuperado y el resultado (ver [Reclamaciones y retirada](/es/docs/reclamaciones-y-retirada)).
+
+## Con el resto de Calidad
+
+Al registrar un **producto retenido** o una **reclamación**, quien ve calidad puede elegir el **lote de
+Trazabilidad**: el código queda como siempre y la ficha del lote los muestra.
+
+## Quién ve qué
+
+| Quién                 | Qué ve y qué hace                                              |
+| --------------------- | -------------------------------------------------------------- |
+| **Gestionar calidad** | Todo: carga lotes, enlaces y entregas, importa y traza.        |
+| **Ver calidad**       | Ve los lotes, traza y exporta.                                 |
+| El resto              | No entra: los clientes y las cantidades son datos comerciales. |
+
+## Relacionado
+
+- [Reclamaciones y retirada](/es/docs/reclamaciones-y-retirada)
+- [Plan APPCC y producto retenido](/es/docs/plan-appcc)
+- [Proveedores](/es/docs/proveedores)

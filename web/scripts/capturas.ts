@@ -526,6 +526,7 @@ const demoSupplierIds = new Map<Locale, string>();
 const demoProductIds = new Map<Locale, string>();
 const demoSurveyIds = new Map<Locale, string>();
 const demoChangeIds = new Map<Locale, string>();
+const demoLotIds = new Map<Locale, string>();
 const qualityAuditOf = (locale: Locale) => {
   const id = demoAuditIds.get(locale);
   if (id === undefined) throw new Error("La auditoría IFS de la demo todavía no está");
@@ -1136,7 +1137,12 @@ const CAPTURES: Capture[] = [
     then: async (page) => {
       // A few statements answered, so the scale shows chosen and unchosen.
       for (const [index, score] of [4, 5, 4].entries()) {
-        await page.getByRole("radiogroup").nth(index).getByRole("radio").nth(score - 1).click();
+        await page
+          .getByRole("radiogroup")
+          .nth(index)
+          .getByRole("radio")
+          .nth(score - 1)
+          .click();
       }
     },
   },
@@ -1173,6 +1179,29 @@ const CAPTURES: Capture[] = [
       const id = rows[0]?.id;
       if (id === undefined) throw new Error("El cambio de la demo todavía no está");
       demoChangeIds.set(locale, id);
+    },
+  },
+  {
+    name: "calidad-trazabilidad",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/calidad/trazabilidad`,
+    before: ({ slug, locale }) => demoQualityOf(locale, slug),
+  },
+  {
+    name: "calidad-lote",
+    who: "owner",
+    path: (i, locale) => `/app/${i.slug}/calidad/trazabilidad/${demoLotIds.get(locale) ?? ""}`,
+    before: async ({ slug, locale }) => {
+      await demoQualityOf(locale, slug);
+      // The pork shoulder: its forward trace reaches the two chorizo lots and their customers.
+      const { rows } = await db.query<{ id: string }>(
+        `SELECT l.id FROM "QualityLot" l JOIN "Workspace" w ON w.id = l."workspaceId"
+          WHERE w.slug = $1 AND l.kind = 'RAW' ORDER BY l.code LIMIT 1`,
+        [slug],
+      );
+      const id = rows[0]?.id;
+      if (id === undefined) throw new Error("El lote de la demo todavía no está");
+      demoLotIds.set(locale, id);
     },
   },
   {

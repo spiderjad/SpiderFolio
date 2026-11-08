@@ -71,6 +71,7 @@ export const DOC_KEYS = [
   "qualitySampling",
   "qualityCulture",
   "qualityChanges",
+  "qualityTraceability",
   "search",
   "bian",
   "security2fa",

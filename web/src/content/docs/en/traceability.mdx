@@ -1,0 +1,84 @@
+---
+title: "Traceability"
+description: "Each lot, which raw materials it comes from and which customers it went to: the backward and forward search, exportable for the authority or the customer."
+group: calidad
+order: 12
+icon: check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+IFS Food 8 (4.18) and BRCGS 9 (3.9) ask you to follow a lot from the raw material, and its supplier, to the
+customer, and back, quickly, and to test it once a year. In the Quality area, **Traceability** brings together
+the lots, which lot went into which and what went out to each customer.
+
+<Shot
+  name="calidad-trazabilidad"
+  alt="The list of lots: raw materials with their supplier, the mix and the finished product lots"
+/>
+
+Each lot has a **type**: raw material, intermediate or finished product. Search by the lot code, the supplier
+lot or the material, and filter by type.
+
+## Loading the lots
+
+There are two ways, and they can be combined:
+
+- **By hand**: **New lot** asks for the type, the code (the same as in the ERP, the MES or the label), the
+  product or material and, for a raw material, the **supplier**, the **supplier lot** and the **origin**
+  (slaughterhouse, country). On the lot's page, **Add input lot** says which lot went into this one, and **Add
+  shipment** records which customer it went out to, with its delivery note.
+- **Importing a CSV**: **Import** takes three files, one at a time: first the **lots**, then the **links**
+  (which lot went into which) and last the **shipments**. Each has its **template**. **Check** goes through
+  the file row by row and says how many rows are new, how many are updated and which have errors and why;
+  **Import** writes the valid ones. A lot of the same type and code is updated, and an empty cell doesn't
+  erase what it already has.
+
+A link that would make a lot be made of itself is refused.
+
+## Tracing
+
+Each lot's page shows its data and its **trace**:
+
+- **Backward**: which lots it comes from, down to the raw materials, with their supplier and lot.
+- **Forward**: which lots it went into, up to the finished products, and their **shipments**: to which
+  customers, with which delivery note and how much.
+
+<Shot
+  name="calidad-lote"
+  alt="The forward trace of a raw material: the mix, the two chorizo lots and their customers"
+/>
+
+At the top are the totals (lots, raw materials and suppliers, or customers and quantity shipped) and how long
+the query took. **Export CSV** and **Export PDF** produce the report to send to the food authority or a
+customer; the export is recorded in the audit log.
+
+Below, the page lists what the lot comes from, what it went into, its shipments and what mentions it: product
+on hold, complaints and recall tests.
+
+## Recall test
+
+Whoever manages quality can click **Record as a recall test** on the trace: it opens the recall test with the
+product, the lot, the direction and the **minutes** since they opened the trace. Only the % recovered and the
+result are left (see [Complaints and recall](/en/docs/complaints-and-recall)).
+
+## With the rest of Quality
+
+When recording **product on hold** or a **complaint**, whoever views quality can pick the **Traceability
+lot**: the code stays as usual and the lot's page shows them.
+
+## Who sees what
+
+| Who                | What they see and do                                             |
+| ------------------ | ---------------------------------------------------------------- |
+| **Manage quality** | Everything: loads lots, links and shipments, imports and traces. |
+| **View quality**   | Sees the lots, traces and exports.                               |
+| Everyone else      | No access: customers and quantities are commercial data.         |
+
+## Related
+
+- [Complaints and recall](/en/docs/complaints-and-recall)
+- [HACCP plan and product on hold](/en/docs/haccp-plan)
+- [Suppliers](/en/docs/suppliers)

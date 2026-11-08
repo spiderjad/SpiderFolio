@@ -1444,7 +1444,7 @@ export const qualityTexts: typeof es = {
     },
     empty: {
       title: "No lots yet",
-      text: "Load them by hand, import them from a CSV or connect the ERP with its plugin.",
+      text: "Load them by hand or import them from a CSV.",
     },
     emptyFiltered: "No lot matches the search.",
     picker: {

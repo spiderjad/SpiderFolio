@@ -1929,10 +1929,25 @@ const CULTURE = {
       "1. Que todo el personal de planta reciba la charla de alérgenos antes de junio.\n2. Subir la participación en la encuesta de cultura por encima del 70 %.\n3. Que cada no conformidad comunicada por planta tenga respuesta en menos de 15 días.",
     activities: [
       { title: "Charla de alérgenos en el cambio de turno", kind: "TRAINING", ago: 60, done: true },
-      { title: "Tablón: resultados de la auditoría IFS", kind: "COMMUNICATION", ago: 30, done: true },
+      {
+        title: "Tablón: resultados de la auditoría IFS",
+        kind: "COMMUNICATION",
+        ago: 30,
+        done: true,
+      },
       { title: "Reunión de calidad con los jefes de línea", kind: "MEETING", ago: 5, done: false },
-      { title: "Encuesta de cultura de seguridad alimentaria", kind: "SURVEY", ago: -10, done: false },
-      { title: "Formación en higiene para el personal nuevo", kind: "TRAINING", ago: -40, done: false },
+      {
+        title: "Encuesta de cultura de seguridad alimentaria",
+        kind: "SURVEY",
+        ago: -10,
+        done: false,
+      },
+      {
+        title: "Formación en higiene para el personal nuevo",
+        kind: "TRAINING",
+        ago: -40,
+        done: false,
+      },
     ],
     survey: "Encuesta de cultura de seguridad alimentaria",
     comments: [
@@ -1952,7 +1967,8 @@ const CULTURE = {
       {
         title: "Nuevo detector de metales en la línea 2",
         kind: "EQUIPMENT",
-        description: "Sustituye al detector actual, que da falsos rechazos. Hay que validar la sensibilidad con las probetas.",
+        description:
+          "Sustituye al detector actual, que da falsos rechazos. Hay que validar la sensibilidad con las probetas.",
         status: "PROPOSED",
         planned: 30,
       },
@@ -1975,7 +1991,8 @@ const CULTURE = {
       haccp: "Sin peligros nuevos; el PCC de secado no cambia.",
       allergens: "Se añade mostaza a «puede contener».",
       training: "Charla a los operarios de amasado.",
-      rejected: "Sin estudio de vida útil que lo respalde: la aw al día 21 no garantiza la estabilidad.",
+      rejected:
+        "Sin estudio de vida útil que lo respalde: la aw al día 21 no garantiza la estabilidad.",
     },
   },
   en: {
@@ -2006,14 +2023,16 @@ const CULTURE = {
       {
         title: "New metal detector on line 2",
         kind: "EQUIPMENT",
-        description: "Replaces the current detector, which gives false rejects. Sensitivity has to be validated with the test pieces.",
+        description:
+          "Replaces the current detector, which gives false rejects. Sensitivity has to be validated with the test pieces.",
         status: "PROPOSED",
         planned: 30,
       },
       {
         title: "New natural casing supplier",
         kind: "SUPPLIER",
-        description: "The current supplier stops serving us. The new one has a valid IFS certificate.",
+        description:
+          "The current supplier stops serving us. The new one has a valid IFS certificate.",
         status: "IMPLEMENTED",
         planned: -20,
       },
@@ -2055,7 +2074,7 @@ export async function demoCulture(
     `SELECT s.id FROM "QualityCultureSurvey" s JOIN "Workspace" w ON w.id = s."workspaceId" WHERE w.slug = $1 LIMIT 1`,
     [target.slug],
   );
-  if (rows.length > 0) return counts;
+  if (rows.length > 0) return await demoTraceability(target, counts);
   const data = CULTURE[target.locale];
   const members = await call<{ items: { id: string; email: string | null }[] }>(
     "GET",
@@ -2150,10 +2169,204 @@ export async function demoCulture(
       ownerId: idOf(1),
       impact: item.status === "IMPLEMENTED" ? "LOW" : "HIGH",
     });
-    await call("POST", `/quality/changes/${change.id}/decision`, { decision: "APPROVE", note: null });
+    await call("POST", `/quality/changes/${change.id}/decision`, {
+      decision: "APPROVE",
+      note: null,
+    });
     if (item.status === "IMPLEMENTED") {
       await call("POST", `/quality/changes/${change.id}/implemented`, { implementedOn: day(-15) });
     }
+  }
+  return await demoTraceability(target, counts);
+}
+
+const TRACE = {
+  es: {
+    raw: [
+      {
+        code: "MP-2610-31",
+        material: "Paleta de cerdo",
+        supplier: "Cárnicas del Valle S.A.",
+        supplierLot: "CV-44712",
+        origin: "Matadero 10.123/LE, España",
+        quantity: 1200,
+        ago: 40,
+      },
+      {
+        code: "MP-2610-32",
+        material: "Pimentón de la Vera",
+        supplier: "Especias Mediterráneas S.L.",
+        supplierLot: "EM-2209",
+        origin: "Cáceres, España",
+        quantity: 25,
+        ago: 39,
+      },
+      {
+        code: "MP-2610-33",
+        material: "Tripa natural de cerdo",
+        supplier: "Tripas Naturales del Norte S.L.",
+        supplierLot: "TN-781",
+        origin: "España",
+        quantity: 300,
+        ago: 39,
+      },
+    ],
+    intermediate: { code: "AM-2610-12", material: "Amasado de chorizo", quantity: 1150, ago: 38 },
+    finished: [
+      { code: "CH-2611-05", product: "CH-01", quantity: 640, ago: 12 },
+      { code: "CH-2611-06", product: "CH-01", quantity: 410, ago: 11 },
+    ],
+    customers: [
+      { lot: 0, customer: "Supermercados Sol", document: "ALB-88231", ago: 8, quantity: 240 },
+      { lot: 0, customer: "Distribuciones Norte", document: "ALB-88240", ago: 6, quantity: 300 },
+      { lot: 1, customer: "Supermercados Sol", document: "ALB-88262", ago: 4, quantity: 180 },
+      { lot: 1, customer: "Tiendas La Despensa", document: "ALB-88270", ago: 3, quantity: 150 },
+    ],
+  },
+  en: {
+    raw: [
+      {
+        code: "RM-2610-31",
+        material: "Pork shoulder",
+        supplier: "Valley Meats Ltd",
+        supplierLot: "VM-44712",
+        origin: "Slaughterhouse UK1234, United Kingdom",
+        quantity: 1200,
+        ago: 40,
+      },
+      {
+        code: "RM-2610-32",
+        material: "Smoked paprika",
+        supplier: "Mediterranean Spices Ltd",
+        supplierLot: "MS-2209",
+        origin: "Spain",
+        quantity: 25,
+        ago: 39,
+      },
+      {
+        code: "RM-2610-33",
+        material: "Natural pork casing",
+        supplier: "Northern Natural Casings Ltd",
+        supplierLot: "NC-781",
+        origin: "United Kingdom",
+        quantity: 300,
+        ago: 39,
+      },
+    ],
+    intermediate: { code: "MX-2610-12", material: "Chorizo mix", quantity: 1150, ago: 38 },
+    finished: [
+      { code: "CH-2611-05", product: "CH-01", quantity: 640, ago: 12 },
+      { code: "CH-2611-06", product: "CH-01", quantity: 410, ago: 11 },
+    ],
+    customers: [
+      { lot: 0, customer: "Sun Supermarkets", document: "DN-88231", ago: 8, quantity: 240 },
+      { lot: 0, customer: "Northern Wholesale", document: "DN-88240", ago: 6, quantity: 300 },
+      { lot: 1, customer: "Sun Supermarkets", document: "DN-88262", ago: 4, quantity: 180 },
+      { lot: 1, customer: "The Pantry Shops", document: "DN-88270", ago: 3, quantity: 150 },
+    ],
+  },
+} as const;
+
+/** Traceability (phase 7): three raw materials, a mix and two chorizo lots shipped to customers. */
+export async function demoTraceability(
+  target: DemoQualityTarget,
+  counts: Record<string, number>,
+): Promise<Record<string, number>> {
+  const call = apiOf(target.base, target.slug, target.token);
+  const { rows } = await target.db.query<{ id: string }>(
+    `SELECT l.id FROM "QualityLot" l JOIN "Workspace" w ON w.id = l."workspaceId" WHERE w.slug = $1 LIMIT 1`,
+    [target.slug],
+  );
+  if (rows.length > 0) return counts;
+  const data = TRACE[target.locale];
+  type Created = { lot: { id: string } };
+  const supplierId = async (name: string) => {
+    const page = await call<{ items: { id: string; name: string }[] }>(
+      "GET",
+      `/quality/suppliers?q=${encodeURIComponent(name)}`,
+    );
+    return page.items.find((item) => item.name === name)?.id ?? null;
+  };
+  const productId = async (code: string) => {
+    const page = await call<{ items: { id: string; code: string | null }[] }>(
+      "GET",
+      `/quality/products?q=${encodeURIComponent(code)}`,
+    );
+    return page.items.find((item) => item.code === code)?.id ?? null;
+  };
+  const raws: string[] = [];
+  for (const item of data.raw) {
+    const { lot } = await call<Created>("POST", "/quality/lots", {
+      kind: "RAW",
+      code: item.code,
+      material: item.material,
+      supplierId: await supplierId(item.supplier),
+      supplierLot: item.supplierLot,
+      origin: item.origin,
+      quantity: item.quantity,
+      unit: "kg",
+      date: day(-item.ago),
+      expiresOn: day(-item.ago + 10),
+    });
+    raws.push(lot.id);
+    counts.lots = (counts.lots ?? 0) + 1;
+  }
+  const { lot: mix } = await call<Created>("POST", "/quality/lots", {
+    kind: "INTERMEDIATE",
+    code: data.intermediate.code,
+    material: data.intermediate.material,
+    quantity: data.intermediate.quantity,
+    unit: "kg",
+    date: day(-data.intermediate.ago),
+  });
+  counts.lots = (counts.lots ?? 0) + 1;
+  const used = [1100, 22, 0];
+  for (const [index, id] of raws.entries()) {
+    if (index === 2) continue;
+    await call("POST", `/quality/lots/${mix.id}/inputs`, {
+      inputId: id,
+      quantity: used[index] ?? null,
+      unit: "kg",
+    });
+  }
+  const finished: string[] = [];
+  for (const item of data.finished) {
+    const { lot } = await call<Created>("POST", "/quality/lots", {
+      kind: "FINISHED",
+      code: item.code,
+      productId: await productId(item.product),
+      quantity: item.quantity,
+      unit: "kg",
+      date: day(-item.ago),
+      expiresOn: day(-item.ago + 120),
+    });
+    finished.push(lot.id);
+    counts.lots = (counts.lots ?? 0) + 1;
+    await call("POST", `/quality/lots/${lot.id}/inputs`, {
+      inputId: mix.id,
+      quantity: Math.round(item.quantity * 1.08),
+      unit: "kg",
+    });
+    const casing = raws[2];
+    if (casing !== undefined) {
+      await call("POST", `/quality/lots/${lot.id}/inputs`, {
+        inputId: casing,
+        quantity: 40,
+        unit: "kg",
+      });
+    }
+  }
+  for (const shipment of data.customers) {
+    const lotId = finished[shipment.lot];
+    if (lotId === undefined) continue;
+    await call("POST", `/quality/lots/${lotId}/shipments`, {
+      customer: shipment.customer,
+      document: shipment.document,
+      shippedOn: day(-shipment.ago),
+      quantity: shipment.quantity,
+      unit: "kg",
+    });
+    counts.shipments = (counts.shipments ?? 0) + 1;
   }
   return counts;
 }

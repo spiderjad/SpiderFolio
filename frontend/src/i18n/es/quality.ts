@@ -1450,7 +1450,7 @@ export const qualityTexts = {
     },
     empty: {
       title: "Todavía no hay lotes",
-      text: "Cárgalos a mano, impórtalos desde un CSV o conecta el ERP con su plugin.",
+      text: "Cárgalos a mano o impórtalos desde un CSV.",
     },
     emptyFiltered: "Ningún lote coincide con la búsqueda.",
     picker: {
