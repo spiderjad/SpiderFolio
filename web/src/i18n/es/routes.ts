@@ -30,6 +30,7 @@ export const routes: LocaleRoutes = {
     pluginLdaps: "activar-ldaps",
     pluginClaudeConnector: "conector-para-claude",
     pluginMcpConnector: "conector-para-claude-edicion",
+    pluginTemplates: "plantillas",
     limits: "limites",
     configuration: "configuracion",
     firstAdmin: "primer-administrador",

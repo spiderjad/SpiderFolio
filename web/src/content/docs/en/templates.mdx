@@ -1,0 +1,94 @@
+---
+title: "Plugin: Company and industry templates"
+description: "Save a page or a folder as a company template, create new content from it and install ready-made packs for food and meat, manufacturing or services."
+group: administracion
+order: 14
+icon: file-check
+---
+
+**Company and industry templates** saves you from starting every document from scratch:
+
+- **Company templates**: you save a page or a whole folder as a template, and from then on anyone can
+  create a copy in the folder they want.
+- **Industry packs**: ready-made sets to install, with folders, model pages, document types and
+  suggested departments. There are three: **Food and meat** (built for IFS Food 8 and BRCGS Food 9),
+  **Manufacturing** and **Services and offices**.
+
+It's a **paid** plugin. The fixed templates SpiderFolio already offers when you create a page
+(procedure, work instruction, minutes, welcome) are still there, with or without the plugin.
+
+## 1. Install the plugin (the owner)
+
+1. In **Admin › License and plugins**, copy the **company ID** and send it to us
+   ([contact](mailto:contacto@spiderjad.com)).
+2. We send you a `.sfplugin` signed for your company. Upload it in **Upload plugin** and press
+   **Restart now**.
+
+**Admin › Templates** appears. The owner sees it, and so does anyone with the **Manage templates**
+permission, given by role in **Admin › Roles**.
+
+## 2. Save a page or a folder as a template
+
+In the **⋯** menu of a page or a folder (in the explorer or with the page open), choose **Save as
+template**. Give it a name, a description and, if you like, a category (Quality, Production, People…).
+
+What's saved:
+
+- **A page**: its current text, its subpages and its images.
+- **A folder**: the folders and pages **you** can see in it. What you don't see isn't included.
+- **A controlled document**: its type (PRC, INS…) and its responsible department. Never its code, its
+  versions, its approvals or its readings.
+
+What's **not** saved: the folder's **files** and **forms** (the template says how many were left out),
+comments, mentions (they stay as text, for example «@Ana») and permissions.
+
+The template is a **fixed copy**: if you later change or delete the original, the template stays the
+same. Its images take up the company's storage until you delete it.
+
+## 3. Create something from a template
+
+In the explorer, open the folder where you want it and press **New › From a company template**. Pick the
+template, check its contents and press **Create**.
+
+- It's created with the **permissions of the folder** you create it in, never the original's.
+- You need to be able to create in that folder. Guests don't use templates.
+- **Controlled documents** start **as drafts**, with a new code. If you can't manage documents in that
+  folder, they're created as plain pages and SpiderFolio tells you.
+- If there's already something with the same name, the new one is called, for example, «Procedure (2)».
+
+## 4. Manage the templates
+
+**Admin › Templates › Company** lists them all, with a search box and filters by category and by kind
+(page or folder). The pencil changes the name, description or category; the bin deletes it. What was
+already created from a template doesn't change when you edit or delete it.
+
+## 5. Install an industry pack
+
+In **Admin › Templates › Industry packs**, each card says what it brings. Press **Install**:
+
+1. Pick the **space**: the pack is created as a folder at its root.
+2. Check the **document types**: the ones your company lacks are added (you need to be able to set up the
+   company). Your own are never changed.
+3. Tick the **suggested departments** you want to create. None is created unless ticked, and you need to
+   be able to manage departments.
+4. Press **Install pack**.
+
+The pack's pages are **guidance models**: they have a note at the top and what you have to fill in is in
+square brackets. Their main pages are also kept as **company templates**, to use again. If you install
+the same pack again, another copy of its folders is created, but its templates aren't repeated.
+
+For now the packs are in Spanish.
+
+## Common problems
+
+**I don't see «Save as template».** You need the **Manage templates** permission, and it only shows on
+pages and folders (not files or forms).
+
+**I don't see «From a company template».** Check that the plugin is active in **Admin › License and
+plugins** and that you can create in that folder.
+
+**A controlled document was created as a plain page.** You can't manage documents in that folder. Create
+it where you can, or ask whoever manages that folder to turn it into a controlled document.
+
+**«The template would have more than 300 folders and pages».** Save a smaller folder, or several
+templates.

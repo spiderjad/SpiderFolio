@@ -37,6 +37,7 @@ export const DOC_KEYS = [
   "pluginLdaps",
   "pluginClaudeConnector",
   "pluginMcpConnector",
+  "pluginTemplates",
   "limits",
   "configuration",
   "firstAdmin",

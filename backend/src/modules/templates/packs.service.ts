@@ -291,6 +291,11 @@ export async function installPack(
     templatesAdded = await ctx.db.$transaction(async (tx) => {
       let added = 0;
       for (const template of checked.templates) {
+        // A page several packs share (document control…) is kept once.
+        const fromPack = await tx.template.count({
+          where: { nameKey: nameKeyOf(template.name), packKey: { not: null } },
+        });
+        if (fromPack > 0) continue;
         let name = template.name;
         for (let n = 2; n < 100; n += 1) {
           if ((await tx.template.count({ where: { nameKey: nameKeyOf(name) } })) === 0) break;

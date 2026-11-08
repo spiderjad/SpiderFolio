@@ -1,6 +1,6 @@
 # Plantillas propias y por rubro (plugin `templates`)
 
-Estado: **borrador para aprobar** (08/11/2026). Nada de código hasta que el mantenedor lo apruebe.
+Estado: **aprobada** (08/11/2026, las 4 propuestas de abajo) e **implementada** (08/11/2026): núcleo (modelo `Template` y `TemplateImage`, `backend/src/modules/templates`, pantallas en `frontend/src/features/templates`, expuestas a los plugins por `@/plugins/ui`), punto de extensión `templatePacks` (pluginApi 4) y plugin `templates` 1.0.0 con los tres paquetes en español. Falta: que el mantenedor lo pruebe con licencia, los tests de seguridad al cerrar el módulo, las capturas (necesitan el plugin y la licencia) y los paquetes en inglés.
 
 ## Qué resuelve
 
@@ -112,7 +112,7 @@ Paquetes de la primera versión (propuesta, en español; inglés después):
   quedan intactas (vuelven con la licencia).
 - Límites de tamaño y profundidad respetados; contenido del `snapshot` validado.
 
-## Preguntas para el mantenedor
+## Decisiones del mantenedor (08/11/2026: sí a las cuatro)
 
 1. ¿Los archivos de una carpeta se dejan fuera (propuesta) o se copian ocupando cuota?
 2. ¿Quién guarda plantillas: solo con `templates:manage` (propuesta) o cualquiera que edite la página?

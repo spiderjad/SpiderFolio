@@ -67,6 +67,18 @@ Hay que analizar y decidir con él, sin código todavía:
 
 ## Plugins
 
+- [ ] **Plantillas propias y por rubro** (`templates` 1.0.0, docs/spec/plantillas.md), hecho el 08/11/2026 sin
+      probar con licencia: falta que el mantenedor lo pruebe en la instalación de prueba (licencia firmada
+      para la empresa), los tests de seguridad al cerrar el módulo (plantillas de otra empresa 404, guardar
+      solo lo que se ve, usar exige crear en el destino, invitados no, sin la feature 404, límites) y las
+      capturas. Su guía (`plantillas` / `templates`) ya está en la web pero el catálogo lo muestra como
+      «Próximamente» (`version: null`) hasta que el mantenedor lo pruebe. Paquetes solo en español.
+- [ ] **Importación de OneDrive y SharePoint** (`onedrive-import`): esqueleto; spec primero. Necesita una
+      app registrada en Microsoft Entra (la registra el mantenedor).
+- [ ] **Documentos controlados** (pedido 08/11/2026, después de Plantillas): listado maestro exportable
+      (CSV y PDF), dar de baja un documento sin reemplazo y documentos externos (normas, legislación,
+      documentos de clientes). Opcional: registro de copias impresas controladas.
+
 - [ ] **«Licencia y plugins» (subir plugins) no aparece en el menú** para el admin: hoy solo lo ve la
       dueña (`frontend/src/components/nav-items.ts`, `section === "license"` → `OWNER`), y subir exige 2FA
       reciente de la dueña. Decidir si el admin lo ve en solo lectura o si se deja así y se explica en la guía.

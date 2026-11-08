@@ -144,16 +144,18 @@ export const PLUGINS: readonly CatalogPlugin[] = [
     id: "templates",
     icon: "file-check",
     price: "paid",
+    // Coming soon until the maintainer has tried 1.0.0 on the test installation.
     version: null,
     minCore: null,
+    guide: "pluginTemplates",
     text: {
       es: {
         title: "Plantillas propias y por rubro",
-        text: "Guarda páginas como plantilla de la empresa y usa colecciones listas para alimentación, industria o servicios.",
+        text: "Guarda páginas y carpetas como plantillas de la empresa e instala paquetes listos para alimentación y cárnicas, industria o servicios.",
       },
       en: {
-        title: "Your own and industry templates",
-        text: "Save pages as company templates and use ready-made collections for food, manufacturing or services.",
+        title: "Company and industry templates",
+        text: "Save pages and folders as company templates and install ready-made packs for food and meat, manufacturing or services.",
       },
     },
   },

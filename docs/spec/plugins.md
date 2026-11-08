@@ -361,7 +361,7 @@ apuntar `PLUGINS_DIR` o `PLUGIN_PACKAGES` a donde queden instalados.
 | `corporate-directory` | Directorio corporativo: inicio de sesión con Active Directory o Microsoft Entra ID, altas, grupos → departamentos y roles, sincronización y bajas. Reemplaza a `microsoft-sign-in`. | Hecho |
 | `onedrive-import` | Importar de OneDrive y SharePoint (botón Nuevo, job `sync`). | Esqueleto |
 | `mcp-connector` | Conector para Claude con edición: enciende `mcp_read` y `mcp_write` del núcleo y reemplaza a `claude-connector` (gratis, solo lectura). docs/spec/conector-mcp.md. | Hecho |
-| `templates` | Plantillas propias y paquetes por rubro: enciende `custom_templates` del núcleo y trae los paquetes (docs/spec/plantillas.md). | Spec |
+| `templates` | Plantillas propias y paquetes por rubro: enciende `custom_templates` del núcleo, declara `templates:manage` y trae los paquetes por `templatePacks` (pluginApi 4; docs/spec/plantillas.md). | Hecho (1.0.0, falta probarlo) |
 | `audit-rooms` | Pasó al núcleo, gratis (docs/spec/salas-de-auditoria.md). El id queda reservado. | Retirado |
 | `erp-traceability` | Trazabilidad desde SAP y ADA MES: lotes, consumos y entregas al modelo de Calidad por `ctx.traceability` (docs/spec/calidad.md, «Fase 7»). | Spec |
 

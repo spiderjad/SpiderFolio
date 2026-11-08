@@ -24,6 +24,7 @@ export function getStaticPaths() {
     ["corporate-directory/ldaps", "pluginLdaps"],
     ["claude-connector", "pluginClaudeConnector"],
     ["mcp-connector", "pluginMcpConnector"],
+    ["templates", "pluginTemplates"],
   ];
   return guides.map(([guide, key]) => ({ params: { guide }, props: { key } }));
 }

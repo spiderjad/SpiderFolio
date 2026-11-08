@@ -1,0 +1,97 @@
+---
+title: "Plugin: Plantillas propias y por rubro"
+description: "Guarda una página o una carpeta como plantilla de la empresa, crea contenido nuevo a partir de ella e instala paquetes listos para alimentación y cárnicas, industria o servicios."
+group: administracion
+order: 14
+icon: file-check
+---
+
+**Plantillas propias y por rubro** sirve para no empezar cada documento de cero:
+
+- **Plantillas de la empresa**: guardas una página o una carpeta completa como plantilla y, desde
+  entonces, cualquiera puede crear una copia en la carpeta que quiera.
+- **Paquetes por rubro**: conjuntos listos para instalar, con carpetas, páginas modelo, tipos de
+  documento y departamentos sugeridos. Hay tres: **Alimentación y cárnicas** (pensado para IFS Food 8 y
+  BRCGS Food 9), **Industria** y **Servicios y oficinas**.
+
+Es un plugin **de pago**. Las plantillas fijas que ya trae SpiderFolio al crear una página
+(procedimiento, instrucción de trabajo, acta, bienvenida) siguen estando, con o sin el plugin.
+
+## 1. Instalar el plugin (el propietario)
+
+1. En **Administración › Licencia y plugins**, copia el **ID de la empresa** y envíanoslo
+   ([contacto](mailto:contacto@spiderjad.com)).
+2. Te enviamos un `.sfplugin` firmado para tu empresa. Súbelo en **Subir plugin** y pulsa **Reiniciar
+   ahora**.
+
+Aparece **Administración › Plantillas**. La ve el propietario y quien tenga el permiso **Gestionar
+plantillas**, que se da por rol en **Administración › Roles**.
+
+## 2. Guardar una página o una carpeta como plantilla
+
+En el menú **⋯** de una página o de una carpeta (en el explorador o con la página abierta), elige
+**Guardar como plantilla**. Ponle un nombre, una descripción y, si quieres, una categoría (Calidad,
+Producción, Personas…).
+
+Qué se guarda:
+
+- **Una página**: su texto actual, sus subpáginas y sus imágenes.
+- **Una carpeta**: las carpetas y páginas que **tú** puedes ver dentro de ella. Lo que no ves no entra
+  en la plantilla.
+- **Un documento controlado**: su tipo (PRC, INS…) y su departamento responsable. Nunca su código, sus
+  versiones, sus aprobaciones ni sus lecturas.
+
+Qué **no** se guarda: los **archivos** y los **formularios** de la carpeta (la plantilla avisa cuántos
+quedaron fuera), los comentarios, las menciones (quedan como texto, por ejemplo «@Ana») y los permisos.
+
+La plantilla es una **copia fija**: si después cambias o borras el original, la plantilla sigue igual.
+Sus imágenes ocupan espacio de la empresa hasta que la borras.
+
+## 3. Crear algo desde una plantilla
+
+En el explorador, abre la carpeta donde lo quieres y pulsa **Nuevo › Desde una plantilla de la empresa**.
+Elige la plantilla, revisa su contenido y pulsa **Crear**.
+
+- Se crea con los **permisos de la carpeta** donde lo creas, nunca con los del original.
+- Hace falta poder crear en esa carpeta. Los invitados no usan plantillas.
+- Los **documentos controlados** nacen **en borrador**, con un código nuevo. Si en esa carpeta no puedes
+  gestionar documentos, se crean como páginas normales y SpiderFolio te lo avisa.
+- Si ya hay algo con el mismo nombre, el nuevo se llama, por ejemplo, «Procedimiento (2)».
+
+## 4. Gestionar las plantillas
+
+En **Administración › Plantillas › De la empresa** están todas, con buscador y filtros por categoría y
+por tipo (página o carpeta). Con el lápiz cambias el nombre, la descripción o la categoría; con la
+papelera la borras. Lo que ya se creó con una plantilla no cambia al editarla ni al borrarla.
+
+## 5. Instalar un paquete por rubro
+
+En **Administración › Plantillas › Paquetes por rubro**, cada tarjeta dice qué trae. Pulsa **Instalar**:
+
+1. Elige el **espacio**: el paquete se crea como una carpeta en su raíz.
+2. Revisa los **tipos de documento**: los que tu empresa no tiene se agregan (hace falta poder configurar
+   la empresa). Los tuyos nunca se cambian.
+3. Marca los **departamentos sugeridos** que quieras crear. Ninguno se crea sin marcarlo, y hace falta
+   poder gestionar departamentos.
+4. Pulsa **Instalar paquete**.
+
+Las páginas del paquete son **modelos orientativos**: llevan una nota al principio y lo que hay que
+completar va entre corchetes. Además, sus páginas principales quedan como **plantillas de la empresa**,
+para volver a usarlas. Si instalas el mismo paquete otra vez, se crea otra copia de sus carpetas, pero
+sus plantillas no se repiten.
+
+Los paquetes están por ahora en español.
+
+## Problemas frecuentes
+
+**No veo «Guardar como plantilla».** Hace falta el permiso **Gestionar plantillas**, y solo aparece en
+páginas y carpetas (no en archivos ni formularios).
+
+**No veo «Desde una plantilla de la empresa».** Comprueba que el plugin está activo en **Administración ›
+Licencia y plugins** y que puedes crear en esa carpeta.
+
+**Un documento controlado se creó como página normal.** En esa carpeta no puedes gestionar documentos.
+Créalo donde sí puedas, o pídele a quien gestiona esa carpeta que lo convierta en documento controlado.
+
+**«La plantilla tendría más de 300 carpetas y páginas».** Guarda una carpeta más chica, o varias
+plantillas.
