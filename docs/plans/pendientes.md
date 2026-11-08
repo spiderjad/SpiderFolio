@@ -60,8 +60,9 @@ Hay que analizar y decidir con él, sin código todavía:
 
 ## Migración a spider-ui
 
-- [ ] Etapas 2 a 5 en [2026-11-07-spider-ui.md](2026-11-07-spider-ui.md) (componentes `v-*`, acceso
-      `auth-*`, web, guías y capturas). El panel usa el violeta de spider-ui, no el monocromo de su guía.
+- [x] Etapas 2 a 5 en [2026-11-07-spider-ui.md](2026-11-07-spider-ui.md) (08/11/2026): componentes `v-*`,
+      acceso `auth-*`, web sin degradados y con títulos en Inter, capturas regeneradas. El panel usa el
+      violeta de spider-ui (o el acento de la empresa) en el botón principal.
 - [x] Reescribir los tests del preset (`packages/tailwind-preset/tests`) para los alias `var(--sp-*)` (07/11/2026).
 
 ## Plugins
