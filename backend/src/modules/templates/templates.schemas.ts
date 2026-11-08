@@ -95,7 +95,7 @@ export const UseTemplateSchema = z.strictObject({
 });
 export type UseTemplateInput = z.infer<typeof UseTemplateSchema>;
 
-export const TemplatesQuerySchema = z.strictObject({
+export const TemplatesQuerySchema = z.object({
   ...pageShape(["name", "createdAt"], "name"),
   q: SearchParam,
   category: Category.optional(),
@@ -103,4 +103,4 @@ export const TemplatesQuerySchema = z.strictObject({
 });
 export type TemplatesQuery = z.infer<typeof TemplatesQuerySchema>;
 
-export const TemplateParams = z.strictObject({ id: z.string().min(1).max(40) });
+export const TemplateParams = z.object({ id: z.string().min(1).max(40) });

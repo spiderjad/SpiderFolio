@@ -4,7 +4,13 @@
 // documentos cuyo departamento responsable es de su área.
 import type { DocStatus, NodeType, Prisma } from "../../generated/prisma/client.ts";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
-import { contentMessages } from "../../i18n/index.ts";
+import { escapeHtml } from "@spiderfolio/content";
+import { documentLimits } from "@spiderfolio/limits";
+import { contentMessages, masterListTexts } from "../../i18n/index.ts";
+import { currentLocale } from "../../i18n/locales.ts";
+import { toCsv } from "../../lib/csv.ts";
+import { companyZone, formatDateTimeIn, formatDayIn } from "../../lib/time-zone.ts";
+import { renderWithGotenberg } from "./pdf.ts";
 import { offsetArgs, pageOf, type Page } from "../../lib/pagination.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { listDocumentTypes, type DocumentTypeView } from "./documents.service.ts";
@@ -97,10 +103,11 @@ export interface AdminDocumentRow {
 
 const DAY = 24 * 60 * 60 * 1000;
 
-export async function listDocuments(
+/** The list's filters (also the master list's): what the person's scope and the query leave. */
+async function documentsWhere(
   ctx: AdminContext,
-  query: AdminDocumentsQuery,
-): Promise<Page<AdminDocumentRow>> {
+  query: Omit<AdminDocumentsQuery, "page" | "pageSize" | "cursor" | "sort" | "dir">,
+): Promise<Prisma.ControlledDocumentWhereInput> {
   const scope = scopeOf(ctx);
   const and: Prisma.ControlledDocumentWhereInput[] = [
     scopeWhere(scope),
@@ -135,7 +142,14 @@ export async function listDocuments(
       },
     });
   }
-  const where: Prisma.ControlledDocumentWhereInput = { AND: and };
+  return { AND: and };
+}
+
+export async function listDocuments(
+  ctx: AdminContext,
+  query: AdminDocumentsQuery,
+): Promise<Page<AdminDocumentRow>> {
+  const where = await documentsWhere(ctx, query);
   const [rows, total, names] = await Promise.all([
     ctx.db.controlledDocument.findMany({
       where,
@@ -178,6 +192,125 @@ export async function listDocuments(
     total,
     query,
   );
+}
+
+// ─── Master list (ISO 9001 7.5.3, IFS 4.2): the list with its filters, as CSV or PDF ───
+
+export interface MasterListFile {
+  fileName: string;
+  contentType: string;
+  body: string | Uint8Array;
+}
+
+/**
+ * Every document the list shows with the same filters (the person's scope included), with its version
+ * in force, since when, its responsible department and its next review. Recorded in the audit log.
+ */
+export async function exportMasterList(
+  ctx: AdminContext,
+  deps: { gotenbergUrl: string | undefined },
+  query: Omit<AdminDocumentsQuery, "page" | "pageSize" | "cursor" | "sort" | "dir">,
+  format: "csv" | "pdf",
+): Promise<MasterListFile> {
+  const t = masterListTexts;
+  if (format === "pdf" && deps.gotenbergUrl === undefined) {
+    throw new AppError("UNAVAILABLE", { message: t.pdfUnavailable });
+  }
+  const max = documentLimits.masterListMax;
+  const where = await documentsWhere(ctx, query);
+  const rows = await ctx.db.controlledDocument.findMany({
+    where,
+    orderBy: [{ code: "asc" }, { id: "asc" }],
+    take: max + 1,
+    select: {
+      nodeId: true,
+      code: true,
+      docType: true,
+      ownerDepartmentId: true,
+      publishedVersion: true,
+      reviewDueAt: true,
+      node: { select: { name: true, space: { select: { name: true } } } },
+    },
+  });
+  if (rows.length > max) throw new AppError("BAD_REQUEST", { message: t.tooMany(max) });
+  const ids = rows.map((row) => row.nodeId);
+  const [versions, types, names, zone] = await Promise.all([
+    ctx.db.documentVersion.findMany({
+      where: { nodeId: { in: ids } },
+      orderBy: { version: "desc" },
+      select: { nodeId: true, version: true, status: true, effectiveAt: true, publishedAt: true },
+    }),
+    listDocumentTypes(ctx),
+    departmentNames(ctx),
+    companyZone(ctx.db),
+  ]);
+  const locale = currentLocale();
+  const typeName = new Map(types.map((type) => [type.code, type.name]));
+  const newest = new Map<string, DocStatus>();
+  const since = new Map<string, Date | null>();
+  const published = new Map(rows.map((row) => [row.nodeId, row.publishedVersion]));
+  for (const version of versions) {
+    if (!newest.has(version.nodeId)) newest.set(version.nodeId, version.status);
+    if (published.get(version.nodeId) === version.version) {
+      since.set(version.nodeId, version.effectiveAt ?? version.publishedAt);
+    }
+  }
+  const day = (date: Date | null | undefined) =>
+    date === null || date === undefined ? "" : formatDayIn(date, zone, locale);
+  const table = rows.map((row) => [
+    row.code,
+    row.node.name,
+    `${row.docType} · ${typeName.get(row.docType) ?? row.docType}`,
+    t.statuses[newest.get(row.nodeId) ?? "DRAFT"],
+    row.publishedVersion === null ? t.noVersion : String(row.publishedVersion),
+    day(since.get(row.nodeId)),
+    row.ownerDepartmentId === null ? "" : (names.get(row.ownerDepartmentId) ?? ""),
+    day(row.reviewDueAt),
+    row.node.space.name,
+  ]);
+  const filtered =
+    (query.q !== undefined && query.q !== "") ||
+    query.status !== undefined ||
+    query.departmentId !== undefined ||
+    query.review !== undefined;
+  await auditAdmin(ctx, {
+    action: "document.master_list.export",
+    entityType: "ControlledDocument",
+    entityId: "master-list",
+    metadata: { format, count: rows.length, filtered },
+  });
+  if (format === "csv") {
+    return {
+      fileName: t.fileName("csv"),
+      contentType: "text/csv; charset=utf-8",
+      body: toCsv(t.columns, table),
+    };
+  }
+  const style = `
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 9px; color: #111; }
+    h1 { font-size: 15px; margin: 0 0 .3em; } .meta { color: #555; margin: 0 0 .8em; }
+    table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #bbb; padding: 3px 5px; text-align: left; vertical-align: top; }
+    th { background: #f3f3f3; font-weight: normal; } thead { display: table-header-group; } tr { page-break-inside: avoid; }
+  `;
+  const meta = [t.summary(rows.length, formatDateTimeIn(new Date(), zone, locale))]
+    .concat(filtered ? [t.filtered] : [])
+    .map((line) => escapeHtml(line))
+    .join(" · ");
+  const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><style>${style}</style></head><body><h1>${escapeHtml(
+    t.title,
+  )}</h1><p class="meta">${meta}</p><table><thead><tr>${t.columns
+    .map((cell) => `<th>${escapeHtml(cell)}</th>`)
+    .join("")}</tr></thead><tbody>${table
+    .map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`)
+    .join("")}</tbody></table></body></html>`;
+  const small =
+    "font-family: Helvetica, Arial, sans-serif; font-size: 8px; color: #555; width: 100%; padding: 0 40px;";
+  const pdf = await renderWithGotenberg(deps.gotenbergUrl ?? "", {
+    html,
+    header: `<html><head><style>body{margin:0}</style></head><body><div style="${small} text-align:right;">${escapeHtml(t.title)}</div></body></html>`,
+    footer: `<html><head><style>body{margin:0}</style></head><body><div style="${small} text-align:center;">${t.pageFooter('<span class="pageNumber"></span>', '<span class="totalPages"></span>')}</div></body></html>`,
+  });
+  return { fileName: t.fileName("pdf"), contentType: "application/pdf", body: pdf };
 }
 
 // ─── Bandeja de aprobaciones (de toda el área) ───────────────────────────────────────────

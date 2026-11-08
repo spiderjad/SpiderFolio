@@ -93,3 +93,8 @@ export const templateLimits = {
   /** Categories offered in the filter. */
   categoriesMax: 100,
 } as const;
+
+/** Controlled documents: the master list downloaded as CSV or PDF. */
+export const documentLimits = {
+  masterListMax: 10_000,
+} as const;

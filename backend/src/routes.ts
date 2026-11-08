@@ -123,7 +123,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...documentRoutes(deps),
     ...qrRoutes(deps),
     ...searchRoutes(deps),
-    ...adminDocumentRoutes(),
+    ...adminDocumentRoutes(deps),
     ...notificationRoutes(),
     ...pageRoutes(deps),
     ...templateRoutes(deps),

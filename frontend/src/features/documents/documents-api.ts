@@ -360,6 +360,23 @@ export const documentsApi = {
     apiBlob(w(slug, `/nodes/${nodeId}/controlled/pdf?${query({ version: String(version) })}`)),
   recent: (slug: string, pageSize = 10) =>
     api<Page<RecentItem>>(w(slug, `/documents/recent?${query({ pageSize: String(pageSize) })}`)),
+  /** The master list with the list's filters (CSV or PDF). */
+  masterList: (
+    slug: string,
+    q: {
+      q?: string;
+      status?: DocStatus | undefined;
+      review?: "due" | undefined;
+      departmentId?: string | undefined;
+    },
+    format: "csv" | "pdf",
+  ) =>
+    apiBlob(
+      w(
+        slug,
+        `/admin/documents/export/${format}?${query({ q: q.q, status: q.status, review: q.review, departmentId: q.departmentId })}`,
+      ),
+    ),
   adminDocuments: (
     slug: string,
     q: {

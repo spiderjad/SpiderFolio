@@ -1329,6 +1329,11 @@ const cases: IsolationCase[] = [
     // Su nodo no es un documento controlado: 400, no 404.
     ownStatus: 400,
   },
+  {
+    method: "get",
+    path: "/admin/documents/export/:format",
+    url: () => "/admin/documents/export/csv",
+  },
   { method: "get", path: "/admin/documents", url: () => "/admin/documents" },
   { method: "get", path: "/admin/documents/approvals", url: () => "/admin/documents/approvals" },
   {

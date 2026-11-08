@@ -1874,3 +1874,35 @@ export const templateTexts = {
   tooManyImages: (max: number) => `La plantilla tendría más de ${String(max)} imágenes.`,
   packUnknown: "Ese paquete no existe o su plugin no está activo.",
 } as const;
+
+export const masterListTexts = {
+  fileName: (format: string) => `listado-maestro.${format}`,
+  title: "Listado maestro de documentos",
+  summary: (count: number, when: string) =>
+    `${String(count)} ${count === 1 ? "documento" : "documentos"} · generado el ${when}`,
+  filtered: "Con los filtros aplicados en la lista.",
+  columns: [
+    "Código",
+    "Título",
+    "Tipo",
+    "Estado",
+    "Versión vigente",
+    "Vigente desde",
+    "Departamento responsable",
+    "Próxima revisión",
+    "Espacio",
+  ],
+  statuses: {
+    DRAFT: "Borrador",
+    IN_REVIEW: "En revisión",
+    APPROVED: "Aprobado",
+    PUBLISHED: "Vigente",
+    OBSOLETE: "Obsoleto",
+    REJECTED: "Rechazado",
+  },
+  noVersion: "Sin publicar",
+  pageFooter: (page: string, total: string) => `Página ${page} de ${total}`,
+  pdfUnavailable: "El PDF no está disponible en este servidor (falta Gotenberg). Descarga el CSV.",
+  tooMany: (max: number) =>
+    `El listado tiene más de ${String(max)} documentos. Filtra la lista antes de descargarlo.`,
+} as const;

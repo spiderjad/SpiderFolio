@@ -2,7 +2,7 @@
 // departamento, próxima revisión), bandeja de aprobaciones, cumplimiento de lectura por documento y
 // por departamento, y numeración por tipo. Un jefe ve solo su área; el servidor lo acota.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardCheck, FileCheck2, Pencil, Plus } from "lucide-react";
+import { ClipboardCheck, Download, FileCheck2, Pencil, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { SearchField } from "@/components/ui/filter-bar";
 import { FormField, Input } from "@/components/ui/form";
 import { LoadMore, ShownCounter, useInfiniteList } from "@/components/ui/infinite";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
-import { adminErrorText } from "@/features/admin/admin-utils";
+import { adminErrorText, downloadBlobFile } from "@/features/admin/admin-utils";
 import { readChoice, useListParams, useSearchParam } from "@/features/admin/list-params";
 import { useMembership } from "@/features/home/workspace-layout";
 import { useDepartmentSource } from "@/features/admin/sources";
@@ -123,8 +123,39 @@ function DocumentsTab() {
         signal,
       ),
   });
+  const download = useMutation({
+    mutationFn: (format: "csv" | "pdf") =>
+      documentsApi.masterList(workspaceSlug, { q, status, review, departmentId }, format),
+    onSuccess: (blob, format) => {
+      downloadBlobFile(t.masterListFile(format), blob);
+    },
+    onError: (error) => {
+      toast.error(adminErrorText(error));
+    },
+  });
   return (
     <Card className="grid gap-3 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{t.masterList}</span> · {t.masterListHint}
+        </p>
+        <div className="flex gap-2">
+          {(["csv", "pdf"] as const).map((format) => (
+            <Button
+              key={format}
+              size="sm"
+              variant="outline"
+              disabled={download.isPending}
+              onClick={() => {
+                download.mutate(format);
+              }}
+            >
+              <Download strokeWidth={1.75} aria-hidden="true" />
+              {format === "csv" ? t.masterListCsv : t.masterListPdf}
+            </Button>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-wrap items-end gap-3">
         <SearchField
           value={search}

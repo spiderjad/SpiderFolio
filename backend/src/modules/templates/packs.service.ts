@@ -33,7 +33,7 @@ import {
 
 const PackId = z.string().regex(/^[a-z0-9][a-z0-9-]{0,59}$/u);
 
-export const PackParams = z.strictObject({ pluginId: PackId, packId: PackId });
+export const PackParams = z.object({ pluginId: PackId, packId: PackId });
 
 export const InstallPackSchema = z.strictObject({
   spaceId: z.string().min(1).max(40),

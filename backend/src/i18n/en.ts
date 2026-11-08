@@ -1869,3 +1869,35 @@ export const templateTexts: Catalog<typeof Es.templateTexts> = {
   tooManyImages: (max: number) => `The template would have more than ${String(max)} images.`,
   packUnknown: "That pack doesn't exist or its plugin isn't active.",
 };
+
+export const masterListTexts: Catalog<typeof Es.masterListTexts> = {
+  fileName: (format: string) => `master-list.${format}`,
+  title: "Master list of documents",
+  summary: (count: number, when: string) =>
+    `${String(count)} ${count === 1 ? "document" : "documents"} · generated on ${when}`,
+  filtered: "With the filters applied in the list.",
+  columns: [
+    "Code",
+    "Title",
+    "Type",
+    "Status",
+    "Version in force",
+    "In force since",
+    "Responsible department",
+    "Next review",
+    "Space",
+  ],
+  statuses: {
+    DRAFT: "Draft",
+    IN_REVIEW: "In review",
+    APPROVED: "Approved",
+    PUBLISHED: "In force",
+    OBSOLETE: "Obsolete",
+    REJECTED: "Rejected",
+  },
+  noVersion: "Not published",
+  pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
+  pdfUnavailable: "PDF isn't available on this server (Gotenberg is missing). Download the CSV.",
+  tooMany: (max: number) =>
+    `The list has more than ${String(max)} documents. Filter it before downloading.`,
+};
