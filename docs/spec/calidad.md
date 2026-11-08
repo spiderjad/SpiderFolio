@@ -794,6 +794,111 @@ Simplificaciones y añadidos:
   quien lo propuso y al responsable. Sin responsable, el vencimiento va a quien lo aprobó.
 - El código de un cambio es **CAM-AAAA-NNNN** en los dos idiomas, como el de las no conformidades.
 
+## Fase 7: trazabilidad
+
+Bloque 4. IFS Food 8 (4.18) y BRCGS 9 (3.9) piden poder seguir un lote desde la materia prima (y su
+proveedor) hasta el cliente y al revés, en poco tiempo, y probarlo una vez al año. Los lotes ya viven en
+SAP (compras, recepciones, entregas) y en ADA MES (órdenes de fabricación y consumos): no se vuelven a
+cargar a mano. Por eso la fase tiene dos partes:
+
+- **Núcleo**: el modelo de lotes, sus enlaces y las entregas; la búsqueda hacia atrás y hacia adelante; alta
+  manual e importación por CSV para quien no tiene ERP; el enlace con retenido, reclamaciones y simulacros.
+- **Plugin comercial `erp-traceability`**: lee SAP y ADA MES y escribe en el modelo del núcleo por un punto
+  de extensión nuevo. El núcleo nunca depende de él.
+
+### Modelo (núcleo)
+
+- `QualityLot` `{ id, workspaceId, kind (RAW | INTERMEDIATE | FINISHED), code (1 a 80, el número de lote del
+  ERP o del MES), productId? (QualityProduct, sin FK), material? (hasta 160: la materia prima o el producto si
+  no está en Productos), supplierId? (QualitySupplier, sin FK; materia prima), supplierLot? (hasta 80),
+  origin? (hasta 200: matadero, país, canal), quantity? (Decimal), unit? (hasta 20), date (DATE: recepción o
+  fabricación), expiresOn? (DATE), source (MANUAL | CSV | PLUGIN), sourceId? (el id del plugin), externalId?
+  (hasta 120, para que una carga repetida actualice y no duplique), createdAt, updatedAt }`. Único por
+  `(workspaceId, kind, code)` y por `(workspaceId, source, sourceId, externalId)`.
+- `QualityLotLink` `{ id, workspaceId, inputId, outputId, quantity?, unit?, source, sourceId?, externalId? }`:
+  el lote `inputId` entró en el lote `outputId` (una orden de fabricación con sus consumos son N enlaces).
+  Único por `(inputId, outputId)`. Sin ciclos: un enlace que cerraría un ciclo se rechaza.
+- `QualityShipment` `{ id, workspaceId, lotId, customer (1 a 160), document? (hasta 80: albarán o entrega),
+  shippedOn (DATE), quantity?, unit?, source, sourceId?, externalId? }`: el lote que salió hacia un cliente.
+- Un lote o un enlace que vino de un plugin se ve con su origen («SAP», «ADA MES») y no se edita a mano: lo
+  corrige el sistema de origen y la próxima sincronización.
+
+### Trazar
+
+- **Hacia atrás**: de un lote a los lotes que lo componen, hasta las materias primas, con su proveedor, lote
+  del proveedor y origen.
+- **Hacia adelante**: de un lote (típicamente una materia prima) a los lotes que la usaron, hasta los
+  terminados y sus entregas: a qué clientes, con qué albarán y cuánto.
+- Una consulta recursiva (CTE) con profundidad máxima y número máximo de lotes (`qualityLimits.traceDepth`,
+  `traceLots`, en `packages/limits`); si se pasa, la respuesta lo dice y no corta en silencio.
+- La pantalla muestra el árbol, los totales (lotes, clientes, cantidad entregada por unidad) y el tiempo que
+  tardó la consulta. Se exporta a **CSV** (una fila por lote y por entrega) y a **PDF** (Gotenberg, como los
+  documentos controlados) para mandarlo a la autoridad o al cliente.
+
+### Alta manual e importación
+
+- quality.manage da de alta lotes, enlaces y entregas a mano (pocas fábricas lo harán: es el respaldo).
+- **Importar CSV** en tres archivos (lotes, enlaces, entregas), con plantilla descargable, validación fila
+  por fila y un resumen antes de confirmar (filas nuevas, actualizadas y con error, con el motivo). Hasta
+  `qualityLimits.csvMax` filas por archivo. Una fila con `externalId` repetido actualiza.
+
+### Enlaces con lo que ya existe
+
+- **Producto retenido**, **reclamaciones** y **no conformidades**: el campo de lote sigue siendo texto, y se
+  suma un selector de lote (`lotId?`) que lo completa y permite abrir la traza desde la ficha.
+- **Simulacros de retirada** (fase 5): desde la traza de un lote, **Registrar como simulacro** abre la prueba
+  con el producto, el lote, el sentido y los minutos ya puestos (desde que se abrió la búsqueda hasta el
+  botón), y el porcentaje recuperado a completar.
+
+### Punto de extensión para plugins
+
+`ctx.traceability` en el contexto del plugin (`PluginWorkspaceContext`), solo para plugins que declaran la
+función `quality.traceability` en su manifiesto y con el módulo de Calidad activo:
+
+- `upsertLots(items)`, `upsertLinks(items)`, `upsertShipments(items)`: de a 500, idempotentes por
+  `externalId`; marcan `source = PLUGIN` y `sourceId` = el plugin. Devuelven creados, actualizados y
+  rechazados con su motivo.
+- `removeMissing({ kind, since })`: borra lo que el plugin cargó y ya no está en el origen (anulaciones).
+- Nunca ve ni toca lo cargado a mano o por otro plugin. El aislamiento entre empresas lo pone el núcleo.
+
+### Plugin `erp-traceability` (comercial)
+
+- Job `sync` con cron (por defecto cada hora) y botón «Sincronizar ahora». Lee:
+  - de **SAP**: recepciones de materia prima (lote, proveedor, lote del proveedor, origen) y entregas a
+    clientes (lote, cliente, albarán, cantidad);
+  - de **ADA MES**: órdenes de fabricación con sus consumos (lote consumido → lote fabricado).
+- Pantalla de ajustes (propietario): conexión, credenciales en `ctx.secrets`, correspondencia de proveedores
+  y productos (código del ERP → `QualitySupplier` / `QualityProduct`), última sincronización y errores.
+- Solo lee: nunca escribe en SAP ni en ADA MES.
+- Cómo se conecta depende de las versiones (ver preguntas abiertas); el plugin lleva un adaptador por
+  sistema para cambiar uno sin tocar el resto.
+
+### Permisos
+
+- quality.view traza, ve lotes y entregas y exporta; quality.manage además da de alta e importa.
+- Los invitados no entran. El resto, nada (los nombres de clientes y las cantidades son datos comerciales).
+- Exportar una traza queda en la auditoría (`quality.trace.export`, con el lote y el sentido).
+
+### Pantallas
+
+- **Trazabilidad** (`/calidad/trazabilidad`): buscador de lote (código, producto, proveedor), la traza con
+  sus dos sentidos y la exportación; lista de lotes paginada en el servidor con filtros (tipo, fecha,
+  origen) en la URL.
+- Ficha de lote (`/calidad/trazabilidad/:lotId`): sus datos, de qué viene, en qué se usó y a quién se
+  entregó, y lo que lo menciona (retenidos, reclamaciones, NC).
+- Botón **Importar** (quality.manage) con el asistente de CSV.
+
+### Preguntas abiertas (para el mantenedor, antes del plugin)
+
+1. **SAP**: ¿S/4HANA, ECC o Business One? ¿Cómo se accede: API OData, Service Layer, una vista de base de
+   datos o archivos exportados por la noche?
+2. **ADA MES**: ¿tiene API (REST) o se lee de su base o de exportaciones? ¿Qué tabla o informe tiene los
+   consumos por orden?
+3. ¿Qué sistema manda en cada dato (por ejemplo, ¿los lotes de producto terminado salen del MES o de SAP)?
+4. ¿Cada cuánto hace falta la sincronización (cada hora, cada 15 minutos, nocturna)?
+
+La parte del núcleo no depende de estas respuestas y se puede hacer antes.
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,
@@ -811,7 +916,9 @@ Simplificaciones y añadidos:
 6. **Panel de indicadores** (bloque 14) y el resto, en tres partes: 6a panel y prerrequisitos (bloque 3);
    6b productos, etiquetado y plan analítico (9 y 10); 6c cultura de seguridad alimentaria y gestión de
    cambios (12 y 13).
-7. **Trazabilidad** (bloque 4): al final, con el conector de SAP y ADA MES (plugin).
+7. **Trazabilidad** (bloque 4, detalle arriba): 7a núcleo (lotes, enlaces, entregas, traza, CSV y enlaces con
+   retenido, reclamaciones y simulacros); 7b el plugin `erp-traceability` con SAP y ADA MES, cuando estén
+   respondidas las preguntas abiertas.
 
 Cada fase: commit propio, guías es/en de las pantallas que cambian y capturas. Tests de permisos y de
 aislamiento entre empresas: todos juntos al cerrar el módulo.

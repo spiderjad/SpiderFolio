@@ -363,6 +363,7 @@ apuntar `PLUGINS_DIR` o `PLUGIN_PACKAGES` a donde queden instalados.
 | `mcp-connector` | Conector MCP para Claude (spec en `plugins/mcp-connector/SPEC.md`). | Esqueleto |
 | `templates` | Plantillas propias y por rubro (migración propia `plugin_templates`). | Esqueleto |
 | `audit-rooms` | Pasó al núcleo, gratis (docs/spec/salas-de-auditoria.md). El id queda reservado. | Retirado |
+| `erp-traceability` | Trazabilidad desde SAP y ADA MES: lotes, consumos y entregas al modelo de Calidad por `ctx.traceability` (docs/spec/calidad.md, «Fase 7»). | Spec |
 
 Oficiales gratis: `microsoft-sign-in` («Entrar con Microsoft»): el botón de inicio de sesión con
 Microsoft 365; la cuenta se crea como Miembro y el propietario le asigna los departamentos.
