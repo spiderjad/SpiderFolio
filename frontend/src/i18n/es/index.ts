@@ -18,6 +18,7 @@ import { formsTexts } from "./forms";
 import { safetyTexts } from "./safety";
 import { caeTexts } from "./cae";
 import { qualityTexts } from "./quality";
+import { templatesTexts } from "./templates";
 import { expiriesTexts } from "./expiries";
 import { auditRoomsTexts } from "./audit-rooms";
 import { termsTexts } from "./terms";
@@ -42,6 +43,7 @@ export const es = {
   safety: safetyTexts,
   cae: caeTexts,
   quality: qualityTexts,
+  templates: templatesTexts,
   expiries: expiriesTexts,
   auditRooms: auditRoomsTexts,
   terms: termsTexts,

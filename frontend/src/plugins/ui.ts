@@ -29,3 +29,7 @@ export { Combobox, useStaticSource, type ComboOption } from "@/components/ui/com
 export { ConfirmCodeDialog } from "@/features/profile/two-factor-section";
 export { toast } from "sonner";
 export { locale, type Locale } from "./locale";
+// Company templates (docs/spec/plantillas.md): the core's screens, which the templates plugin puts in
+// its admin section and in the explorer's menus.
+export { TemplatesAdmin } from "@/features/templates/templates-admin";
+export { SaveAsTemplateDialog, UseTemplateDialog } from "@/features/templates/template-dialogs";
