@@ -5,6 +5,7 @@ import { sharingDepsOf } from "../access/sharing.service.ts";
 import {
   AccessGapsQuerySchema,
   PublishSchema,
+  RetireSchema,
   ApproversQuerySchema,
   GrantReadingAccessSchema,
   RemindSchema,
@@ -29,6 +30,7 @@ import {
   decide,
   myApprovals,
   publish,
+  retire,
   submitForReview,
   withdraw,
 } from "./approvals.service.ts";
@@ -119,6 +121,15 @@ export function documentRoutes(deps: AppDeps): TenantRoute[] {
       handler: async (req, res) => {
         const { id } = DocumentNodeParamsSchema.parse(req.params);
         await withdraw(adminContextOf(req), id);
+        res.status(204).end();
+      },
+    },
+    {
+      method: "post",
+      path: "/nodes/:id/controlled/retire",
+      handler: async (req, res) => {
+        const { id } = DocumentNodeParamsSchema.parse(req.params);
+        await retire(adminContextOf(req), id, RetireSchema.parse(req.body));
         res.status(204).end();
       },
     },

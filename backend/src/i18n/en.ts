@@ -362,6 +362,8 @@ export const memberMessages: Catalog<typeof Es.memberMessages> = {
 
 /** Spaces, folders and files (module 3). */
 export const contentMessages: Catalog<typeof Es.contentMessages> = {
+  retireBusy: "There's a version in review or approved and not published: withdraw or decide it before retiring.",
+  retireNothing: "The document has no version in force to retire.",
   controlledPdfUnavailable:
     "This server doesn't generate the PDF for controlled pages (Gotenberg is missing). " +
     "Whoever manages the installation can turn it on.",

@@ -99,6 +99,8 @@ export interface ControlledActions {
   canDecide: boolean;
   canPublish: boolean;
   canWithdraw: boolean;
+  /** Retire it without a replacement (it has a version in force and nothing in review). */
+  canRetire: boolean;
 }
 
 /** Para quien está revisando: el estado de sus comentarios y si ya revisó una ronda anterior. */
@@ -126,6 +128,8 @@ export interface ControlledView {
   publishedVersion: number | null;
   ownerDepartment: { id: string; name: string } | null;
   reviewDueAt: Date | null;
+  /** Retired without a replacement: when, why, by whom and its last version. */
+  retired: { at: Date; reason: string; by: string | null; version: number | null } | null;
   /** De la más nueva a la más vieja. */
   versions: DocumentVersionView[];
   actions: ControlledActions;
@@ -279,7 +283,19 @@ export async function getControlled(ctx: AdminContext, nodeId: string): Promise<
     canPublish: status === "APPROVED" && (await canApprove(ctx, nodeId, row.ownerDepartmentId, me)),
     canWithdraw:
       status === "IN_REVIEW" && (latest?.submittedById === me || atLeast(level, "MANAGE")),
+    canRetire:
+      row.publishedVersion !== null &&
+      status !== "IN_REVIEW" &&
+      status !== "APPROVED" &&
+      atLeast(level, "MANAGE"),
   };
+  const retiredBy =
+    row.retiredById === null
+      ? null
+      : await ctx.db.membership.findFirst({
+          where: { id: row.retiredById },
+          select: { user: { select: { name: true } } },
+        });
   return {
     controlled: {
       code: row.code,
@@ -289,6 +305,15 @@ export async function getControlled(ctx: AdminContext, nodeId: string): Promise<
       publishedVersion: row.publishedVersion,
       ownerDepartment: department,
       reviewDueAt: row.reviewDueAt,
+      retired:
+        row.retiredAt === null
+          ? null
+          : {
+              at: row.retiredAt,
+              reason: row.retireReason ?? "",
+              by: retiredBy?.user.name ?? null,
+              version: row.retiredVersion,
+            },
       versions,
       actions,
       review,

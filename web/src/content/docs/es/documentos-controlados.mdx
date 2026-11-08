@@ -48,6 +48,21 @@ Cada versión pasa por estos estados:
 
 Una versión **Rechazada** se descarta y queda en el historial sin publicarse.
 
+## Dar de baja un documento
+
+Cuando un documento deja de aplicarse sin que otro lo reemplace (un proceso que ya no se hace, una
+máquina que se retiró), quien lo gestiona abre su **Control de documento** y pulsa **Dar de baja**,
+con el motivo:
+
+- Su última versión pasa a **Obsoleta** y el documento deja de tener versión vigente.
+- Ya no pide lecturas ni avisa de la revisión periódica.
+- Quien lo abre ve un aviso con la fecha y el motivo de la baja, y sigue pudiendo leer su última versión.
+- Se conserva todo el historial, y la baja queda en el registro de auditoría.
+
+No se puede dar de baja mientras una versión está en revisión o aprobada sin publicar: primero hay que
+retirarla de revisión o decidirla. Para volver a usarlo, publica una versión nueva: vuelve a estar
+vigente.
+
 ## La versión vigente
 
 - Quien solo puede ver el documento lee siempre la versión vigente, aunque haya cambios en curso. Un aviso le indica el código y la versión que está viendo.

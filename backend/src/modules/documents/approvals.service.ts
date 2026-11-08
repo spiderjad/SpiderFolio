@@ -2,7 +2,8 @@
 // contenido), aprobar o rechazar, retirar y publicar. Con varios aprobadores deben aprobar todos; sin
 // autoaprobación salvo que el propietario lo permita en Seguridad (queda en el historial y la
 // auditoría como «aprobado por el propio autor»). Publicar deja una sola versión vigente.
-import { scheduleReview } from "../safety/review-expiry.ts";
+import { REVIEW_EXPIRY, scheduleReview } from "../safety/review-expiry.ts";
+import { resolveExpiry } from "../expiries/expiries.service.ts";
 import type { NodeType } from "../../generated/prisma/client.ts";
 import type { Jobs } from "../../jobs/boss.ts";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
@@ -31,6 +32,7 @@ import type {
   DecisionInput,
   MyApprovalsQuery,
   PublishInput,
+  RetireInput,
   SubmitInput,
 } from "./documents.schemas.ts";
 
@@ -379,6 +381,60 @@ export async function withdraw(ctx: AdminContext, nodeId: string): Promise<void>
 }
 
 /**
+ * Retires a document without a replacement: its version in force becomes obsolete, it stops asking for
+ * readings and for its periodic review, and its history stays. Whoever manages the document does it,
+ * with a reason; not while a version is in review or approved. Publishing a new version brings it back.
+ */
+export async function retire(ctx: AdminContext, nodeId: string, input: RetireInput): Promise<void> {
+  const { node, controlled } = await controlledNode(ctx, nodeId);
+  requireLevel(await levelOfNode(ctx, nodeId), "MANAGE");
+  await assertSpaceWritable(ctx, node.spaceId);
+  const latest = await ctx.db.documentVersion.findFirst({
+    where: { nodeId },
+    orderBy: { version: "desc" },
+    select: { status: true },
+  });
+  if (latest?.status === "IN_REVIEW" || latest?.status === "APPROVED") {
+    throw new AppError("CONFLICT", { message: contentMessages.retireBusy });
+  }
+  if (controlled.publishedVersion === null) {
+    throw new AppError("CONFLICT", { message: contentMessages.retireNothing });
+  }
+  const now = new Date();
+  await ctx.db.$transaction(async (tx) => {
+    await tx.documentVersion.updateMany({
+      where: { nodeId, status: "PUBLISHED" },
+      data: { status: "OBSOLETE", obsoletedAt: now },
+    });
+    await tx.controlledDocument.update({
+      where: { id: controlled.id },
+      data: {
+        publishedVersion: null,
+        reviewDueAt: null,
+        retiredAt: now,
+        retiredVersion: controlled.publishedVersion,
+        retiredById: ctx.tenant.membershipId,
+        retireReason: input.reason,
+      },
+    });
+    await resolveExpiry(tx, REVIEW_EXPIRY, nodeId);
+    await auditAdmin(
+      { db: tx, info: ctx.info },
+      {
+        action: "document.retired",
+        entityType: "Node",
+        entityId: nodeId,
+        metadata: {
+          code: controlled.code,
+          version: controlled.publishedVersion,
+          reason: input.reason,
+        },
+      },
+    );
+  });
+}
+
+/**
  * Publica la versión aprobada: pasa a ser la única vigente y la anterior queda obsoleta (no se
  * borra). Lo hace quien puede aprobar este documento. Por defecto se pide nueva lectura a quienes
  * debían leer la anterior; sin ella (cambio menor) sus lecturas siguen valiendo.
@@ -432,7 +488,15 @@ export async function publish(
     const reviewDueAt = dayMonthsLater(now, type?.reviewMonths ?? 12, zone);
     await tx.controlledDocument.update({
       where: { id: controlled.id },
-      data: { publishedVersion: latest.version, reviewDueAt },
+      // A retired document comes back with its new version.
+      data: {
+        publishedVersion: latest.version,
+        reviewDueAt,
+        retiredAt: null,
+        retiredVersion: null,
+        retiredById: null,
+        retireReason: null,
+      },
     });
     // A risk assessment (EVR): its review day is told to its department's heads.
     await scheduleReview(tx, { nodeId, docType: controlled.docType }, reviewDueAt, zone);

@@ -163,3 +163,9 @@ export const TypeUpdateSchema = z.strictObject({
 export type TypeUpdateInput = z.infer<typeof TypeUpdateSchema>;
 
 export const TypeParamsSchema = z.object({ code: z.string().min(1).max(10) });
+
+export const RetireSchema = z.strictObject({
+  /** Why it stops being in force (shown on the document and kept in the audit log). */
+  reason: z.string().trim().min(1).max(1000),
+});
+export type RetireInput = z.infer<typeof RetireSchema>;

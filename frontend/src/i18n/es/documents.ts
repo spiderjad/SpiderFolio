@@ -39,6 +39,9 @@ export const documentsTexts = {
     notControlled: "Este elemento no es un documento controlado.",
     current: "Versión vigente:",
     noCurrent: "todavía no hay (nada publicado)",
+    retired: (date: string, by: string | null) =>
+      by === null ? `Dado de baja el ${date}` : `Dado de baja el ${date} por ${by}`,
+    retiredReason: "Motivo:",
     version: (version: number) => `v${String(version)}`,
     responsible: "Responsable:",
     noResponsible: "sin departamento",
@@ -250,6 +253,7 @@ export const documentsTexts = {
     requestChanges: "Pedir cambios",
     publish: "Publicar",
     withdraw: "Retirar de revisión",
+    retire: "Dar de baja",
   },
   submit: {
     title: "Enviar a revisión",
@@ -345,6 +349,15 @@ export const documentsTexts = {
   rejected: "Versión rechazada: se descartó.",
   changesRequested: "Pediste cambios: vuelve a borrador.",
   withdrawn: "Retirado de revisión.",
+  retiredDone: "Documento dado de baja.",
+  retire: {
+    title: "¿Dar de baja el documento?",
+    text: "Deja de estar vigente sin reemplazo: su última versión queda obsoleta, ya no pide lecturas ni revisión periódica y se conserva todo el historial. Para volver a usarlo, publica una versión nueva.",
+    reason: "Motivo",
+    reasonHint: "Se muestra en el documento y queda en el registro de auditoría.",
+    action: "Dar de baja",
+    pending: "Dando de baja…",
+  },
   published: "Versión publicada.",
   approvals: {
     title: "Aprobaciones",
@@ -357,6 +370,8 @@ export const documentsTexts = {
     version: (version: number) => `versión ${String(version)}`,
   },
   banner: {
+    retired: (code: string, date: string, reason: string) =>
+      `${code} está dado de baja desde el ${date}: no está vigente. Motivo: ${reason}`,
     published: (code: string, version: number) =>
       `${code}: estás viendo la versión vigente (v${String(version)}). Hay cambios en borrador que todavía no se publicaron.`,
   },

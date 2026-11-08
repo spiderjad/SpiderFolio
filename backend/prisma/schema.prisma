@@ -1583,6 +1583,13 @@ model ControlledDocument {
   reviewDueAt       DateTime?
   /// Número de la versión vigente; null si todavía no hay ninguna publicada.
   publishedVersion  Int?
+  /// Retired without a replacement (docs/plans/pendientes.md, controlled documents): its last version is obsolete and
+  /// it has no version in force (publishedVersion null). Publishing a new version brings it back.
+  retiredAt         DateTime?
+  retiredVersion    Int?
+  /// Membership; no FK.
+  retiredById       String?
+  retireReason      String?
   createdById       String
   createdAt         DateTime  @default(now())
 

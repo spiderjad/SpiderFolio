@@ -41,6 +41,9 @@ export const documentsTexts: Catalog<typeof EsDocuments> = {
     notControlled: "This item isn’t a controlled document.",
     current: "Current version:",
     noCurrent: "none yet (nothing published)",
+    retired: (date: string, by: string | null) =>
+      by === null ? `Retired on ${date}` : `Retired on ${date} by ${by}`,
+    retiredReason: "Reason:",
     version: (version: number) => `v${String(version)}`,
     responsible: "Responsible:",
     noResponsible: "no department",
@@ -252,6 +255,7 @@ export const documentsTexts: Catalog<typeof EsDocuments> = {
     requestChanges: "Request changes",
     publish: "Publish",
     withdraw: "Withdraw from review",
+    retire: "Retire",
   },
   submit: {
     title: "Send for review",
@@ -345,6 +349,15 @@ export const documentsTexts: Catalog<typeof EsDocuments> = {
   rejected: "Version rejected: it was discarded.",
   changesRequested: "You requested changes: it goes back to draft.",
   withdrawn: "Withdrawn from review.",
+  retiredDone: "Document retired.",
+  retire: {
+    title: "Retire the document?",
+    text: "It stops being in force with no replacement: its last version becomes obsolete, it no longer asks for readings or periodic review, and its whole history is kept. To use it again, publish a new version.",
+    reason: "Reason",
+    reasonHint: "It's shown on the document and kept in the audit log.",
+    action: "Retire",
+    pending: "Retiring…",
+  },
   published: "Version published.",
   approvals: {
     title: "Approvals",
@@ -357,6 +370,8 @@ export const documentsTexts: Catalog<typeof EsDocuments> = {
     version: (version: number) => `version ${String(version)}`,
   },
   banner: {
+    retired: (code: string, date: string, reason: string) =>
+      `${code} was retired on ${date}: it isn’t in force. Reason: ${reason}`,
     published: (code: string, version: number) =>
       `${code}: you’re viewing the current version (v${String(version)}). There are draft changes that haven’t been published yet.`,
   },

@@ -48,6 +48,19 @@ Each version goes through these statuses:
 
 A **Rejected** version is discarded and stays in the history without being published.
 
+## Retire a document
+
+When a document stops applying and nothing replaces it (a process no longer done, a machine taken
+out), whoever manages it opens its **Document control** and presses **Retire**, with the reason:
+
+- Its last version becomes **Obsolete** and the document no longer has a version in force.
+- It no longer asks for readings or warns about its periodic review.
+- Whoever opens it sees a notice with the date and reason, and can still read its last version.
+- Its whole history is kept, and the retirement is recorded in the audit log.
+
+It can't be retired while a version is in review or approved and not published: withdraw it from
+review or decide it first. To use it again, publish a new version: it's in force again.
+
 ## The current version
 
 - People who can only view the document always read the current version, even while changes are in progress. A notice tells them the code and version they're viewing.

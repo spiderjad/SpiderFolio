@@ -37,7 +37,7 @@ import {
 import { useAuth } from "@/auth/auth-context";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { NotFoundPage } from "@/features/home/not-found-page";
-import { cn, timeAgo } from "@/lib/utils";
+import { cn, formatShortDate, timeAgo } from "@/lib/utils";
 import { canEdit, commentsApi, filesApi, filesKeys, pagesApi, type PageDetail } from "../files/api";
 import { NodeIcon } from "../files/file-utils";
 import { useBian } from "../bian/bian-context";
@@ -583,6 +583,15 @@ function PageEditor({ page }: { page: PageDetail }) {
             <Banner tone="warning">{texts.files.explorer.archivedNotice}</Banner>
           )}
           {!page.space.archived && !writable && <Banner tone="info">{t.readOnly}</Banner>}
+          {page.controlled?.retired != null && (
+            <Banner tone="warning">
+              {texts.documents.banner.retired(
+                page.controlled.code,
+                formatShortDate(page.controlled.retired.at),
+                page.controlled.retired.reason,
+              )}
+            </Banner>
+          )}
           {page.controlled?.showing === "published" &&
             page.controlled.publishedVersion !== null && (
               <Banner tone="info">

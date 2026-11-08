@@ -52,6 +52,7 @@ export interface ControlledActions {
   canDecide: boolean;
   canPublish: boolean;
   canWithdraw: boolean;
+  canRetire: boolean;
 }
 
 export interface ReadingMine {
@@ -106,6 +107,7 @@ export interface ControlledView {
   publishedVersion: number | null;
   ownerDepartment: { id: string; name: string } | null;
   reviewDueAt: string | null;
+  retired: { at: string; reason: string; by: string | null; version: number | null } | null;
   versions: DocumentVersionView[];
   actions: ControlledActions;
   /** Solo para quien tiene la aprobación pendiente. */
@@ -451,6 +453,11 @@ export const documentsApi = {
     api<undefined>(w(slug, `/nodes/${nodeId}/controlled/submit`), { method: "POST", body }),
   decide: (slug: string, nodeId: string, body: { decision: Decision; comment?: string }) =>
     api<undefined>(w(slug, `/nodes/${nodeId}/controlled/decision`), { method: "POST", body }),
+  retire: (slug: string, nodeId: string, reason: string) =>
+    api<undefined>(w(slug, `/nodes/${nodeId}/controlled/retire`), {
+      method: "POST",
+      body: { reason },
+    }),
   withdraw: (slug: string, nodeId: string) =>
     api<undefined>(w(slug, `/nodes/${nodeId}/controlled/withdraw`), { method: "POST" }),
   publish: (

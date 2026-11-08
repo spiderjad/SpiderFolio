@@ -39,6 +39,8 @@ export interface PageControlled {
   showing: "published" | "draft";
   /** Está revisando este documento: ve lo que se revisa y puede comentarlo. */
   reviewer: boolean;
+  /** Retired without a replacement: whoever doesn't edit it reads its last version. */
+  retired: { at: Date; reason: string } | null;
 }
 
 export interface PageDetail extends NodeDetail {
@@ -161,10 +163,20 @@ export async function getPage(ctx: AdminContext, id: string): Promise<PageDetail
       orderBy: { version: "desc" },
       select: { status: true },
     });
-    const published = await publishedPageSnapshot(ctx, id);
+    const published =
+      controlledRow.retiredAt !== null && controlledRow.retiredVersion !== null
+        ? await ctx.db.documentVersion.findFirst({
+            where: { nodeId: id, version: controlledRow.retiredVersion },
+            select: { content: true },
+          })
+        : await publishedPageSnapshot(ctx, id);
     const reviewer = await isReviewing(ctx.db, id, ctx.tenant.membershipId);
     // Quien revisa ve lo que está en revisión, no la versión vigente.
-    const showPublished = published !== null && !atLeast(detail.node.level, "EDIT") && !reviewer;
+    const showPublished =
+      published !== null &&
+      published.content !== null &&
+      !atLeast(detail.node.level, "EDIT") &&
+      !reviewer;
     if (showPublished) content = published.content as Prisma.JsonValue;
     controlled = {
       code: controlledRow.code,
@@ -172,6 +184,10 @@ export async function getPage(ctx: AdminContext, id: string): Promise<PageDetail
       publishedVersion: controlledRow.publishedVersion,
       showing: showPublished ? "published" : "draft",
       reviewer,
+      retired:
+        controlledRow.retiredAt === null
+          ? null
+          : { at: controlledRow.retiredAt, reason: controlledRow.retireReason ?? "" },
     };
   }
   return {

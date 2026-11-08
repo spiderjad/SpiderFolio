@@ -2,7 +2,7 @@
 // flujo: enviar a revisión (con aprobadores sugeridos y editables), aprobar o rechazar, retirar y
 // publicar. Muestra el estado, la versión vigente y el historial con las decisiones.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FileDown, GitCompare, Send, Undo2, XCircle } from "lucide-react";
+import { Archive, CheckCircle2, FileDown, GitCompare, Send, Undo2, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -243,6 +243,7 @@ function ControlledPanel({
   const [submitting, setSubmitting] = useState(false);
   const [deciding, setDeciding] = useState<Decision | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [retiring, setRetiring] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const { actions } = controlled;
@@ -295,8 +296,22 @@ function ControlledPanel({
           </div>
         )}
       </dl>
+      {controlled.retired !== null && (
+        <div className="v-banner v-banner--warning grid gap-1 text-sm">
+          <p className="font-medium">
+            {t.dialog.retired(formatShortDate(controlled.retired.at), controlled.retired.by)}
+          </p>
+          <p>
+            {t.dialog.retiredReason} {controlled.retired.reason}
+          </p>
+        </div>
+      )}
 
-      {(actions.canSubmit || actions.canDecide || actions.canPublish || actions.canWithdraw) && (
+      {(actions.canSubmit ||
+        actions.canDecide ||
+        actions.canPublish ||
+        actions.canWithdraw ||
+        actions.canRetire) && (
         <div className="flex flex-wrap gap-2" role="group" aria-label={t.actions.label}>
           {actions.canSubmit && (
             <Button
@@ -356,6 +371,17 @@ function ControlledPanel({
             >
               <Undo2 strokeWidth={1.75} aria-hidden="true" />
               {t.actions.withdraw}
+            </Button>
+          )}
+          {actions.canRetire && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRetiring(true);
+              }}
+            >
+              <Archive strokeWidth={1.75} aria-hidden="true" />
+              {t.actions.retire}
             </Button>
           )}
         </div>
@@ -487,6 +513,17 @@ function ControlledPanel({
           await run(() => documentsApi.withdraw(workspaceSlug, nodeId), t.withdrawn);
         }}
       />
+      {retiring && (
+        <RetireDialog
+          onClose={() => {
+            setRetiring(false);
+          }}
+          onRetire={async (reason) => {
+            await run(() => documentsApi.retire(workspaceSlug, nodeId, reason), t.retiredDone);
+            setRetiring(false);
+          }}
+        />
+      )}
       {publishing && (
         <PublishDialog
           hasPrevious={controlled.publishedVersion !== null}
@@ -973,6 +1010,69 @@ function DecisionDialog({
           </FormGrid>
         </DialogContent>
       )}
+    </Dialog>
+  );
+}
+
+/** Retire without a replacement: the reason is required (shown on the document and audited). */
+function RetireDialog({
+  onClose,
+  onRetire,
+}: {
+  onClose: () => void;
+  onRetire: (reason: string) => Promise<void>;
+}) {
+  const t = texts.documents.retire;
+  const [reason, setReason] = useState("");
+  const [pending, setPending] = useState(false);
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !pending) onClose();
+      }}
+    >
+      <DialogContent
+        title={t.title}
+        description={t.text}
+        footer={
+          <>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={pending}>
+                {texts.common.cancel}
+              </Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              disabled={pending || reason.trim() === ""}
+              onClick={() => {
+                setPending(true);
+                onRetire(reason.trim())
+                  .catch(() => undefined)
+                  .finally(() => {
+                    setPending(false);
+                  });
+              }}
+            >
+              {pending ? t.pending : t.action}
+            </Button>
+          </>
+        }
+      >
+        <FormField label={t.reason} hint={t.reasonHint}>
+          {(control) => (
+            <Textarea
+              {...control}
+              required
+              maxLength={1000}
+              value={reason}
+              onChange={(event) => {
+                setReason(event.target.value);
+              }}
+            />
+          )}
+        </FormField>
+      </DialogContent>
     </Dialog>
   );
 }

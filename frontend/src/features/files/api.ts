@@ -418,6 +418,8 @@ export interface PageDetail extends NodeDetail {
     showing: "published" | "draft";
     /** Está revisando el documento: ve lo que se revisa y puede comentarlo. */
     reviewer: boolean;
+    /** Retired without a replacement. */
+    retired: { at: string; reason: string } | null;
   } | null;
   /** Documento Tiptap (JSON); lo valida el servidor con packages/content. */
   content: unknown;

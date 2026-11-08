@@ -75,9 +75,11 @@ Hay que analizar y decidir con él, sin código todavía:
       «Próximamente» (`version: null`) hasta que el mantenedor lo pruebe. Paquetes solo en español.
 - [ ] **Importación de OneDrive y SharePoint** (`onedrive-import`): esqueleto; spec primero. Necesita una
       app registrada en Microsoft Entra (la registra el mantenedor).
-- [ ] **Documentos controlados** (pedido 08/11/2026, después de Plantillas): listado maestro exportable
-      (CSV y PDF), dar de baja un documento sin reemplazo y documentos externos (normas, legislación,
-      documentos de clientes). Opcional: registro de copias impresas controladas.
+- [ ] **Documentos controlados** (pedido 08/11/2026): hechos el listado maestro (CSV y PDF con los filtros
+      de la lista) y dar de baja sin reemplazo (motivo, última versión obsoleta, sin lecturas ni revisión;
+      publicar una versión nueva lo reactiva). Faltan los documentos externos (normas, legislación,
+      documentos de clientes) y, opcional, el registro de copias impresas controladas. Tests de seguridad
+      de ambos al cerrar el módulo.
 
 - [ ] **«Licencia y plugins» (subir plugins) no aparece en el menú** para el admin: hoy solo lo ve la
       dueña (`frontend/src/components/nav-items.ts`, `section === "license"` → `OWNER`), y subir exige 2FA
