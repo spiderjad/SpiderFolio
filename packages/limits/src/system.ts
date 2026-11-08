@@ -78,3 +78,18 @@ export const qualityLimits = {
   traceImportRows: 5000,
   traceImportChars: 900_000,
 } as const;
+
+/** Company templates (docs/spec/plantillas.md): how big a saved tree can be. */
+export const templateLimits = {
+  /** Folders and pages in one template. */
+  nodesMax: 300,
+  /** Levels below the template's root. */
+  depthMax: 10,
+  nameMax: 120,
+  descriptionMax: 1000,
+  categoryMax: 60,
+  /** Images copied with one template. */
+  imagesMax: 200,
+  /** Categories offered in the filter. */
+  categoriesMax: 100,
+} as const;

@@ -1864,3 +1864,13 @@ export const qualityTexts = {
     closedOn: "Cerrada el",
   },
 } as const;
+
+export const templateTexts = {
+  invalid: "La plantilla está dañada y no se puede usar.",
+  nameTaken: "Ya hay una plantilla con ese nombre.",
+  notTemplatable: "Solo se guardan como plantilla las páginas y las carpetas.",
+  tooBig: (max: number) => `La plantilla tendría más de ${String(max)} carpetas y páginas.`,
+  tooDeep: "La carpeta tiene demasiados niveles para guardarla como plantilla.",
+  tooManyImages: (max: number) => `La plantilla tendría más de ${String(max)} imágenes.`,
+  packUnknown: "Ese paquete no existe o su plugin no está activo.",
+} as const;

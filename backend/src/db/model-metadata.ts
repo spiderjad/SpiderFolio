@@ -126,6 +126,8 @@ export const modelMetadata = {
       qualityLots: "QualityLot",
       qualityLotLinks: "QualityLotLink",
       qualityShipments: "QualityShipment",
+      templates: "Template",
+      templateImages: "TemplateImage",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -392,6 +394,11 @@ export const modelMetadata = {
     },
   },
   PageImage: { scope: "tenant", relations: { workspace: "Workspace", node: "Node" } },
+  Template: { scope: "tenant", relations: { workspace: "Workspace", images: "TemplateImage" } },
+  TemplateImage: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", template: "Template" },
+  },
   CommentThread: {
     scope: "tenant",
     relations: { workspace: "Workspace", node: "Node", comments: "Comment" },

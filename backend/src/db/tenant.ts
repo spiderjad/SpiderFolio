@@ -343,6 +343,14 @@ export interface TenantDb {
     "findFirst" | "findMany" | "count" | "groupBy" | "create" | "update" | "updateMany"
   >;
   pageImage: TenantDelegate<PrismaClient["pageImage"], Op>;
+  template: TenantDelegate<
+    PrismaClient["template"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "delete"
+  >;
+  templateImage: TenantDelegate<
+    PrismaClient["templateImage"],
+    "findMany" | "aggregate" | "createMany"
+  >;
   commentThread: TenantDelegate<PrismaClient["commentThread"], Op>;
   comment: TenantDelegate<PrismaClient["comment"], Op>;
   mention: TenantDelegate<PrismaClient["mention"], Op>;
@@ -627,6 +635,11 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "groupBy", "create", "update", "updateMany"],
   },
   pageImage: { model: "PageImage", ops: [...readOps, ...writeOps] },
+  template: {
+    model: "Template",
+    ops: ["findFirst", "findMany", "count", "create", "update", "delete"],
+  },
+  templateImage: { model: "TemplateImage", ops: ["findMany", "aggregate", "createMany"] },
   commentThread: { model: "CommentThread", ops: [...readOps, ...writeOps] },
   comment: { model: "Comment", ops: [...readOps, ...writeOps] },
   mention: { model: "Mention", ops: [...readOps, ...writeOps] },

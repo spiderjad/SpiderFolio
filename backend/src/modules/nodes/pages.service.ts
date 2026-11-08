@@ -62,7 +62,7 @@ async function loadPage(ctx: AdminContext, id: string) {
 }
 
 /** «Sin título», «Sin título (2)»…: un nombre libre entre los hermanos. */
-async function freeName(
+export async function freeName(
   ctx: AdminContext,
   spaceId: string,
   parentId: string | null,

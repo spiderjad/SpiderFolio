@@ -347,43 +347,71 @@ export async function makeControlled(
   }
 
   await ctx.db.$transaction(async (tx) => {
-    const taken = await tx.documentType.update({
-      where: { id: type.id },
-      data: { nextNumber: { increment: 1 } },
-      select: { nextNumber: true },
-    });
-    const number = taken.nextNumber - 1;
-    const code = `${type.prefix}-${String(number).padStart(type.padding, "0")}`;
-    await tx.controlledDocument.create({
-      data: {
-        nodeId,
-        code,
-        docType: type.code,
-        ownerDepartmentId,
-        createdById: ctx.tenant.membershipId,
-      },
-    });
-    await tx.documentVersion.create({
-      data: {
-        nodeId,
-        version: 1,
-        status: "DRAFT",
-        title: node.name,
-        createdById: ctx.tenant.membershipId,
-        ...(nodeType === "FILE" ? { fileVersion: node.currentVersion } : {}),
-      },
-    });
-    await auditAdmin(
-      { db: tx, info: ctx.info },
+    await controlNode(
+      { db: tx, info: ctx.info, tenant: ctx.tenant },
       {
-        action: "document.controlled",
-        entityType: "Node",
-        entityId: nodeId,
-        metadata: { code, docType: type.code },
+        nodeId,
+        name: node.name,
+        nodeType,
+        typeId: type.id,
+        ownerDepartmentId,
+        fileVersion: node.currentVersion,
       },
     );
   });
   return await getControlled(ctx, nodeId);
+}
+
+/**
+ * Inside a transaction: takes the type's next number (an UPDATE, no gaps or repeats), records the
+ * controlled document and opens its version 1 as a draft. The caller already checked who may do it.
+ */
+export async function controlNode(
+  ctx: Pick<AdminContext, "db" | "info" | "tenant">,
+  input: {
+    nodeId: string;
+    name: string;
+    nodeType: NodeType;
+    typeId: string;
+    ownerDepartmentId: string | null;
+    fileVersion?: number | null;
+  },
+): Promise<string> {
+  const taken = await ctx.db.documentType.update({
+    where: { id: input.typeId },
+    data: { nextNumber: { increment: 1 } },
+    select: { nextNumber: true, prefix: true, padding: true, code: true },
+  });
+  const number = taken.nextNumber - 1;
+  const code = `${taken.prefix}-${String(number).padStart(taken.padding, "0")}`;
+  await ctx.db.controlledDocument.create({
+    data: {
+      nodeId: input.nodeId,
+      code,
+      docType: taken.code,
+      ownerDepartmentId: input.ownerDepartmentId,
+      createdById: ctx.tenant.membershipId,
+    },
+  });
+  await ctx.db.documentVersion.create({
+    data: {
+      nodeId: input.nodeId,
+      version: 1,
+      status: "DRAFT",
+      title: input.name,
+      createdById: ctx.tenant.membershipId,
+      ...(input.nodeType === "FILE" && input.fileVersion !== undefined
+        ? { fileVersion: input.fileVersion }
+        : {}),
+    },
+  });
+  await auditAdmin(ctx, {
+    action: "document.controlled",
+    entityType: "Node",
+    entityId: input.nodeId,
+    metadata: { code, docType: taken.code },
+  });
+  return code;
 }
 
 /** Texto de la versión vigente de una página para quien no la edita (null si no hay vigente). */

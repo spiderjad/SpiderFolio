@@ -1374,6 +1374,34 @@ const cases: IsolationCase[] = [
     url: (ids) => `/pages/${ids.pageId}/duplicate`,
   },
   { method: "get", path: "/pages/:id", url: (ids) => `/pages/${ids.pageId}` },
+  // Company templates: off without the templates plugin (404 for everyone, B included).
+  { method: "get", path: "/templates", url: () => "/templates", ownStatus: 404 },
+  {
+    method: "get",
+    path: "/templates/categories",
+    url: () => "/templates/categories",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/templates/:id", url: () => "/templates/x", ownStatus: 404 },
+  {
+    method: "patch",
+    path: "/templates/:id",
+    url: () => "/templates/x",
+    body: { name: "Ajena" },
+  },
+  { method: "delete", path: "/templates/:id", url: () => "/templates/x" },
+  {
+    method: "post",
+    path: "/templates/:id/use",
+    url: () => "/templates/x/use",
+    body: { spaceId: "x", parentId: null },
+  },
+  {
+    method: "post",
+    path: "/nodes/:id/template",
+    url: (ids) => `/nodes/${ids.pageId}/template`,
+    body: { name: "Ajena" },
+  },
   // Forms: B's form never reaches A, nor does creating one in B's space.
   {
     method: "post",

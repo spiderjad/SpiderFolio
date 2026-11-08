@@ -468,6 +468,8 @@ describe("forTenant: transacciones", () => {
           "space",
           "spaceUserState",
           "ssoFlow",
+          "template",
+          "templateImage",
           "uploadReservation",
           "usageCounter",
           "usageCounterMember",

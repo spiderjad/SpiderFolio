@@ -1859,3 +1859,13 @@ export const qualityTexts: Catalog<typeof Es.qualityTexts> = {
     closedOn: "Closed on",
   },
 };
+
+export const templateTexts: Catalog<typeof Es.templateTexts> = {
+  invalid: "The template is damaged and can't be used.",
+  nameTaken: "There's already a template with that name.",
+  notTemplatable: "Only pages and folders can be saved as a template.",
+  tooBig: (max: number) => `The template would have more than ${String(max)} folders and pages.`,
+  tooDeep: "The folder has too many levels to save it as a template.",
+  tooManyImages: (max: number) => `The template would have more than ${String(max)} images.`,
+  packUnknown: "That pack doesn't exist or its plugin isn't active.",
+};

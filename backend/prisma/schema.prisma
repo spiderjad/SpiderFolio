@@ -338,6 +338,8 @@ model Workspace {
   qualityLots              QualityLot[]
   qualityLotLinks          QualityLotLink[]
   qualityShipments         QualityShipment[]
+  templates                Template[]
+  templateImages           TemplateImage[]
 }
 
 model Role {
@@ -3547,4 +3549,58 @@ model QualityShipment {
 
   @@index([workspaceId, lotId])
   @@index([workspaceId, shippedOn, id])
+}
+
+// ─── Company templates (docs/spec/plantillas.md): turned on by the templates plugin ───
+
+enum TemplateKind {
+  PAGE
+  FOLDER
+}
+
+/// A snapshot of a page or a folder tree to start new content from. It never follows its source: if
+/// the original changes or is deleted, the template stays the same.
+model Template {
+  id           String       @id @default(cuid())
+  workspaceId  String
+  name         String
+  nameKey      String
+  description  String       @default("")
+  category     String?
+  kind         TemplateKind
+  /// The tree (templates.schemas.ts, TemplateSnapshot), validated again every time it's read.
+  snapshot     Json
+  /// Folders and pages in the snapshot.
+  nodeCount    Int
+  /// Files and forms of the source folder left out (they aren't copied).
+  skippedFiles Int          @default(0)
+  /// The industry pack it came from (`<plugin>/<pack>`), or null if a person saved it.
+  packKey      String?
+  createdById  String // membership; no FK, like Node
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  images    TemplateImage[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, nameKey])
+  @@index([workspaceId, packKey])
+}
+
+/// An image of a template's pages, copied when it was saved (it counts towards the company's storage).
+model TemplateImage {
+  /// The id the snapshot's content refers to.
+  id          String   @id
+  workspaceId String
+  templateId  String
+  storageKey  String   @unique
+  mimeType    String
+  sizeBytes   BigInt
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  template  Template  @relation(fields: [templateId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, templateId])
 }
