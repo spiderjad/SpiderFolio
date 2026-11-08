@@ -130,4 +130,5 @@ Lista viva en `docs/plans/pendientes.md`. Lo principal:
 | Calidad alimentaria (IFS 8 / BRCGS 9) | docs/spec/calidad.md |
 | Vencimientos de archivos y páginas | docs/spec/vencimientos.md |
 | Salas de auditoría | docs/spec/salas-de-auditoria.md |
+| Plantillas propias y por rubro (plugin) | docs/spec/plantillas.md |
 | Fase 2 | docs/spec/fase-2.md |

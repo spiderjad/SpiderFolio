@@ -360,8 +360,8 @@ apuntar `PLUGINS_DIR` o `PLUGIN_PACKAGES` a donde queden instalados.
 | `security-policies` | Exigir 2FA a la empresa (gancho `mfaRequired`) y dominios permitidos para invitar e importar (gancho `checkMemberEmail`). Sección «Políticas avanzadas» del propietario. | Hecho |
 | `corporate-directory` | Directorio corporativo: inicio de sesión con Active Directory o Microsoft Entra ID, altas, grupos → departamentos y roles, sincronización y bajas. Reemplaza a `microsoft-sign-in`. | Hecho |
 | `onedrive-import` | Importar de OneDrive y SharePoint (botón Nuevo, job `sync`). | Esqueleto |
-| `mcp-connector` | Conector MCP para Claude (spec en `plugins/mcp-connector/SPEC.md`). | Esqueleto |
-| `templates` | Plantillas propias y por rubro (migración propia `plugin_templates`). | Esqueleto |
+| `mcp-connector` | Conector para Claude con edición: enciende `mcp_read` y `mcp_write` del núcleo y reemplaza a `claude-connector` (gratis, solo lectura). docs/spec/conector-mcp.md. | Hecho |
+| `templates` | Plantillas propias y paquetes por rubro: enciende `custom_templates` del núcleo y trae los paquetes (docs/spec/plantillas.md). | Spec |
 | `audit-rooms` | Pasó al núcleo, gratis (docs/spec/salas-de-auditoria.md). El id queda reservado. | Retirado |
 | `erp-traceability` | Trazabilidad desde SAP y ADA MES: lotes, consumos y entregas al modelo de Calidad por `ctx.traceability` (docs/spec/calidad.md, «Fase 7»). | Spec |
 
