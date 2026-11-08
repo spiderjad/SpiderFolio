@@ -770,6 +770,30 @@ APPCC antes de aprobarse (IFS 4.2.1.3 y 2.3.1, BRCGS 1.1.11 y 2.3).
   cambiarlo.
 
 
+### Hecho (fase 6c)
+
+Hecha el 08/11/2026. Migración `quality_culture_changes` (`QualityCulturePlan`, `QualityCultureActivity`,
+`QualityCultureSurvey`, `QualityCultureAnswer`, `QualityCultureVoter`, `QualityChange` y
+`QualityChangeCounter`). Backend en `culture.service.ts`, `changes.service.ts` y `culture.schemas.ts`;
+vencimientos `quality.culture` y `quality.change`; aviso `quality_change`; el mínimo de respuestas y los
+largos en `packages/limits` (`qualityLimits.survey*`, `objectivesMax`). Pantallas **Cultura**, responder una
+encuesta (`/calidad/encuestas/:id`, desde **Mis pendientes**), **Cambios** y la ficha de cada cambio; el panel
+suma sus cifras. Demo (`demoCulture`), capturas `calidad-cultura`, `calidad-encuesta`,
+`calidad-encuesta-resultados`, `calidad-cambios` y `calidad-cambio`, guías **Cultura de seguridad
+alimentaria** y **Gestión de cambios** (es y en) y tests de seguridad.
+
+Simplificaciones y añadidos:
+
+- La respuesta lleva un id aleatorio (`uuid`), no uno ordenado por tiempo, para que el id no diga cuándo se
+  respondió. Responder no se anota en el registro de auditoría.
+- Una encuesta se puede cambiar hasta la primera respuesta; después solo se cierra. Cierra sola al pasar su
+  fecha de cierre.
+- La participación es sobre las personas activas (no invitadas) de hoy, no las de la fecha de apertura.
+- Quien no ve calidad ve en **Cultura** solo las actividades a su cargo, sin objetivos ni encuestas.
+- Proponer un cambio avisa a quien gestiona calidad; asignarle responsable, aprobarlo o rechazarlo avisa a
+  quien lo propuso y al responsable. Sin responsable, el vencimiento va a quien lo aprobó.
+- El código de un cambio es **CAM-AAAA-NNNN** en los dos idiomas, como el de las no conformidades.
+
 ## Fases
 
 1. **No conformidades y CAPA** (arriba): activación, permisos, NC con su ciclo, causa raíz, acciones,

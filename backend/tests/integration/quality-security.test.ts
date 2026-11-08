@@ -1710,3 +1710,304 @@ describe("calidad fase 6b: productos, etiquetas y plan analítico", () => {
     expect((board.body as { sampling: { nonConforming: number } }).sampling.nonConforming).toBe(0);
   });
 });
+
+describe("calidad fase 6c: cultura de seguridad alimentaria y gestión de cambios", () => {
+  // A fresh app: the global limit (per minute, in memory) would count the requests of the blocks above.
+  beforeAll(() => {
+    app = createApp(ctx.deps);
+  });
+
+  const survey = { title: "Cultura 2026", opensOn: "2020-01-01", closesOn: "2099-12-31" };
+  const scores = (n: number, value = 4) => Array.from({ length: n }, () => value);
+  interface SurveyBody {
+    survey: { id: string; questions: string[]; state: string };
+  }
+  interface ChangeBody {
+    change: {
+      id: string;
+      code: string;
+      status: string;
+      can: { edit: boolean; decide: boolean; implement: boolean; cancel: boolean };
+    };
+  }
+  const review = (state: "pending" | "done" | "not_applicable", haccp = state) => ({
+    haccp: { state: haccp, note: "" },
+    allergens: { state, note: "" },
+    label: { state, note: "" },
+    training: { state, note: "" },
+    validation: { state, note: "" },
+  });
+
+  it("plan y actividades: solo quality.manage planifica; su responsable la marca hecha; el resto ve solo las suyas", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    const viewer = api(w.ws.slug, w.viewer.token);
+    const plain = api(w.ws.slug, w.plain.token);
+    expect((await viewer.put("/quality/culture/plans/2026", { objectives: "x" })).status).toBe(403);
+    expect((await api(w.ws.slug, w.guest.token).get("/quality/culture")).status).toBe(403);
+    expect((await manager.put("/quality/culture/plans/2026", { objectives: "Objetivos" })).status).toBe(
+      200,
+    );
+    const activity = {
+      year: 2026,
+      title: "Charla de alérgenos",
+      kind: "TRAINING",
+      plannedOn: "2026-11-01",
+    };
+    expect((await viewer.post("/quality/culture/activities", activity)).status).toBe(403);
+    expect(
+      (
+        await manager.post("/quality/culture/activities", {
+          ...activity,
+          responsibleId: w.guest.membership.id,
+        })
+      ).status,
+    ).toBe(404);
+    const created = await manager.post("/quality/culture/activities", {
+      ...activity,
+      responsibleId: w.responsible.membership.id,
+    });
+    expect(created.status).toBe(201);
+    const id = (created.body as { activity: { id: string } }).activity.id;
+    const expiry = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.culture", subjectId: id },
+    });
+    expect(expiry?.responsibleId).toBe(w.responsible.membership.id);
+    // A plain member doesn't see the plan, the surveys or other people's activities.
+    const theirs = await plain.get("/quality/culture?year=2026");
+    const body = theirs.body as { objectives: string; activities: unknown[]; surveys: unknown[] };
+    expect(body.objectives).toBe("");
+    expect(body.activities).toEqual([]);
+    expect(body.surveys).toEqual([]);
+    expect(
+      (await plain.post(`/quality/culture/activities/${id}/done`, { doneOn: "2026-11-02" })).status,
+    ).toBe(404);
+    const responsible = api(w.ws.slug, w.responsible.token);
+    expect(
+      (await responsible.patch(`/quality/culture/activities/${id}`, { title: "Otra" })).status,
+    ).toBe(403);
+    const done = await responsible.post(`/quality/culture/activities/${id}/done`, {
+      doneOn: "2026-11-02",
+    });
+    expect(done.status).toBe(200);
+    const resolved = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.culture", subjectId: id },
+    });
+    expect(resolved === null || resolved.resolvedAt !== null).toBe(true);
+  });
+
+  it("encuesta: anónima, una vez por persona, sin invitados; resultados solo desde 5 respuestas", async () => {
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await api(w.ws.slug, w.viewer.token).post("/quality/culture/surveys", survey)).status).toBe(
+      403,
+    );
+    expect(
+      (
+        await manager.post("/quality/culture/surveys", {
+          ...survey,
+          opensOn: "2026-11-10",
+          closesOn: "2026-11-01",
+        })
+      ).status,
+    ).toBe(400);
+    const created = await manager.post("/quality/culture/surveys", survey);
+    expect(created.status).toBe(201);
+    const { id, questions } = (created.body as SurveyBody).survey;
+    expect(questions).toHaveLength(10);
+    const n = questions.length;
+    const guest = api(w.ws.slug, w.guest.token);
+    expect((await guest.get("/quality/culture/surveys/pending")).status).toBe(403);
+    expect(
+      (await guest.post(`/quality/culture/surveys/${id}/answer`, { scores: scores(n) })).status,
+    ).toBe(403);
+    const plain = api(w.ws.slug, w.plain.token);
+    const pending = await plain.get("/quality/culture/surveys/pending");
+    expect((pending.body as { items: { id: string }[] }).items.map((s) => s.id)).toContain(id);
+    expect(
+      (await plain.post(`/quality/culture/surveys/${id}/answer`, { scores: scores(2) })).status,
+    ).toBe(400);
+    expect(
+      (await plain.post(`/quality/culture/surveys/${id}/answer`, { scores: scores(n, 2) })).status,
+    ).toBe(201);
+    expect(
+      (await plain.post(`/quality/culture/surveys/${id}/answer`, { scores: scores(n) })).status,
+    ).toBe(409);
+    expect((await plain.get(`/quality/culture/surveys/${id}/results`)).status).toBe(403);
+    // Once answered, the survey can't be changed.
+    expect((await manager.patch(`/quality/culture/surveys/${id}`, { title: "Otra" })).status).toBe(
+      409,
+    );
+    // Nothing ties the answer to the person or the time; the audit log doesn't record it.
+    const answers = await ctx.prisma.qualityCultureAnswer.findMany({ where: { surveyId: id } });
+    expect(answers).toHaveLength(1);
+    expect(Object.keys(answers[0] ?? {}).sort()).toEqual(
+      ["comment", "id", "scores", "surveyId", "workspaceId"].sort(),
+    );
+    const voters = await ctx.prisma.qualityCultureVoter.findMany({ where: { surveyId: id } });
+    expect(voters.map((voter) => voter.membershipId)).toEqual([w.plain.membership.id]);
+    expect(
+      await ctx.prisma.auditLog.count({
+        where: { workspaceId: w.ws.workspaceId, entityId: id, actorId: w.plain.user.id },
+      }),
+    ).toBe(0);
+    const hidden = await manager.get(`/quality/culture/surveys/${id}/results`);
+    expect(hidden.status).toBe(200);
+    expect(hidden.body).toMatchObject({ hidden: true, answers: 1, questions: [], comments: [] });
+    for (const person of [w.manager, w.viewer, w.responsible, w.head]) {
+      const res = await api(w.ws.slug, person.token).post(`/quality/culture/surveys/${id}/answer`, {
+        scores: scores(n, 4),
+        comment: "Bien",
+      });
+      expect(res.status).toBe(201);
+    }
+    const shown = await api(w.ws.slug, w.viewer.token).get(`/quality/culture/surveys/${id}/results`);
+    expect(shown.body).toMatchObject({ hidden: false, answers: 5 });
+    const results = shown.body as { average: number; comments: string[] };
+    expect(results.average).toBeCloseTo(3.6);
+    expect(results.comments).toHaveLength(4);
+    const closed = await manager.post(`/quality/culture/surveys/${id}/close`);
+    expect((closed.body as SurveyBody).survey.state).toBe("closed");
+    expect(
+      (
+        await api(w.ws.slug, w.owner.token).post(`/quality/culture/surveys/${id}/answer`, {
+          scores: scores(n),
+        })
+      ).status,
+    ).toBe(409);
+  });
+
+  it("cambios: cualquiera propone y ve los suyos; aprobar exige el APPCC; implantar, nada pendiente", async () => {
+    const plain = api(w.ws.slug, w.plain.token);
+    const manager = api(w.ws.slug, w.manager.token);
+    expect(
+      (await api(w.ws.slug, w.guest.token).post("/quality/changes", { title: "x", kind: "OTHER" }))
+        .status,
+    ).toBe(403);
+    const proposed = await plain.post("/quality/changes", {
+      title: "Nueva receta",
+      kind: "RECIPE",
+      plannedOn: "2026-11-20",
+    });
+    expect(proposed.status).toBe(201);
+    const change = (proposed.body as ChangeBody).change;
+    expect(change.code).toMatch(/^CAM-\d{4}-\d{4}$/u);
+    expect(change.can).toEqual({ edit: false, decide: false, implement: false, cancel: false });
+    const notified = await ctx.prisma.notification.count({
+      where: { membershipId: w.manager.membership.id, kind: "quality_change", detail: change.id },
+    });
+    expect(notified).toBe(1);
+    // Another plain member doesn't see it; whoever proposed it can't change or decide it.
+    expect((await api(w.ws.slug, w.head.token).get(`/quality/changes/${change.id}`)).status).toBe(
+      404,
+    );
+    const mine = await plain.get("/quality/changes");
+    expect((mine.body as { items: { id: string }[] }).items.map((c) => c.id)).toEqual([change.id]);
+    expect((await plain.patch(`/quality/changes/${change.id}`, { title: "Otra" })).status).toBe(403);
+    expect(
+      (await plain.post(`/quality/changes/${change.id}/decision`, { decision: "APPROVE" })).status,
+    ).toBe(403);
+    expect(
+      (
+        await api(w.ws.slug, w.viewer.token).post(`/quality/changes/${change.id}/decision`, {
+          decision: "APPROVE",
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (await manager.post(`/quality/changes/${change.id}/decision`, { decision: "APPROVE" }))
+        .status,
+    ).toBe(400);
+    expect(
+      (await manager.post(`/quality/changes/${change.id}/decision`, { decision: "REJECT" })).status,
+    ).toBe(400);
+    expect(
+      (
+        await manager.patch(`/quality/changes/${change.id}`, {
+          ownerId: w.guest.membership.id,
+        })
+      ).status,
+    ).toBe(404);
+    await manager.patch(`/quality/changes/${change.id}`, {
+      review: review("pending", "done"),
+      ownerId: w.responsible.membership.id,
+    });
+    const approved = await manager.post(`/quality/changes/${change.id}/decision`, {
+      decision: "APPROVE",
+    });
+    expect((approved.body as ChangeBody).change.status).toBe("APPROVED");
+    const expiry = await ctx.prisma.expiry.findFirst({
+      where: { workspaceId: w.ws.workspaceId, kind: "quality.change", subjectId: change.id },
+    });
+    expect(expiry?.responsibleId).toBe(w.responsible.membership.id);
+    expect(
+      (await manager.post(`/quality/changes/${change.id}/decision`, { decision: "APPROVE" }))
+        .status,
+    ).toBe(409);
+    const responsible = api(w.ws.slug, w.responsible.token);
+    expect(
+      (
+        await plain.post(`/quality/changes/${change.id}/implemented`, {
+          implementedOn: "2026-11-21",
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await responsible.post(`/quality/changes/${change.id}/implemented`, {
+          implementedOn: "2026-11-21",
+        })
+      ).status,
+    ).toBe(400);
+    await manager.patch(`/quality/changes/${change.id}`, { review: review("not_applicable", "done") });
+    const implemented = await responsible.post(`/quality/changes/${change.id}/implemented`, {
+      implementedOn: "2026-11-21",
+    });
+    expect((implemented.body as ChangeBody).change.status).toBe("IMPLEMENTED");
+    expect((await manager.post(`/quality/changes/${change.id}/cancel`)).status).toBe(409);
+  });
+
+  it("otra empresa: sus encuestas, actividades y cambios son 404", async () => {
+    const other = await world("Calidad cultura ajena");
+    const theirs = api(other.ws.slug, other.manager.token);
+    const created = await theirs.post("/quality/culture/surveys", survey);
+    const surveyId = (created.body as SurveyBody).survey.id;
+    const activity = await theirs.post("/quality/culture/activities", {
+      year: 2026,
+      title: "Ajena",
+      kind: "OTHER",
+      plannedOn: "2026-11-01",
+    });
+    const activityId = (activity.body as { activity: { id: string } }).activity.id;
+    const change = await theirs.post("/quality/changes", { title: "Ajeno", kind: "OTHER" });
+    const changeId = (change.body as ChangeBody).change.id;
+    const manager = api(w.ws.slug, w.manager.token);
+    expect((await manager.get(`/quality/culture/surveys/${surveyId}/results`)).status).toBe(404);
+    expect(
+      (
+        await api(w.ws.slug, w.plain.token).post(`/quality/culture/surveys/${surveyId}/answer`, {
+          scores: scores(10),
+        })
+      ).status,
+    ).toBe(404);
+    expect((await manager.post(`/quality/culture/surveys/${surveyId}/close`)).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/culture/activities/${activityId}/done`, {
+          doneOn: "2026-11-02",
+        })
+      ).status,
+    ).toBe(404);
+    expect((await manager.get(`/quality/changes/${changeId}`)).status).toBe(404);
+    expect(
+      (
+        await manager.post(`/quality/changes/${changeId}/decision`, {
+          decision: "REJECT",
+          note: "No",
+        })
+      ).status,
+    ).toBe(404);
+    const pending = await api(w.ws.slug, w.plain.token).get("/quality/culture/surveys/pending");
+    expect((pending.body as { items: { id: string }[] }).items.map((s) => s.id)).not.toContain(
+      surveyId,
+    );
+  });
+});

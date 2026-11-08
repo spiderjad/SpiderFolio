@@ -26,8 +26,6 @@ Hay que analizar y decidir con él, sin código todavía:
       plugins compilados (`CAPTURAS_PLUGINS_DIR`) y las licencias (`CAPTURAS_LICENCIAS`): `plugin-microsoft`,
       `plugin-claude`, `aplicaciones-conectadas`, `conector-seguridad`, `autorizar-app`, `plugin-asistente`,
       `plugin-directorio` y `licencia`. `sala-auditor` (vista del auditor externo, sin el marco) no cambia.
-- [ ] **Calidad en la barra de áreas**: el área `QUALITY` (y `Space.area = QUALITY`) existe pero no se
-      muestra hasta que exista el módulo; al hacerlo, sumar sus secciones en `frontend/src/components/nav-areas.ts`.
 
 ## Módulos por hacer (núcleo, apagados por defecto y activables por empresa, como Seguridad y salud)
 
@@ -51,12 +49,12 @@ Hay que analizar y decidir con él, sin código todavía:
 - [ ] **Calidad alimentaria** (IFS 8 / BRCGS 9, cárnicas): notas, 14 bloques y orden en
       [2026-11-07-modulo-calidad.md](2026-11-07-modulo-calidad.md). Núcleo, **módulo aparte en el menú**,
       activable por empresa como Prevención. Spec [docs/spec/calidad.md](../spec/calidad.md) aprobada;
-      **fases 1 a 5, 6a y 6b cerradas** (07/11/2026): no conformidades y CAPA; plan APPCC, PCC, plantilla
+      **fases 1 a 5, 6a, 6b y 6c cerradas** (08/11/2026): no conformidades y CAPA; plan APPCC, PCC, plantilla
       cárnica y producto retenido; auditorías con su cobertura y hallazgos; proveedores con documentos,
       vencimientos y evaluación; reclamaciones, crisis y retirada; panel de indicadores y prerrequisitos;
-      productos con su ficha, estudios de vida útil, aprobación de etiquetas y plan analítico. Con sus
-      tests de seguridad. Sigue la fase 6c (cultura de seguridad alimentaria y gestión de cambios; spec ya
-      escrita en calidad.md).
+      productos con su ficha, estudios de vida útil, aprobación de etiquetas y plan analítico; cultura de
+      seguridad alimentaria con encuestas anónimas y gestión de cambios. Con sus tests de seguridad. Sigue
+      la fase 7 (trazabilidad, con el conector de SAP y ADA MES; primero su spec).
 
 ## Migración a spider-ui
 
