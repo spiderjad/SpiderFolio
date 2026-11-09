@@ -77,6 +77,8 @@ export const templatesTexts = {
     templates: (n: number) => (n === 1 ? "1 plantilla" : `${String(n)} plantillas`),
     installedAt: (date: string) => `Instalado el ${date}`,
     install: "Instalar",
+    installAgain: "Instalar otra vez",
+    contents: "Qué incluye",
     installTitle: (name: string) => `Instalar «${name}»`,
     space: "Espacio",
     spaceHint: "Se crea una carpeta con el paquete en la raíz del espacio.",

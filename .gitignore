@@ -37,3 +37,7 @@ clips-gif/
 claves/
 entregas/
 backups/
+
+# Plugins installed in development (uploaded from the app) and the restart plan; only the README is ours.
+/plugins/*
+!/plugins/README.md

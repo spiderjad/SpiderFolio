@@ -79,6 +79,8 @@ export const templatesTexts: Catalog<typeof es> = {
     templates: (n: number) => (n === 1 ? "1 template" : `${String(n)} templates`),
     installedAt: (date: string) => `Installed on ${date}`,
     install: "Install",
+    installAgain: "Install again",
+    contents: "What it includes",
     installTitle: (name: string) => `Install «${name}»`,
     space: "Space",
     spaceHint: "A folder with the pack is created at the root of the space.",

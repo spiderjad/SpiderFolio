@@ -43,6 +43,8 @@ export default defineConfig(
     "**/coverage/",
     "**/.astro/",
     "backend/src/generated/",
+    // Plugins installed in development (uploaded .sfplugin, already built): not this repo's code.
+    "plugins/*/",
   ]),
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,

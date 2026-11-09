@@ -3,14 +3,24 @@
 // without templates:manage.
 import type { PluginScreenProps } from "@spiderfolio/plugin-sdk/frontend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LayoutTemplate, Package, Pencil, Trash2 } from "lucide-react";
+import {
+  Briefcase,
+  Check,
+  Factory,
+  LayoutTemplate,
+  Package,
+  Pencil,
+  Trash2,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Combobox, useStaticSource, type ComboboxSource } from "@/components/ui/combobox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Badge, Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
+import { Badge, Banner, Card, EmptyState, Skeleton } from "@/components/ui/display";
 import { SearchField } from "@/components/ui/filter-bar";
 import { Checkbox, FormField } from "@/components/ui/form";
 import { InfiniteList, useInfiniteList } from "@/components/ui/infinite";
@@ -339,6 +349,13 @@ function EditTemplateDialog({
 
 // ─── Industry packs ───
 
+/** An icon per industry; a pack from another plugin gets the generic one. */
+const packIcons: Record<string, LucideIcon> = {
+  alimentacion: UtensilsCrossed,
+  industria: Factory,
+  servicios: Briefcase,
+};
+
 function Packs({ slug }: { slug: string }) {
   const t = texts.templates.packs;
   const packs = useQuery({
@@ -356,39 +373,55 @@ function Packs({ slug }: { slug: string }) {
         <EmptyState icon={Package}>{t.none}</EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {list.map((pack) => (
-            <Card key={`${pack.pluginId}/${pack.id}`} className="flex flex-col gap-3">
-              <div>
-                <CardTitle>{pack.name}</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">{pack.description}</p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {[
-                  t.folders(pack.folders),
-                  t.pages(pack.pages),
-                  pack.controlled > 0 ? t.controlled(pack.controlled) : null,
-                  pack.templates > 0 ? t.templates(pack.templates) : null,
-                ]
-                  .filter((part) => part !== null)
-                  .join(" · ")}
-              </p>
-              {pack.installedAt !== null && (
-                <Badge tone="success" className="self-start">
-                  {t.installedAt(formatShortDate(pack.installedAt))}
-                </Badge>
-              )}
-              <div className="mt-auto">
-                <Button
-                  variant={pack.installedAt === null ? "primary" : "outline"}
-                  onClick={() => {
-                    setInstalling(pack);
-                  }}
-                >
-                  {t.install}
-                </Button>
-              </div>
-            </Card>
-          ))}
+          {list.map((pack) => {
+            const Icon = packIcons[pack.id] ?? Package;
+            const installed = pack.installedAt !== null;
+            const counts = [
+              { value: pack.folders, label: t.folders(pack.folders) },
+              { value: pack.pages, label: t.pages(pack.pages) },
+              { value: pack.controlled, label: t.controlled(pack.controlled) },
+              { value: pack.templates, label: t.templates(pack.templates) },
+            ].filter((count) => count.value > 0);
+            return (
+              <Card key={`${pack.pluginId}/${pack.id}`} className="flex flex-col p-0">
+                <div className="grid flex-1 content-start gap-3 p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-muted text-foreground">
+                      <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-base font-semibold leading-tight">{pack.name}</h2>
+                      {installed && (
+                        <Badge tone="success" className="mt-1.5 inline-flex items-center gap-1">
+                          <Check className="size-3" aria-hidden="true" />
+                          {t.installedAt(formatShortDate(pack.installedAt ?? ""))}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{pack.description}</p>
+                  <ul className="flex flex-wrap gap-1.5" aria-label={t.contents}>
+                    {counts.map((count) => (
+                      <li key={count.label} className="v-badge">
+                        {count.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex justify-end border-t border-border px-4 py-3 sm:px-5">
+                  <Button
+                    size="sm"
+                    variant={installed ? "outline" : "primary"}
+                    onClick={() => {
+                      setInstalling(pack);
+                    }}
+                  >
+                    {installed ? t.installAgain : t.install}
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
       {installing !== null && (

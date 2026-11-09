@@ -73,7 +73,9 @@ export function FormField({ label, error, hint, children, className }: FormField
         ? "text-[13px] text-[var(--auth-muted)]"
         : "v-help";
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    // content-start: in a row next to a taller field (one with a hint), the label and the control stay
+    // at the top instead of spreading over the extra height.
+    <div className={cn("grid content-start gap-1.5", className)}>
       <Label htmlFor={id}>{label}</Label>
       {children({
         id,
@@ -135,11 +137,7 @@ export const Textarea = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement>
 >(({ className, ...props }, ref) => (
-  <textarea
-    ref={ref}
-    className={cn("v-input min-h-24", className)}
-    {...props}
-  />
+  <textarea ref={ref} className={cn("v-input min-h-24", className)} {...props} />
 ));
 Textarea.displayName = "Textarea";
 
