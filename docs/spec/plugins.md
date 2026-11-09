@@ -113,7 +113,8 @@ Payload (`LicensePayloadSchema` en `@spiderfolio/plugin-sdk`):
   en `backend/src/plugins/license-key.ts`. Ninguna variable de entorno la reemplaza; los tests pasan otra
   clave por parámetro.
 - Es por workspace (`WorkspaceLicense`): la carga el **propietario** en Administración › Licencia y
-  plugins (`PUT /admin/license`). Se rechaza una licencia inválida o vencida. La auditoría guarda id,
+  plugins (`PUT /admin/license`). La pantalla (`GET /admin/license`) la ven también los administradores
+  (`workspace.settings`), en solo lectura: todo lo que cambia algo sigue siendo solo del propietario. Se rechaza una licencia inválida o vencida. La auditoría guarda id,
   empresa, plugins y vencimiento, nunca el token.
 - Activo = instalado **y** listado en una licencia válida y no vencida. La API y el worker recuerdan la
   licencia leída 30 s.

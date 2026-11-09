@@ -1,4 +1,5 @@
 // /api/v1/w/:slug/plugins, /admin/license, /admin/plugins and /admin/server (docs/spec/plugins.md).
+// Reading the License and plugins screen: owner and admins (workspace.settings), read-only for admins.
 // Loading or removing the license, turning on community plugins, uploading signed plugins and
 // restarting the server are the owner's only.
 import express, { type Request } from "express";
@@ -56,7 +57,7 @@ export function pluginRoutes(deps: AppDeps): TenantRoute[] {
     {
       method: "get",
       path: "/admin/license",
-      ownerOnly: true,
+      capability: "workspace.settings",
       handler: async (req, res) => {
         res.json(await overview(req));
       },

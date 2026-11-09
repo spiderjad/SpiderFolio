@@ -131,6 +131,52 @@ describe("activar un plugin community", () => {
   });
 });
 
+describe("Licencia y plugins: el administrador solo lee", () => {
+  const call = (app: App, ws: TestWorkspace, token: string, method: string, path: string) => {
+    const url = `/api/v1/w/${ws.slug}${path}`;
+    const req =
+      method === "get"
+        ? request(app).get(url)
+        : method === "put"
+          ? request(app).put(url)
+          : method === "post"
+            ? request(app).post(url)
+            : request(app).delete(url);
+    return req.set("Authorization", `Bearer ${token}`);
+  };
+
+  it("el admin ve la pantalla, pero no carga ni quita la licencia, ni sube, quita o reinicia", async () => {
+    const app = await appWithPlugins();
+    const ws = await createWorkspace(ctx, "Licencia admin lee");
+    const admin = await addMember(ctx, ws, { base: "ADMIN" });
+
+    const read = await call(app, ws, admin.token, "get", "/admin/license");
+    expect(read.status).toBe(200);
+    expect(read.body).toMatchObject({ workspaceId: ws.workspaceId, license: { state: "none" } });
+
+    const license = await call(app, ws, admin.token, "put", "/admin/license").send({
+      token: "SFL1.no-es-una-licencia.firma",
+    });
+    expect(license.status).toBe(403);
+    expect((await call(app, ws, admin.token, "delete", "/admin/license")).status).toBe(403);
+    const upload = await call(app, ws, admin.token, "post", "/admin/plugins/packages")
+      .set("Content-Type", "application/octet-stream")
+      .send(Buffer.from("no-es-un-plugin"));
+    expect(upload.status).toBe(403);
+    expect((await call(app, ws, admin.token, "delete", `/admin/plugins/${COMMUNITY}`)).status).toBe(
+      403,
+    );
+    expect((await call(app, ws, admin.token, "post", "/admin/server/restart")).status).toBe(403);
+  });
+
+  it("un miembro no ve la pantalla", async () => {
+    const app = await appWithPlugins();
+    const ws = await createWorkspace(ctx, "Licencia miembro");
+    const member = await addMember(ctx, ws, { base: "MEMBER" });
+    expect((await call(app, ws, member.token, "get", "/admin/license")).status).toBe(403);
+  });
+});
+
 describe("cargar plugins community", () => {
   it("no carga uno que usa el id de un plugin comercial de SpiderJAD", async () => {
     const dir = mkdtempSync(join(tmpdir(), "spiderfolio-plugins-"));

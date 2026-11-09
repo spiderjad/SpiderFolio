@@ -1,4 +1,4 @@
-// Admin › License and plugins (owner only): one compact list of the plugins on this server, each with
+// Admin › License and plugins (owner; admins read it without the actions): one compact list of the plugins on this server, each with
 // what it needs (its license and when it expires, turning it on, its guide, removing it), uploading a
 // signed plugin (.sfplugin) and the restart that loads or unloads them, and the company id the license
 // is issued for. The server does every check, offline (docs/spec/plugins.md).
@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
+import { useMembership } from "@/features/home/workspace-layout";
 import { ConfirmCodeDialog } from "@/features/profile/two-factor-section";
 import { ApiError } from "@/lib/api";
 import { pluginKeys } from "@/plugins/registry";
@@ -99,6 +100,8 @@ function Plugins({
   onChanged: () => Promise<void>;
 }) {
   const { server, license } = data;
+  // Admins see the screen read-only: every change is the owner's (the server enforces it).
+  const readOnly = useMembership().role.base !== "OWNER";
   const [query, setQuery] = useState("");
   const [licenseOpen, setLicenseOpen] = useState(false);
   const [enabling, setEnabling] = useState<InstalledPluginView | null>(null);
@@ -169,22 +172,25 @@ function Plugins({
 
   return (
     <>
-      {!server.ownMfa && server.uploadEnabled && (
+      {readOnly && <Banner tone="info">{t.readOnly}</Banner>}
+      {!readOnly && !server.ownMfa && server.uploadEnabled && (
         <Banner tone="warning">{t.upload.needsMfa}</Banner>
       )}
       {license.state === "invalid" && (
         <Banner
           tone="warning"
           action={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setLicenseOpen(true);
-              }}
-            >
-              {t.loadLicense}
-            </Button>
+            readOnly ? undefined : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setLicenseOpen(true);
+                }}
+              >
+                {t.loadLicense}
+              </Button>
+            )
           }
         >
           {license.reason === "workspace" ? t.invalidWorkspace : t.invalid}
@@ -195,7 +201,7 @@ function Plugins({
           tone="info"
           icon={RotateCw}
           action={
-            server.restartAt === null && server.restartSupported ? (
+            !readOnly && server.restartAt === null && server.restartSupported ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -243,7 +249,7 @@ function Plugins({
                 />
               </label>
             )}
-            {server.uploadEnabled && (
+            {!readOnly && server.uploadEnabled && (
               <>
                 <input
                   ref={input}
@@ -285,6 +291,7 @@ function Plugins({
                 plugin={plugin}
                 data={data}
                 busy={toggle.isPending}
+                readOnly={readOnly}
                 onLicense={() => {
                   setLicenseOpen(true);
                 }}
@@ -403,6 +410,7 @@ function PluginRow({
   plugin,
   data,
   busy,
+  readOnly,
   onLicense,
   onToggle,
   onRemove,
@@ -410,6 +418,7 @@ function PluginRow({
   plugin: InstalledPluginView;
   data: LicenseOverview;
   busy: boolean;
+  readOnly: boolean;
   onLicense: () => void;
   onToggle: () => void;
   onRemove: () => void;
@@ -419,7 +428,8 @@ function PluginRow({
   const replaced = plugin.replacedBy !== null;
   const removing = server.removing.includes(plugin.id);
   const waiting = server.waiting.some((entry) => entry.id === plugin.id);
-  const removable = server.uploadEnabled && server.removable.includes(plugin.id) && !removing;
+  const removable =
+    !readOnly && server.uploadEnabled && server.removable.includes(plugin.id) && !removing;
   // A paid plugin shows the company's license when it covers it.
   const covered =
     paid &&
@@ -447,7 +457,7 @@ function PluginRow({
               : { label: t.pluginState.noLicense, tone: "neutral" as const }
             : { label: t.pluginState.off, tone: "neutral" as const };
 
-  const canToggle = !paid && !replaced && !removing;
+  const canToggle = !readOnly && !paid && !replaced && !removing;
   return (
     <li className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
       <div className="min-w-0">
@@ -508,7 +518,7 @@ function PluginRow({
             </a>
           </Button>
         )}
-        {paid && !replaced && (
+        {!readOnly && paid && !replaced && (
           <Button
             size="sm"
             variant={expired || soon || !covered ? "primary" : "outline"}

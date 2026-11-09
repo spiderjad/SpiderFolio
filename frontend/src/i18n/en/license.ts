@@ -8,6 +8,8 @@ export const licenseEs: Catalog<typeof EsLicense> = {
     subtitle:
       "This server's plugins. Paid ones work with your company's license; you turn the free ones on.",
     loadError: "We couldn't load the plugins",
+    readOnly:
+      "Read-only: the license, uploading or removing plugins, turning them on and restarting the server are up to the owner.",
     pluginsTitle: "Plugins",
     count: (shown: number, total: number) =>
       shown === total ? `${String(total)} installed` : `${String(shown)} of ${String(total)}`,

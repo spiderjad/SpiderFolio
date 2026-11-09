@@ -5,6 +5,8 @@ export const licenseEs = {
     subtitle:
       "Los plugins de este servidor. Los de pago funcionan con la licencia de tu empresa; los gratis los activas tú.",
     loadError: "No pudimos cargar los plugins",
+    readOnly:
+      "Solo lectura: la licencia, subir o quitar plugins, activarlos y reiniciar el servidor los hace el propietario.",
     pluginsTitle: "Plugins",
     count: (shown: number, total: number) =>
       shown === total ? `${String(total)} instalados` : `${String(shown)} de ${String(total)}`,
