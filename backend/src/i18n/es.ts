@@ -1913,3 +1913,171 @@ export const masterListTexts = {
   tooMany: (max: number) =>
     `El listado tiene más de ${String(max)} documentos. Filtra la lista antes de descargarlo.`,
 } as const;
+
+export const whistleblowingTexts = {
+  code: (year: number, number: number) => `DEN-${String(year)}-${String(number).padStart(4, "0")}`,
+  /** The categories a company starts with (management can change them). */
+  defaultCategories: [
+    "Acoso laboral",
+    "Acoso sexual o por razón de sexo",
+    "Discriminación",
+    "Seguridad y salud en el trabajo",
+    "Seguridad alimentaria",
+    "Medio ambiente",
+    "Fraude o corrupción",
+    "Protección de datos",
+    "Competencia y mercado",
+    "Hacienda y Seguridad Social",
+    "Conflicto de interés",
+    "Otra",
+  ],
+  /** The deadline notice: never the case's number or content. */
+  deadlineWhat: "Un caso del canal de denuncias tiene que responderse",
+  noKey:
+    "El servidor no tiene configurada la clave de cifrado (EMAIL_ENCRYPTION_KEY): sin ella no se puede activar el canal.",
+  needsResponsible: "Designa a la persona responsable del sistema antes de activar el canal.",
+  managerNotEligible:
+    "Solo pueden gestionar el canal miembros activos con plaza completa y la verificación en dos pasos activa.",
+  keepResponsible:
+    "Mientras el canal esté activo tiene que haber una persona responsable del sistema.",
+  tooManyManagers: "Se alcanzó el máximo de personas que gestionan el canal.",
+  keepOneVisible:
+    "Al menos una de las personas que gestionan el canal tiene que poder ver el caso.",
+  invalidCategory: "Elige una de las categorías del canal.",
+  wrongState: "El caso no está en un estado que permita esa acción.",
+  alreadyExtended: "El plazo ya se amplió una vez.",
+  purged: "Los datos de este caso se suprimieron.",
+  invalid: "El código de seguimiento o la contraseña no son correctos.",
+  noSession: "Vuelve a entrar con tu código de seguimiento y tu contraseña.",
+};
+
+export const environmentTexts = {
+  space: {
+    name: "Medio ambiente",
+    description: "Autorizaciones, residuos, vertidos y documentos ambientales.",
+  },
+  folders: {
+    permits: "Autorizaciones",
+    contractors: "Gestores y transportistas",
+  },
+  units: { KG: "kg", T: "t", L: "L", M3: "m³", UNITS: "unidades" },
+  sandach: { CAT1: "Categoría 1", CAT2: "Categoría 2", CAT3: "Categoría 3" },
+  yes: "Sí",
+  no: "No",
+  expiry: {
+    permit: (name: string) => `Autorización «${name}»`,
+    obligation: (name: string) => name,
+    contractor: (name: string) => `Autorización del gestor «${name}»`,
+    storage: (name: string) => `Tiempo máximo de almacenamiento de «${name}»`,
+    leakCheck: (name: string) => `Control de fugas de «${name}»`,
+  },
+  discharge: {
+    ncTitle: (permit: string) => `Vertido fuera de límite: ${permit}`,
+    ncIntro: (day: string, point: string, lab: string) =>
+      `Analítica del ${day}${point === "" ? "" : `, punto ${point}`}${lab === "" ? "" : `, laboratorio ${lab}`}.`,
+    ncLine: (
+      parameter: string,
+      value: number,
+      unit: string,
+      min: number | null,
+      max: number | null,
+    ) =>
+      `${parameter}: ${String(value)} ${unit} (límite ${min === null ? "" : `mín. ${String(min)} `}${max === null ? "" : `máx. ${String(max)}`})`.replace(
+        " )",
+        ")",
+      ),
+  },
+  errors: {
+    wasteExists: "Ya hay un residuo con ese nombre.",
+    contractorExists: "Ya hay un gestor o transportista con ese nombre.",
+    invalidLer: "El código LER son 6 cifras (con «*» al final si es peligroso).",
+    notManager: "Esa empresa no está dada de alta como gestor de residuos.",
+    notCarrier: "Esa empresa no está dada de alta como transportista.",
+    archived: "Está archivado: restáuralo para usarlo.",
+    noGotenberg: "El servidor no tiene configurado el generador de PDF.",
+    tooMany: "Demasiadas filas para exportar: acota el período.",
+  },
+  chronological: {
+    title: "Archivo cronológico de residuos",
+    subtitle: (from: string, to: string) => `Del ${from} al ${to} · Ley 7/2022, artículo 64`,
+    fileName: (format: string) => `archivo-cronologico-residuos.${format}`,
+    columns: [
+      "Fecha",
+      "Residuo",
+      "Código LER",
+      "Peligroso",
+      "SANDACH",
+      "Cantidad",
+      "Unidad",
+      "Gestor",
+      "NIMA del gestor",
+      "Operación",
+      "Transportista",
+      "Documento (DI o comercial)",
+      "Vehículo",
+      "Observaciones",
+    ],
+  },
+  sandachRegister: {
+    title: "Registro de expediciones SANDACH",
+    subtitle: (from: string, to: string) =>
+      `Del ${from} al ${to} · Reglamento (UE) 142/2011, anexo VIII`,
+    fileName: (format: string) => `registro-sandach.${format}`,
+    columns: [
+      "Fecha",
+      "Categoría",
+      "Material",
+      "Cantidad",
+      "Unidad",
+      "Destinatario",
+      "Autorización o NIMA",
+      "Transportista",
+      "Vehículo",
+      "Documento comercial",
+    ],
+  },
+  annual: {
+    title: (year: number) => `Resumen anual de residuos ${String(year)}`,
+    fileName: (year: number, format: string) => `resumen-residuos-${String(year)}.${format}`,
+    columns: [
+      "Código LER",
+      "Residuo",
+      "Peligroso",
+      "Gestor",
+      "Operación",
+      "Retiradas",
+      "Cantidad",
+      "Unidad",
+    ],
+  },
+  pageFooter: (page: string, total: string) => `Página ${page} de ${total}`,
+  generated: (when: string) => `Generado el ${when}`,
+  /** The meat industry's usual waste, loaded on demand. */
+  template: [
+    {
+      name: "Subproductos de categoría 3 (recortes, huesos, grasas)",
+      ler: "020203",
+      sandach: "CAT3",
+      operation: "R3",
+    },
+    {
+      name: "Subproductos de categoría 2 (contenido digestivo, estiércol)",
+      ler: "020106",
+      sandach: "CAT2",
+      operation: "R3",
+    },
+    {
+      name: "Material especificado de riesgo (categoría 1)",
+      ler: "020203",
+      sandach: "CAT1",
+      operation: "D10",
+    },
+    { name: "Lodos de la depuradora", ler: "020204", sandach: null, operation: "R3" },
+    { name: "Aceites usados de maquinaria", ler: "130205*", sandach: null, operation: "R9" },
+    { name: "Envases contaminados", ler: "150110*", sandach: null, operation: "R12" },
+    { name: "Absorbentes y trapos contaminados", ler: "150202*", sandach: null, operation: "R12" },
+    { name: "Plásticos (film y cajas)", ler: "150102", sandach: null, operation: "R3" },
+    { name: "Papel y cartón", ler: "150101", sandach: null, operation: "R3" },
+    { name: "Fluorescentes y lámparas", ler: "200121*", sandach: null, operation: "R4" },
+  ],
+};

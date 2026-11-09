@@ -135,6 +135,21 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
     description:
       "Reads every nonconformity and its actions without changing them. Meant for management or for preparing an audit.",
   },
+  "environment.manage": {
+    label: "Manage environment",
+    description:
+      "Handles permits, recurring obligations, the waste catalog, waste managers and collections, and the environment module's settings.",
+  },
+  "environment.view": {
+    label: "View environment",
+    description:
+      "Reads the whole environment module without changing it. Meant for management or for preparing an inspection.",
+  },
+  "environment.record": {
+    label: "Record waste collections",
+    description:
+      "Records waste collections with their document, without touching the catalog, the managers or the permits. Meant for maintenance or dispatch.",
+  },
 };
 
 export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
@@ -145,6 +160,7 @@ export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
   audit: "Audit log",
   safety: "Occupational health and safety",
   quality: "Quality",
+  environment: "Environment",
   administration: "Administration",
   plugins: "Plugins",
 };

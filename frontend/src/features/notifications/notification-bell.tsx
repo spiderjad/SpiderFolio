@@ -50,7 +50,9 @@ export interface NotificationView {
     | "cae_portal_upload"
     | "quality_nc"
     | "quality_label"
-    | "quality_change";
+    | "quality_change"
+    | "whistleblowing"
+    | "environment_discharge";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -151,6 +153,11 @@ function pathOf(
   if (item.kind === "quality_change") {
     return `/app/${slug}/calidad/cambios/${item.detail ?? ""}`;
   }
+  if (item.kind === "environment_discharge") return `/app/${slug}/medio-ambiente/vertidos`;
+  // Never a case's id: the notice only says there's something new.
+  if (item.kind === "whistleblowing") {
+    return item.detail === "managers" ? `/app/${slug}` : `/app/${slug}/canal`;
+  }
   if (item.kind === "bian_usage" || item.kind === "bian_request") {
     return `/app/${slug}/admin/bian${item.kind === "bian_request" ? "?tab=usage" : ""}`;
   }
@@ -189,6 +196,15 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
   if (item.kind === "quality_nc") return t.qualityNc(item.actor?.name ?? "");
   if (item.kind === "quality_label") return t.qualityLabel(item.actor?.name ?? "");
   if (item.kind === "quality_change") return t.qualityChange(item.actor?.name ?? "");
+  if (item.kind === "environment_discharge") return t.environmentDischarge;
+  if (item.kind === "whistleblowing") {
+    const notice = texts.whistleblowing.notifications;
+    return item.detail === "message"
+      ? notice.message
+      : item.detail === "managers"
+        ? notice.managers
+        : notice.new;
+  }
   if (item.kind === "expiry_due") {
     return item.expiry === null || item.expiresAt === null
       ? t.expiryGone

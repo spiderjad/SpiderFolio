@@ -66,6 +66,11 @@ export const NOTIFICATION_KINDS = [
   /** A change proposed, assigned, approved or rejected (docs/spec/calidad.md, «Fase 6c»; `detail` = the
    * change's id). */
   "quality_change",
+  /** The whistleblowing channel (docs/spec/canal-denuncias.md), never with the case: `detail` = «new»,
+   * «message» or «managers». */
+  "whistleblowing",
+  /** A discharge analysis out of its limits (docs/spec/medio-ambiente.md; `detail` = the analysis). */
+  "environment_discharge",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

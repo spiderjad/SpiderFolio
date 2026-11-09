@@ -1,0 +1,124 @@
+---
+title: "Whistleblowing channel"
+description: "The internal reporting system of Spain's Ley 2/2023: report anonymously, follow the case with a code and handle it with its deadlines, without anyone outside management seeing anything."
+group: administracion
+order: 15
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+Spain's **Ley 2/2023** requires companies with **50 or more employees** to have an internal reporting system:
+a channel to report breaches anonymously or confidentially, with an acknowledgement, an answer within a
+deadline and protection against retaliation. SpiderFolio's whistleblowing channel covers it without separate
+software.
+
+- Anyone related to the company (staff, former employees, candidates, contractors, suppliers) reports from a
+  **public page**, without an account.
+- They can do it **anonymously**: SpiderFolio doesn't keep their address, their browser or their account.
+- They follow their case with a **follow-up code** and a password, and write with management.
+- Only the people who manage the channel see the cases. **Neither the owner nor the admins** see them unless
+  they're designated.
+
+## Turning it on
+
+In **Administration › Security › General**, the **Whistleblowing channel** card. Only the **owner**, with
+two-step verification on (the code is asked for when saving if needed).
+
+1. In **Channel management**, add the people who will handle the cases. They need a **full seat** and
+   **two-step verification** turned on. One of them is **responsible for the system**, the person the company
+   designates before the authority for the protection of whistleblowers.
+2. Turn on **Channel on**. It can't be turned on without a responsible person.
+3. Copy the **public link** and put it on the home page of the company's website and on posters at the plant
+   and in the changing rooms.
+4. In **External channels**, write which authority applies to the company. If you leave it empty, a general
+   text is shown.
+
+Every change
+
+<Shot
+  name="canal-ajustes"
+  alt="The Whistleblowing channel card: the channel on, the two people in management with the one responsible for the system, the public link and the external channels"
+/>
+to who manages the channel goes to the audit log and the people in management are told. The channel
+needs the server to have the encryption key set up (`EMAIL_ENCRYPTION_KEY`).
+
+Turning the channel off closes the form. **It deletes nothing**: open cases go on with their deadlines and the
+reporter still gets into their mailbox.
+
+## How someone reports
+
+The public page (also in everyone's menu, **Whistleblowing channel**) explains what can be reported, who can
+report, the guarantees and the external channels. **Report something** opens the form:
+
+<Shot
+  name="canal-publico"
+  alt="The channel's public page: what can be reported, who can report, the guarantees and the external channels"
+/>
+
+- **What it's about** (the category), **what happened** and, if they want, the people involved, when and where.
+- **I want to identify myself**: if they don't tick it, the report is anonymous.
+- If more than one person manages the channel, they can tick who **must not see** their report (for example,
+  if it's about them). At least one has to be able to see it.
+- A **password** for their mailbox.
+
+<Shot
+  name="canal-formulario"
+  alt="The form: the category, what happened, when and where, whether to identify oneself, who in management must not see it and the password"
+/>
+
+When it's sent, the screen shows the **follow-up code** once, to copy or download. Since we don't know who
+they are, the code and the password can't be recovered.
+
+<Shot
+  name="canal-codigo"
+  alt="The report received: the follow-up code with the Copy and Download as text buttons"
+/>
+
+## The reporter's mailbox
+
+In **I already reported: see my case**, with the code and the password, they see the case's status, when it was
+received, the answer's deadline, the reason if it wasn't admitted or the outcome when it's closed, and the
+messages with management, signed «The channel's management», without names. They can write from there.
+
+<Shot
+  name="canal-buzon"
+  alt="The mailbox: the category and the status, when it was received, the answer's deadline and the messages"
+/>
+
+Ten wrong passwords in a row lock the mailbox for 24 hours. The session ends by itself after 30 minutes without
+use.
+
+## Handling the cases
+
+The people in management have the **Channel** area in the rail. **Cases** lists the reports they can see, with
+their number, category, status and the deadline in color. The list doesn't show the content.
+
+In each case:
+
+- **Admit** or **Don't admit** (with the reason, shown in the mailbox).
+- **Start the investigation** and **Close** with the outcome (substantiated, not substantiated, partly or
+  referred to an authority) and a summary for the reporter.
+- **Extend the deadline** by 3 months, only once and with a reason.
+- Record that it was **referred to the public prosecutor** or that the **person concerned was informed**.
+- Choose the **investigator**, write to the reporter and add **internal notes**.
+- **Stand aside** from the case if there's a conflict of interest.
+
+The case's **log of access and changes** says who opened or changed it and when. It doesn't go to the general
+audit log: so nobody outside management knows the case exists.
+
+## Deadlines and notices
+
+- The **acknowledgement** is automatic, when it's received.
+- The **answer** has to come within **3 months** of the acknowledgement (6 if extended). The people in
+  management get notices 30 and 7 days before and on the day it's due.
+- Notices never say the case's number or content: only that there's something new or that a case is due.
+
+## Confidentiality
+
+- Everything the reporter and management write is stored **encrypted**.
+- The public page leaves no trace of the reporter in the server's logs, and the attempt limits don't keep
+  their address.
+- The channel stays out of Bian, the connector for Claude, search and the general exports.

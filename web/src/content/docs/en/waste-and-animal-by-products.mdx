@@ -1,0 +1,67 @@
+---
+title: "Waste and animal by-products"
+description: "The waste catalog with its LER code, the authorized waste managers, each collection with its document, and the chronological record and the by-products register ready for the inspection."
+group: medio-ambiente
+order: 2
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+Spain's **Ley 7/2022** requires a **chronological record** of waste (article 64) and **Regulation (EU)
+142/2011** a register of the dispatches of **animal by-products**. In **Environment › Waste**, each collection
+you record feeds both, and they're exported as PDF or CSV.
+
+## The catalog
+
+In the **Catalog** tab, each waste has:
+
+- Its 6-digit **LER code**. With “\*” at the end it's **hazardous** (for example, 130205\* for used oil).
+- If it's an animal by-product, its **category** (1, 2 or 3).
+- The **treatment operation** (R for recovery, D for disposal: R3, R13, D10…).
+- The usual **waste manager** and **carrier**, and the **treatment contract**.
+- The **maximum storage time**: by default, the law's (6 months for hazardous; 24 for recovery and 12 for
+  disposal otherwise). The app gives notice before a waste reaches it without being collected.
+
+**Load the meat industry's waste** adds the usual ones (category 1, 2 and 3 by-products, treatment sludge,
+oil, contaminated packaging, plastics, cardboard, fluorescent tubes) to adjust them. Existing ones with the
+same name aren't touched.
+
+<Shot
+  name="medio-ambiente-catalogo"
+  alt="The waste catalog: each with its LER code, whether it's hazardous or an animal by-product, the operation, the waste manager and since when it's stored"
+/>
+
+## Waste managers and carriers
+
+In the **Waste managers** tab, each company with its **tax ID**, its **NIMA**, its **authorizations** and when
+they expire, and whether it's a **waste manager**, a **carrier** or both. Each has its documents folder
+(authorization, treatment contract). The app gives notice before its authorization expires.
+
+## Recording a collection
+
+In the **Collections** tab, **Record collection** asks for the waste, the date, the **quantity** and its unit,
+the waste manager and the carrier (by default, the waste's), the number of the **identification document
+(DI)** or of the animal by-products **commercial document**, and the vehicle registration.
+
+When it's recorded, the waste's storage counts again from that day. Whoever has **Record waste collections**
+only sees the ones they recorded; whoever manages the module can **delete** a collection to correct a mistake
+(it stays in the audit log).
+
+<Shot
+  name="medio-ambiente-retiradas"
+  alt="The collections: date, waste, quantity, waste manager and document, with the period filters and the Export button"
+/>
+
+## Exporting for the inspection
+
+Choose the period with **From** and **To** and open **Export**:
+
+- **Chronological record**: date, waste, LER code, whether it's hazardous, by-product category, quantity, waste
+  manager and its NIMA, operation, carrier, document, vehicle and notes.
+- **By-products register**: only animal by-products, with category, consignee and commercial document.
+- **Annual summary**: the total by waste, waste manager and unit, for the declarations and the report.
+
+Each export, as PDF or CSV, goes to the audit log.

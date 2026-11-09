@@ -52,7 +52,7 @@ export const adminSections = {
   /** Bian: seguridad o facturación. */
   bian: ["security.manage", "workspace.settings"],
   /** Plan y consumo: solo facturación. */
-  /** Licencia y plugins: solo el propietario (lo hace cumplir el servidor). */
+  /** Licencia y plugins: propietario y administradores; el admin solo lee (lo hace cumplir el servidor). */
   license: ["workspace.settings"],
   limits: ["workspace.settings", "storage.view"],
   audit: ["audit.view"],
@@ -77,8 +77,13 @@ export function canSee(person: Person, section: keyof typeof adminSections): boo
     capabilities.includes(capability),
   );
   // Seguridad: la ven quienes tienen la capacidad (los administradores solo la pestaña Email).
-  if (section === "license") return role.base === "OWNER";
-  if (section === "security" || section === "bian" || section === "limits" || section === "audit")
+  if (
+    section === "security" ||
+    section === "bian" ||
+    section === "license" ||
+    section === "limits" ||
+    section === "audit"
+  )
     return byCapability;
   if (section === "roles" || section === "access" || section === "auditRooms") return byCapability;
   // Documentos: quien tiene las capacidades, o un jefe (ve solo su área).
@@ -191,15 +196,6 @@ export function navItems(
       group: t.group,
     });
   }
-  if (canSee(person, "license")) {
-    items.push({
-      to: `/app/${slug}/admin/license`,
-      label: t.license,
-      icon: KeyRound,
-      group: t.group,
-      plugins: true,
-    });
-  }
   if (canSee(person, "auditRooms")) {
     items.push({
       to: `/app/${slug}/admin/audit-rooms`,
@@ -214,6 +210,17 @@ export function navItems(
       label: t.audit,
       icon: ScrollText,
       group: t.group,
+    });
+  }
+  // Licencia y plugins va justo antes de las secciones de los plugins: el menú los agrupa bajo
+  // «Plugins» y una entrada en medio partiría el grupo en dos.
+  if (canSee(person, "license")) {
+    items.push({
+      to: `/app/${slug}/admin/license`,
+      label: t.license,
+      icon: KeyRound,
+      group: t.group,
+      plugins: true,
     });
   }
   // Plugins activos: sus pantallas en el menú principal y sus secciones en el panel.
@@ -280,6 +287,8 @@ export function sectionTitle(
   if (pathname.includes("/vencimientos")) return texts.expiries.nav;
   if (pathname.includes("/seguridad")) return texts.safety.terms[safetyTerms].module;
   if (pathname.includes("/calidad")) return texts.quality.module;
+  if (pathname.includes("/medio-ambiente")) return texts.environment.module;
+  if (pathname.includes("/canal")) return texts.whistleblowing.module;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;
   if (pathname.includes("/admin/security")) return texts.admin.nav.security;

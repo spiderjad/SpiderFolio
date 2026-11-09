@@ -1,7 +1,7 @@
 // Workspace.settings (CLAUDE.md, secciones 9.3 y 12A.2): zona horaria e idioma del workspace;
 // las políticas de seguridad se agregan con su módulo.
 import { z } from "zod";
-import { caeLimits, qualityLimits } from "@spiderfolio/limits";
+import { caeLimits, qualityLimits, whistleblowingLimits } from "@spiderfolio/limits";
 import { LOCALES } from "../../i18n/locales.ts";
 import { validationMessages } from "../../i18n/index.ts";
 import { isTimeZone } from "../../lib/time-zone.ts";
@@ -124,7 +124,10 @@ export const caeEnabled = (settings: SafetySettings): boolean =>
 export const QualitySettingsSchema = z.object({
   enabled: z.boolean().default(false),
   spaceId: z.string().min(1).max(64).optional(),
-  standards: z.array(z.enum(["IFS8", "BRCGS9"])).max(2).default([]),
+  standards: z
+    .array(z.enum(["IFS8", "BRCGS9"]))
+    .max(2)
+    .default([]),
   verifyDays: z
     .number()
     .int()
@@ -156,6 +159,50 @@ export function readQualitySettings(settings: unknown): QualitySettings {
       };
 }
 
+/** The environment module (docs/spec/medio-ambiente.md): on or off, and its space once it's created. */
+export const EnvironmentSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  spaceId: z.string().min(1).max(64).optional(),
+});
+
+export type EnvironmentSettings = z.infer<typeof EnvironmentSettingsSchema>;
+
+/** The module's settings; off with data missing or not valid. */
+export function readEnvironmentSettings(settings: unknown): EnvironmentSettings {
+  const raw = (settings as { environment?: unknown } | null | undefined)?.environment;
+  const parsed = EnvironmentSettingsSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : { enabled: false };
+}
+
+/**
+ * The whistleblowing channel (docs/spec/canal-denuncias.md): on or off, its categories (empty: the
+ * default ones), the page's texts and how long closed cases are kept.
+ */
+export const WhistleblowingSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  categories: z
+    .array(z.string().trim().min(1).max(whistleblowingLimits.categoryMax))
+    .max(whistleblowingLimits.categoriesMax)
+    .default([]),
+  intro: z.string().max(whistleblowingLimits.pageTextMax).default(""),
+  externalChannels: z.string().max(whistleblowingLimits.pageTextMax).default(""),
+  retentionYears: z
+    .number()
+    .int()
+    .min(1)
+    .max(whistleblowingLimits.retentionYearsMax)
+    .default(whistleblowingLimits.retentionYearsDefault),
+});
+
+export type WhistleblowingSettings = z.infer<typeof WhistleblowingSettingsSchema>;
+
+/** The channel's settings; off with data missing or not valid. */
+export function readWhistleblowingSettings(settings: unknown): WhistleblowingSettings {
+  const raw = (settings as { whistleblowing?: unknown } | null | undefined)?.whistleblowing;
+  const parsed = WhistleblowingSettingsSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : WhistleblowingSettingsSchema.parse({});
+}
+
 export const WorkspaceSettingsSchema = z.object({
   timezone: z.string().refine(isTimeZone, { error: () => validationMessages.invalidTimeZone }),
   locale: z.enum(LOCALES),
@@ -167,6 +214,8 @@ export const WorkspaceSettingsSchema = z.object({
   bianGuests: z.boolean().optional(),
   safety: SafetySettingsSchema.optional(),
   quality: QualitySettingsSchema.optional(),
+  whistleblowing: WhistleblowingSettingsSchema.optional(),
+  environment: EnvironmentSettingsSchema.optional(),
 });
 
 export type WorkspaceSettings = z.infer<typeof WorkspaceSettingsSchema>;

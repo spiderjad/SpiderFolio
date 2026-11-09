@@ -1,0 +1,77 @@
+---
+title: "Discharges, consumption and cooling units"
+description: "Discharge analyses against their limits, water and energy consumption per tonne produced, and units with fluorinated gases and their leak checks."
+group: medio-ambiente
+order: 3
+icon: clock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## The area's summary
+
+**Environment › Summary** shows what's due in the next 60 days (permits, obligations, waste managers'
+authorizations, waste maximum storage time and leak checks), the analyses out of limits in the last six months
+and last month's consumption against the same month the year before.
+
+## Discharges
+
+It starts from a permit of type **Discharge permit** (in Permits).
+
+1. In **Discharges**, **Edit limits** loads each parameter of the permit with its unit and its minimum or
+   maximum: COD, BOD5, suspended solids, oils and fats, pH, conductivity, nitrogen, phosphorus…
+2. **Record analysis** asks for the sampling date, the sampling point, the laboratory and each parameter's value
+   (others can be added).
+3. Each value is compared with its limit: out of limits shows in red and whoever manages the module is told.
+4. With the **Quality** module on, **Open nonconformity** creates one with the values out of limits; the
+   analysis stays linked to it.
+
+The **Trend** chart shows one parameter over time with its limit as a dashed line. How often analyses are done
+is kept as a recurring obligation.
+
+<Shot
+  name="medio-ambiente-vertidos"
+  alt="Discharges: the permit's limits, the COD trend with its limit and the analyses, the last one out of limits"
+/>
+
+## Consumption and indicators
+
+1. **New meter**: mains or well water, electricity, natural gas, diesel, LPG or other, with its unit (m³, kWh,
+   L, kg).
+2. Each month, tap the month's cell and type the **meter reading at the end of the month**. The app works out
+   the consumption from the previous month's reading. For the first reading or when the meter was replaced,
+   type the month's consumption by hand.
+3. In **Production (t)**, type the tonnes produced each month: they give the **ratio per tonne** (m³/t,
+   kWh/t).
+4. **Target per t** sets the year's goal for each meter; the months and the total above it show in red.
+
+Each meter has its chart with the year's consumption and the previous year's.
+
+<Shot
+  name="medio-ambiente-consumos"
+  alt="Consumption: each month's production and, per meter, the chart of the year against the previous one, the consumption, the ratio per tonne and the target"
+/>
+
+## Cooling units and fluorinated gases
+
+**New unit** asks for the name, the location, the **refrigerant** (R-404A, R-449A, R-744…), the **charge in
+kg** and whether it has a **leak detection system**. The global warming potential (GWP) comes from a reference
+table; for a refrigerant that isn't there, type it.
+
+The app works out:
+
+- The **tonnes of CO₂ equivalent** (charge × GWP / 1000).
+- The **leak check period** of Regulation (EU) 2024/573: 5 to 50 t, every 12 months; 50 to 500, every 6; from
+  500, every 3; with leak detection, twice as long. Under 5 t there's no mandatory check.
+- A warning if the refrigerant has a GWP of 2500 or more with 40 t or more, for the servicing restrictions.
+
+Ammonia (R-717) and CO₂ (R-744) aren't fluorinated gases: their inspections are kept as a recurring obligation.
+
+**Log** records on the unit a leak check (and whether a leak was found), a recharge, a recovery, a repair or
+an inspection, with the kilos, the company and the certificate. Each leak check moves the date of the next
+one, which gives notice before it's due.
+
+<Shot
+  name="medio-ambiente-frio"
+  alt="Cooling units: each with its refrigerant, charge, tonnes of CO₂ equivalent, leak check period and next check"
+/>

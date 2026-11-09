@@ -55,8 +55,22 @@ Hay que analizar y decidir con él, sin código todavía:
       productos con su ficha, estudios de vida útil, aprobación de etiquetas y plan analítico; cultura de
       seguridad alimentaria con encuestas anónimas y gestión de cambios. Con sus tests de seguridad. Sigue
       la fase 7: la **7a** (lotes, enlaces, entregas, traza, CSV) está hecha (08/11/2026); la **7b** (plugin
-      `erp-traceability` con SAP y ADA MES y el punto de extensión `ctx.traceability`) espera las respuestas
-      del mantenedor sobre SAP y ADA MES (preguntas abiertas en calidad.md, «Fase 7»).
+      `erp-traceability` con SAP y ADA MES y el punto de extensión `ctx.traceability`) queda **en suspenso**
+      (09/11/2026) hasta que la empresa responda sobre SAP y ADA MES (preguntas abiertas en calidad.md,
+      «Fase 7»).
+
+- [ ] **Canal de denuncias** (Ley 2/2023; pedido 09/11/2026, primero de los módulos nuevos): spec aprobada
+      en [docs/spec/canal-denuncias.md](../spec/canal-denuncias.md). **Fase 1 hecha** (09/11/2026), falta
+      que el mantenedor la pruebe, las capturas y la fase 2 (adjuntos, comunicaciones verbales,
+      libro-registro exportable, supresión automática, cartel con QR, política y procedimiento al
+      activar). Tests de seguridad al cerrar el módulo. La guía no se publica hasta la versión del núcleo. Después, en este orden: Mantenimiento (GMAO), Medio ambiente, Requisitos
+      legales, Personas y polivalencia, Visitas.
+
+- [ ] **Medio ambiente** (pedido 09/11/2026): spec aprobada en
+      [docs/spec/medio-ambiente.md](../spec/medio-ambiente.md). **Fases 1 a 5 hechas** (autorizaciones y
+      obligaciones; residuos y SANDACH con archivo cronológico; vertidos; consumos; gases fluorados y Resumen),
+      falta que el mantenedor las pruebe y las capturas. Quedan los aspectos ambientales (si se piden) y el CO₂
+      de la energía. Las guías no se publican hasta la versión del núcleo.
 
 ## Migración a spider-ui
 
@@ -71,7 +85,9 @@ Hay que analizar y decidir con él, sin código todavía:
       probar con licencia: falta que el mantenedor lo pruebe en la instalación de prueba (licencia firmada
       para la empresa), los tests de seguridad al cerrar el módulo (plantillas de otra empresa 404, guardar
       solo lo que se ve, usar exige crear en el destino, invitados no, sin la feature 404, límites) y las
-      capturas. Su guía (`plantillas` / `templates`) ya está en la web pero el catálogo lo muestra como
+      capturas. Prueba en este PC con el dev local: licencia para «Demo Industrias»
+      (`cmvf5f1at0001eodqye2xurc1`) con `entregas/licencia-plantillas.ps1`, porque el núcleo con
+      plantillas aún no está en ninguna versión publicada (la instalación de prueba usa v0.13.0). Su guía (`plantillas` / `templates`) ya está en la web pero el catálogo lo muestra como
       «Próximamente» (`version: null`) hasta que el mantenedor lo pruebe. Paquetes solo en español.
 - [ ] **Importación de OneDrive y SharePoint** (`onedrive-import`): esqueleto; spec primero. Necesita una
       app registrada en Microsoft Entra (la registra el mantenedor).
@@ -82,9 +98,10 @@ Hay que analizar y decidir con él, sin código todavía:
       copias impresas controladas. Tests de seguridad
       de ambos al cerrar el módulo.
 
-- [ ] **«Licencia y plugins» (subir plugins) no aparece en el menú** para el admin: hoy solo lo ve la
-      dueña (`frontend/src/components/nav-items.ts`, `section === "license"` → `OWNER`), y subir exige 2FA
-      reciente de la dueña. Decidir si el admin lo ve en solo lectura o si se deja así y se explica en la guía.
+- [x] **«Licencia y plugins» para el admin**: decidido y hecho (09/11/2026), el admin la ve en **solo
+      lectura** (`GET /admin/license` con `workspace.settings`); cargar la licencia, subir, quitar o activar
+      plugins y reiniciar siguen siendo del propietario. Guía y spec actualizadas; la guía de la web espera
+      a la próxima versión del núcleo.
 - [ ] Las licencias de `entregas/` (LIC-2026-0001 a 0004) son de la empresa `cmvrwab20000301p17i21oq4k`
       (instalación de prueba de Windows). En la Mac hay que firmar licencias nuevas para la empresa demo local
       `cmvf5f1at0001eodqye2xurc1` (demo-industrias); lo firma quien mantiene el proyecto. El repo privado de

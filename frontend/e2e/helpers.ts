@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { test as base, expect, type Page } from "@playwright/test";
 import { MAILPIT_API } from "./config.ts";
 
@@ -84,4 +84,44 @@ export async function trackCspViolations(page: Page): Promise<() => Promise<stri
   });
   return () =>
     page.evaluate(() => (window as unknown as { __cspViolations: string[] }).__cspViolations);
+}
+
+/** TOTP (RFC 6238, SHA-1, 6 digits, 30 s) of a base32 secret, as the app computes it. */
+export function totp(secretBase32: string, at = Date.now()): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const char of secretBase32.replaceAll(/\s/gu, "")) {
+    bits += alphabet.indexOf(char).toString(2).padStart(5, "0");
+  }
+  const key = Buffer.from((bits.match(/.{8}/gu) ?? []).map((byte) => parseInt(byte, 2)));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(at / 30_000)));
+  const hmac = createHmac("sha1", key).update(counter).digest();
+  const offset = (hmac[19] ?? 0) & 15;
+  const value = hmac.readUInt32BE(offset) & 0x7fffffff;
+  return String(value % 1_000_000).padStart(6, "0");
+}
+
+/** The company's slug from the app's address (/app/:slug/…). */
+export const slugOf = (page: Page): string => new URL(page.url()).pathname.split("/")[2] ?? "";
+
+/** Confirms the email of the account just registered. */
+export async function verifyEmail(page: Page, email: string): Promise<void> {
+  await page.goto(`/verify-email#token=${await verificationToken(email)}`);
+  await expect(page.getByText("Listo, tu email quedó confirmado.")).toBeVisible();
+}
+
+/** Turns on two-step verification from the profile (the session counts as just verified). */
+export async function enableTwoFactor(page: Page, slug: string): Promise<void> {
+  await page.goto(`/app/${slug}/profile`);
+  await page.getByRole("button", { name: "Activar", exact: true }).click();
+  const setup = page.getByRole("dialog", { name: "Activar la verificación en dos pasos" });
+  await setup.getByRole("button", { name: "¿No puedes escanearlo? Mostrar la clave" }).click();
+  const secret = (await setup.locator("code").innerText()).replaceAll(/\s/gu, "");
+  await setup.getByLabel(/Escribe el código de 6 dígitos/).fill(totp(secret));
+  await setup.getByRole("button", { name: "Activar" }).click();
+  await page
+    .getByRole("dialog", { name: "Tus códigos de recuperación" })
+    .getByRole("button", { name: "Ya los guardé" })
+    .click();
 }

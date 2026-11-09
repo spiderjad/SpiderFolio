@@ -1,0 +1,81 @@
+---
+title: "Vertidos, consumos y equipos de frío"
+description: "Las analíticas de vertido contra sus límites, los consumos de agua y energía por tonelada producida, y los equipos con gases fluorados y su control de fugas."
+group: medio-ambiente
+order: 3
+icon: clock
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Resumen del área
+
+**Medio ambiente › Resumen** muestra lo que vence en los próximos 60 días (autorizaciones, obligaciones,
+autorizaciones de gestores, tiempo máximo de almacenamiento de residuos y controles de fugas), las analíticas
+fuera de límite de los últimos seis meses y los consumos del último mes frente al mismo mes del año anterior.
+
+## Vertidos
+
+Parte de una autorización de tipo **Autorización de vertido** (en Autorizaciones).
+
+1. En **Vertidos**, **Editar límites** carga cada parámetro de la autorización con su unidad y su mínimo o
+   máximo: DQO, DBO5, sólidos en suspensión, aceites y grasas, pH, conductividad, nitrógeno, fósforo…
+2. **Registrar analítica** pide la fecha de la toma, el punto de muestreo, el laboratorio y el valor de cada
+   parámetro (se pueden agregar otros).
+3. Cada valor se compara con su límite: fuera de límite sale en rojo y se avisa a quienes gestionan el módulo.
+4. Con el módulo de **Calidad** activo, **Abrir no conformidad** crea una con los valores fuera de límite; la
+   analítica queda enlazada a ella.
+
+El gráfico **Evolución** muestra un parámetro a lo largo del tiempo con su límite en línea discontinua. La
+frecuencia de las analíticas se lleva como obligación periódica.
+
+<Shot
+  name="medio-ambiente-vertidos"
+  alt="Vertidos: los límites de la autorización, la evolución de la DQO con su límite y las analíticas, la última fuera de límite"
+/>
+
+## Consumos e indicadores
+
+1. **Nuevo contador**: agua de red o de pozo, electricidad, gas natural, gasóleo, GLP u otro, con su unidad
+   (m³, kWh, L, kg).
+2. Cada mes, toca la celda del mes y apunta la **lectura del contador a fin de mes**. La app calcula el consumo
+   con la lectura del mes anterior. Para la primera lectura o si se cambió el contador, escribe el consumo del
+   mes a mano.
+3. En **Producción (t)**, apunta las toneladas producidas cada mes: con ellas se calcula el **ratio por
+   tonelada** (m³/t, kWh/t).
+4. **Objetivo por t** fija la meta del año para cada contador; los meses y el total que la superan salen en
+   rojo.
+
+Cada contador tiene su gráfico con el consumo del año y el del año anterior.
+
+<Shot
+  name="medio-ambiente-consumos"
+  alt="Consumos: la producción de cada mes y, por contador, el gráfico del año frente al anterior, el consumo, el ratio por tonelada y el objetivo"
+/>
+
+## Equipos de frío y gases fluorados
+
+**Nuevo equipo** pide el nombre, la ubicación, el **refrigerante** (R-404A, R-449A, R-744…), la **carga en kg**
+y si tiene **sistema de detección de fugas**. El potencial de calentamiento (PCA) se toma de una tabla de
+referencia; para un refrigerante que no está, escríbelo.
+
+La app calcula:
+
+- Las **toneladas de CO₂ equivalente** (carga × PCA / 1000).
+- La **periodicidad del control de fugas** del Reglamento (UE) 2024/573: de 5 a 50 t, cada 12 meses; de 50 a
+  500, cada 6; desde 500, cada 3; con detección de fugas, el doble de tiempo. Por debajo de 5 t no hay control
+  obligatorio.
+- Un aviso si el refrigerante tiene un PCA de 2500 o más con 40 t o más, por las restricciones de
+  mantenimiento.
+
+El amoniaco (R-717) y el CO₂ (R-744) no son gases fluorados: sus inspecciones (Real Decreto 552/2019) se llevan
+como obligación periódica.
+
+**Anotar** registra en el equipo un control de fugas (y si se encontró una), una recarga, una recuperación,
+una reparación o una inspección, con los kilos, la empresa y el certificado. Cada control de fugas mueve la
+fecha del siguiente, que avisa antes de vencer.
+
+<Shot
+  name="medio-ambiente-frio"
+  alt="Equipos de frío: cada uno con su refrigerante, carga, toneladas de CO₂ equivalente, periodicidad del control de fugas y próximo control"
+/>

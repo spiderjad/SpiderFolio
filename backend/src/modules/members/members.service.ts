@@ -597,7 +597,8 @@ export async function updateOwnJobTitle(ctx: AdminContext, jobTitle: string | nu
 /** Each person picks the area the app opens in (only their own membership). */
 export async function updateOwnHomeArea(
   ctx: AdminContext,
-  homeArea: "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN" | null,
+  homeArea:
+    "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "ADMIN" | null,
 ): Promise<void> {
   await ctx.db.membership.update({
     where: { id: ctx.tenant.membershipId },

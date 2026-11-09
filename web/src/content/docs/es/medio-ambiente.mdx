@@ -1,0 +1,74 @@
+---
+title: "Medio ambiente"
+description: "Activar el módulo, quién hace qué, y las autorizaciones y obligaciones periódicas con sus vencimientos."
+group: medio-ambiente
+order: 1
+icon: globe
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+El módulo **Medio ambiente** reúne lo que una inspección ambiental o una auditoría pide ver: las
+**autorizaciones** de la empresa y sus vencimientos, lo que hay que hacer **cada cierto tiempo** (controles de
+emisiones, analíticas de vertido, declaraciones) y el **registro de residuos y SANDACH** (ver
+[Residuos y SANDACH](/es/docs/residuos-y-sandach)). Está pensado primero para la industria alimentaria y
+cárnica en España.
+
+## Activarlo
+
+En **Administración › Seguridad › General**, la tarjeta **Medio ambiente**. Solo el **propietario**. Al
+activarlo aparece el área **Medio ambiente** en la barra y se crea su **espacio de documentos**, donde cada
+autorización y cada gestor de residuos tiene su carpeta.
+
+Apagarlo oculta el área y pausa los avisos. **No borra nada.**
+
+## Quién hace qué
+
+Tres capacidades, en **Administración › Roles y permisos**:
+
+- **Gestionar medio ambiente**: todo el módulo. Por defecto, propietario y administradores.
+- **Ver medio ambiente**: lee todo sin cambiar nada (dirección, preparar una inspección).
+- **Registrar retiradas de residuos**: apunta las retiradas, sin tocar el catálogo, los gestores ni las
+  autorizaciones. Pensada para mantenimiento o expediciones; ve las retiradas que registra.
+
+## Autorizaciones
+
+En **Medio ambiente › Autorizaciones**, **Nueva autorización** pide:
+
+- El **tipo**: autorización ambiental integrada, licencia o comunicación ambiental, autorización de vertido,
+  inscripción como productor de residuos, registro SANDACH, emisiones a la atmósfera u otra.
+- El **nombre**, el **organismo** y el **número de expediente o inscripción**.
+- Cuándo se otorgó, cuándo **vence** y, si sus condiciones se revisan antes, la fecha de **revisión**.
+- Las **condiciones principales** y un **responsable**.
+
+Cada autorización tiene su carpeta en el espacio del módulo (enlace **Documentos**) para guardar la
+resolución, los anexos y la correspondencia. La lista marca en color las que vencen pronto o ya vencieron.
+
+<Shot
+  name="medio-ambiente-autorizaciones"
+  alt="Autorizaciones y obligaciones: la licencia ambiental, la autorización de vertido y el registro SANDACH, y las obligaciones periódicas con su próxima fecha"
+/>
+
+## Obligaciones periódicas
+
+Lo que hay que hacer cada cierto tiempo: «Control de emisiones de la caldera» cada 36 meses, «Analítica de
+vertido» cada 3, «Declaración anual de envases» cada 12. Cada obligación tiene su **periodicidad**, la
+**próxima fecha**, un responsable y, si viene de una autorización, cuál.
+
+Al terminarla, **Hecha** pide la fecha y una nota (por ejemplo, la empresa que lo hizo o el número del
+informe) y calcula la próxima. El historial queda en la obligación.
+
+## Avisos
+
+<Shot
+  name="medio-ambiente-resumen"
+  alt="El Resumen del área: lo que vence en los próximos 60 días, la analítica fuera de límite y los consumos del último mes"
+/>
+
+Las autorizaciones, las obligaciones, las autorizaciones de los gestores de residuos y el tiempo máximo de
+almacenamiento de cada residuo avisan antes de vencer: a su responsable o, si no tiene, a quienes gestionan el
+módulo. Aparecen también en **Vencimientos** y en **Mis pendientes** de quien los recibe.
+
+Archivar una autorización u obligación la saca de la lista y de los avisos sin borrarla; se puede restaurar.

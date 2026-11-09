@@ -340,6 +340,28 @@ model Workspace {
   qualityShipments         QualityShipment[]
   templates                Template[]
   templateImages           TemplateImage[]
+  whistleblowingManagers   WhistleblowingManager[]
+  whistleblowingCounters   WhistleblowingCounter[]
+  whistleblowingCases      WhistleblowingCase[]
+  whistleblowingExclusions WhistleblowingExclusion[]
+  whistleblowingMessages   WhistleblowingMessage[]
+  whistleblowingNotes      WhistleblowingNote[]
+  whistleblowingEvents     WhistleblowingEvent[]
+  whistleblowingSessions   WhistleblowingSession[]
+  envPermits               EnvPermit[]
+  envObligations           EnvObligation[]
+  envObligationsDone       EnvObligationDone[]
+  envContractors           EnvContractor[]
+  envWastes                EnvWaste[]
+  envWasteMovements        EnvWasteMovement[]
+  envDischargeLimits       EnvDischargeLimit[]
+  envDischargeSamples      EnvDischargeSample[]
+  envMeters                EnvMeter[]
+  envReadings              EnvReading[]
+  envProduction            EnvProduction[]
+  envTargets               EnvTarget[]
+  envCoolingUnits          EnvCoolingUnit[]
+  envCoolingEvents         EnvCoolingEvent[]
 }
 
 model Role {
@@ -2521,6 +2543,7 @@ enum SpaceArea {
   DOCUMENTS
   PREVENTION
   QUALITY
+  ENVIRONMENT
 }
 
 /// The area the app opens in (docs/spec/diseno.md 10.4.1).
@@ -2530,6 +2553,8 @@ enum HomeArea {
   WIKI
   PREVENTION
   QUALITY
+  ENVIRONMENT
+  CHANNEL
   ADMIN
 }
 
@@ -3618,4 +3643,511 @@ model TemplateImage {
   template  Template  @relation(fields: [templateId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, templateId])
+}
+
+// ─── Whistleblowing channel (docs/spec/canal-denuncias.md) ─────────────────────────────────────────
+
+enum WhistleblowingStatus {
+  RECEIVED
+  ADMITTED
+  NOT_ADMITTED
+  INVESTIGATING
+  CLOSED
+}
+
+enum WhistleblowingOutcome {
+  SUBSTANTIATED
+  NOT_SUBSTANTIATED
+  PARTIAL
+  REFERRED
+}
+
+enum WhistleblowingParty {
+  REPORTER
+  MANAGEMENT
+}
+
+/// Who handles the channel's cases. Not a role capability: only the owner designates them.
+model WhistleblowingManager {
+  workspaceId  String
+  /// Membership; no FK.
+  membershipId String
+  /// The person responsible for the system (Ley 2/2023, art. 8): one per company.
+  responsible  Boolean  @default(false)
+  addedById    String
+  addedAt      DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, membershipId])
+}
+
+model WhistleblowingCounter {
+  workspaceId String
+  year        Int
+  last        Int
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, year])
+}
+
+/// A report. Its content is encrypted (bodyEnc); nothing in it points to the reporter's account,
+/// address or browser.
+model WhistleblowingCase {
+  id                 String                 @id @default(cuid())
+  workspaceId        String
+  year               Int
+  number             Int
+  category           String
+  status             WhistleblowingStatus   @default(RECEIVED)
+  outcome            WhistleblowingOutcome?
+  anonymous          Boolean
+  /// The account, the people involved, when and where, and the contact (JSON, encrypted).
+  bodyEnc            String?
+  /// sha256(workspaceId:code): the follow-up code finds the case without its id.
+  codeHash           String                 @unique
+  passwordHash       String
+  failedLogins       Int                    @default(0)
+  lockedUntil        DateTime?
+  receivedAt         DateTime               @default(now())
+  /// The acknowledgement, sent to the mailbox when it's received.
+  acknowledgedAt     DateTime               @default(now())
+  decidedAt          DateTime?
+  /// Why it wasn't admitted, or the closing summary (encrypted).
+  decisionEnc        String?
+  dueOn              DateTime               @db.Date
+  extendedAt         DateTime?
+  extensionEnc       String?
+  referredAt         DateTime?
+  affectedInformedAt DateTime?
+  closedAt           DateTime?
+  /// Membership of the manager in charge; no FK.
+  instructorId       String?
+  /// The reporter wrote and management hasn't opened it yet.
+  unread             Boolean                @default(true)
+  purgeAfter         DateTime?
+  purgedAt           DateTime?
+
+  workspace  Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  exclusions WhistleblowingExclusion[]
+  messages   WhistleblowingMessage[]
+  notes      WhistleblowingNote[]
+  events     WhistleblowingEvent[]
+  sessions   WhistleblowingSession[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, year, number])
+  @@index([workspaceId, receivedAt, id])
+  @@index([workspaceId, status])
+}
+
+/// A manager who must not see a case (the reporter's choice, or they stood aside).
+model WhistleblowingExclusion {
+  workspaceId  String
+  caseId       String
+  /// Membership; no FK.
+  membershipId String
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  case      WhistleblowingCase @relation(fields: [caseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@id([caseId, membershipId])
+  @@index([workspaceId, membershipId])
+}
+
+model WhistleblowingMessage {
+  id          String              @id @default(cuid())
+  workspaceId String
+  caseId      String
+  from        WhistleblowingParty
+  bodyEnc     String
+  createdAt   DateTime            @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  case      WhistleblowingCase @relation(fields: [caseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, caseId, createdAt])
+}
+
+/// Management's internal notes (encrypted).
+model WhistleblowingNote {
+  id          String   @id @default(cuid())
+  workspaceId String
+  caseId      String
+  /// Membership; no FK.
+  authorId    String
+  bodyEnc     String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  case      WhistleblowingCase @relation(fields: [caseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, caseId, createdAt])
+}
+
+/// The module's own access log and timeline: who opened or changed a case, and when. Never in the
+/// general audit log.
+model WhistleblowingEvent {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  caseId       String
+  /// Membership; null when it's the reporter or the system. No FK.
+  membershipId String?
+  action       String
+  createdAt    DateTime @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  case      WhistleblowingCase @relation(fields: [caseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, caseId, createdAt])
+}
+
+/// The reporter's mailbox session (cookie scoped to the mailbox path).
+model WhistleblowingSession {
+  id          String    @id @default(cuid())
+  workspaceId String
+  caseId      String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  case      WhistleblowingCase @relation(fields: [caseId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, caseId])
+}
+
+// ─── Environment (docs/spec/medio-ambiente.md) ──────────────────────────────────────────────────────
+
+enum EnvPermitKind {
+  AAI
+  ENVIRONMENTAL_LICENSE
+  DISCHARGE
+  WASTE_PRODUCER
+  SANDACH_REGISTRY
+  EMISSIONS
+  OTHER
+}
+
+enum EnvSandach {
+  CAT1
+  CAT2
+  CAT3
+}
+
+enum EnvUnit {
+  KG
+  T
+  L
+  M3
+  UNITS
+}
+
+/// An environmental authorization, registration or license the company holds.
+model EnvPermit {
+  id          String        @id @default(cuid())
+  workspaceId String
+  kind        EnvPermitKind
+  name        String
+  authority   String        @default("")
+  /// File or registration number.
+  reference   String        @default("")
+  issuedOn    DateTime?     @db.Date
+  expiresOn   DateTime?     @db.Date
+  reviewOn    DateTime?     @db.Date
+  conditions  String        @default("")
+  /// Membership in charge; no FK.
+  ownerId     String?
+  /// Its folder in the module's space (documents); no FK.
+  folderId    String?
+  archivedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, archivedAt, name])
+}
+
+/// Something the company has to do every few months (an emissions check, a discharge analysis…).
+model EnvObligation {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  /// The permit it comes from (no FK).
+  permitId    String?
+  everyMonths Int
+  lastDoneOn  DateTime? @db.Date
+  nextDueOn   DateTime  @db.Date
+  ownerId     String?
+  notes       String    @default("")
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  done      EnvObligationDone[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, archivedAt, nextDueOn])
+}
+
+model EnvObligationDone {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  obligationId String
+  doneOn       DateTime @db.Date
+  note         String   @default("")
+  recordedById String
+  createdAt    DateTime @default(now())
+
+  workspace  Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  obligation EnvObligation @relation(fields: [obligationId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, obligationId, doneOn])
+}
+
+/// A waste manager or carrier, with its authorization.
+model EnvContractor {
+  id                     String    @id @default(cuid())
+  workspaceId            String
+  name                   String
+  nameKey                String
+  nif                    String?
+  nima                   String?
+  authorizations         String    @default("")
+  isManager              Boolean   @default(true)
+  isCarrier              Boolean   @default(false)
+  authorizationExpiresOn DateTime? @db.Date
+  contact                String    @default("")
+  folderId               String?
+  archivedAt             DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, nameKey])
+}
+
+/// A waste the company produces, with its LER code, its SANDACH category and who takes it.
+model EnvWaste {
+  id               String      @id @default(cuid())
+  workspaceId      String
+  name             String
+  nameKey          String
+  /// LER code, 6 digits; hazardous ones end with «*».
+  ler              String
+  hazardous        Boolean
+  sandach          EnvSandach?
+  /// R or D operation (R3, R13, D5…).
+  operation        String      @default("")
+  /// EnvContractor ids; no FK (an archived contractor stays referenced).
+  managerId        String?
+  carrierId        String?
+  contractRef      String      @default("")
+  maxStorageMonths Int
+  /// Stored since (the last collection, or when it started).
+  storageSince     DateTime?   @db.Date
+  archivedAt       DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  movements EnvWasteMovement[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, nameKey])
+}
+
+/// A collection of a waste: a row of the chronological record (Ley 7/2022, art. 64).
+model EnvWasteMovement {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  wasteId      String
+  date         DateTime @db.Date
+  quantity     Decimal  @db.Decimal(14, 3)
+  unit         EnvUnit
+  managerId    String?
+  carrierId    String?
+  /// The identification document (DI) or the SANDACH commercial document number.
+  documentRef  String   @default("")
+  vehicle      String   @default("")
+  notes        String   @default("")
+  recordedById String
+  createdAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  waste     EnvWaste  @relation(fields: [wasteId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+
+  @@index([workspaceId, date, id])
+  @@index([workspaceId, wasteId, date])
+}
+
+enum EnvMeterKind {
+  WATER_NETWORK
+  WATER_WELL
+  ELECTRICITY
+  NATURAL_GAS
+  DIESEL
+  LPG
+  OTHER
+}
+
+enum EnvCoolingEventKind {
+  LEAK_CHECK
+  RECHARGE
+  RECOVERY
+  REPAIR
+  INSPECTION
+}
+
+/// A discharge permit's limit for one parameter (DQO, pH…).
+model EnvDischargeLimit {
+  id          String   @id @default(cuid())
+  workspaceId String
+  /// The DISCHARGE permit (no FK).
+  permitId    String
+  parameter   String
+  unit        String   @default("")
+  min         Decimal? @db.Decimal(14, 4)
+  max         Decimal? @db.Decimal(14, 4)
+  position    Int      @default(0)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, permitId, position])
+}
+
+/// A discharge analysis: its values are compared with the permit's limits.
+model EnvDischargeSample {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  permitId     String
+  takenOn      DateTime @db.Date
+  point        String   @default("")
+  laboratory   String   @default("")
+  /// [{ parameter, value }]
+  values       Json
+  /// How many values were out of their limits when it was recorded.
+  outOfLimits  Int      @default(0)
+  notes        String   @default("")
+  /// The quality nonconformity opened from it, if any (no FK).
+  ncId         String?
+  recordedById String
+  createdAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, permitId, takenOn])
+}
+
+model EnvMeter {
+  id          String       @id @default(cuid())
+  workspaceId String
+  name        String
+  kind        EnvMeterKind
+  /// m3, kWh, L, kg…
+  unit        String
+  archivedAt  DateTime?
+  createdAt   DateTime     @default(now())
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  readings  EnvReading[]
+  targets   EnvTarget[]
+
+  @@unique([id, workspaceId])
+}
+
+/// A meter's reading at the end of a month; the month's consumption is the difference with the
+/// previous one (or typed by hand when the meter was replaced).
+model EnvReading {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  meterId      String
+  /// «YYYY-MM».
+  month        String
+  reading      Decimal? @db.Decimal(16, 3)
+  consumption  Decimal  @db.Decimal(16, 3)
+  recordedById String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  meter     EnvMeter  @relation(fields: [meterId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([meterId, month])
+  @@index([workspaceId, month])
+}
+
+/// The month's production, for the ratios per tonne.
+model EnvProduction {
+  workspaceId String
+  month       String
+  tonnes      Decimal @db.Decimal(14, 3)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, month])
+}
+
+/// The year's target for a meter, per tonne produced.
+model EnvTarget {
+  workspaceId String
+  meterId     String
+  year        Int
+  perTonne    Decimal @db.Decimal(14, 4)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  meter     EnvMeter  @relation(fields: [meterId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@id([meterId, year])
+  @@index([workspaceId, year])
+}
+
+/// A cooling unit: its refrigerant and charge give its CO2 equivalent and the leak check period.
+model EnvCoolingUnit {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  name          String
+  location      String    @default("")
+  refrigerant   String
+  chargeKg      Decimal   @db.Decimal(10, 3)
+  gwp           Int
+  leakDetection Boolean   @default(false)
+  installer     String    @default("")
+  installedOn   DateTime? @db.Date
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  events    EnvCoolingEvent[]
+
+  @@unique([id, workspaceId])
+}
+
+model EnvCoolingEvent {
+  id             String              @id @default(cuid())
+  workspaceId    String
+  unitId         String
+  date           DateTime            @db.Date
+  kind           EnvCoolingEventKind
+  kgAdded        Decimal?            @db.Decimal(10, 3)
+  kgRecovered    Decimal?            @db.Decimal(10, 3)
+  leakFound      Boolean?
+  company        String              @default("")
+  certificateRef String              @default("")
+  notes          String              @default("")
+  recordedById   String
+  createdAt      DateTime            @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  unit      EnvCoolingUnit @relation(fields: [unitId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, unitId, date])
 }

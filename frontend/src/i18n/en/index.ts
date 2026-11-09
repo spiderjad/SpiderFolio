@@ -19,6 +19,8 @@ import { formsTexts } from "./forms";
 import { safetyTexts } from "./safety";
 import { caeTexts } from "./cae";
 import { qualityTexts } from "./quality";
+import { whistleblowingTexts } from "./whistleblowing";
+import { environmentTexts } from "./environment";
 import { templatesTexts } from "./templates";
 import { expiriesTexts } from "./expiries";
 import { auditRoomsTexts } from "./audit-rooms";
@@ -44,6 +46,8 @@ export const en: Messages = {
   safety: safetyTexts,
   cae: caeTexts,
   quality: qualityTexts,
+  whistleblowing: whistleblowingTexts,
+  environment: environmentTexts,
   templates: templatesTexts,
   expiries: expiriesTexts,
   auditRooms: auditRoomsTexts,
@@ -325,8 +329,11 @@ export const en: Messages = {
         : `${who}: a quality nonconformity needs you.`,
     qualityLabel: (who: string) =>
       who === "" ? "A label changed status." : `${who}: a label to review or already reviewed.`,
+    environmentDischarge: "A discharge analysis came out of its limits.",
     qualityChange: (who: string) =>
-      who === "" ? "A quality change needs you." : `${who}: a change proposed, assigned or decided.`,
+      who === ""
+        ? "A quality change needs you."
+        : `${who}: a change proposed, assigned or decided.`,
     expiryGone: "An expiry that no longer exists.",
     formOverdue: (what: string) => `“${what}” wasn't filled in last period.`,
     directorySyncStopped:

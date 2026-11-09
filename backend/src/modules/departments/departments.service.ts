@@ -23,7 +23,9 @@ import type {
   UpdateDepartmentInput,
 } from "./departments.schemas.ts";
 
-type HomeAreaValue = "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN";
+/** CHANNEL (the whistleblowing channel) is never chosen as a home area, but the column allows it. */
+type HomeAreaValue =
+  "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "CHANNEL" | "ADMIN";
 
 export interface DepartmentView {
   id: string;

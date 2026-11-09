@@ -50,6 +50,15 @@ export const routes = [
         path: "contratas/:accessId",
         lazy: page(() => import("@/features/safety/cae-portal-page"), "CaePortalPage"),
       },
+      // The whistleblowing channel (docs/spec/canal-denuncias.md): no account, nothing of the session.
+      {
+        path: "canal/:workspaceSlug",
+        lazy: page(() => import("@/features/whistleblowing/channel-page"), "ChannelPage"),
+      },
+      {
+        path: "canal/:workspaceSlug/buzon",
+        lazy: page(() => import("@/features/whistleblowing/mailbox-page"), "MailboxPage"),
+      },
       {
         element: <GuestOnly />,
         children: [
@@ -137,6 +146,74 @@ export const routes = [
                 // File and page expiries (docs/spec/vencimientos.md): only what the person sees.
                 path: "vencimientos",
                 lazy: page(() => import("@/features/expiries/expiries-page"), "ExpiriesPage"),
+              },
+              {
+                // Environment (docs/spec/medio-ambiente.md): only while it's on.
+                path: "medio-ambiente",
+                lazy: page(
+                  () => import("@/features/environment/environment-common"),
+                  "RequireEnvironment",
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: page(
+                      () => import("@/features/environment/environment-common"),
+                      "EnvironmentHome",
+                    ),
+                  },
+                  {
+                    path: "autorizaciones",
+                    lazy: page(() => import("@/features/environment/permits-page"), "PermitsPage"),
+                  },
+                  {
+                    path: "resumen",
+                    lazy: page(
+                      () => import("@/features/environment/summary-page"),
+                      "EnvironmentSummaryPage",
+                    ),
+                  },
+                  {
+                    path: "residuos",
+                    lazy: page(() => import("@/features/environment/waste-page"), "WastePage"),
+                  },
+                  {
+                    path: "vertidos",
+                    lazy: page(
+                      () => import("@/features/environment/discharge-page"),
+                      "DischargePage",
+                    ),
+                  },
+                  {
+                    path: "consumos",
+                    lazy: page(
+                      () => import("@/features/environment/consumption-page"),
+                      "ConsumptionPage",
+                    ),
+                  },
+                  {
+                    path: "frio",
+                    lazy: page(() => import("@/features/environment/cooling-page"), "CoolingPage"),
+                  },
+                ],
+              },
+              {
+                // The whistleblowing channel's cases (docs/spec/canal-denuncias.md): its managers only.
+                path: "canal",
+                lazy: page(
+                  () => import("@/features/whistleblowing/cases-page"),
+                  "RequireChannelManager",
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: page(() => import("@/features/whistleblowing/cases-page"), "CasesPage"),
+                  },
+                  {
+                    path: ":caseId",
+                    lazy: page(() => import("@/features/whistleblowing/case-page"), "CasePage"),
+                  },
+                ],
               },
               {
                 // Food quality (docs/spec/calidad.md): only while it's on.

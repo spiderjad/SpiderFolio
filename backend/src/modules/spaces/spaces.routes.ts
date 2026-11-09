@@ -42,10 +42,7 @@ export function spaceRoutes(): TenantRoute[] {
       anyCapability: ["spaces.create"],
       leaderAccess: true,
       handler: async (req, res) => {
-        const space = await createSpace(
-          adminContextOf(req),
-          CreateSpaceSchema.parse(req.body),
-        );
+        const space = await createSpace(adminContextOf(req), CreateSpaceSchema.parse(req.body));
         res.status(201).json({ space });
       },
     },

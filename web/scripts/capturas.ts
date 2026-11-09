@@ -43,6 +43,7 @@ import { demoEmergencies } from "./demo-emergencies.ts";
 import { demoIndicators } from "./demo-indicators.ts";
 import { demoPlanning } from "./demo-planning.ts";
 import { demoQuality } from "./demo-quality.ts";
+import { demoEnvironment } from "./demo-environment.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
 const BASE = `http://localhost:${String(PORT)}`;
@@ -484,6 +485,112 @@ async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
 }
 
 /** Food quality (web/scripts/demo-quality.ts): the module on and nonconformities in every step. */
+
+// ─── Environment and the whistleblowing channel ─────────────────────────────────────────────
+
+const demoEnvironmentDone = new Set<Locale>();
+
+async function demoEnvironmentOf(locale: Locale, slug: string): Promise<void> {
+  if (demoEnvironmentDone.has(locale)) return;
+  await demoEnvironment({ base: BASE, token: await ownerToken(locale), slug, locale });
+  demoEnvironmentDone.add(locale);
+}
+
+/** The channel's managers in the demo: people nobody signs in as here (their 2FA is only marked). */
+const CHANNEL_MANAGERS: Record<Locale, [string, string]> = {
+  es: ["irene@demo.local", "jorge@demo.local"],
+  en: ["grace@demo-en.local", "jack@demo-en.local"],
+};
+const CHANNEL_PASSWORD = "buzon-de-la-demo-1";
+const channelCodes = new Map<Locale, string>();
+
+/**
+ * The whistleblowing channel on, with two managers (the first responsible) and a report sent through
+ * the public page's API, whose code opens the mailbox (only in this database: the channel's setup asks
+ * for the owner's two-step verification, which the demo owners don't have).
+ */
+async function demoChannelOf(locale: Locale, slug: string): Promise<void> {
+  if (channelCodes.has(locale)) return;
+  const { rows } = await db.query<{ id: string; settings: unknown }>(
+    `SELECT id, settings FROM "Workspace" WHERE slug = $1`,
+    [slug],
+  );
+  const workspace = rows[0];
+  if (workspace === undefined) throw new Error("No está la empresa demo");
+  const settings = (workspace.settings ?? {}) as Record<string, unknown>;
+  await db.query(`UPDATE "Workspace" SET settings = $2 WHERE id = $1`, [
+    workspace.id,
+    JSON.stringify({
+      ...settings,
+      whistleblowing: {
+        enabled: true,
+        categories: [],
+        intro: "",
+        externalChannels:
+          locale === "es"
+            ? "Autoridad Independiente de Protección del Informante (A.A.I.) y Oficina Antifrau de Catalunya."
+            : "The public authority for the protection of whistleblowers.",
+        retentionYears: 3,
+      },
+    }),
+  ]);
+  for (const [index, email] of CHANNEL_MANAGERS[locale].entries()) {
+    const member = await db.query<{ id: string; userId: string }>(
+      `SELECT m.id, m."userId" FROM "Membership" m JOIN "User" u ON u.id = m."userId"
+        WHERE m."workspaceId" = $1 AND u.email = $2`,
+      [workspace.id, email],
+    );
+    const row = member.rows[0];
+    if (row === undefined) throw new Error(`No está ${email} en la demo`);
+    await db.query(`UPDATE "User" SET "totpEnabledAt" = now() WHERE id = $1`, [row.userId]);
+    await db.query(
+      `INSERT INTO "WhistleblowingManager" ("workspaceId", "membershipId", responsible, "addedById")
+       VALUES ($1, $2, $3, $2) ON CONFLICT ("workspaceId", "membershipId") DO NOTHING`,
+      [workspace.id, row.id, index === 0],
+    );
+  }
+  const res = await fetch(`${BASE}/api/v1/canal/${slug}/reports`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "accept-language": locale },
+    body: JSON.stringify({
+      category: locale === "es" ? "Seguridad alimentaria" : "Food safety",
+      account:
+        locale === "es"
+          ? "En la línea 2 se reetiquetan lotes caducados con una fecha nueva."
+          : "On line 2, expired lots are relabelled with a new date.",
+      password: CHANNEL_PASSWORD,
+    }),
+  });
+  if (!res.ok)
+    throw new Error(`Comunicación de la demo: ${String(res.status)} ${await res.text()}`);
+  channelCodes.set(locale, ((await res.json()) as { code: string }).code);
+}
+
+/** Fills the public form like someone reporting (without sending it unless asked). */
+async function fillChannelForm(page: Page, locale: Locale): Promise<void> {
+  const es = locale === "es";
+  await page.getByRole("button", { name: es ? "Comunicar algo" : "Report something" }).click();
+  await page.getByRole("combobox", { name: es ? "Sobre qué es" : "What it's about" }).click();
+  await page.getByRole("option", { name: es ? "Seguridad alimentaria" : "Food safety" }).click();
+  await page
+    .getByLabel(es ? "Qué pasó" : "What happened")
+    .fill(
+      es
+        ? "En la línea 2 se reetiquetan lotes caducados con una fecha nueva. Lo vi tres veces en octubre, en el turno de tarde."
+        : "On line 2, expired lots are relabelled with a new date. I saw it three times in October, on the afternoon shift.",
+    );
+  await page
+    .getByLabel(es ? "Cuándo" : "When")
+    .fill(es ? "Octubre, turno de tarde" : "October, afternoon shift");
+  await page
+    .getByLabel(es ? "Dónde" : "Where")
+    .fill(es ? "Línea 2, etiquetado" : "Line 2, labelling");
+  const passwordLabel = es ? "Contraseña para tu buzón" : "Password for your mailbox";
+  const repeatLabel = es ? "Repite la contraseña" : "Repeat the password";
+  await page.getByLabel(passwordLabel, { exact: true }).fill(CHANNEL_PASSWORD);
+  await page.getByLabel(repeatLabel, { exact: true }).fill(CHANNEL_PASSWORD);
+}
+
 const demoQualityNcs = new Map<Locale, Record<string, string>>();
 
 const loginTokens = new Map<string, string>();
@@ -1581,6 +1688,115 @@ const CAPTURES: Capture[] = [
         // The Samba AD test image's fixed password (plugins repository, test/samba-ad).
         bindPassword: "Clave-Prueba-2026!",
       });
+    },
+  },
+  // ─── Environment (docs/spec/medio-ambiente.md) ───
+  {
+    name: "medio-ambiente-resumen",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/resumen`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  {
+    name: "medio-ambiente-autorizaciones",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/autorizaciones`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  {
+    name: "medio-ambiente-retiradas",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/residuos`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  {
+    name: "medio-ambiente-catalogo",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/residuos?pestana=catalogo`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  {
+    name: "medio-ambiente-vertidos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/vertidos`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  {
+    name: "medio-ambiente-consumos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/consumos`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  {
+    name: "medio-ambiente-frio",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/medio-ambiente/frio`,
+    before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  // ─── The whistleblowing channel (docs/spec/canal-denuncias.md): its public side and its setup ───
+  {
+    name: "canal-ajustes",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/admin/security`,
+    before: ({ slug, locale }) => demoChannelOf(locale, slug),
+    then: async (page, locale) => {
+      await page
+        .getByRole("heading", {
+          name: locale === "es" ? "Canal de denuncias" : "Whistleblowing channel",
+        })
+        .scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: "canal-publico",
+    who: "owner",
+    prefix: "/canal/",
+    path: (i) => `/canal/${i.slug}`,
+    before: ({ slug, locale }) => demoChannelOf(locale, slug),
+  },
+  {
+    name: "canal-formulario",
+    who: "owner",
+    prefix: "/canal/",
+    path: (i) => `/canal/${i.slug}`,
+    before: ({ slug, locale }) => demoChannelOf(locale, slug),
+    then: async (page, locale) => {
+      await fillChannelForm(page, locale);
+      await page
+        .getByLabel(locale === "es" ? "Qué pasó" : "What happened")
+        .scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: "canal-codigo",
+    who: "owner",
+    prefix: "/canal/",
+    path: (i) => `/canal/${i.slug}`,
+    before: ({ slug, locale }) => demoChannelOf(locale, slug),
+    then: async (page, locale) => {
+      await fillChannelForm(page, locale);
+      await page.getByRole("button", { name: locale === "es" ? "Enviar" : "Send" }).click();
+      await page.locator("p.font-mono").waitFor();
+    },
+  },
+  {
+    name: "canal-buzon",
+    who: "owner",
+    prefix: "/canal/",
+    path: (i) => `/canal/${i.slug}/buzon`,
+    before: ({ slug, locale }) => demoChannelOf(locale, slug),
+    then: async (page, locale) => {
+      const es = locale === "es";
+      const code = page.getByLabel(es ? "Código de seguimiento" : "Follow-up code");
+      // The mailbox's session stays from the first theme.
+      if (await code.isVisible()) {
+        await code.fill(channelCodes.get(locale) ?? "");
+        await page
+          .getByLabel(es ? "Contraseña" : "Password", { exact: true })
+          .fill(CHANNEL_PASSWORD);
+        await page.getByRole("button", { name: es ? "Entrar" : "Sign in" }).click();
+      }
+      await page.getByRole("heading", { name: es ? "Mensajes" : "Messages" }).waitFor();
     },
   },
 ];

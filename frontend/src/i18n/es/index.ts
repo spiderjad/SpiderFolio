@@ -18,6 +18,8 @@ import { formsTexts } from "./forms";
 import { safetyTexts } from "./safety";
 import { caeTexts } from "./cae";
 import { qualityTexts } from "./quality";
+import { whistleblowingTexts } from "./whistleblowing";
+import { environmentTexts } from "./environment";
 import { templatesTexts } from "./templates";
 import { expiriesTexts } from "./expiries";
 import { auditRoomsTexts } from "./audit-rooms";
@@ -43,6 +45,8 @@ export const es = {
   safety: safetyTexts,
   cae: caeTexts,
   quality: qualityTexts,
+  whistleblowing: whistleblowingTexts,
+  environment: environmentTexts,
   templates: templatesTexts,
   expiries: expiriesTexts,
   auditRooms: auditRoomsTexts,
@@ -331,6 +335,7 @@ export const es = {
       who === ""
         ? "Una etiqueta cambió de estado."
         : `${who}: una etiqueta para revisar o ya revisada.`,
+    environmentDischarge: "Una analítica de vertido salió fuera de límite.",
     qualityChange: (who: string) =>
       who === ""
         ? "Un cambio de calidad te necesita."

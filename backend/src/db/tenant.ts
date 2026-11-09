@@ -324,6 +324,80 @@ export interface TenantDb {
     "findFirst" | "findMany" | "count" | "create" | "update"
   >;
   qualityChangeCounter: TenantDelegate<PrismaClient["qualityChangeCounter"], "upsert">;
+  // Whistleblowing channel (docs/spec/canal-denuncias.md): cases are never deleted here (the purge only
+  // empties their content); messages, notes, exclusions and the module's log are only added.
+  whistleblowingManager: TenantDelegate<
+    PrismaClient["whistleblowingManager"],
+    "findFirst" | "findMany" | "deleteMany" | "upsert"
+  >;
+  whistleblowingCounter: TenantDelegate<PrismaClient["whistleblowingCounter"], "upsert">;
+  whistleblowingCase: TenantDelegate<
+    PrismaClient["whistleblowingCase"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  whistleblowingExclusion: TenantDelegate<
+    PrismaClient["whistleblowingExclusion"],
+    "findMany" | "create"
+  >;
+  whistleblowingMessage: TenantDelegate<
+    PrismaClient["whistleblowingMessage"],
+    "findMany" | "create"
+  >;
+  whistleblowingNote: TenantDelegate<PrismaClient["whistleblowingNote"], "findMany" | "create">;
+  whistleblowingEvent: TenantDelegate<
+    PrismaClient["whistleblowingEvent"],
+    "findFirst" | "findMany" | "create"
+  >;
+  whistleblowingSession: TenantDelegate<PrismaClient["whistleblowingSession"], "create" | "update">;
+  // Environment (docs/spec/medio-ambiente.md): catalogs are archived, never deleted; a waste
+  // collection can be deleted to correct a mistake (it's audited).
+  envPermit: TenantDelegate<
+    PrismaClient["envPermit"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  envObligation: TenantDelegate<
+    PrismaClient["envObligation"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  envObligationDone: TenantDelegate<PrismaClient["envObligationDone"], "findMany" | "create">;
+  envContractor: TenantDelegate<
+    PrismaClient["envContractor"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  envWaste: TenantDelegate<
+    PrismaClient["envWaste"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  envWasteMovement: TenantDelegate<
+    PrismaClient["envWasteMovement"],
+    "findFirst" | "findMany" | "count" | "create" | "delete"
+  >;
+  envDischargeLimit: TenantDelegate<
+    PrismaClient["envDischargeLimit"],
+    "findMany" | "create" | "deleteMany"
+  >;
+  envDischargeSample: TenantDelegate<
+    PrismaClient["envDischargeSample"],
+    "findFirst" | "findMany" | "count" | "create" | "update" | "delete"
+  >;
+  envMeter: TenantDelegate<
+    PrismaClient["envMeter"],
+    "findFirst" | "findMany" | "create" | "update"
+  >;
+  envReading: TenantDelegate<
+    PrismaClient["envReading"],
+    "findFirst" | "findMany" | "upsert" | "delete"
+  >;
+  envProduction: TenantDelegate<PrismaClient["envProduction"], "findMany" | "upsert">;
+  envTarget: TenantDelegate<PrismaClient["envTarget"], "findMany" | "upsert" | "deleteMany">;
+  envCoolingUnit: TenantDelegate<
+    PrismaClient["envCoolingUnit"],
+    "findFirst" | "findMany" | "create" | "update"
+  >;
+  envCoolingEvent: TenantDelegate<
+    PrismaClient["envCoolingEvent"],
+    "findFirst" | "findMany" | "create" | "delete"
+  >;
   // Traceability: manual and imported lots are corrected or deleted; what a plugin loaded is only
   // changed by that plugin.
   qualityLot: TenantDelegate<
@@ -601,7 +675,10 @@ const delegates = {
     model: "QualitySamplingPoint",
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
-  qualityLabResult: { model: "QualityLabResult", ops: ["findFirst", "findMany", "count", "create"] },
+  qualityLabResult: {
+    model: "QualityLabResult",
+    ops: ["findFirst", "findMany", "count", "create"],
+  },
   qualityCulturePlan: { model: "QualityCulturePlan", ops: ["findFirst", "upsert"] },
   qualityCultureActivity: {
     model: "QualityCultureActivity",
@@ -618,6 +695,46 @@ const delegates = {
     ops: ["findFirst", "findMany", "count", "create", "update"],
   },
   qualityChangeCounter: { model: "QualityChangeCounter", ops: ["upsert"] },
+  whistleblowingManager: {
+    model: "WhistleblowingManager",
+    ops: ["findFirst", "findMany", "deleteMany", "upsert"],
+  },
+  whistleblowingCounter: { model: "WhistleblowingCounter", ops: ["upsert"] },
+  whistleblowingCase: {
+    model: "WhistleblowingCase",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  whistleblowingExclusion: { model: "WhistleblowingExclusion", ops: ["findMany", "create"] },
+  whistleblowingMessage: { model: "WhistleblowingMessage", ops: ["findMany", "create"] },
+  whistleblowingNote: { model: "WhistleblowingNote", ops: ["findMany", "create"] },
+  whistleblowingEvent: { model: "WhistleblowingEvent", ops: ["findFirst", "findMany", "create"] },
+  whistleblowingSession: { model: "WhistleblowingSession", ops: ["create", "update"] },
+  envPermit: { model: "EnvPermit", ops: ["findFirst", "findMany", "count", "create", "update"] },
+  envObligation: {
+    model: "EnvObligation",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  envObligationDone: { model: "EnvObligationDone", ops: ["findMany", "create"] },
+  envContractor: {
+    model: "EnvContractor",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  envWaste: { model: "EnvWaste", ops: ["findFirst", "findMany", "count", "create", "update"] },
+  envWasteMovement: {
+    model: "EnvWasteMovement",
+    ops: ["findFirst", "findMany", "count", "create", "delete"],
+  },
+  envDischargeLimit: { model: "EnvDischargeLimit", ops: ["findMany", "create", "deleteMany"] },
+  envDischargeSample: {
+    model: "EnvDischargeSample",
+    ops: ["findFirst", "findMany", "count", "create", "update", "delete"],
+  },
+  envMeter: { model: "EnvMeter", ops: ["findFirst", "findMany", "create", "update"] },
+  envReading: { model: "EnvReading", ops: ["findFirst", "findMany", "upsert", "delete"] },
+  envProduction: { model: "EnvProduction", ops: ["findMany", "upsert"] },
+  envTarget: { model: "EnvTarget", ops: ["findMany", "upsert", "deleteMany"] },
+  envCoolingUnit: { model: "EnvCoolingUnit", ops: ["findFirst", "findMany", "create", "update"] },
+  envCoolingEvent: { model: "EnvCoolingEvent", ops: ["findFirst", "findMany", "create", "delete"] },
   qualityLot: {
     model: "QualityLot",
     ops: ["findFirst", "findMany", "count", "create", "update", "delete"],

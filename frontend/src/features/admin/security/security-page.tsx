@@ -18,6 +18,8 @@ import { visibilityChoices } from "../choices";
 import { EmailTab } from "./email-tab";
 import { SafetyCard } from "./safety-card";
 import { QualityAdminCard } from "@/features/quality/quality-admin-card";
+import { ChannelAdminCard } from "@/features/whistleblowing/channel-admin-card";
+import { EnvironmentAdminCard } from "@/features/environment/environment-admin-card";
 import { isLocale, LOCALE_NAMES, LOCALES, texts } from "@/i18n";
 
 /** «Europe/Madrid · GMT+1»: every zone the browser knows, with its offset now. */
@@ -123,6 +125,8 @@ function SecurityGeneral() {
       </Card>
       <SafetyCard />
       <QualityAdminCard />
+      <EnvironmentAdminCard />
+      <ChannelAdminCard />
       <Card className="min-w-0 p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <Eye className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />

@@ -45,6 +45,68 @@ export const caeLimits = {
   portalMaxFileMb: 20,
 } as const;
 
+/** Environment (docs/spec/medio-ambiente.md). */
+export const environmentLimits = {
+  nameMax: 160,
+  textMax: 4_000,
+  shortMax: 120,
+  /** An obligation's period, in months. */
+  everyMonthsMax: 120,
+  /** Maximum storage of a waste (Ley 7/2022, art. 18): hazardous, non-hazardous for recovery, for disposal. */
+  storageMonthsHazardous: 6,
+  storageMonthsRecovery: 24,
+  storageMonthsDisposal: 12,
+  storageMonthsMax: 36,
+  /** Notices before a permit, an obligation or an authorization expires. */
+  noticeDays: [60, 30, 7, 0],
+  /** Notices before a waste reaches its maximum storage time. */
+  storageNoticeDays: [30, 7, 0],
+  /** The chronological record and the SANDACH register are exported at most this many rows at once. */
+  exportMaxRows: 20_000,
+  quantityMax: 1_000_000_000,
+  /** The discharge analyses shown at once (newest first). */
+  samplesShown: 200,
+  /** Parameters of a discharge permit and values of an analysis. */
+  parametersMax: 30,
+} as const;
+
+/** Whistleblowing channel (docs/spec/canal-denuncias.md, Ley 2/2023). */
+export const whistleblowingLimits = {
+  /** The account of what happened, and each of its other free-text fields. */
+  bodyMax: 20_000,
+  fieldMax: 2_000,
+  contactMax: 300,
+  /** A message between the reporter and management, a note or a decision. */
+  messageMax: 5_000,
+  categoryMax: 80,
+  categoriesMax: 30,
+  /** The page's own texts (the external channels, an introduction). */
+  pageTextMax: 4_000,
+  /** The reporter's mailbox password. */
+  passwordMin: 10,
+  passwordMax: 200,
+  /** Wrong passwords in a row before the mailbox locks, and for how long. */
+  maxFailedLogins: 10,
+  lockHours: 24,
+  /** The mailbox session ends after this many minutes without use. */
+  sessionIdleMinutes: 30,
+  managersMax: 20,
+  /** Days to decide whether a case is admitted (orientative, shown to management). */
+  admissionDays: 10,
+  /** Months to answer, from the acknowledgement; and the one extension (art. 9.2.d). */
+  responseMonths: 3,
+  extensionMonths: 3,
+  /** A case not investigated is purged this many months after it's received (art. 32.3). */
+  purgeUninvestigatedMonths: 3,
+  /** A closed case is kept these years by default, never more than the maximum (art. 26). */
+  retentionYearsDefault: 3,
+  retentionYearsMax: 10,
+  /** Notices to management before the answer is due. */
+  noticeDays: [30, 7, 0],
+  /** Reports per address in the window (kept only in memory). */
+  reportsPerHour: 5,
+} as const;
+
 /** Food quality (docs/spec/calidad.md): nonconformities and CAPA. */
 export const qualityLimits = {
   /** Days from the last action done to the proposed effectiveness check. */

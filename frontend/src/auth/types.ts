@@ -28,6 +28,11 @@ export interface Membership {
     };
     /** The food quality module (docs/spec/calidad.md): on or off. */
     quality: { enabled: boolean };
+    /** The whistleblowing channel (docs/spec/canal-denuncias.md): on or off, and whether this person
+     * manages it (only managers see its area). */
+    whistleblowing: { enabled: boolean; manager: boolean };
+    /** The environment module (docs/spec/medio-ambiente.md): on or off. */
+    environment: { enabled: boolean };
   };
   role: { id: string; name: string; base: SystemRole };
   capabilities: string[];
@@ -43,9 +48,11 @@ export interface Membership {
 }
 
 /** The app's areas (docs/spec/diseno.md 10.4.1): where the app opens and what the rail shows. */
-export type HomeArea = "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN";
+/** CHANNEL (the whistleblowing channel) is an area of the rail, never chosen as the home area. */
+export type HomeArea =
+  "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "CHANNEL" | "ADMIN";
 /** The areas a space can be listed in. */
-export type SpaceArea = "WIKI" | "DOCUMENTS" | "PREVENTION" | "QUALITY";
+export type SpaceArea = "WIKI" | "DOCUMENTS" | "PREVENTION" | "QUALITY" | "ENVIRONMENT";
 
 export interface Account {
   user: {

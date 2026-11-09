@@ -1908,3 +1908,167 @@ export const masterListTexts: Catalog<typeof Es.masterListTexts> = {
   tooMany: (max: number) =>
     `The list has more than ${String(max)} documents. Filter it before downloading.`,
 };
+
+export const whistleblowingTexts: Catalog<typeof Es.whistleblowingTexts> = {
+  code: (year: number, number: number) => `WB-${String(year)}-${String(number).padStart(4, "0")}`,
+  defaultCategories: [
+    "Workplace harassment",
+    "Sexual or gender-based harassment",
+    "Discrimination",
+    "Occupational health and safety",
+    "Food safety",
+    "Environment",
+    "Fraud or corruption",
+    "Data protection",
+    "Competition and markets",
+    "Tax and social security",
+    "Conflict of interest",
+    "Other",
+  ],
+  deadlineWhat: "A whistleblowing case has to be answered",
+  noKey:
+    "The server has no encryption key set (EMAIL_ENCRYPTION_KEY): the channel can't be turned on without it.",
+  needsResponsible:
+    "Designate the person responsible for the system before turning the channel on.",
+  managerNotEligible:
+    "Only active members with a full seat and two-step verification turned on can manage the channel.",
+  keepResponsible: "While the channel is on there has to be a person responsible for the system.",
+  tooManyManagers: "The maximum number of people managing the channel has been reached.",
+  keepOneVisible: "At least one of the people managing the channel has to be able to see the case.",
+  invalidCategory: "Choose one of the channel's categories.",
+  wrongState: "The case isn't in a state that allows that.",
+  alreadyExtended: "The deadline has already been extended once.",
+  purged: "This case's data has been purged.",
+  invalid: "The follow-up code or the password is not right.",
+  noSession: "Sign in again with your follow-up code and your password.",
+};
+
+export const environmentTexts: Catalog<typeof Es.environmentTexts> = {
+  space: {
+    name: "Environment",
+    description: "Permits, waste, discharges and environmental documents.",
+  },
+  folders: {
+    permits: "Permits",
+    contractors: "Waste managers and carriers",
+  },
+  units: { KG: "kg", T: "t", L: "L", M3: "m³", UNITS: "units" },
+  sandach: { CAT1: "Category 1", CAT2: "Category 2", CAT3: "Category 3" },
+  yes: "Yes",
+  no: "No",
+  expiry: {
+    permit: (name: string) => `Permit “${name}”`,
+    obligation: (name: string) => name,
+    contractor: (name: string) => `Authorization of the waste manager “${name}”`,
+    storage: (name: string) => `Maximum storage time of “${name}”`,
+    leakCheck: (name: string) => `Leak check of “${name}”`,
+  },
+  discharge: {
+    ncTitle: (permit: string) => `Discharge out of limits: ${permit}`,
+    ncIntro: (day: string, point: string, lab: string) =>
+      `Analysis of ${day}${point === "" ? "" : `, point ${point}`}${lab === "" ? "" : `, laboratory ${lab}`}.`,
+    ncLine: (
+      parameter: string,
+      value: number,
+      unit: string,
+      min: number | null,
+      max: number | null,
+    ) =>
+      `${parameter}: ${String(value)} ${unit} (limit ${min === null ? "" : `min. ${String(min)} `}${max === null ? "" : `max. ${String(max)}`})`.replace(
+        " )",
+        ")",
+      ),
+  },
+  errors: {
+    wasteExists: "There's already a waste with that name.",
+    contractorExists: "There's already a waste manager or carrier with that name.",
+    invalidLer: "The LER code is 6 digits (with “*” at the end if it's hazardous).",
+    notManager: "That company isn't registered as a waste manager.",
+    notCarrier: "That company isn't registered as a carrier.",
+    archived: "It's archived: restore it to use it.",
+    noGotenberg: "The server has no PDF generator set up.",
+    tooMany: "Too many rows to export: narrow the period.",
+  },
+  chronological: {
+    title: "Chronological waste record",
+    subtitle: (from: string, to: string) => `From ${from} to ${to} · Ley 7/2022, article 64`,
+    fileName: (format: string) => `chronological-waste-record.${format}`,
+    columns: [
+      "Date",
+      "Waste",
+      "LER code",
+      "Hazardous",
+      "Animal by-product",
+      "Quantity",
+      "Unit",
+      "Waste manager",
+      "Manager's NIMA",
+      "Operation",
+      "Carrier",
+      "Document (DI or commercial)",
+      "Vehicle",
+      "Notes",
+    ],
+  },
+  sandachRegister: {
+    title: "Animal by-products dispatch register",
+    subtitle: (from: string, to: string) =>
+      `From ${from} to ${to} · Regulation (EU) 142/2011, annex VIII`,
+    fileName: (format: string) => `animal-by-products-register.${format}`,
+    columns: [
+      "Date",
+      "Category",
+      "Material",
+      "Quantity",
+      "Unit",
+      "Consignee",
+      "Authorization or NIMA",
+      "Carrier",
+      "Vehicle",
+      "Commercial document",
+    ],
+  },
+  annual: {
+    title: (year: number) => `Waste annual summary ${String(year)}`,
+    fileName: (year: number, format: string) => `waste-summary-${String(year)}.${format}`,
+    columns: [
+      "LER code",
+      "Waste",
+      "Hazardous",
+      "Waste manager",
+      "Operation",
+      "Collections",
+      "Quantity",
+      "Unit",
+    ],
+  },
+  pageFooter: (page: string, total: string) => `Page ${page} of ${total}`,
+  generated: (when: string) => `Generated on ${when}`,
+  template: [
+    {
+      name: "Category 3 by-products (trimmings, bones, fat)",
+      ler: "020203",
+      sandach: "CAT3",
+      operation: "R3",
+    },
+    {
+      name: "Category 2 by-products (digestive tract content, manure)",
+      ler: "020106",
+      sandach: "CAT2",
+      operation: "R3",
+    },
+    {
+      name: "Specified risk material (category 1)",
+      ler: "020203",
+      sandach: "CAT1",
+      operation: "D10",
+    },
+    { name: "Wastewater treatment sludge", ler: "020204", sandach: null, operation: "R3" },
+    { name: "Used machinery oil", ler: "130205*", sandach: null, operation: "R9" },
+    { name: "Contaminated packaging", ler: "150110*", sandach: null, operation: "R12" },
+    { name: "Contaminated absorbents and rags", ler: "150202*", sandach: null, operation: "R12" },
+    { name: "Plastics (film and crates)", ler: "150102", sandach: null, operation: "R3" },
+    { name: "Paper and cardboard", ler: "150101", sandach: null, operation: "R3" },
+    { name: "Fluorescent tubes and lamps", ler: "200121*", sandach: null, operation: "R4" },
+  ],
+};

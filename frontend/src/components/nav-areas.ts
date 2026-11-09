@@ -26,6 +26,13 @@ import {
   GraduationCap,
   HardHat,
   Home,
+  FileBadge,
+  Leaf,
+  Recycle,
+  Droplets,
+  Gauge,
+  Snowflake,
+  Inbox,
   IdCard,
   Library,
   LayoutDashboard,
@@ -67,7 +74,9 @@ export interface Area {
 /** What the shell knows besides the membership: the spaces listed outside the Wiki, the committee. */
 export interface AreaContext {
   /** The person's visible spaces of each non-Wiki area (a few: they're listed in the menu). */
-  spaces: Partial<Record<"DOCUMENTS" | "PREVENTION" | "QUALITY", readonly SpaceView[]>>;
+  spaces: Partial<
+    Record<"DOCUMENTS" | "PREVENTION" | "QUALITY" | "ENVIRONMENT", readonly SpaceView[]>
+  >;
   /** A current member of the health and safety committee (docs/spec/seguridad-salud.md). */
   committee: boolean;
 }
@@ -133,6 +142,29 @@ function preventionItems(slug: string, person: Membership, context: AreaContext)
     items.push({ to: `${base}/comunicar`, label: a.report, icon: Siren, group: a.mine });
     items.push(...spaceItems(slug, context.spaces.PREVENTION, a.areaSpaces));
   }
+  return items;
+}
+
+/** The Environment area (docs/spec/medio-ambiente.md): with the module on and an environment capability. */
+function environmentItems(slug: string, person: Membership, context: AreaContext): AreaItem[] {
+  if (!person.workspace.environment.enabled || person.role.base === "GUEST") return [];
+  const caps = person.capabilities;
+  const manage = caps.includes("environment.manage");
+  const view = manage || caps.includes("environment.view");
+  const record = manage || caps.includes("environment.record");
+  if (!view && !record) return [];
+  const base = `/app/${slug}/medio-ambiente`;
+  const n = texts.environment.nav;
+  const items: AreaItem[] = [];
+  if (view) {
+    items.push({ to: `${base}/resumen`, label: n.summary, icon: LayoutDashboard });
+    items.push({ to: `${base}/autorizaciones`, label: n.permits, icon: FileBadge });
+  }
+  items.push({ to: `${base}/residuos`, label: n.waste, icon: Recycle });
+  items.push({ to: `${base}/vertidos`, label: n.discharge, icon: Droplets });
+  items.push({ to: `${base}/consumos`, label: n.consumption, icon: Gauge });
+  items.push({ to: `${base}/frio`, label: n.cooling, icon: Snowflake });
+  items.push(...spaceItems(slug, context.spaces.ENVIRONMENT, texts.shell.areas.areaSpaces));
   return items;
 }
 
@@ -296,6 +328,30 @@ export function areasOf(
     });
   }
 
+  const environment = environmentItems(slug, person, context);
+  if (environment.length > 0) {
+    areas.push({
+      id: "ENVIRONMENT",
+      label: texts.environment.module,
+      short: texts.environment.short,
+      icon: Leaf,
+      items: environment,
+    });
+  }
+
+  // The whistleblowing channel (docs/spec/canal-denuncias.md): only its managers see the area, even
+  // while it's off (open cases go on).
+  if (person.workspace.whistleblowing.manager) {
+    const c = texts.whistleblowing;
+    areas.push({
+      id: "CHANNEL",
+      label: c.module,
+      short: c.short,
+      icon: Megaphone,
+      items: [{ to: `/app/${slug}/canal`, label: c.cases.title, icon: Inbox }],
+    });
+  }
+
   const moved = movedOutOfAdmin(slug);
   const admin = adminNavItems(slug, person, plugins).filter(
     (item) =>
@@ -378,7 +434,7 @@ export function landingOf(area: Area): string | undefined {
 /** The areas a person or a department can open in (Quality, once its module exists). */
 export function homeAreaChoices(person: Membership): { id: AreaId; label: string }[] {
   const names = texts.shell.areas.names;
-  const ids: AreaId[] = ["HOME", "DOCUMENTS", "WIKI"];
+  const ids: Exclude<AreaId, "CHANNEL" | "ENVIRONMENT">[] = ["HOME", "DOCUMENTS", "WIKI"];
   if (person.workspace.safety.enabled) ids.push("PREVENTION");
   ids.push("ADMIN");
   return ids.map((id) => ({

@@ -29,7 +29,13 @@ import type {
   UpdateProfileSchema,
 } from "./auth.schemas.ts";
 import { MAX_PIN_FAILURES, pinLockMs } from "../pin/pin-rules.ts";
-import { readPinLoginSettings, readQualitySettings, readSafetySettings } from "../workspaces/settings.ts";
+import {
+  readPinLoginSettings,
+  readQualitySettings,
+  readSafetySettings,
+  readWhistleblowingSettings,
+  readEnvironmentSettings,
+} from "../workspaces/settings.ts";
 import { randomToken, sha256 } from "../../lib/crypto.ts";
 import { userMediaUrl } from "../profile-media/profile-media.service.ts";
 import {
@@ -61,7 +67,9 @@ export const LOCK_MS = 15 * 60 * 1000;
 /** Sin una sesión con el mismo user agent en este lapso, el login avisa por email. */
 const NEW_DEVICE_WINDOW_MS = 30 * 24 * 3600 * 1000;
 
-type HomeAreaValue = "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ADMIN";
+/** CHANNEL (the whistleblowing channel) is never chosen as a home area, but the column allows it. */
+type HomeAreaValue =
+  "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "CHANNEL" | "ADMIN";
 
 export interface AuthContext {
   userId: string;
@@ -113,6 +121,13 @@ export interface Account {
       safety: { enabled: boolean; terms: "es" | "latam"; cae: boolean; caeAccessLog: boolean };
       /** The food quality module (docs/spec/calidad.md): on or off. */
       quality: { enabled: boolean };
+      /**
+       * The whistleblowing channel (docs/spec/canal-denuncias.md): on or off, and whether this person
+       * is one of its managers (only they see its area).
+       */
+      whistleblowing: { enabled: boolean; manager: boolean };
+      /** The environment module (docs/spec/medio-ambiente.md): on or off. */
+      environment: { enabled: boolean };
     };
     role: { id: string; name: string; base: string };
     capabilities: string[];
@@ -272,6 +287,17 @@ export function createAuthService(deps: AppDeps) {
               caeAccessLog: enabled && cae.enabled && cae.accessLog,
             }))(readSafetySettings(m.workspace.settings)),
             quality: { enabled: readQualitySettings(m.workspace.settings).enabled },
+            environment: { enabled: readEnvironmentSettings(m.workspace.settings).enabled },
+            whistleblowing: {
+              enabled: readWhistleblowingSettings(m.workspace.settings).enabled,
+              manager:
+                (await prisma.whistleblowingManager.findUnique({
+                  where: {
+                    workspaceId_membershipId: { workspaceId: m.workspace.id, membershipId: m.id },
+                  },
+                  select: { membershipId: true },
+                })) !== null,
+            },
           },
           role: { id: m.role.id, name: m.role.name, base: m.role.base },
           // El propietario tiene también las capacidades de los plugins instalados.

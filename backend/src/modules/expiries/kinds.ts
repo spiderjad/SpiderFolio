@@ -9,4 +9,6 @@ import "../safety/drill-expiry.ts";
 import "../safety/committee-expiry.ts";
 import "../safety/cae-expiry.ts";
 import "../quality/quality-expiry.ts";
+import "../whistleblowing/whistleblowing-expiry.ts";
+import "../environment/environment-expiry.ts";
 import "./node-expiry.ts";

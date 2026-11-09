@@ -36,6 +36,12 @@ export const capabilities = [
   "quality.manage",
   /** Food quality: read every nonconformity and action, without changing anything. */
   "quality.view",
+  /** Environment (docs/spec/medio-ambiente.md): permits, obligations, waste, contractors. */
+  "environment.manage",
+  /** Environment: read everything, without changing anything. */
+  "environment.view",
+  /** Environment: record waste collections (and later readings and analyses), not the catalog. */
+  "environment.record",
 ] as const;
 
 /** Las del núcleo. */

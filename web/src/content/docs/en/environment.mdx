@@ -1,0 +1,75 @@
+---
+title: "Environment"
+description: "Turning the module on, who does what, and permits and recurring obligations with their expiries."
+group: medio-ambiente
+order: 1
+icon: globe
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+The **Environment** module brings together what an environmental inspection or an audit asks to see: the
+company's **permits** and their expiries, what has to be done **every few months** (emission checks,
+discharge analyses, declarations) and the **waste and animal by-products record** (see
+[Waste and animal by-products](/en/docs/waste-and-animal-by-products)). It's designed first for the food and
+meat industry in Spain.
+
+## Turning it on
+
+In **Administration › Security › General**, the **Environment** card. Only the **owner**. Turning it on adds
+the **Environment** area to the rail and creates its **documents space**, where each permit and each waste
+manager has its folder.
+
+Turning it off hides the area and pauses the notices. **It deletes nothing.**
+
+## Who does what
+
+Three capabilities, in **Administration › Roles and permissions**:
+
+- **Manage environment**: the whole module. By default, owner and admins.
+- **View environment**: reads everything without changing anything (management, preparing an inspection).
+- **Record waste collections**: records collections, without touching the catalog, the waste managers or the
+  permits. Meant for maintenance or dispatch; it sees the collections it records.
+
+## Permits
+
+In **Environment › Permits**, **New permit** asks for:
+
+- The **type**: integrated environmental permit, environmental license or notice, discharge permit, waste
+  producer registration, animal by-products registration, air emissions or other.
+- The **name**, the **authority** and the **file or registration number**.
+- When it was issued, when it **expires** and, if its conditions are reviewed earlier, the **review** date.
+- The **main conditions** and an **owner**.
+
+Each permit has its folder in the module's space (the **Documents** link) to keep the decision, the annexes
+and the correspondence. The list marks in color the ones expiring soon or already expired.
+
+<Shot
+  name="medio-ambiente-autorizaciones"
+  alt="Permits and obligations: the environmental license, the discharge permit and the animal by-products registration, and the recurring obligations with their next date"
+/>
+
+## Recurring obligations
+
+What has to be done every few months: “Boiler emissions check” every 36 months, “Discharge analysis” every 3,
+“Annual packaging declaration” every 12. Each obligation has its **period**, the **next date**, an owner and,
+if it comes from a permit, which one.
+
+When it's done, **Done** asks for the date and a note (for example, the company that did it or the report's
+number) and works out the next one. The history stays in the obligation.
+
+## Notices
+
+<Shot
+  name="medio-ambiente-resumen"
+  alt="The area's Summary: what's due in the next 60 days, the analysis out of limits and last month's consumption"
+/>
+
+Permits, obligations, waste managers' authorizations and each waste's maximum storage time give notice before
+they're due: to their owner or, without one, to whoever manages the module. They also show in **Expiries**
+and in the recipient's **My tasks**.
+
+Archiving a permit or obligation takes it out of the list and the notices without deleting it; it can be
+restored.

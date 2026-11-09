@@ -332,6 +332,7 @@ export const site: Catalog<typeof esSite> = {
       "uso-diario": "For users",
       prevencion: "Health & safety",
       calidad: "Quality",
+      "medio-ambiente": "Environment",
       administracion: "Administration",
       seguridad: "Security",
       autoalojamiento: "Self-hosting",

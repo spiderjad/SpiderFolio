@@ -331,6 +331,7 @@ export const site = {
       "uso-diario": "Para usuarios",
       prevencion: "Prevención (PRL)",
       calidad: "Calidad",
+      "medio-ambiente": "Medio ambiente",
       administracion: "Administración",
       seguridad: "Seguridad",
       autoalojamiento: "Autoalojamiento",

@@ -18,6 +18,7 @@ import {
   Layers,
   ListTodo,
   LogOut,
+  Megaphone,
   Menu,
   MoreHorizontal,
   Moon,
@@ -88,6 +89,7 @@ import {
 } from "@/lib/sidebar";
 import { isDarkTheme, setThemePreference } from "@/lib/theme";
 import { cn, formatToday, setAppTimeZone } from "@/lib/utils";
+import { channelApi, channelKeys } from "@/features/whistleblowing/whistleblowing-api";
 import { texts } from "@/i18n";
 import { RestartBanner } from "./restart-banner";
 import { MENU_COLLAPSED_WIDTH, MENU_WIDTH, RAIL_WIDTH } from "./shell-sizes";
@@ -728,7 +730,7 @@ function useAreaNav(membership: Membership) {
     queryKey: [...filesKeys.spaces(slug), "areas"],
     queryFn: () =>
       filesApi.spaces(slug, {
-        area: ["DOCUMENTS", "PREVENTION", "QUALITY"],
+        area: ["DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT"],
         pageSize: AREA_SPACES_SHOWN,
       }),
     select: (page) => page.items,
@@ -747,6 +749,11 @@ function useAreaNav(membership: Membership) {
     () => (qualityOn ? areaSpaces.data?.filter((space) => space.area === "QUALITY") : []),
     [areaSpaces.data, qualityOn],
   );
+  const environmentOn = membership.workspace.environment.enabled && role !== "GUEST";
+  const environmentSpaces = useMemo(
+    () => (environmentOn ? areaSpaces.data?.filter((space) => space.area === "ENVIRONMENT") : []),
+    [areaSpaces.data, environmentOn],
+  );
   const areas = useMemo(
     () =>
       areasOf(slug, membership, plugins, {
@@ -755,6 +762,7 @@ function useAreaNav(membership: Membership) {
           ...(documentSpaces === undefined ? {} : { DOCUMENTS: documentSpaces }),
           ...(preventionSpaces === undefined ? {} : { PREVENTION: preventionSpaces }),
           ...(qualitySpaces === undefined ? {} : { QUALITY: qualitySpaces }),
+          ...(environmentSpaces === undefined ? {} : { ENVIRONMENT: environmentSpaces }),
         },
       }),
     [
@@ -766,6 +774,7 @@ function useAreaNav(membership: Membership) {
       documentSpaces,
       preventionSpaces,
       qualitySpaces,
+      environmentSpaces,
     ],
   );
   const active = activeAreaOf(pathname, slug, areas);
@@ -806,6 +815,14 @@ function useAreaNav(membership: Membership) {
     queryFn: () => caeApi.documents(slug, { status: "pending" }, undefined, undefined, 1),
     select: (page) => page.total,
     enabled: caeReview,
+  });
+  // The whistleblowing channel: how many cases are new or have a new message (its managers only).
+  const channelUnread = useQuery({
+    queryKey: channelKeys.counts(slug),
+    queryFn: () => channelApi.counts(slug),
+    select: (data) => data.unread,
+    staleTime: 60_000,
+    enabled: membership.workspace.whistleblowing.manager,
   });
   const unseenShared = sharedSummary.data?.unseen ?? 0;
   const base = `/app/${slug}`;
@@ -852,6 +869,15 @@ function useAreaNav(membership: Membership) {
         tone: expired > 0 ? "danger" : "warning",
         label: texts.expiries.pendingCount(count, expired),
         detail: texts.expiries.countDetail(expired, count - expired),
+      };
+    }
+    if (to === `${base}/canal` && (channelUnread.data ?? 0) > 0) {
+      const count = channelUnread.data ?? 0;
+      return {
+        kind: "count",
+        count,
+        tone: "primary",
+        label: texts.whistleblowing.cases.unreadCount(count),
       };
     }
     if (to === `${base}/files/shared` && unseenShared > 0) {
@@ -1235,6 +1261,15 @@ function SidebarContent({
               )}
               {dark ? texts.shell.account.themeLight : texts.shell.account.themeDark}
             </DropdownMenuItem>
+            {membership.workspace.whistleblowing.enabled && (
+              // The public page, in a new tab: reporting never goes through the person's session.
+              <DropdownMenuItem asChild>
+                <a href={`/canal/${slug}`} target="_blank" rel="noreferrer">
+                  <Megaphone strokeWidth={1.75} aria-hidden="true" />
+                  {texts.whistleblowing.menuLink}
+                </a>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onSelect={onLogout}>
               <LogOut strokeWidth={1.75} aria-hidden="true" />
               {texts.common.logout}

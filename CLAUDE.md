@@ -131,4 +131,6 @@ Lista viva en `docs/plans/pendientes.md`. Lo principal:
 | Vencimientos de archivos y páginas | docs/spec/vencimientos.md |
 | Salas de auditoría | docs/spec/salas-de-auditoria.md |
 | Plantillas propias y por rubro (plugin) | docs/spec/plantillas.md |
+| Canal de denuncias (Ley 2/2023) | docs/spec/canal-denuncias.md |
+| Medio ambiente (residuos, vertidos, consumos, gases fluorados) | docs/spec/medio-ambiente.md |
 | Fase 2 | docs/spec/fase-2.md |

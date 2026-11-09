@@ -41,11 +41,15 @@ import { RESTART_HEADER } from "./plugins/restart.ts";
 import { oauthConsentRouter, oauthPublicRouter } from "./modules/oauth/oauth.routes.ts";
 import { createOAuthService } from "./modules/oauth/oauth.service.ts";
 import { auditorRouter } from "./modules/audit-rooms/auditor.router.ts";
+import { reporterRouter } from "./modules/whistleblowing/reporter.router.ts";
 import { caePortalRouter } from "./modules/safety/cae-portal.router.ts";
 import { mcpRouter } from "./modules/mcp/mcp.router.ts";
 import { writeTools } from "./modules/mcp/tools.write.ts";
 import { localeFromHeader, withLocale } from "./i18n/locales.ts";
 import { registerPluginCapabilities } from "./modules/roles/capabilities.ts";
+
+/** The whistleblowing channel's public side (docs/spec/canal-denuncias.md). */
+const CHANNEL_PATH = "/api/v1/canal";
 
 export function createApp(deps: AppDeps): Express {
   const { env, prisma, logger } = deps;
@@ -56,7 +60,14 @@ export function createApp(deps: AppDeps): Express {
   app.set("trust proxy", env.TRUST_PROXY_HOPS);
 
   app.use(requestId);
-  app.use(pinoHttp({ logger, genReqId: (req) => (req as express.Request).requestId }));
+  app.use(
+    pinoHttp({
+      logger,
+      genReqId: (req) => (req as express.Request).requestId,
+      // The whistleblowing channel's public side leaves no trace of the reporter (address, browser).
+      autoLogging: { ignore: (req) => req.url.startsWith(CHANNEL_PATH) },
+    }),
+  );
   app.use(
     helmet({
       // La API solo devuelve JSON: nada que cargar ni enmarcar. La CSP de la app (HTML) la
@@ -120,6 +131,8 @@ export function createApp(deps: AppDeps): Express {
   app.use("/api/v1/auditor", auditorRouter(deps));
   // A contractor's portal (docs/spec/cae.md): its own cookie, never a member's session.
   app.use("/api/v1/contratas", caePortalRouter(deps));
+  // The whistleblowing channel (docs/spec/canal-denuncias.md): no account and no member's session.
+  app.use(CHANNEL_PATH, reporterRouter(deps));
   app.use("/api/v1/internal", internalRouter(deps));
 
   const tenant = express.Router({ mergeParams: true });

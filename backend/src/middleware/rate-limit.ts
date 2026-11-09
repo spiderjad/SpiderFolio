@@ -28,6 +28,25 @@ const onLimit: Options["handler"] = (req, res, next) => {
   next(new AppError("RATE_LIMITED"));
 };
 
+/**
+ * A limit kept only in this process's memory, never written anywhere: for the whistleblowing channel,
+ * where the reporter's address must not be stored (docs/spec/canal-denuncias.md).
+ */
+export function memoryRateLimit(options: {
+  windowMs: number;
+  limit: number;
+  key: (req: Request) => string;
+}): RequestHandler {
+  return rateLimit({
+    windowMs: options.windowMs,
+    limit: options.limit,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    keyGenerator: options.key,
+    handler: onLimit,
+  });
+}
+
 export function globalRateLimit(): RequestHandler {
   return rateLimit({
     windowMs: 60_000,

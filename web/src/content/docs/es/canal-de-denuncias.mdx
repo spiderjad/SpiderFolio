@@ -1,0 +1,124 @@
+---
+title: "Canal de denuncias"
+description: "El sistema interno de información de la Ley 2/2023: comunicar de forma anónima, seguir el caso con un código y gestionarlo con sus plazos, sin que nadie fuera de la gestión vea nada."
+group: administracion
+order: 15
+icon: shield
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+La **Ley 2/2023** obliga a las empresas con **50 o más personas trabajadoras** a tener un sistema interno de
+información: un canal para comunicar infracciones de forma anónima o confidencial, con acuse de recibo,
+respuesta en un plazo y protección contra represalias. El canal de denuncias de SpiderFolio lo cubre sin
+programas aparte.
+
+- Cualquiera relacionado con la empresa (plantilla, antiguos trabajadores, candidatos, contratas, proveedores)
+  comunica desde una **página pública**, sin cuenta.
+- Puede hacerlo **de forma anónima**: SpiderFolio no guarda su dirección, su navegador ni su cuenta.
+- Sigue su caso con un **código de seguimiento** y una contraseña, y se escribe con la gestión.
+- Solo las personas que gestionan el canal ven los casos. **Ni el propietario ni los administradores** los ven
+  si no están designados.
+
+## Activarlo
+
+En **Administración › Seguridad › General**, la tarjeta **Canal de denuncias**. Solo el **propietario**, con la
+verificación en dos pasos activa (al guardar se pide el código si hace falta).
+
+1. En **Gestión del canal**, agrega a las personas que van a tramitar los casos. Necesitan **plaza completa** y
+   la **verificación en dos pasos** activa. Una de ellas es la **responsable del sistema**, la persona que la
+   empresa designa ante la Autoridad Independiente de Protección del Informante (A.A.I.).
+2. Activa **Canal activo**. Sin una persona responsable no se puede activar.
+3. Copia el **enlace público** y ponlo en la portada de la web de la empresa y en carteles en planta y
+   vestuarios.
+4. En **Canales externos**, escribe qué autoridad corresponde a la empresa (por ejemplo, la Oficina Antifrau de
+   Catalunya). Si lo dejas vacío, se muestra un texto general.
+
+<Shot
+  name="canal-ajustes"
+  alt="La tarjeta Canal de denuncias: el canal activo, las dos personas de la gestión con la responsable del sistema, el enlace público y los canales externos"
+/>
+
+Cada cambio de quién gestiona el canal queda en el registro de auditoría y se avisa a las personas de la
+gestión. El canal necesita que el servidor tenga configurada la clave de cifrado (`EMAIL_ENCRYPTION_KEY`).
+
+Apagar el canal cierra el formulario. **No borra nada**: los casos abiertos siguen con sus plazos y quien
+informó sigue entrando a su buzón.
+
+## Cómo comunica alguien
+
+En la página pública (también en el menú de cada persona, **Canal de denuncias**) se explica qué se puede
+comunicar, quién puede hacerlo, las garantías y los canales externos. **Comunicar algo** abre el formulario:
+
+<Shot
+  name="canal-publico"
+  alt="La página pública del canal: qué se puede comunicar, quién, las garantías y los canales externos"
+/>
+
+- **Sobre qué es** (la categoría), **qué pasó** y, si quiere, las personas implicadas, cuándo y dónde.
+- **Quiero identificarme**: si no lo marca, la comunicación es anónima.
+- Si hay más de una persona en la gestión, puede marcar a quien **no debe ver** su comunicación (por ejemplo,
+  si habla de ella). Al menos una tiene que poder verla.
+- Una **contraseña** para su buzón.
+
+<Shot
+  name="canal-formulario"
+  alt="El formulario: la categoría, qué pasó, cuándo y dónde, identificarse o no, las personas de la gestión que no deben verlo y la contraseña"
+/>
+
+Al enviar, la pantalla muestra el **código de seguimiento** una sola vez, para copiarlo o descargarlo. Como no
+sabemos quién es, el código y la contraseña no se pueden recuperar.
+
+<Shot
+  name="canal-codigo"
+  alt="La comunicación recibida: el código de seguimiento con los botones Copiar y Descargar como texto"
+/>
+
+## El buzón de quien informa
+
+En **Ya comuniqué algo: ver mi caso**, con el código y la contraseña, ve el estado del caso, cuándo se recibió,
+la fecha límite de la respuesta, el motivo si no se admitió o el resultado al cerrarse, y los mensajes con la
+gestión, que firman «La gestión del canal», sin nombres. Puede escribir desde ahí.
+
+<Shot
+  name="canal-buzon"
+  alt="El buzón: la categoría y el estado, la fecha de recepción y la fecha límite de la respuesta, y los mensajes"
+/>
+
+Diez contraseñas incorrectas seguidas bloquean el buzón 24 horas. La sesión termina sola a los 30 minutos sin
+uso.
+
+## Gestionar los casos
+
+Las personas de la gestión tienen el área **Canal** en la barra. **Casos** lista las comunicaciones que pueden
+ver, con su número (**DEN-AAAA-NNNN**), la categoría, el estado y la fecha límite en color. La lista no muestra
+el contenido.
+
+En cada caso:
+
+- **Admitir** o **No admitir** (con el motivo, que se muestra en el buzón).
+- **Iniciar investigación** y **Cerrar** con el resultado (fundado, no fundado, en parte o remitido a una
+  autoridad) y un resumen para quien informó.
+- **Ampliar el plazo** 3 meses, una sola vez y con motivo.
+- Dejar constancia de que se **remitió al Ministerio Fiscal** o de que se **informó a la persona afectada**.
+- Elegir la **instructora**, escribir a quien informó y agregar **notas internas**.
+- **Apartarse** del caso si hay conflicto de interés.
+
+El **registro de accesos y cambios** del caso dice quién lo abrió o cambió y cuándo. No va al registro de
+auditoría general: así nadie fuera de la gestión sabe que el caso existe.
+
+## Plazos y avisos
+
+- El **acuse de recibo** es automático, al recibirse.
+- La **respuesta** tiene que llegar en **3 meses** desde el acuse (6 si se amplió). Las personas de la gestión
+  reciben avisos a los 30 y 7 días y el día que vence.
+- Los avisos nunca dicen el número ni el contenido del caso: solo que hay algo nuevo o que un caso vence.
+
+## Confidencialidad
+
+- Todo lo que escriben quien informa y la gestión se guarda **cifrado**.
+- La página pública no deja rastro de quien informa en los registros del servidor, y los límites de intentos
+  no guardan su dirección.
+- El canal queda fuera de Bian, del conector para Claude, de la búsqueda y de las exportaciones generales.

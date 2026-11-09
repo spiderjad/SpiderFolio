@@ -131,6 +131,21 @@ export const capabilityTexts = {
     description:
       "Lee todas las no conformidades y sus acciones sin poder cambiarlas. Pensada para dirección o para preparar una auditoría.",
   },
+  "environment.manage": {
+    label: "Gestionar medio ambiente",
+    description:
+      "Gestiona las autorizaciones, las obligaciones periódicas, el catálogo de residuos, los gestores y las retiradas, y los ajustes del módulo de medio ambiente.",
+  },
+  "environment.view": {
+    label: "Ver medio ambiente",
+    description:
+      "Lee todo el módulo de medio ambiente sin poder cambiarlo. Pensada para dirección o para preparar una inspección.",
+  },
+  "environment.record": {
+    label: "Registrar retiradas de residuos",
+    description:
+      "Apunta las retiradas de residuos con su documento, sin tocar el catálogo, los gestores ni las autorizaciones. Pensada para mantenimiento o expediciones.",
+  },
 } as const;
 
 export const capabilityGroupTexts = {
@@ -141,6 +156,7 @@ export const capabilityGroupTexts = {
   audit: "Auditoría",
   safety: "Seguridad y salud laboral",
   quality: "Calidad",
+  environment: "Medio ambiente",
   administration: "Administración",
   plugins: "Plugins",
 } as const;

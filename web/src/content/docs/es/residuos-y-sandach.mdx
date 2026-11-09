@@ -1,0 +1,67 @@
+---
+title: "Residuos y SANDACH"
+description: "El catálogo de residuos con su código LER, los gestores autorizados, cada retirada con su documento, y el archivo cronológico y el registro SANDACH listos para la inspección."
+group: medio-ambiente
+order: 2
+icon: file-check
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+La **Ley 7/2022** obliga a llevar un **archivo cronológico** de los residuos (artículo 64) y el
+**Reglamento (UE) 142/2011** un registro de las expediciones de **subproductos animales (SANDACH)**. En
+**Medio ambiente › Residuos**, cada retirada que se apunta alimenta los dos, y se exportan en PDF o CSV.
+
+## El catálogo
+
+En la pestaña **Catálogo**, cada residuo tiene:
+
+- Su **código LER** de 6 cifras. Con «\*» al final es **peligroso** (por ejemplo, 130205\* para el aceite usado).
+- Si es un subproducto animal, su **categoría SANDACH** (1, 2 o 3).
+- La **operación de tratamiento** (R para valorización, D para eliminación: R3, R13, D10…).
+- El **gestor** y el **transportista** habituales, y el **contrato de tratamiento**.
+- El **tiempo máximo de almacenamiento**: por defecto, el de la ley (6 meses los peligrosos; 24 los demás para
+  valorización y 12 para eliminación). La app avisa antes de que un residuo lo alcance sin retirarse.
+
+**Cargar residuos de la industria cárnica** agrega los habituales (subproductos de categoría 1, 2 y 3, lodos
+de la depuradora, aceites, envases contaminados, plásticos, cartón, fluorescentes) para ajustarlos. Los que ya
+existen con el mismo nombre no se tocan.
+
+<Shot
+  name="medio-ambiente-catalogo"
+  alt="El catálogo de residuos: cada uno con su código LER, si es peligroso o SANDACH, la operación, el gestor y desde cuándo está almacenado"
+/>
+
+## Gestores y transportistas
+
+En la pestaña **Gestores**, cada empresa con su **NIF**, su **NIMA**, sus **autorizaciones** y cuándo vencen,
+y si es **gestor**, **transportista** o las dos cosas. Cada una tiene su carpeta de documentos (autorización,
+contrato de tratamiento). La app avisa antes de que venza su autorización.
+
+## Registrar una retirada
+
+En la pestaña **Retiradas**, **Registrar retirada** pide el residuo, la fecha, la **cantidad** y su unidad, el
+gestor y el transportista (por defecto, los del residuo), el número del **documento de identificación (DI)** o
+del **documento comercial** SANDACH y la matrícula del vehículo.
+
+Al registrarla, el residuo vuelve a contar su almacenamiento desde ese día. Quien tiene **Registrar retiradas
+de residuos** solo ve las que registró; quien gestiona el módulo puede **borrar** una retirada para corregir un
+error (queda en el registro de auditoría).
+
+<Shot
+  name="medio-ambiente-retiradas"
+  alt="Las retiradas: fecha, residuo, cantidad, gestor y documento, con los filtros del período y el botón Exportar"
+/>
+
+## Exportar para la inspección
+
+Elige el período con **Desde** y **Hasta** y abre **Exportar**:
+
+- **Archivo cronológico**: fecha, residuo, código LER, si es peligroso, categoría SANDACH, cantidad, gestor y
+  su NIMA, operación, transportista, documento, vehículo y observaciones.
+- **Registro SANDACH**: solo los subproductos animales, con categoría, destinatario y documento comercial.
+- **Resumen anual**: el total por residuo, gestor y unidad, para las declaraciones y la memoria.
+
+Cada exportación, en PDF o CSV, queda en el registro de auditoría.
