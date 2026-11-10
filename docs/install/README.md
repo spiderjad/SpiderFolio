@@ -698,6 +698,26 @@ docker compose up -d --force-recreate app worker
 If you changed `COMPOSE_PROFILES`, `HTTP_PORT` or `MAIL_UI_PORT`, use `docker compose up -d --force-recreate`
 (without service names), which also adds or removes the optional parts.
 
+## Many people at once
+
+With the default values, one API process serves around 100 people using the app at the same time
+without trouble (measured on 10/11/2026 on a laptop: no errors, 15 to 25 ms responses). For more, or for a
+whole plant connected at once, adjust the `.env` and recreate the app and the worker (above):
+
+- **A whole plant through the same IP.** The request limit counts **per person** when there's a session
+  (`RATE_LIMIT_PER_USER`, 300 a minute), so a plant's tablets and phones behind one router don't cut each
+  other off. Without a session it counts per IP (`RATE_LIMIT_PER_IP`, 300), and everything that comes with a
+  session from one IP has a cap (`RATE_LIMIT_PER_SHARED_IP`, 6000). Sign-ins per IP are 500 every 15
+  minutes (`LOGIN_LIMIT_PER_IP`, for the shift change); the 5 tries per account and the lockout after 10
+  failures don't change.
+- **Database connections.** Each process opens `DATABASE_POOL_MAX` connections (20).
+- **More processes.** `API_PROCESSES=4` starts the API in 4 processes, one per core, sharing the port. Set as
+  many as free cores the server has (leaving one for the database). Keep
+  `(API_PROCESSES + 1) × DATABASE_POOL_MAX` under 100, Postgres' maximum connections: with 4 processes,
+  `DATABASE_POOL_MAX=15`.
+- With several processes, each keeps its own count of the general limit: the real limit is that many
+  times the configured value. The sign-in ones are shared (they're in the database).
+
 ## If emails don't arrive
 
 1. In **Administration › Security**, **Email** tab, the **Server email** card says whether the SMTP

@@ -23,7 +23,7 @@ async function main(): Promise<void> {
   const env = loadEnv();
   initSentry(env);
   const logger = createLogger(env);
-  const prisma = createPrismaClient(env.DATABASE_URL);
+  const prisma = createPrismaClient(env.DATABASE_URL, env.DATABASE_POOL_MAX);
   const boss = createBoss(env.DATABASE_URL, "api");
   boss.on("error", (error) => {
     logger.error({ err: error }, "Error de pg-boss");

@@ -39,6 +39,9 @@ export function toAppError(error: unknown): AppError | null {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2025") return new AppError("NOT_FOUND");
     if (error.code === "P2002" || error.code === "P2003") return new AppError("CONFLICT");
+    // The database is saturated (no connection free in time, a transaction that couldn't start): busy,
+    // try again (503), not an unexpected error.
+    if (error.code === "P2024" || error.code === "P2028") return new AppError("UNAVAILABLE");
     return null;
   }
 

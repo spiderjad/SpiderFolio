@@ -5,6 +5,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { cleanupExpired } from "../../src/jobs/handlers.ts";
 import { sha256 } from "../../src/lib/crypto.ts";
+import { signAccessToken } from "../../src/lib/jwt.ts";
 import { errorHandler } from "../../src/middleware/error-handler.ts";
 import { globalRateLimit, sensitiveRateLimit } from "../../src/middleware/rate-limit.ts";
 import { requestId } from "../../src/middleware/request-id.ts";
@@ -120,5 +121,37 @@ describe("límite global en memoria", () => {
     expect(statuses[300]).toBe(429);
     // Otra IP sigue pasando.
     expect((await request(app).get("/x").set("X-Forwarded-For", "192.0.2.51")).status).toBe(200);
+  });
+
+  it("con sesión cuenta por persona: una planta entera detrás de una IP no se corta", async () => {
+    const secret = "secreto-de-prueba-del-rate-limit-0123456789";
+    const app = express();
+    app.set("trust proxy", 1);
+    app.use(requestId);
+    app.use(globalRateLimit({ secret, limits: { perUser: 3, perIp: 2, perSharedIp: 6 } }));
+    app.get("/x", (_req, res) => {
+      res.json({ ok: true });
+    });
+    app.use(errorHandler(ctx.deps.logger));
+    const token = (userId: string) =>
+      signAccessToken({ userId, sessionId: randomUUID() }, secret, 60);
+    const get = (auth?: string) => {
+      const call = request(app).get("/x").set("X-Forwarded-For", "192.0.2.60");
+      return (auth === undefined ? call : call.set("Authorization", `Bearer ${auth}`)).then(
+        (res) => res.status,
+      );
+    };
+    const ana = token("ana");
+    const beto = token("beto");
+    // Each person has their own 3, from the same address.
+    expect([await get(ana), await get(ana), await get(ana), await get(ana)]).toEqual([
+      200, 200, 200, 429,
+    ]);
+    expect([await get(beto), await get(beto), await get(beto)]).toEqual([200, 200, 200]);
+    // Without a session (or with a forged token) it's per address.
+    const forged = signAccessToken({ userId: "ana", sessionId: randomUUID() }, "otro-secreto", 60);
+    expect([await get(), await get(forged), await get()]).toEqual([200, 200, 429]);
+    // And everything with a session from that address has a cap: 6, already used by ana and beto.
+    expect(await get(token("carla"))).toBe(429);
   });
 });

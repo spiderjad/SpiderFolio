@@ -699,6 +699,26 @@ docker compose up -d --force-recreate app worker
 Si cambiaste `COMPOSE_PROFILES`, `HTTP_PORT` o `MAIL_UI_PORT`, usa `docker compose up -d --force-recreate`
 (sin nombres de servicio), que también agrega o quita las piezas opcionales.
 
+## Mucha gente a la vez
+
+Con los valores de serie, un proceso de la API atiende sin problema a unas 100 personas usando la app a la
+vez (medido el 10/11/2026 en un portátil: sin errores, respuestas de 15 a 25 ms). Para más, o para una
+planta entera conectada al mismo tiempo, ajusta en el `.env` y recrea la app y el worker (arriba):
+
+- **Toda la planta por la misma IP.** El límite de peticiones cuenta **por persona** cuando hay sesión
+  (`RATE_LIMIT_PER_USER`, 300 por minuto), así que las tablets y móviles de una planta detrás de un mismo
+  router no se cortan entre sí. Sin sesión cuenta por IP (`RATE_LIMIT_PER_IP`, 300), y todo lo que llega
+  con sesión desde una IP tiene un tope (`RATE_LIMIT_PER_SHARED_IP`, 6000). Los inicios de sesión por IP
+  son 500 cada 15 minutos (`LOGIN_LIMIT_PER_IP`, para el cambio de turno); los 5 intentos por cuenta y el
+  bloqueo tras 10 fallos no cambian.
+- **Conexiones a la base.** Cada proceso abre `DATABASE_POOL_MAX` conexiones (20).
+- **Más procesos.** `API_PROCESSES=4` arranca la API en 4 procesos, uno por núcleo, que comparten el
+  puerto. Pon tantos como núcleos libres tenga el servidor (dejando uno para la base). Cuida que
+  `(API_PROCESSES + 1) × DATABASE_POOL_MAX` quede por debajo de 100, el máximo de conexiones de Postgres:
+  con 4 procesos, `DATABASE_POOL_MAX=15`.
+- Con varios procesos, cada uno lleva su propia cuenta del límite general: el límite real es ese número
+  de veces el valor configurado. Los de inicio de sesión se comparten (están en la base).
+
 ## Si el email no llega
 
 1. En **Administración › Seguridad**, pestaña **Email**, la tarjeta **Email del servidor** dice si el SMTP

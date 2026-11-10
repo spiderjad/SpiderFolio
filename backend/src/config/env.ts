@@ -58,6 +58,40 @@ export const envSchema = z
       emptyToUndefined,
       z.coerce.number().int().min(0).max(5).default(1),
     ),
+    /**
+     * Procesos de la API en la imagen de Docker (backend/scripts/start.ts, node:cluster): uno por núcleo
+     * para mucha gente a la vez. Cada uno abre DATABASE_POOL_MAX conexiones.
+     */
+    API_PROCESSES: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(1).max(32).default(1),
+    ),
+    /** Conexiones a Postgres de cada proceso (API o worker). Más personas a la vez, más conexiones. */
+    DATABASE_POOL_MAX: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(2).max(200).default(20),
+    ),
+    /**
+     * Rate limit general por minuto (sección 12): por persona con sesión, por IP sin sesión, y un tope
+     * por IP para todo lo que llega con sesión (una planta entera sale por la misma IP).
+     */
+    RATE_LIMIT_PER_USER: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(10).max(100_000).default(300),
+    ),
+    RATE_LIMIT_PER_IP: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(10).max(100_000).default(300),
+    ),
+    RATE_LIMIT_PER_SHARED_IP: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(10).max(1_000_000).default(6000),
+    ),
+    /** Inicios de sesión por IP cada 15 minutos (el límite por IP + email sigue en 5). */
+    LOGIN_LIMIT_PER_IP: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(5).max(100_000).default(500),
+    ),
     /** HTML → PDF para el PDF controlado (Gotenberg; solo red interna). Vacío: sin PDF de páginas. */
     GOTENBERG_URL: z.preprocess(emptyToUndefined, z.url().optional()),
     /**

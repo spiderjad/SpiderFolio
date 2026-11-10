@@ -101,7 +101,9 @@ export function authRouter(deps: AppDeps): Router {
 
   router.post(
     "/login",
-    limit("login-ip", 15 * MINUTE, 50),
+    // Wide per address (a whole plant signs in through one IP at the shift change); the real defence is
+    // per address + email (5) and the account's lockout after 10 failures.
+    limit("login-ip", 15 * MINUTE, deps.env.LOGIN_LIMIT_PER_IP),
     limit("login-ip-email", 15 * MINUTE, 5, byIpAndEmail),
     async (req, res) => {
       const input = LoginSchema.parse(req.body);
@@ -119,7 +121,7 @@ export function authRouter(deps: AppDeps): Router {
   // el límite por IP es amplio porque varias tablets de una planta comparten IP.
   router.post(
     "/pin-login",
-    limit("pin-login-ip", 15 * MINUTE, 200),
+    limit("pin-login-ip", 15 * MINUTE, 1000),
     limit("pin-login-user", 15 * MINUTE, 12, byWorkspaceAndLoginName),
     async (req, res) => {
       const input = PinLoginSchema.parse(req.body);

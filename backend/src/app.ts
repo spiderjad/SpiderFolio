@@ -15,6 +15,16 @@ import { AppError } from "./lib/errors.ts";
 import { authMiddleware } from "./middleware/auth.ts";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.ts";
 import { globalRateLimit } from "./middleware/rate-limit.ts";
+
+/** The global rate limit as the installation sets it (section 12). */
+const globalLimitsOf = (env: AppDeps["env"]) => ({
+  secret: env.JWT_ACCESS_SECRET,
+  limits: {
+    perUser: env.RATE_LIMIT_PER_USER,
+    perIp: env.RATE_LIMIT_PER_IP,
+    perSharedIp: env.RATE_LIMIT_PER_SHARED_IP,
+  },
+});
 import { requestId } from "./middleware/request-id.ts";
 import {
   requireAnyCapability,
@@ -91,7 +101,7 @@ export function createApp(deps: AppDeps): Express {
   if (env.STORAGE_DRIVER === "local" && env.STORAGE_DIR !== undefined) {
     app.use(
       LOCAL_STORAGE_PATH,
-      globalRateLimit(),
+      globalRateLimit(globalLimitsOf(env)),
       localStorageRouter({
         root: resolve(env.STORAGE_DIR),
         signer: createTokenSigner(env.JWT_ACCESS_SECRET),
@@ -110,7 +120,7 @@ export function createApp(deps: AppDeps): Express {
   app.use((req, _res, next) => {
     withLocale(localeFromHeader(req.headers["accept-language"]), next);
   });
-  app.use("/api", globalRateLimit());
+  app.use("/api", globalRateLimit(globalLimitsOf(env)));
   // Respuestas con datos de la empresa: nunca en caché (tampoco la del navegador al volver
   // "atrás" después del logout).
   app.use("/api", (_req, res, next) => {
