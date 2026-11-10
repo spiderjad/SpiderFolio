@@ -127,7 +127,9 @@ async function saveNote(
 ): Promise<Note> {
   if (input.kind === "text") {
     const transcript = clean(input.text).slice(0, L.textMax);
-    if (transcript === "") throw new AppError("BAD_REQUEST", { message: T().nothingHeard });
+    if (!/\p{L}/u.test(transcript)) {
+      throw new AppError("BAD_REQUEST", { message: T().nothingHeard });
+    }
     const row = await ctx.db.maintRecording.create({
       data: {
         workOrderId,
@@ -170,7 +172,8 @@ async function saveNote(
     }
     throw error;
   }
-  if (transcript === "") {
+  // Silence comes back as dots (« . . . »): with no letter, nothing was heard.
+  if (!/\p{L}/u.test(transcript)) {
     await reservation.refund();
     throw new AppError("BAD_REQUEST", { message: T().nothingHeard });
   }
