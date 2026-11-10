@@ -72,20 +72,15 @@ Hay que analizar y decidir con él, sin código todavía:
       falta que el mantenedor las pruebe y las capturas. Quedan los aspectos ambientales (si se piden) y el CO₂
       de la energía. Las guías no se publican hasta la versión del núcleo.
 
-- [ ] **Mantenimiento** (pedido 09/11/2026: OT por audio, resolución con IA, stock desde otro sistema por
-      API; el stock vive en un SGA): spec aprobada en [docs/spec/mantenimiento.md](../spec/mantenimiento.md).
-      **Fase 1 hecha** (equipos con QR, OT con su ciclo, tiempos, repuestos, liberación higiénica), sin probar
-      por el mantenedor. **Fase 2 hecha** el 10/11/2026 (avisar y cerrar hablando, Whisper autoalojado con
-      el perfil `audio`), probada. **Fase 3 hecha** el 10/11/2026 (preventivo, contadores, calibración), sin
-      probar por el mantenedor. **Fase 4 hecha** (sugerir resolución con IA), sin probar. **Fase 5 hecha** (API del SGA con token y
-      catálogo), sin probar; queda el punto de extensión para plugins. **Fase 6 hecha** (indicadores y Resumen), sin probar.
-      Quedan: tests de seguridad del módulo (fase 7, cuando el mantenedor lo pida), guía y capturas, versión.
-      **Enlace con Calidad** (pedido 10/11/2026, spec sección 8, por aprobar): equipo en PCC y formularios
-      de vigilancia (cámaras, secaderos), lectura fuera de límite → OT urgente enlazada con la NC, y la NC
-      ve el estado de su OT.
-      **Gente de planta sin PC** (10/11/2026, spec sección 9): avisan lectores y cuentas usuario + PIN
-      (tablet compartida, botón grande en su inicio) y por el QR del equipo desde el móvil. Por decidir:
-      aviso sin cuenta desde el QR.
+- [x] **Mantenimiento** (pedido 09/11/2026): **publicado en la v0.15.0** el 10/11/2026, probado por el
+      mantenedor parte por parte, con su guía y capturas. Spec en
+      [docs/spec/mantenimiento.md](../spec/mantenimiento.md): equipos con QR, OT, avisar y cerrar hablando
+      (Whisper), sugerencia con IA, preventivo y calibración, enlace con Calidad, API del SGA e indicadores.
+      Con la versión salió también el arreglo de carga (límite por persona, no por IP; `DATABASE_POOL_MAX`,
+      `API_PROCESSES`), tras un simulacro con 200 usuarios.
+- [ ] Mantenimiento, lo que queda: tests de seguridad del módulo (fase 7, cuando el mantenedor lo pida),
+      punto de extensión para un plugin de SGA concreto, decidir el aviso sin cuenta desde el QR, y medir
+      `API_PROCESSES` en el servidor real.
 
 ## Migración a spider-ui
 

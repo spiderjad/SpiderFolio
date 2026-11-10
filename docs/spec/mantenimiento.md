@@ -2,6 +2,8 @@
 
 Núcleo, abierto y gratis, **apagado por defecto** y activable por empresa, como Prevención, Calidad y
 Medio ambiente. Spec aprobada por el mantenedor el 09/11/2026, con las siete propuestas de «Decisiones».
+**Publicado en la v0.15.0 (10/11/2026)**: fases 1 a 6, el enlace con Calidad y la gente de planta sin PC.
+Quedan la fase 7 (tests de seguridad), el punto de extensión para plugins del SGA y el aviso sin cuenta.
 
 Pensado primero para una planta cárnica: muchas máquinas (picadoras, embutidoras, hornos, cámaras,
 envasadoras, detectores de metales), poco tiempo para escribir y las manos ocupadas o con guantes. Por eso
@@ -147,7 +149,7 @@ exportación CSV.
 
 ## 8. Enlace con Calidad (cámaras, secaderos…)
 
-Pedido por el mantenedor el 10/11/2026 y **hecho ese día** (sin probar por el mantenedor): migración
+Pedido por el mantenedor el 10/11/2026 y **hecho ese día** (probada por el mantenedor): migración
 `maintenance_quality_link` (`MaintWorkOrder.ncId`, origen `QUALITY`), `maintenance/quality-link.ts`,
 `workOrderForNc` y `workOrdersOfNc` en `work-orders.service.ts`, `askMaintenance` y
 `POST /quality/ncs/:id/maintenance` en Calidad.
@@ -211,10 +213,10 @@ usuario + PIN.
 
 1. **Equipos y OT a mano**: activación, permisos, equipos con QR y documentos, OT con su ciclo, trabajo,
    repuestos manuales, liberación higiénica, avisos. Avisar desde el QR escribiendo.
-   **Hecha el 09/11/2026**, sin probar por el mantenedor. Quedan para más adelante: la importación de equipos
+   **Hecha el 09/11/2026**, probada por el mantenedor. Quedan para más adelante: la importación de equipos
    desde CSV y las fotos propias de cada OT (por ahora, en la carpeta del equipo).
 2. **Audio e IA para avisar y cerrar**: grabación, transcripción, propuesta de OT y de cierre.
-   **Hecha el 10/11/2026**, sin probar por el mantenedor. Migración `maintenance_audio` (`MaintRecording`:
+   **Hecha el 10/11/2026**, probada por el mantenedor. Migración `maintenance_audio` (`MaintRecording`:
    la nota con su transcripción; el audio en el almacenamiento hasta 30 días). `WHISPER_URL` y el contenedor
    `whisper` (perfil `audio`, `onerahmet/openai-whisper-asr-webservice:v1.10.0`, modelo `small`); sin él,
    el dictado del navegador (solo Chrome, Edge y Safari). Backend en `voice.service.ts`
@@ -226,7 +228,7 @@ usuario + PIN.
    «Cerrar hablando» en la OT (tiempo, repuestos y «hecha» con las acciones de siempre) y las notas de voz
    en la ficha. El reconocimiento de repuestos por código queda para la fase 5 (catálogo del SGA).
 3. **Preventivo**: planes, generación automática de OT, contadores, calibración.
-   **Hecha el 10/11/2026**, sin probar por el mantenedor. Migración `maintenance_preventive` (`MaintPlan`,
+   **Hecha el 10/11/2026**, probada por el mantenedor. Migración `maintenance_preventive` (`MaintPlan`,
    `MaintMeter`, `MaintMeterReading`; `MaintWorkOrder.planId` y `checklist`; tipo de OT `CALIBRATION`).
    `plans.service.ts`: planes por tiempo (días, semanas o meses) o por uso (cada N unidades de un contador),
    con tareas, técnico, minutos estimados, antelación y consignación. La cola `maintenance-plans` (cada hora)
@@ -235,7 +237,7 @@ usuario + PIN.
    **Preventivo** (planes y contadores), tareas a marcar en la OT, y en Calidad › Prerrequisitos la tarjeta
    «Calibraciones de Mantenimiento» (solo lectura, decisión 5).
 4. **Resolución con IA**: sugerencia con historial y manuales, valoración.
-   **Hecha el 10/11/2026**, sin probar por el mantenedor. Migración `maintenance_suggestions`
+   **Hecha el 10/11/2026**, probada por el mantenedor. Migración `maintenance_suggestions`
    (`MaintSuggestion`). `suggest.service.ts`: el historial resuelto del equipo y de los del mismo modelo
    (hasta 30, con sus repuestos), los fragmentos de documentos que Bian encuentra para el equipo y el
    síntoma (solo lo que la persona puede ver) y el modelo de Bian con salida JSON fija; solo se guardan
@@ -243,7 +245,7 @@ usuario + PIN.
    las causas, sus pasos, sus fuentes enlazadas y «Útil / No útil».
 5. **Repuestos y stock**: punto de extensión para plugins, API de integración con token, catálogo de solo
    lectura, consumo.
-   **API y catálogo hechos el 10/11/2026**, sin probar por el mantenedor (el punto de extensión para plugins
+   **API y catálogo hechos el 10/11/2026**, probada por el mantenedor (el punto de extensión para plugins
    queda para después). Migración `maintenance_parts_integration` (`MaintPart`, `MaintIntegrationToken`).
    Tokens `sfm_…` que crea el propietario en la tarjeta del módulo (se ven una vez; se guarda su SHA-256;
    alcances `parts.write` y `consumption.read`; revocables). API en `/api/v1/integrations/maintenance`:
@@ -253,7 +255,7 @@ usuario + PIN.
    el almacén» al agregar un repuesto (con el stock y el aviso de mínimo) y «Cerrar hablando» usa los códigos
    del catálogo.
 6. **Indicadores** y Resumen.
-   **Hecha el 10/11/2026**, sin probar por el mantenedor. `indicators.service.ts`: por período (días de la
+   **Hecha el 10/11/2026**, probada por el mantenedor. `indicators.service.ts`: por período (días de la
    empresa) y para toda la planta o una línea o equipo con todo lo que cuelga de él. Avería = OT correctiva,
    de seguridad o higiénica no cancelada. MTBF = (horas del período × equipos − horas de parada) ÷ averías;
    MTTR = horas medias del aviso a «hecha»; disponibilidad = 1 − parada ÷ (horas × equipos), con 24 h al

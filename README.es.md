@@ -61,6 +61,11 @@ corresponde. Pensado para pymes de habla hispana, también en planta.
   PDF controlado y auditoría exportable.
 - **Para la planta**: códigos QR que abren siempre la versión vigente, vencimientos y una vista simple
   para tablets con usuario y PIN.
+- **Módulos para la industria**, gratis y activables por empresa: **Prevención** (EPIs, formación,
+  accidentes, emergencias, comité y contratas), **Calidad** alimentaria (IFS 8 y BRCGS 9), **Mantenimiento**
+  (equipos con QR, averías que se avisan hablando, órdenes de trabajo, preventivo, stock del SGA e
+  indicadores), **Medio ambiente** (autorizaciones, residuos, vertidos, consumos y frío) y el **Canal de
+  denuncias** de la Ley 2/2023.
 - **Bian, el asistente IA**: responde solo con el contenido vigente que cada persona puede ver y cita la
   fuente. Usa tu propia clave de la API de Anthropic.
 - **Seguridad**: verificación en dos pasos, sesiones y dispositivos de confianza, registro de auditoría

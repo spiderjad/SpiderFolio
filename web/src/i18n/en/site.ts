@@ -198,6 +198,24 @@ export const site: Catalog<typeof esSite> = {
           soon: false,
         },
         {
+          icon: "clipboard",
+          title: "Maintenance",
+          text: "Equipment with its QR, breakdowns reported by talking, work orders, preventive and calibration, and the SGA's stock.",
+          soon: false,
+        },
+        {
+          icon: "globe",
+          title: "Environment",
+          text: "Permits, waste and animal by-products, discharges, consumption and fluorinated gases, with their expiries.",
+          soon: false,
+        },
+        {
+          icon: "message",
+          title: "Whistleblowing channel",
+          text: "Spain's Ley 2/2023 internal reporting system: anonymous, with follow-up and its deadlines.",
+          soon: false,
+        },
+        {
           icon: "lock",
           title: "Administration",
           text: "Members, departments, roles, security and limits, only for whoever administers.",

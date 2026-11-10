@@ -19,6 +19,7 @@ Key facts:
 - Shop floor: QR codes that always open the current version of a document, expiry dates with reminders, and a simple tablet view with username and PIN.
 - Bian, the built-in AI assistant (optional): answers only from current content the person is allowed to see and cites the source. Uses the company's own Anthropic API key.
 - Security: two-step verification (2FA), session and trusted-device management, audit log, strict isolation between companies (multi-tenant).
+- Industry modules (free, turned on per company): occupational health and safety with contractor coordination, food quality (IFS Food 8, BRCGS Food Safety 9), maintenance (equipment with QR codes, breakdowns reported by voice, work orders, preventive and calibration plans, spare parts stock from the warehouse system through an API, MTBF/MTTR indicators), environment (permits, waste and animal by-products, discharges, consumption, fluorinated gases) and a whistleblowing channel (Spain's Ley 2/2023).
 
 ## Commercial plugins (optional)
 
@@ -60,6 +61,15 @@ Node.js 24, TypeScript, Express 5, Prisma 7, PostgreSQL 16, pg-boss (job queue o
 - [Configuration](https://spiderfolio.spiderjad.com/en/docs/configuration)
 - [Backups](https://spiderfolio.spiderjad.com/en/docs/backups) and [updates](https://spiderfolio.spiderjad.com/en/docs/updates)
 - [License and plugins](https://spiderfolio.spiderjad.com/en/docs/license-and-plugins)
+
+## Docs: industry modules
+
+- [Occupational health and safety](https://spiderfolio.spiderjad.com/en/docs/occupational-health-and-safety): PPE, training, incidents, emergencies and the committee
+- [Contractors (CAE)](https://spiderfolio.spiderjad.com/en/docs/contractors-cae): contractor coordination and the gatehouse check
+- [Quality](https://spiderfolio.spiderjad.com/en/docs/quality): food quality, nonconformities and CAPA, HACCP
+- [Maintenance](https://spiderfolio.spiderjad.com/en/docs/maintenance): equipment, work orders, voice reports, preventive, SGA stock and indicators
+- [Environment](https://spiderfolio.spiderjad.com/en/docs/environment): permits, waste, discharges, consumption and cooling
+- [Whistleblowing channel](https://spiderfolio.spiderjad.com/en/docs/whistleblowing-channel): Ley 2/2023 internal reporting
 
 ## Developers
 

@@ -62,6 +62,11 @@ floor.
   controlled PDF and an exportable audit log.
 - **For the shop floor**: QR codes that always open the current version, expiry dates and a simple view
   for tablets with username and PIN.
+- **Industry modules**, free and turned on per company: **Health and safety** (PPE, training,
+  incidents, emergencies, committee and contractors), food **Quality** (IFS 8 and BRCGS 9),
+  **Maintenance** (equipment with QR, breakdowns reported by talking, work orders, preventive, the SGA's
+  stock and indicators), **Environment** (permits, waste, discharges, consumption and cooling) and the
+  **Whistleblowing channel** of Spain's Ley 2/2023.
 - **Bian, the AI assistant**: answers only from the current content each person is allowed to see, and
   cites the source. Uses your own Anthropic API key.
 - **Security**: two-step verification, sessions and trusted devices, audit log and strict isolation

@@ -197,6 +197,24 @@ export const site = {
           soon: false,
         },
         {
+          icon: "clipboard",
+          title: "Mantenimiento",
+          text: "Equipos con su QR, averías que se avisan hablando, órdenes de trabajo, preventivo y calibración, y el stock del SGA.",
+          soon: false,
+        },
+        {
+          icon: "globe",
+          title: "Medio ambiente",
+          text: "Autorizaciones, residuos y SANDACH, vertidos, consumos y gases fluorados, con sus vencimientos.",
+          soon: false,
+        },
+        {
+          icon: "message",
+          title: "Canal de denuncias",
+          text: "El sistema interno de información de la Ley 2/2023: anónimo, con seguimiento y sus plazos.",
+          soon: false,
+        },
+        {
           icon: "lock",
           title: "Administración",
           text: "Miembros, departamentos, roles, seguridad y límites, solo para quien administra.",
