@@ -68,6 +68,7 @@ export const caeTexts = localized("caeTexts");
 export const qualityTexts = localized("qualityTexts");
 export const whistleblowingTexts = localized("whistleblowingTexts");
 export const environmentTexts = localized("environmentTexts");
+export const maintenanceTexts = localized("maintenanceTexts");
 export const formExportTexts = localized("formExportTexts");
 export const templateTexts = localized("templateTexts");
 export const masterListTexts = localized("masterListTexts");

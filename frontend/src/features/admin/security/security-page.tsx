@@ -20,6 +20,7 @@ import { SafetyCard } from "./safety-card";
 import { QualityAdminCard } from "@/features/quality/quality-admin-card";
 import { ChannelAdminCard } from "@/features/whistleblowing/channel-admin-card";
 import { EnvironmentAdminCard } from "@/features/environment/environment-admin-card";
+import { MaintenanceAdminCard } from "@/features/maintenance/maintenance-admin-card";
 import { isLocale, LOCALE_NAMES, LOCALES, texts } from "@/i18n";
 
 /** «Europe/Madrid · GMT+1»: every zone the browser knows, with its offset now. */
@@ -126,6 +127,7 @@ function SecurityGeneral() {
       <SafetyCard />
       <QualityAdminCard />
       <EnvironmentAdminCard />
+      <MaintenanceAdminCard />
       <ChannelAdminCard />
       <Card className="min-w-0 p-4 sm:p-5">
         <div className="flex items-center gap-3">

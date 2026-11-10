@@ -88,6 +88,19 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
 
+  # Audio → text for Maintenance (reporting and closing by talking). Optional: it downloads the model
+  # (~500 MB) the first time. docker compose --profile audio up -d whisper; WHISPER_URL=http://127.0.0.1:9000
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:v1.10.0
+    profiles: ["audio"]
+    environment:
+      ASR_ENGINE: faster_whisper
+      ASR_MODEL: small
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - whisper-cache:/root/.cache
+
 # Explicit names: the volumes keep the names they had under the old "spiderfolio" project, so
 # existing development data stays.
 volumes:
@@ -95,3 +108,5 @@ volumes:
     name: spiderfolio_postgres-data
   rustfs-data:
     name: spiderfolio_rustfs-data
+  whisper-cache:
+    name: spiderfolio_whisper-cache

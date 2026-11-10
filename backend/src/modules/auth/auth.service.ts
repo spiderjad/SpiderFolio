@@ -35,6 +35,7 @@ import {
   readSafetySettings,
   readWhistleblowingSettings,
   readEnvironmentSettings,
+  readMaintenanceSettings,
 } from "../workspaces/settings.ts";
 import { randomToken, sha256 } from "../../lib/crypto.ts";
 import { userMediaUrl } from "../profile-media/profile-media.service.ts";
@@ -69,7 +70,15 @@ const NEW_DEVICE_WINDOW_MS = 30 * 24 * 3600 * 1000;
 
 /** CHANNEL (the whistleblowing channel) is never chosen as a home area, but the column allows it. */
 type HomeAreaValue =
-  "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "CHANNEL" | "ADMIN";
+  | "HOME"
+  | "DOCUMENTS"
+  | "WIKI"
+  | "PREVENTION"
+  | "QUALITY"
+  | "ENVIRONMENT"
+  | "MAINTENANCE"
+  | "CHANNEL"
+  | "ADMIN";
 
 export interface AuthContext {
   userId: string;
@@ -128,6 +137,8 @@ export interface Account {
       whistleblowing: { enabled: boolean; manager: boolean };
       /** The environment module (docs/spec/medio-ambiente.md): on or off. */
       environment: { enabled: boolean };
+      /** The maintenance module (docs/spec/mantenimiento.md): on or off. */
+      maintenance: { enabled: boolean };
     };
     role: { id: string; name: string; base: string };
     capabilities: string[];
@@ -288,6 +299,7 @@ export function createAuthService(deps: AppDeps) {
             }))(readSafetySettings(m.workspace.settings)),
             quality: { enabled: readQualitySettings(m.workspace.settings).enabled },
             environment: { enabled: readEnvironmentSettings(m.workspace.settings).enabled },
+            maintenance: { enabled: readMaintenanceSettings(m.workspace.settings).enabled },
             whistleblowing: {
               enabled: readWhistleblowingSettings(m.workspace.settings).enabled,
               manager:

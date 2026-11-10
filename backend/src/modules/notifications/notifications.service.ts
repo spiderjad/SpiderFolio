@@ -71,6 +71,9 @@ export const NOTIFICATION_KINDS = [
   "whistleblowing",
   /** A discharge analysis out of its limits (docs/spec/medio-ambiente.md; `detail` = the analysis). */
   "environment_discharge",
+  /** A work order assigned to someone, or an urgent one reported (docs/spec/mantenimiento.md;
+   * `detail` = the work order). */
+  "maintenance_work_order",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 

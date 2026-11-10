@@ -2081,3 +2081,34 @@ export const environmentTexts = {
     { name: "Fluorescentes y lámparas", ler: "200121*", sandach: null, operation: "R4" },
   ],
 };
+
+export const maintenanceTexts = {
+  space: {
+    name: "Mantenimiento",
+    description:
+      "Manuales, esquemas, certificados y fotos de los equipos y sus órdenes de trabajo.",
+  },
+  folders: { assets: "Equipos", workOrders: "Órdenes de trabajo" },
+  code: (year: number, number: number) => `OT-${String(year)}-${String(number).padStart(4, "0")}`,
+  expiry: (code: string, title: string) => `${code} · ${title}`,
+  errors: {
+    codeExists: "Ya hay un equipo con ese código.",
+    parentLoop: "Un equipo no puede colgar de sí mismo ni de uno de los suyos.",
+    tooDeep: "El árbol de equipos tiene demasiados niveles.",
+    wrongState: "La orden de trabajo no está en un estado que permita eso.",
+    needsHygiene: "Antes de cerrarla, alguien de calidad tiene que dar la liberación higiénica.",
+    hygieneNotNeeded: "Esta orden de trabajo no necesita liberación higiénica.",
+    timerRunning: "Ya tienes un tiempo en marcha en esta orden de trabajo.",
+    noTimer: "No tienes un tiempo en marcha en esta orden de trabajo.",
+    tooLong: "Ese tiempo es demasiado largo: revisa la hora de inicio.",
+    archived: "El equipo está archivado.",
+    voiceOff: "Avisar y cerrar hablando necesita a Bian, el asistente de IA, activo en la empresa.",
+    noTranscriber: "Este servidor no transcribe audio: usa el dictado del navegador o escribe.",
+    audioTooLarge: "La grabación es demasiado larga. Graba hasta 3 minutos.",
+    audioFormat: "No reconocemos ese formato de audio.",
+    transcribeFailed: "No pudimos pasar el audio a texto. Prueba de nuevo o escríbelo.",
+    nothingHeard: "No se entendió nada en la grabación. Prueba de nuevo, más cerca del móvil.",
+    proposalFailed: "La IA no pudo preparar la propuesta. Rellénalo a mano.",
+  },
+  qrLabel: "Avisar de una avería",
+};

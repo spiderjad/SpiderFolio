@@ -394,6 +394,30 @@ export interface TenantDb {
     PrismaClient["envCoolingUnit"],
     "findFirst" | "findMany" | "create" | "update"
   >;
+  // Maintenance (docs/spec/mantenimiento.md): assets are archived; work orders are never deleted
+  // (cancelled); a part or a stretch of work entered by mistake can be removed (audited).
+  maintAsset: TenantDelegate<
+    PrismaClient["maintAsset"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  maintCounter: TenantDelegate<PrismaClient["maintCounter"], "upsert">;
+  maintWorkOrder: TenantDelegate<
+    PrismaClient["maintWorkOrder"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  maintLabor: TenantDelegate<
+    PrismaClient["maintLabor"],
+    "findFirst" | "findMany" | "create" | "update" | "delete"
+  >;
+  maintPartUse: TenantDelegate<
+    PrismaClient["maintPartUse"],
+    "findFirst" | "findMany" | "create" | "delete"
+  >;
+  maintEvent: TenantDelegate<PrismaClient["maintEvent"], "findMany" | "create">;
+  maintRecording: TenantDelegate<
+    PrismaClient["maintRecording"],
+    "findFirst" | "findMany" | "create" | "updateMany"
+  >;
   envCoolingEvent: TenantDelegate<
     PrismaClient["envCoolingEvent"],
     "findFirst" | "findMany" | "create" | "delete"
@@ -735,6 +759,19 @@ const delegates = {
   envTarget: { model: "EnvTarget", ops: ["findMany", "upsert", "deleteMany"] },
   envCoolingUnit: { model: "EnvCoolingUnit", ops: ["findFirst", "findMany", "create", "update"] },
   envCoolingEvent: { model: "EnvCoolingEvent", ops: ["findFirst", "findMany", "create", "delete"] },
+  maintAsset: { model: "MaintAsset", ops: ["findFirst", "findMany", "count", "create", "update"] },
+  maintCounter: { model: "MaintCounter", ops: ["upsert"] },
+  maintWorkOrder: {
+    model: "MaintWorkOrder",
+    ops: ["findFirst", "findMany", "count", "create", "update"],
+  },
+  maintLabor: { model: "MaintLabor", ops: ["findFirst", "findMany", "create", "update", "delete"] },
+  maintPartUse: { model: "MaintPartUse", ops: ["findFirst", "findMany", "create", "delete"] },
+  maintEvent: { model: "MaintEvent", ops: ["findMany", "create"] },
+  maintRecording: {
+    model: "MaintRecording",
+    ops: ["findFirst", "findMany", "create", "updateMany"],
+  },
   qualityLot: {
     model: "QualityLot",
     ops: ["findFirst", "findMany", "count", "create", "update", "delete"],

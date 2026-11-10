@@ -6,6 +6,7 @@
 # Optional profiles (set COMPOSE_PROFILES in .env, comma-separated):
 #   https  Caddy with automatic HTTPS for DOMAIN (ports 80 and 443)
 #   pdf    Gotenberg: PDF of controlled documents (needs GOTENBERG_URL=http://gotenberg:3000)
+#   audio  Whisper: Maintenance by voice, audio never leaves the server (WHISPER_URL=http://whisper:9000)
 #   mail   Mailpit: test inbox at http://localhost:8025, no real email server (SMTP_HOST=mailpit)
 #
 # Update: docker compose pull && docker compose up -d (docs/instalacion/actualizar.md).
@@ -98,6 +99,18 @@ services:
     profiles: ["pdf"]
     restart: unless-stopped
 
+  # Audio → text for Maintenance. Downloads the model (~500 MB) the first time; a few seconds of CPU
+  # per voice note.
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:v1.10.0
+    profiles: ["audio"]
+    environment:
+      ASR_ENGINE: faster_whisper
+      ASR_MODEL: small
+    volumes:
+      - whisper-cache:/root/.cache
+    restart: unless-stopped
+
   # Test inbox: catches every email (nothing leaves the machine). Only for trying SpiderFolio out.
   mailpit:
     image: axllent/mailpit:v1.31.5
@@ -112,3 +125,4 @@ volumes:
   plugins:
   caddy-data:
   caddy-config:
+  whisper-cache:

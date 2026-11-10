@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/auth-context";
 import { useParams } from "react-router";
 import { Card, EmptyState } from "@/components/ui/display";
 import { PendingFormsCard } from "@/features/forms/pending-forms";
+import { ReportBreakdownCard } from "@/features/maintenance/report-card";
 import { SwitchUserButton } from "./kiosk-session";
 import { texts } from "@/i18n";
 
@@ -23,6 +24,7 @@ export function KioskHome() {
         </div>
         <SwitchUserButton />
       </div>
+      <ReportBreakdownCard slug={workspaceSlug} />
       <PendingFormsCard slug={workspaceSlug} />
       <Card>
         <EmptyState icon={BookOpenCheck} title={t.empty.title}>

@@ -23,7 +23,7 @@ export const ListSpacesQuerySchema = z.object({
     .transform((value) => value.split(","))
     .pipe(
       z
-        .array(z.enum(["WIKI", "DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT"]))
+        .array(z.enum(["WIKI", "DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT", "MAINTENANCE"]))
         .min(1)
         .max(4),
     )
@@ -76,7 +76,7 @@ export const UpdateSpaceSchema = z.strictObject({
   departmentLevel: DepartmentLevelSchema.optional(),
   includeSubareas: z.boolean().optional(),
   /** The app area it's listed in (only with spaces.manage). */
-  area: z.enum(["WIKI", "DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT"]).optional(),
+  area: z.enum(["WIKI", "DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT", "MAINTENANCE"]).optional(),
 });
 
 export const AccessLevelSchema = z.enum(["MANAGE", "EDIT", "COMMENT", "VIEW"]);

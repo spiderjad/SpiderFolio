@@ -42,6 +42,12 @@ export const capabilities = [
   "environment.view",
   /** Environment: record waste collections (and later readings and analyses), not the catalog. */
   "environment.record",
+  /** Maintenance (docs/spec/mantenimiento.md): assets, work orders, settings. */
+  "maintenance.manage",
+  /** Maintenance: technicians (take work orders, record work, parts, mark them done). */
+  "maintenance.work",
+  /** Maintenance: read everything, without changing anything. */
+  "maintenance.view",
 ] as const;
 
 /** Las del núcleo. */

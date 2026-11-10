@@ -32,6 +32,8 @@ import {
   Droplets,
   Gauge,
   Snowflake,
+  Wrench,
+  Cog,
   Inbox,
   IdCard,
   Library,
@@ -75,7 +77,10 @@ export interface Area {
 export interface AreaContext {
   /** The person's visible spaces of each non-Wiki area (a few: they're listed in the menu). */
   spaces: Partial<
-    Record<"DOCUMENTS" | "PREVENTION" | "QUALITY" | "ENVIRONMENT", readonly SpaceView[]>
+    Record<
+      "DOCUMENTS" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "MAINTENANCE",
+      readonly SpaceView[]
+    >
   >;
   /** A current member of the health and safety committee (docs/spec/seguridad-salud.md). */
   committee: boolean;
@@ -142,6 +147,24 @@ function preventionItems(slug: string, person: Membership, context: AreaContext)
     items.push({ to: `${base}/comunicar`, label: a.report, icon: Siren, group: a.mine });
     items.push(...spaceItems(slug, context.spaces.PREVENTION, a.areaSpaces));
   }
+  return items;
+}
+
+/** The Maintenance area (docs/spec/mantenimiento.md): with the module on, for maintenance and for whoever reports. */
+function maintenanceItems(slug: string, person: Membership, context: AreaContext): AreaItem[] {
+  if (!person.workspace.maintenance.enabled || person.role.base === "GUEST") return [];
+  const caps = person.capabilities;
+  const manage = caps.includes("maintenance.manage");
+  const work = manage || caps.includes("maintenance.work");
+  const base = `/app/${slug}/mantenimiento`;
+  const n = texts.maintenance.nav;
+  const items: AreaItem[] = [];
+  // Everyone but guests reports (readers and user + PIN accounts included: shared tablets).
+  items.push({ to: `${base}/avisar`, label: n.report, icon: Megaphone });
+  if (work) items.push({ to: `${base}/ot?mias=1&estado=open`, label: n.mine, icon: ListTodo });
+  items.push({ to: `${base}/ot`, label: n.workOrders, icon: Wrench });
+  items.push({ to: `${base}/equipos`, label: n.assets, icon: Cog });
+  items.push(...spaceItems(slug, context.spaces.MAINTENANCE, texts.shell.areas.areaSpaces));
   return items;
 }
 
@@ -328,6 +351,17 @@ export function areasOf(
     });
   }
 
+  const maintenance = maintenanceItems(slug, person, context);
+  if (maintenance.length > 0) {
+    areas.push({
+      id: "MAINTENANCE",
+      label: texts.maintenance.module,
+      short: texts.maintenance.short,
+      icon: Wrench,
+      items: maintenance,
+    });
+  }
+
   const environment = environmentItems(slug, person, context);
   if (environment.length > 0) {
     areas.push({
@@ -434,7 +468,11 @@ export function landingOf(area: Area): string | undefined {
 /** The areas a person or a department can open in (Quality, once its module exists). */
 export function homeAreaChoices(person: Membership): { id: AreaId; label: string }[] {
   const names = texts.shell.areas.names;
-  const ids: Exclude<AreaId, "CHANNEL" | "ENVIRONMENT">[] = ["HOME", "DOCUMENTS", "WIKI"];
+  const ids: Exclude<AreaId, "CHANNEL" | "ENVIRONMENT" | "MAINTENANCE">[] = [
+    "HOME",
+    "DOCUMENTS",
+    "WIKI",
+  ];
   if (person.workspace.safety.enabled) ids.push("PREVENTION");
   ids.push("ADMIN");
   return ids.map((id) => ({

@@ -21,6 +21,7 @@ import { caeTexts } from "./cae";
 import { qualityTexts } from "./quality";
 import { whistleblowingTexts } from "./whistleblowing";
 import { environmentTexts } from "./environment";
+import { maintenanceTexts } from "./maintenance";
 import { templatesTexts } from "./templates";
 import { expiriesTexts } from "./expiries";
 import { auditRoomsTexts } from "./audit-rooms";
@@ -48,6 +49,7 @@ export const en: Messages = {
   quality: qualityTexts,
   whistleblowing: whistleblowingTexts,
   environment: environmentTexts,
+  maintenance: maintenanceTexts,
   templates: templatesTexts,
   expiries: expiriesTexts,
   auditRooms: auditRoomsTexts,

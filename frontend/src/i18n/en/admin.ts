@@ -145,6 +145,21 @@ export const capabilityTexts: Catalog<typeof EsCapabilities> = {
     description:
       "Reads the whole environment module without changing it. Meant for management or for preparing an inspection.",
   },
+  "maintenance.manage": {
+    label: "Manage maintenance",
+    description:
+      "Handles equipment, creates, plans, assigns, closes and cancels work orders, and the maintenance module's settings.",
+  },
+  "maintenance.work": {
+    label: "Work on maintenance",
+    description:
+      "For technicians: they see every work order, take them, log time and spare parts and mark them as done.",
+  },
+  "maintenance.view": {
+    label: "View maintenance",
+    description:
+      "Reads the equipment and every work order without changing them. Meant for management or quality.",
+  },
   "environment.record": {
     label: "Record waste collections",
     description:
@@ -161,6 +176,7 @@ export const capabilityGroupTexts: Catalog<typeof EsCapabilityGroups> = {
   safety: "Occupational health and safety",
   quality: "Quality",
   environment: "Environment",
+  maintenance: "Maintenance",
   administration: "Administration",
   plugins: "Plugins",
 };

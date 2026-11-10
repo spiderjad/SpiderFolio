@@ -288,6 +288,7 @@ export function sectionTitle(
   if (pathname.includes("/seguridad")) return texts.safety.terms[safetyTerms].module;
   if (pathname.includes("/calidad")) return texts.quality.module;
   if (pathname.includes("/medio-ambiente")) return texts.environment.module;
+  if (pathname.includes("/mantenimiento")) return texts.maintenance.module;
   if (pathname.includes("/canal")) return texts.whistleblowing.module;
   if (pathname.includes("/admin/roles")) return texts.admin.nav.roles;
   if (pathname.includes("/admin/access")) return texts.admin.nav.access;

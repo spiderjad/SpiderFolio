@@ -148,6 +148,45 @@ export const routes = [
                 lazy: page(() => import("@/features/expiries/expiries-page"), "ExpiriesPage"),
               },
               {
+                // Maintenance (docs/spec/mantenimiento.md): only while it's on.
+                path: "mantenimiento",
+                lazy: page(
+                  () => import("@/features/maintenance/maintenance-common"),
+                  "RequireMaintenance",
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: page(
+                      () => import("@/features/maintenance/maintenance-common"),
+                      "MaintenanceHome",
+                    ),
+                  },
+                  {
+                    path: "avisar",
+                    lazy: page(() => import("@/features/maintenance/report-page"), "ReportPage"),
+                  },
+                  {
+                    path: "ot",
+                    lazy: page(
+                      () => import("@/features/maintenance/work-orders-page"),
+                      "WorkOrdersPage",
+                    ),
+                  },
+                  {
+                    path: "ot/:workOrderId",
+                    lazy: page(
+                      () => import("@/features/maintenance/work-order-page"),
+                      "WorkOrderPage",
+                    ),
+                  },
+                  {
+                    path: "equipos",
+                    lazy: page(() => import("@/features/maintenance/assets-page"), "AssetsPage"),
+                  },
+                ],
+              },
+              {
                 // Environment (docs/spec/medio-ambiente.md): only while it's on.
                 path: "medio-ambiente",
                 lazy: page(

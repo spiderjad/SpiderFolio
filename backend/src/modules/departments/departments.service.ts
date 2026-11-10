@@ -25,7 +25,7 @@ import type {
 
 /** CHANNEL (the whistleblowing channel) is never chosen as a home area, but the column allows it. */
 type HomeAreaValue =
-  "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "CHANNEL" | "ADMIN";
+  "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "MAINTENANCE" | "CHANNEL" | "ADMIN";
 
 export interface DepartmentView {
   id: string;

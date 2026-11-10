@@ -95,6 +95,8 @@ export interface RequestOptions {
   body?: unknown;
   /** A file sent as is (application/octet-stream), instead of a JSON body. */
   file?: Blob;
+  /** The file's type, when the route expects it (a voice note: audio/webm…). */
+  fileType?: string;
   headers?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -105,7 +107,9 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   const token = getAccessToken();
   if (token !== null) headers.Authorization = `Bearer ${token}`;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
-  if (options.file !== undefined) headers["Content-Type"] = "application/octet-stream";
+  if (options.file !== undefined) {
+    headers["Content-Type"] = options.fileType ?? "application/octet-stream";
+  }
   try {
     return await fetch(`${API_BASE}${path}`, {
       method: options.method ?? "GET",

@@ -133,4 +133,5 @@ Lista viva en `docs/plans/pendientes.md`. Lo principal:
 | Plantillas propias y por rubro (plugin) | docs/spec/plantillas.md |
 | Canal de denuncias (Ley 2/2023) | docs/spec/canal-denuncias.md |
 | Medio ambiente (residuos, vertidos, consumos, gases fluorados) | docs/spec/medio-ambiente.md |
+| Mantenimiento (equipos, OT por audio, IA, preventivo, stock por API) | docs/spec/mantenimiento.md |
 | Fase 2 | docs/spec/fase-2.md |

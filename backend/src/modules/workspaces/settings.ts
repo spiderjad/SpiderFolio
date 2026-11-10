@@ -159,6 +159,21 @@ export function readQualitySettings(settings: unknown): QualitySettings {
       };
 }
 
+/** The maintenance module (docs/spec/mantenimiento.md): on or off, and its space once it's created. */
+export const MaintenanceSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  spaceId: z.string().min(1).max(64).optional(),
+});
+
+export type MaintenanceSettings = z.infer<typeof MaintenanceSettingsSchema>;
+
+/** The module's settings; off with data missing or not valid. */
+export function readMaintenanceSettings(settings: unknown): MaintenanceSettings {
+  const raw = (settings as { maintenance?: unknown } | null | undefined)?.maintenance;
+  const parsed = MaintenanceSettingsSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : { enabled: false };
+}
+
 /** The environment module (docs/spec/medio-ambiente.md): on or off, and its space once it's created. */
 export const EnvironmentSettingsSchema = z.object({
   enabled: z.boolean().default(false),
@@ -216,6 +231,7 @@ export const WorkspaceSettingsSchema = z.object({
   quality: QualitySettingsSchema.optional(),
   whistleblowing: WhistleblowingSettingsSchema.optional(),
   environment: EnvironmentSettingsSchema.optional(),
+  maintenance: MaintenanceSettingsSchema.optional(),
 });
 
 export type WorkspaceSettings = z.infer<typeof WorkspaceSettingsSchema>;

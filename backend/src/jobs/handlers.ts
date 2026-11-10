@@ -1,4 +1,5 @@
 // Handlers del worker. Reciben sus dependencias por parámetro para poder probarlos.
+import { maintenanceLimits } from "@spiderfolio/limits";
 import { dayIn, formatDayIn, zoneOf } from "../lib/time-zone.ts";
 import * as Sentry from "@sentry/node";
 import type { Logger } from "pino";
@@ -872,8 +873,46 @@ export async function cleanupExpiredUploads(
 }
 
 /** Limpieza horaria (UTC): contadores de rate limit, sesiones y tokens vencidos. */
+/**
+ * Maintenance voice notes (docs/spec/mantenimiento.md, section 3): the audio is deleted after 30 days
+ * (the transcript stays), and a report's note never confirmed, after a day. Of every company.
+ */
+export async function purgeMaintenanceAudio(
+  deps: Pick<WorkerDeps, "prisma" | "logger" | "storage">,
+  now: Date = new Date(),
+): Promise<{ orphans: number; audio: number }> {
+  const orphanBefore = new Date(now.getTime() - maintenanceLimits.audioOrphanHours * 3600 * 1000);
+  const audioBefore = new Date(
+    now.getTime() - maintenanceLimits.audioRetentionDays * 24 * 3600 * 1000,
+  );
+  const orphans = await deps.prisma.maintRecording.findMany({
+    where: { workOrderId: null, createdAt: { lt: orphanBefore } },
+    select: { id: true, storageKey: true },
+    take: 500,
+  });
+  for (const row of orphans) if (row.storageKey !== null) await deps.storage.delete(row.storageKey);
+  if (orphans.length > 0) {
+    await deps.prisma.maintRecording.deleteMany({
+      where: { id: { in: orphans.map((row) => row.id) }, workOrderId: null },
+    });
+  }
+  const expired = await deps.prisma.maintRecording.findMany({
+    where: { storageKey: { not: null }, createdAt: { lt: audioBefore } },
+    select: { id: true, storageKey: true },
+    take: 500,
+  });
+  for (const row of expired) if (row.storageKey !== null) await deps.storage.delete(row.storageKey);
+  if (expired.length > 0) {
+    await deps.prisma.maintRecording.updateMany({
+      where: { id: { in: expired.map((row) => row.id) } },
+      data: { storageKey: null },
+    });
+  }
+  return { orphans: orphans.length, audio: expired.length };
+}
+
 export async function cleanupExpired(
-  deps: Pick<WorkerDeps, "prisma" | "logger" | "systemStorage">,
+  deps: Pick<WorkerDeps, "prisma" | "logger" | "systemStorage" | "storage">,
   payload: unknown,
   now: Date = new Date(),
 ): Promise<CleanupResult> {
@@ -889,6 +928,10 @@ export async function cleanupExpired(
   await deps.prisma.auditRoomSession.deleteMany({ where: { expiresAt: { lt: now } } });
   await deps.prisma.auditRoomCode.deleteMany({ where: { expiresAt: { lt: now } } });
   await expireExports(deps, now);
+  const voiceNotes = await purgeMaintenanceAudio(deps, now);
+  if (voiceNotes.orphans + voiceNotes.audio > 0) {
+    deps.logger.info(voiceNotes, "Notas de voz de mantenimiento purgadas");
+  }
   const result = {
     rateLimitBuckets: buckets.count,
     sessions: sessions.count,

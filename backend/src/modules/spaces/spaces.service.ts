@@ -49,7 +49,7 @@ export interface SpaceView {
   /** El acceso de miembros llega también a los subdepartamentos. */
   includeSubareas: boolean;
   /** The app area it's listed in (docs/spec/diseno.md 10.4.1). */
-  area: "WIKI" | "DOCUMENTS" | "PREVENTION" | "QUALITY" | "ENVIRONMENT";
+  area: "WIKI" | "DOCUMENTS" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "MAINTENANCE";
   /** Por qué la persona tiene ese nivel ("Jefe de Finanzas", "Administrador"…). */
   reason: SpaceReasonView | null;
   /** Marcado como favorito por quien pide. */

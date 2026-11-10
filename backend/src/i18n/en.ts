@@ -2072,3 +2072,33 @@ export const environmentTexts: Catalog<typeof Es.environmentTexts> = {
     { name: "Fluorescent tubes and lamps", ler: "200121*", sandach: null, operation: "R4" },
   ],
 };
+
+export const maintenanceTexts: Catalog<typeof Es.maintenanceTexts> = {
+  space: {
+    name: "Maintenance",
+    description: "Manuals, diagrams, certificates and photos of the equipment and its work orders.",
+  },
+  folders: { assets: "Equipment", workOrders: "Work orders" },
+  code: (year: number, number: number) => `WO-${String(year)}-${String(number).padStart(4, "0")}`,
+  expiry: (code: string, title: string) => `${code} · ${title}`,
+  errors: {
+    codeExists: "There's already a piece of equipment with that code.",
+    parentLoop: "A piece of equipment can't hang from itself or from one of its own.",
+    tooDeep: "The equipment tree has too many levels.",
+    wrongState: "The work order isn't in a state that allows that.",
+    needsHygiene: "Before closing it, someone from quality has to give the hygiene release.",
+    hygieneNotNeeded: "This work order doesn't need a hygiene release.",
+    timerRunning: "You already have a timer running on this work order.",
+    noTimer: "You have no timer running on this work order.",
+    tooLong: "That time is too long: check the start time.",
+    archived: "The equipment is archived.",
+    voiceOff: "Reporting and closing by talking needs Bian, the AI assistant, turned on for the company.",
+    noTranscriber: "This server doesn't transcribe audio: use the browser's dictation or type it.",
+    audioTooLarge: "The recording is too long. Record up to 3 minutes.",
+    audioFormat: "We don't recognise that audio format.",
+    transcribeFailed: "We couldn't turn the audio into text. Try again or type it.",
+    nothingHeard: "Nothing could be made out in the recording. Try again, closer to the phone.",
+    proposalFailed: "The AI couldn't prepare the proposal. Fill it in by hand.",
+  },
+  qrLabel: "Report a breakdown",
+};

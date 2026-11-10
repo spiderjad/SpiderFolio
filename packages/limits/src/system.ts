@@ -70,6 +70,27 @@ export const environmentLimits = {
   parametersMax: 30,
 } as const;
 
+/** Maintenance (docs/spec/mantenimiento.md). */
+export const maintenanceLimits = {
+  codeMax: 40,
+  nameMax: 160,
+  shortMax: 120,
+  textMax: 4_000,
+  /** Levels of the asset tree (line › machine › component…). */
+  assetDepthMax: 5,
+  quantityMax: 100_000,
+  /** A stretch of work longer than this many minutes is refused (a forgotten timer). */
+  laborMinutesMax: 24 * 60,
+  /** Notices before a planned work order is due. */
+  noticeDays: [1, 0],
+  /** A voice note (report or close by talking): its size, its length and how long the audio is kept. */
+  audioMaxBytes: 10 * 1024 * 1024,
+  audioMaxSeconds: 180,
+  audioRetentionDays: 30,
+  /** An unconfirmed report's voice note (no work order) is deleted after this many hours. */
+  audioOrphanHours: 24,
+} as const;
+
 /** Whistleblowing channel (docs/spec/canal-denuncias.md, Ley 2/2023). */
 export const whistleblowingLimits = {
   /** The account of what happened, and each of its other free-text fields. */

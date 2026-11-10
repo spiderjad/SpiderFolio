@@ -90,6 +90,7 @@ import {
 import { isDarkTheme, setThemePreference } from "@/lib/theme";
 import { cn, formatToday, setAppTimeZone } from "@/lib/utils";
 import { channelApi, channelKeys } from "@/features/whistleblowing/whistleblowing-api";
+import { maintenanceApi, maintenanceKeys } from "@/features/maintenance/maintenance-api";
 import { texts } from "@/i18n";
 import { RestartBanner } from "./restart-banner";
 import { MENU_COLLAPSED_WIDTH, MENU_WIDTH, RAIL_WIDTH } from "./shell-sizes";
@@ -730,7 +731,7 @@ function useAreaNav(membership: Membership) {
     queryKey: [...filesKeys.spaces(slug), "areas"],
     queryFn: () =>
       filesApi.spaces(slug, {
-        area: ["DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT"],
+        area: ["DOCUMENTS", "PREVENTION", "QUALITY", "ENVIRONMENT", "MAINTENANCE"],
         pageSize: AREA_SPACES_SHOWN,
       }),
     select: (page) => page.items,
@@ -754,6 +755,11 @@ function useAreaNav(membership: Membership) {
     () => (environmentOn ? areaSpaces.data?.filter((space) => space.area === "ENVIRONMENT") : []),
     [areaSpaces.data, environmentOn],
   );
+  const maintenanceOn = membership.workspace.maintenance.enabled && role !== "GUEST";
+  const maintenanceSpaces = useMemo(
+    () => (maintenanceOn ? areaSpaces.data?.filter((space) => space.area === "MAINTENANCE") : []),
+    [areaSpaces.data, maintenanceOn],
+  );
   const areas = useMemo(
     () =>
       areasOf(slug, membership, plugins, {
@@ -763,6 +769,7 @@ function useAreaNav(membership: Membership) {
           ...(preventionSpaces === undefined ? {} : { PREVENTION: preventionSpaces }),
           ...(qualitySpaces === undefined ? {} : { QUALITY: qualitySpaces }),
           ...(environmentSpaces === undefined ? {} : { ENVIRONMENT: environmentSpaces }),
+          ...(maintenanceSpaces === undefined ? {} : { MAINTENANCE: maintenanceSpaces }),
         },
       }),
     [
@@ -775,6 +782,7 @@ function useAreaNav(membership: Membership) {
       preventionSpaces,
       qualitySpaces,
       environmentSpaces,
+      maintenanceSpaces,
     ],
   );
   const active = activeAreaOf(pathname, slug, areas);
@@ -815,6 +823,15 @@ function useAreaNav(membership: Membership) {
     queryFn: () => caeApi.documents(slug, { status: "pending" }, undefined, undefined, 1),
     select: (page) => page.total,
     enabled: caeReview,
+  });
+  // Maintenance: the open work orders assigned to the person (technicians only).
+  const maintenanceMine = useQuery({
+    queryKey: maintenanceKeys.counts(slug),
+    queryFn: () => maintenanceApi.counts(slug),
+    select: (data) => data.mine,
+    staleTime: 60_000,
+    enabled:
+      maintenanceOn && (caps.includes("maintenance.work") || caps.includes("maintenance.manage")),
   });
   // The whistleblowing channel: how many cases are new or have a new message (its managers only).
   const channelUnread = useQuery({
@@ -870,6 +887,10 @@ function useAreaNav(membership: Membership) {
         label: texts.expiries.pendingCount(count, expired),
         detail: texts.expiries.countDetail(expired, count - expired),
       };
+    }
+    if (to === `${base}/mantenimiento/ot?mias=1&estado=open` && (maintenanceMine.data ?? 0) > 0) {
+      const count = maintenanceMine.data ?? 0;
+      return { kind: "count", count, tone: "primary", label: texts.maintenance.nav.mine };
     }
     if (to === `${base}/canal` && (channelUnread.data ?? 0) > 0) {
       const count = channelUnread.data ?? 0;

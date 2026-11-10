@@ -150,6 +150,13 @@ export const modelMetadata = {
       envTargets: "EnvTarget",
       envCoolingUnits: "EnvCoolingUnit",
       envCoolingEvents: "EnvCoolingEvent",
+      maintAssets: "MaintAsset",
+      maintCounters: "MaintCounter",
+      maintWorkOrders: "MaintWorkOrder",
+      maintLabor: "MaintLabor",
+      maintPartUses: "MaintPartUse",
+      maintEvents: "MaintEvent",
+      maintRecordings: "MaintRecording",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -422,6 +429,34 @@ export const modelMetadata = {
   EnvCoolingEvent: {
     scope: "tenant",
     relations: { workspace: "Workspace", unit: "EnvCoolingUnit" },
+  },
+  MaintAsset: { scope: "tenant", relations: { workspace: "Workspace" } },
+  MaintCounter: { scope: "tenant", relations: { workspace: "Workspace" } },
+  MaintWorkOrder: {
+    scope: "tenant",
+    relations: {
+      workspace: "Workspace",
+      labor: "MaintLabor",
+      parts: "MaintPartUse",
+      events: "MaintEvent",
+      recordings: "MaintRecording",
+    },
+  },
+  MaintLabor: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },
+  },
+  MaintPartUse: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },
+  },
+  MaintEvent: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },
+  },
+  MaintRecording: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },
   },
   WhistleblowingManager: { scope: "tenant", relations: { workspace: "Workspace" } },
   WhistleblowingCounter: { scope: "tenant", relations: { workspace: "Workspace" } },

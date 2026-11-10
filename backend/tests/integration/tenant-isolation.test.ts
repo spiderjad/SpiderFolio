@@ -2455,6 +2455,102 @@ const cases: IsolationCase[] = [
     path: "/environment/cooling/events/:id",
     url: () => "/environment/cooling/events/x",
   },
+  // Maintenance (docs/spec/mantenimiento.md). The module of B is off: its own reads are 404, except
+  // the owner's setup.
+  { method: "get", path: "/admin/maintenance", url: () => "/admin/maintenance" },
+  {
+    method: "put",
+    path: "/admin/maintenance",
+    url: () => "/admin/maintenance",
+    body: { enabled: false },
+  },
+  { method: "get", path: "/maintenance/assets", url: () => "/maintenance/assets", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/maintenance/assets",
+    url: () => "/maintenance/assets",
+    body: { code: "X-1", name: "Ajeno" },
+  },
+  {
+    method: "get",
+    path: "/maintenance/assets/:id",
+    url: () => "/maintenance/assets/x",
+    ownStatus: 404,
+  },
+  {
+    method: "put",
+    path: "/maintenance/assets/:id",
+    url: () => "/maintenance/assets/x",
+    body: { code: "X-1", name: "Ajeno" },
+  },
+  {
+    method: "get",
+    path: "/maintenance/assets/:id/qr",
+    url: () => "/maintenance/assets/x/qr",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/maintenance/technicians",
+    url: () => "/maintenance/technicians",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/maintenance/work-orders",
+    url: () => "/maintenance/work-orders",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/maintenance/counts", url: () => "/maintenance/counts", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/maintenance/reports",
+    url: () => "/maintenance/reports",
+    body: { title: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/maintenance/work-orders",
+    url: () => "/maintenance/work-orders",
+    body: { title: "Ajena" },
+  },
+  {
+    method: "get",
+    path: "/maintenance/work-orders/:id",
+    url: () => "/maintenance/work-orders/x",
+    ownStatus: 404,
+  },
+  {
+    method: "put",
+    path: "/maintenance/work-orders/:id",
+    url: () => "/maintenance/work-orders/x",
+    body: { title: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/maintenance/work-orders/:id/actions",
+    url: () => "/maintenance/work-orders/x/actions",
+    body: { action: "take" },
+  },
+  { method: "get", path: "/maintenance/voice", url: () => "/maintenance/voice", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/maintenance/voice/report",
+    url: () => "/maintenance/voice/report",
+    body: { text: "Ajena" },
+  },
+  {
+    method: "post",
+    path: "/maintenance/work-orders/:id/voice",
+    url: () => "/maintenance/work-orders/x/voice",
+    body: { text: "Ajena" },
+  },
+  {
+    method: "get",
+    path: "/maintenance/recordings/:id/audio",
+    url: () => "/maintenance/recordings/x/audio",
+    ownStatus: 404,
+  },
 ];
 
 let ctx: TestContext;

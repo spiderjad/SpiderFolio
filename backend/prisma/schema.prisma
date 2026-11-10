@@ -362,6 +362,13 @@ model Workspace {
   envTargets               EnvTarget[]
   envCoolingUnits          EnvCoolingUnit[]
   envCoolingEvents         EnvCoolingEvent[]
+  maintAssets              MaintAsset[]
+  maintCounters            MaintCounter[]
+  maintWorkOrders          MaintWorkOrder[]
+  maintLabor               MaintLabor[]
+  maintPartUses            MaintPartUse[]
+  maintEvents              MaintEvent[]
+  maintRecordings          MaintRecording[]
 }
 
 model Role {
@@ -2544,6 +2551,7 @@ enum SpaceArea {
   PREVENTION
   QUALITY
   ENVIRONMENT
+  MAINTENANCE
 }
 
 /// The area the app opens in (docs/spec/diseno.md 10.4.1).
@@ -2554,6 +2562,7 @@ enum HomeArea {
   PREVENTION
   QUALITY
   ENVIRONMENT
+  MAINTENANCE
   CHANNEL
   ADMIN
 }
@@ -4150,4 +4159,225 @@ model EnvCoolingEvent {
   unit      EnvCoolingUnit @relation(fields: [unitId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, unitId, date])
+}
+
+// ─── Maintenance (docs/spec/mantenimiento.md) ───────────────────────────────────────────────────────
+
+enum MaintCriticality {
+  A
+  B
+  C
+}
+
+enum MaintAssetStatus {
+  OPERATING
+  STOPPED
+  RETIRED
+}
+
+enum MaintWorkKind {
+  CORRECTIVE
+  PREVENTIVE
+  IMPROVEMENT
+  SAFETY
+  HYGIENE
+}
+
+enum MaintPriority {
+  URGENT
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum MaintWorkStatus {
+  REPORTED
+  PLANNED
+  IN_PROGRESS
+  ON_HOLD
+  DONE
+  CLOSED
+  CANCELLED
+}
+
+enum MaintSource {
+  APP
+  AUDIO
+  QR
+  PREVENTIVE
+  API
+}
+
+/// A piece of equipment: a line, a machine or a component (parentId), with its documents folder.
+model MaintAsset {
+  id           String           @id @default(cuid())
+  workspaceId  String
+  /// Unique per company (EMB-02).
+  code         String
+  codeKey      String
+  name         String
+  parentId     String?
+  location     String           @default("")
+  manufacturer String           @default("")
+  model        String           @default("")
+  serial       String           @default("")
+  installedOn  DateTime?        @db.Date
+  criticality  MaintCriticality @default(B)
+  /// In the product zone: a work order on it needs the hygiene release to close.
+  foodContact  Boolean          @default(false)
+  status       MaintAssetStatus @default(OPERATING)
+  /// Its folder in the module's space; no FK.
+  folderId     String?
+  notes        String           @default("")
+  archivedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, codeKey])
+  @@index([workspaceId, parentId])
+}
+
+model MaintCounter {
+  workspaceId String
+  year        Int
+  last        Int
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, year])
+}
+
+/// A work order (OT-AAAA-NNNN).
+model MaintWorkOrder {
+  id                  String          @id @default(cuid())
+  workspaceId         String
+  year                Int
+  number              Int
+  /// The asset (no FK: an archived asset keeps its history).
+  assetId             String?
+  kind                MaintWorkKind   @default(CORRECTIVE)
+  priority            MaintPriority   @default(NORMAL)
+  status              MaintWorkStatus @default(REPORTED)
+  title               String
+  description         String          @default("")
+  /// Memberships; no FK.
+  reportedById        String
+  assignedToId        String?
+  reportedAt          DateTime        @default(now())
+  dueOn               DateTime?       @db.Date
+  startedAt           DateTime?
+  doneAt              DateTime?
+  closedAt            DateTime?
+  holdReason          String          @default("")
+  downtimeMinutes     Int?
+  cause               String          @default("")
+  solution            String          @default("")
+  /// Needs lockout/tagout before starting.
+  lockout             Boolean         @default(false)
+  closedById          String?
+  hygieneReleasedById String?
+  hygieneReleasedAt   DateTime?
+  source              MaintSource     @default(APP)
+  /// Its folder (photos) when it has no asset; no FK.
+  folderId            String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  workspace  Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  labor      MaintLabor[]
+  parts      MaintPartUse[]
+  events     MaintEvent[]
+  recordings MaintRecording[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, year, number])
+  @@index([workspaceId, status, priority])
+  @@index([workspaceId, assetId, reportedAt])
+  @@index([workspaceId, assignedToId, status])
+  @@index([workspaceId, reportedAt, id])
+}
+
+/// A stretch of work by a technician on a work order.
+model MaintLabor {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  workOrderId  String
+  membershipId String
+  startedAt    DateTime
+  endedAt      DateTime?
+  minutes      Int?
+  note         String    @default("")
+  createdAt    DateTime  @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workOrder MaintWorkOrder @relation(fields: [workOrderId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, workOrderId])
+  @@index([workspaceId, membershipId, endedAt])
+}
+
+/// A spare part used on a work order (its code is the warehouse system's).
+model MaintPartUse {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  workOrderId  String
+  partCode     String   @default("")
+  description  String
+  quantity     Decimal  @db.Decimal(12, 3)
+  unit         String   @default("ud")
+  recordedById String
+  createdAt    DateTime @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workOrder MaintWorkOrder @relation(fields: [workOrderId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, workOrderId])
+}
+
+/// A work order's timeline: who changed what and when.
+enum MaintRecordingPurpose {
+  REPORT
+  CLOSE
+}
+
+/// A voice note: who reported or closed a work order by talking (docs/spec/mantenimiento.md, section 3).
+/// The audio is kept 30 days (storageKey, then null); the transcript stays. A report's note has no work
+/// order until the person confirms the proposal; unconfirmed ones are deleted after a day.
+model MaintRecording {
+  id           String                @id @default(cuid())
+  workspaceId  String
+  workOrderId  String?
+  purpose      MaintRecordingPurpose
+  membershipId String
+  storageKey   String?
+  contentType  String
+  size         Int
+  durationMs   Int?
+  transcript   String
+  createdAt    DateTime              @default(now())
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workOrder MaintWorkOrder? @relation(fields: [workOrderId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, workOrderId, createdAt])
+  @@index([createdAt])
+}
+
+model MaintEvent {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  workOrderId  String
+  membershipId String?
+  action       String
+  detail       String   @default("")
+  createdAt    DateTime @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workOrder MaintWorkOrder @relation(fields: [workOrderId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, workOrderId, createdAt])
 }

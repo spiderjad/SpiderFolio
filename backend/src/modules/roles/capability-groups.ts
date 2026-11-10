@@ -46,6 +46,10 @@ export const capabilityGroups = [
     capabilities: ["environment.manage", "environment.view", "environment.record"],
   },
   {
+    id: "maintenance",
+    capabilities: ["maintenance.manage", "maintenance.work", "maintenance.view"],
+  },
+  {
     id: "administration",
     capabilities: ["security.manage", "workspace.settings"],
   },

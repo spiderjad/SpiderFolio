@@ -598,7 +598,7 @@ export async function updateOwnJobTitle(ctx: AdminContext, jobTitle: string | nu
 export async function updateOwnHomeArea(
   ctx: AdminContext,
   homeArea:
-    "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "ADMIN" | null,
+    "HOME" | "DOCUMENTS" | "WIKI" | "PREVENTION" | "QUALITY" | "ENVIRONMENT" | "MAINTENANCE" | "ADMIN" | null,
 ): Promise<void> {
   await ctx.db.membership.update({
     where: { id: ctx.tenant.membershipId },

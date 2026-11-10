@@ -22,6 +22,7 @@ import { safetyRoutes } from "./modules/safety/safety.routes.ts";
 import { qualityRoutes } from "./modules/quality/quality.routes.ts";
 import { whistleblowingRoutes } from "./modules/whistleblowing/whistleblowing.routes.ts";
 import { environmentRoutes } from "./modules/environment/environment.routes.ts";
+import { maintenanceRoutes } from "./modules/maintenance/maintenance.routes.ts";
 import { connectionsRoutes } from "./modules/oauth/connections.routes.ts";
 import { directoryRoutes } from "./modules/directory/directory.routes.ts";
 import { fileRoutes } from "./modules/files/files.routes.ts";
@@ -110,6 +111,7 @@ export function tenantRoutes(deps: AppDeps): TenantRoute[] {
     ...qualityRoutes(deps),
     ...whistleblowingRoutes(deps),
     ...environmentRoutes(deps),
+    ...maintenanceRoutes(deps),
     ...invitationRoutes(deps),
     ...memberRoutes(deps),
     ...directoryRoutes(),

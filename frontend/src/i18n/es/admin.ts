@@ -141,6 +141,21 @@ export const capabilityTexts = {
     description:
       "Lee todo el módulo de medio ambiente sin poder cambiarlo. Pensada para dirección o para preparar una inspección.",
   },
+  "maintenance.manage": {
+    label: "Gestionar mantenimiento",
+    description:
+      "Gestiona los equipos, crea, planifica, asigna, cierra y cancela órdenes de trabajo, y los ajustes del módulo de mantenimiento.",
+  },
+  "maintenance.work": {
+    label: "Trabajar en mantenimiento",
+    description:
+      "Para los técnicos: ven todas las órdenes de trabajo, se las quedan, anotan tiempos y repuestos y las dan por hechas.",
+  },
+  "maintenance.view": {
+    label: "Ver mantenimiento",
+    description:
+      "Lee los equipos y todas las órdenes de trabajo sin cambiarlos. Pensada para dirección o calidad.",
+  },
   "environment.record": {
     label: "Registrar retiradas de residuos",
     description:
@@ -157,6 +172,7 @@ export const capabilityGroupTexts = {
   safety: "Seguridad y salud laboral",
   quality: "Calidad",
   environment: "Medio ambiente",
+  maintenance: "Mantenimiento",
   administration: "Administración",
   plugins: "Plugins",
 } as const;

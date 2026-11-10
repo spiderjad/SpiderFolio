@@ -11,4 +11,5 @@ import "../safety/cae-expiry.ts";
 import "../quality/quality-expiry.ts";
 import "../whistleblowing/whistleblowing-expiry.ts";
 import "../environment/environment-expiry.ts";
+import "../maintenance/maintenance-expiry.ts";
 import "./node-expiry.ts";

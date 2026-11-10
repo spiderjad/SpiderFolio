@@ -52,7 +52,8 @@ export interface NotificationView {
     | "quality_label"
     | "quality_change"
     | "whistleblowing"
-    | "environment_discharge";
+    | "environment_discharge"
+    | "maintenance_work_order";
   createdAt: string;
   readAt: string | null;
   actor: { id: string; name: string } | null;
@@ -154,6 +155,9 @@ function pathOf(
     return `/app/${slug}/calidad/cambios/${item.detail ?? ""}`;
   }
   if (item.kind === "environment_discharge") return `/app/${slug}/medio-ambiente/vertidos`;
+  if (item.kind === "maintenance_work_order") {
+    return `/app/${slug}/mantenimiento/ot/${item.detail ?? ""}`;
+  }
   // Never a case's id: the notice only says there's something new.
   if (item.kind === "whistleblowing") {
     return item.detail === "managers" ? `/app/${slug}` : `/app/${slug}/canal`;
@@ -197,6 +201,9 @@ function text(item: NotificationView, plugins: readonly FrontendPlugin[]): strin
   if (item.kind === "quality_label") return t.qualityLabel(item.actor?.name ?? "");
   if (item.kind === "quality_change") return t.qualityChange(item.actor?.name ?? "");
   if (item.kind === "environment_discharge") return t.environmentDischarge;
+  if (item.kind === "maintenance_work_order") {
+    return texts.maintenance.notifications.workOrder(item.actor?.name ?? "");
+  }
   if (item.kind === "whistleblowing") {
     const notice = texts.whistleblowing.notifications;
     return item.detail === "message"

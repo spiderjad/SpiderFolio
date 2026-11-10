@@ -232,8 +232,9 @@ describe("roles del panel", () => {
     const body = res.body as { groups: { id: string }[]; all: string[]; grantable: string[] };
     expect(body.groups.map((g) => g.id)).toContain("members");
     // 24 plus CAE's two (docs/spec/cae.md), in the safety group, quality's two (docs/spec/calidad.md)
-    // and the environment's three (docs/spec/medio-ambiente.md), each in their own group.
-    expect(body.all).toHaveLength(31);
+    // the environment's three (docs/spec/medio-ambiente.md) and maintenance's three
+    // (docs/spec/mantenimiento.md), each in their own group.
+    expect(body.all).toHaveLength(34);
     expect(body.all).toEqual(
       expect.arrayContaining(["cae.manage", "cae.check", "quality.manage", "quality.view"]),
     );
@@ -245,6 +246,9 @@ describe("roles del panel", () => {
     });
     expect(body.groups.find((g) => g.id === "environment")).toMatchObject({
       capabilities: ["environment.manage", "environment.view", "environment.record"],
+    });
+    expect(body.groups.find((g) => g.id === "maintenance")).toMatchObject({
+      capabilities: ["maintenance.manage", "maintenance.work", "maintenance.view"],
     });
     expect(body.grantable).toEqual(body.all);
   });

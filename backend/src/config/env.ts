@@ -60,6 +60,11 @@ export const envSchema = z
     ),
     /** HTML → PDF para el PDF controlado (Gotenberg; solo red interna). Vacío: sin PDF de páginas. */
     GOTENBERG_URL: z.preprocess(emptyToUndefined, z.url().optional()),
+    /**
+     * Audio → text for reporting and closing work orders by talking (Whisper self-hosted, the
+     * openai-whisper-asr-webservice API; internal network only). Empty: the browser's speech recognition.
+     */
+    WHISPER_URL: z.preprocess(emptyToUndefined, z.url().optional()),
     /** Versión vigente de los Términos y la Política de privacidad; al cambiarla se pide aceptar de nuevo. */
     TERMS_VERSION: z.preprocess(emptyToUndefined, z.string().min(1).max(40).default("2026-10-01")),
     SENTRY_DSN: z.preprocess(emptyToUndefined, z.url().optional()),
