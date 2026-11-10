@@ -13,6 +13,8 @@ import type {
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
 import { offsetArgs, pageOf, type Page } from "../../lib/pagination.ts";
 import { maintenanceTexts, qualityTexts } from "../../i18n/index.ts";
+import { atLeast } from "../access/access.ts";
+import { accessFor } from "../access/access-context.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { dayOf, resolveExpiry, setExpiry } from "../expiries/expiries.service.ts";
 import { companyToday } from "../quality/prps.service.ts";
@@ -419,10 +421,12 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
     nc: nc === null ? null : { id: nc.id, code: qualityTexts.code(nc.year, nc.number) },
     plan,
     checklist: checklistOf(row.checklist),
-    suggestion:
+    suggestion: await visibleSuggestion(
+      ctx,
       suggestion === null
         ? null
         : suggestionView(suggestion, names.get(suggestion.membershipId) ?? ""),
+    ),
     recordings: recordings.map((entry) => ({
       id: entry.id,
       purpose: entry.purpose,
@@ -508,6 +512,32 @@ export async function assertTechnician(db: TenantDb, id: string | null): Promise
     select: { id: true },
   });
   if (row === null) throw notFound();
+}
+
+/**
+ * The suggestion as this person may see it: only maintenance (not whoever just reported), and without
+ * the documents they can't open nor the causes taken from them. It was made with the documents its
+ * author could see.
+ */
+async function visibleSuggestion(
+  ctx: AdminContext,
+  suggestion: SuggestionView | null,
+): Promise<SuggestionView | null> {
+  if (suggestion === null || !canViewMaintenance(ctx)) return null;
+  const documents = suggestion.sources.filter((source) => source.kind === "document");
+  if (documents.length === 0) return suggestion;
+  const access = await accessFor(ctx, { nodeIds: documents.map((source) => source.id) });
+  const hidden = new Set(
+    documents
+      .filter((source) => !atLeast(access.ofNode(source.id), "VIEW"))
+      .map((source) => source.ref),
+  );
+  if (hidden.size === 0) return suggestion;
+  return {
+    ...suggestion,
+    causes: suggestion.causes.filter((cause) => !cause.sources.some((ref) => hidden.has(ref))),
+    sources: suggestion.sources.filter((source) => !hidden.has(source.ref)),
+  };
 }
 
 /** The steps of a work order, as stored ([{ text, done }]); anything else is dropped. */
