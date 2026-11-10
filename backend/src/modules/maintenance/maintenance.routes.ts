@@ -9,6 +9,7 @@ import { clientIp, sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import { assetQr, createAsset, getAsset, listAssets, updateAsset } from "./assets.service.ts";
+import { rateSuggestion, suggestResolution } from "./suggest.service.ts";
 import { requireAny } from "./maintenance-access.ts";
 import { getMaintenanceSettings, updateMaintenanceSettings } from "./maintenance.service.ts";
 import {
@@ -316,6 +317,28 @@ export function maintenanceRoutes(deps: AppDeps): TenantRoute[] {
         const { id } = IdParams.parse(req.params);
         const input = voiceInputOf(req);
         res.json(await closeByVoice(adminContextOf(req), voice, id, input, abortOnClose(res)));
+      },
+    },
+    // ─── Suggest a resolution (section 4) ───
+    {
+      method: "post",
+      path: "/maintenance/work-orders/:id/suggestion",
+      guards: [voiceLimit],
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          suggestion: await suggestResolution(adminContextOf(req), voice, id, abortOnClose(res)),
+        });
+      },
+    },
+    {
+      method: "put",
+      path: "/maintenance/work-orders/:id/suggestion/:suggestionId",
+      handler: async (req, res) => {
+        const { id, suggestionId } = z.object({ id: Id, suggestionId: Id }).parse(req.params);
+        const { useful } = z.strictObject({ useful: z.boolean() }).parse(req.body);
+        await rateSuggestion(adminContextOf(req), id, suggestionId, useful);
+        res.status(204).end();
       },
     },
     {

@@ -168,6 +168,7 @@ export interface WorkOrderDetail extends WorkOrderSummary {
   nc: { id: string; code: string } | null;
   plan: { id: string; name: string } | null;
   checklist: { text: string; done: boolean }[];
+  suggestion: Suggestion | null;
   recordings: {
     id: string;
     purpose: "REPORT" | "CLOSE";
@@ -177,6 +178,30 @@ export interface WorkOrderDetail extends WorkOrderSummary {
     createdAt: string;
   }[];
   can: { edit: boolean; work: boolean; close: boolean; releaseHygiene: boolean };
+}
+
+/** «Suggest a resolution» (docs/spec/mantenimiento.md, section 4). */
+export interface Suggestion {
+  id: string;
+  causes: {
+    cause: string;
+    likelihood: "high" | "medium" | "low";
+    steps: string[];
+    sources: string[];
+  }[];
+  note: string;
+  sources: {
+    ref: string;
+    kind: "work_order" | "document";
+    id: string;
+    label: string;
+    spaceId: string | null;
+    nodeType: string | null;
+    parentId: string | null;
+  }[];
+  useful: boolean | null;
+  by: string;
+  createdAt: string;
 }
 
 /** Reporting and closing by talking (docs/spec/mantenimiento.md, section 3). */
@@ -346,6 +371,13 @@ export const maintenanceApi = {
     return api<VoiceResult<CloseProposal>>(m(slug, `/work-orders/${id}/voice${suffix}`), options);
   },
   recordingAudio: (slug: string, id: string) => apiBlob(m(slug, `/recordings/${id}/audio`)),
+  suggest: (slug: string, id: string) =>
+    api<{ suggestion: Suggestion }>(m(slug, `/work-orders/${id}/suggestion`), { method: "POST" }),
+  rateSuggestion: (slug: string, id: string, suggestionId: string, useful: boolean) =>
+    api<undefined>(m(slug, `/work-orders/${id}/suggestion/${suggestionId}`), {
+      method: "PUT",
+      body: { useful },
+    }),
   createWorkOrder: (slug: string, body: WorkOrderInput) =>
     api<{ workOrder: WorkOrderDetail }>(m(slug, "/work-orders"), { method: "POST", body }),
   workOrder: (slug: string, id: string) =>

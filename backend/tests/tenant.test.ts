@@ -422,6 +422,7 @@ describe("forTenant: transacciones", () => {
           "maintPartUse",
           "maintPlan",
           "maintRecording",
+          "maintSuggestion",
           "maintWorkOrder",
           "membership",
           "mention",

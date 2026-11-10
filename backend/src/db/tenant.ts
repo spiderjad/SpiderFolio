@@ -427,6 +427,10 @@ export interface TenantDb {
     "findFirst" | "findMany" | "create" | "update"
   >;
   maintMeterReading: TenantDelegate<PrismaClient["maintMeterReading"], "findMany" | "create">;
+  maintSuggestion: TenantDelegate<
+    PrismaClient["maintSuggestion"],
+    "findFirst" | "create" | "update"
+  >;
   envCoolingEvent: TenantDelegate<
     PrismaClient["envCoolingEvent"],
     "findFirst" | "findMany" | "create" | "delete"
@@ -784,6 +788,7 @@ const delegates = {
   maintPlan: { model: "MaintPlan", ops: ["findFirst", "findMany", "count", "create", "update"] },
   maintMeter: { model: "MaintMeter", ops: ["findFirst", "findMany", "create", "update"] },
   maintMeterReading: { model: "MaintMeterReading", ops: ["findMany", "create"] },
+  maintSuggestion: { model: "MaintSuggestion", ops: ["findFirst", "create", "update"] },
   qualityLot: {
     model: "QualityLot",
     ops: ["findFirst", "findMany", "count", "create", "update", "delete"],

@@ -2557,6 +2557,17 @@ const cases: IsolationCase[] = [
     url: () => "/maintenance/recordings/x/audio",
     ownStatus: 404,
   },
+  {
+    method: "post",
+    path: "/maintenance/work-orders/:id/suggestion",
+    url: () => "/maintenance/work-orders/x/suggestion",
+  },
+  {
+    method: "put",
+    path: "/maintenance/work-orders/:id/suggestion/:suggestionId",
+    url: () => "/maintenance/work-orders/x/suggestion/y",
+    body: { useful: true },
+  },
   { method: "get", path: "/maintenance/plans", url: () => "/maintenance/plans", ownStatus: 404 },
   {
     method: "post",

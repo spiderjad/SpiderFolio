@@ -42,7 +42,7 @@ function recognitionClass(): (new () => Recognition) | null {
  * Whether voice notes are offered here: Bian on for the company and a browser that can take one.
  * `serverTranscription` says how (the server's Whisper or the browser's dictation).
  */
-export function useVoice(): { available: boolean; serverTranscription: boolean } {
+export function useVoice(): { available: boolean; serverTranscription: boolean; ai: boolean } {
   const { workspaceSlug = "" } = useParams();
   const status = useQuery({
     queryKey: maintenanceKeys.voice(workspaceSlug),
@@ -55,6 +55,8 @@ export function useVoice(): { available: boolean; serverTranscription: boolean }
   return {
     available: voice?.available === true && canCaptureVoice(serverTranscription),
     serverTranscription,
+    // Bian is on for the company (suggesting a resolution needs no microphone).
+    ai: voice?.available === true,
   };
 }
 

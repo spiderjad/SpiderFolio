@@ -20,6 +20,7 @@ import {
   type WorkOrderDetail,
 } from "./maintenance-api";
 import { PriorityBadge, StatusBadge, todayDay } from "./maintenance-common";
+import { SuggestionCard } from "./suggestion-card";
 import { useVoice } from "./voice-capture";
 import { VoiceCloseDialog, VoiceNotes } from "./voice-close";
 import { WorkOrderDialog } from "./work-orders-page";
@@ -270,6 +271,11 @@ export function WorkOrderPage() {
               </p>
             )}
           </Section>
+
+          {/* Breakdowns only: a preventive or a calibration follows its plan's tasks. */}
+          {data.kind !== "PREVENTIVE" && data.kind !== "CALIBRATION" && (
+            <SuggestionCard data={data} canAsk={voice.ai && data.can.work && open} />
+          )}
 
           {data.checklist.length > 0 && (
             <Section

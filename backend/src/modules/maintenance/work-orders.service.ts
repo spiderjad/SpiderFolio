@@ -29,6 +29,7 @@ import {
   requireWork,
 } from "./maintenance-access.ts";
 import { planWorkFinished } from "./plans.service.ts";
+import { suggestionView, type SuggestionView } from "./suggestion-view.ts";
 import { maintenanceEnabled, noteOnNc } from "./quality-link.ts";
 
 export const WORK_ORDER_EXPIRY = "maintenance.work_order";
@@ -82,6 +83,8 @@ export interface WorkOrderDetail extends WorkOrderSummary {
   totalMinutes: number;
   parts: { id: string; partCode: string; description: string; quantity: number; unit: string }[];
   events: { id: string; action: string; detail: string; who: string | null; createdAt: Date }[];
+  /** The latest «Suggest a resolution» (section 4), if any. */
+  suggestion: SuggestionView | null;
   /** The preventive plan that generated it (section 5), and its steps. */
   plan: { id: string; name: string } | null;
   checklist: { text: string; done: boolean }[];
@@ -311,7 +314,7 @@ async function rowOf(ctx: AdminContext, id: string) {
 export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkOrderDetail> {
   await requireMaintenance(ctx);
   const row = await rowOf(ctx, id);
-  const [labor, parts, events, recordings, nc, plan] = await Promise.all([
+  const [labor, parts, events, recordings, nc, plan, suggestion] = await Promise.all([
     ctx.db.maintLabor.findMany({
       where: { workOrderId: id },
       orderBy: [{ startedAt: "asc" }, { id: "asc" }],
@@ -357,8 +360,14 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
     row.planId === null
       ? Promise.resolve(null)
       : ctx.db.maintPlan.findFirst({ where: { id: row.planId }, select: { id: true, name: true } }),
+    ctx.db.maintSuggestion.findFirst({
+      where: { workOrderId: id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, content: true, useful: true, createdAt: true, membershipId: true },
+    }),
   ]);
   const names = await namesOf(ctx.db, [
+    suggestion?.membershipId ?? null,
     ...recordings.map((entry) => entry.membershipId),
     row.closedById,
     row.hygieneReleasedById,
@@ -410,6 +419,10 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
     nc: nc === null ? null : { id: nc.id, code: qualityTexts.code(nc.year, nc.number) },
     plan,
     checklist: checklistOf(row.checklist),
+    suggestion:
+      suggestion === null
+        ? null
+        : suggestionView(suggestion, names.get(suggestion.membershipId) ?? ""),
     recordings: recordings.map((entry) => ({
       id: entry.id,
       purpose: entry.purpose,

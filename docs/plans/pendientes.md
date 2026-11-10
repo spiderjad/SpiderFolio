@@ -77,7 +77,8 @@ Hay que analizar y decidir con él, sin código todavía:
       **Fase 1 hecha** (equipos con QR, OT con su ciclo, tiempos, repuestos, liberación higiénica), sin probar
       por el mantenedor. **Fase 2 hecha** el 10/11/2026 (avisar y cerrar hablando, Whisper autoalojado con
       el perfil `audio`), probada. **Fase 3 hecha** el 10/11/2026 (preventivo, contadores, calibración), sin
-      probar por el mantenedor. Sigue la fase 4 (resolución con IA).
+      probar por el mantenedor. **Fase 4 hecha** (sugerir resolución con IA), sin probar. Sigue la fase 5
+      (repuestos y stock del SGA).
       **Enlace con Calidad** (pedido 10/11/2026, spec sección 8, por aprobar): equipo en PCC y formularios
       de vigilancia (cámaras, secaderos), lectura fuera de límite → OT urgente enlazada con la NC, y la NC
       ve el estado de su OT.

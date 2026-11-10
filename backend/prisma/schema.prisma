@@ -372,6 +372,7 @@ model Workspace {
   maintPlans               MaintPlan[]
   maintMeters              MaintMeter[]
   maintMeterReadings       MaintMeterReading[]
+  maintSuggestions         MaintSuggestion[]
 }
 
 model Role {
@@ -4299,11 +4300,12 @@ model MaintWorkOrder {
   /// The plan's steps, copied when generated: [{ text, done }].
   checklist           Json            @default("[]")
 
-  workspace  Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  labor      MaintLabor[]
-  parts      MaintPartUse[]
-  events     MaintEvent[]
-  recordings MaintRecording[]
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  labor       MaintLabor[]
+  parts       MaintPartUse[]
+  events      MaintEvent[]
+  recordings  MaintRecording[]
+  suggestions MaintSuggestion[]
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, year, number])
@@ -4462,6 +4464,28 @@ model MaintMeterReading {
   meter     MaintMeter @relation(fields: [meterId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, meterId, readAt])
+}
+
+/// «Suggest a resolution» (docs/spec/mantenimiento.md, section 4): what the AI suggested for a work order,
+/// from the equipment's history and its manuals, and whether it helped. Only a suggestion: it never
+/// changes the work order.
+model MaintSuggestion {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  workOrderId  String
+  membershipId String
+  /// { causes: [{ cause, likelihood, steps, sources }], sources: [{ ref, kind, id, label }] }.
+  content      Json
+  /// Did it help? null until the technician says.
+  useful       Boolean?
+  model        String
+  createdAt    DateTime @default(now())
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workOrder MaintWorkOrder @relation(fields: [workOrderId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, workOrderId, createdAt])
 }
 
 model MaintEvent {

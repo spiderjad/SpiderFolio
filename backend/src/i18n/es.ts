@@ -2109,7 +2109,11 @@ export const maintenanceTexts = {
     transcribeFailed: "No pudimos pasar el audio a texto. Prueba de nuevo o escríbelo.",
     nothingHeard: "No se entendió nada en la grabación. Prueba de nuevo, más cerca del móvil.",
     proposalFailed: "La IA no pudo preparar la propuesta. Rellénalo a mano.",
-    planFrequency: "Elige cada cuánto: por tiempo (días, semanas o meses) o por uso (un contador), no los dos.",
+    suggestKind:
+      "La sugerencia es para averías: una preventiva o una calibración sigue las tareas de su plan.",
+    suggestFailed: "La IA no pudo preparar la sugerencia. Prueba de nuevo en un rato.",
+    planFrequency:
+      "Elige cada cuánto: por tiempo (días, semanas o meses) o por uso (un contador), no los dos.",
     readingLower: (last: number) =>
       `La lectura no puede ser menor que la última (${String(last)}). Si cambiaron el contador, crea uno nuevo.`,
   },

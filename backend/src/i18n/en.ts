@@ -2092,14 +2092,19 @@ export const maintenanceTexts: Catalog<typeof Es.maintenanceTexts> = {
     noTimer: "You have no timer running on this work order.",
     tooLong: "That time is too long: check the start time.",
     archived: "The equipment is archived.",
-    voiceOff: "Reporting and closing by talking needs Bian, the AI assistant, turned on for the company.",
+    voiceOff:
+      "Reporting and closing by talking needs Bian, the AI assistant, turned on for the company.",
     noTranscriber: "This server doesn't transcribe audio: use the browser's dictation or type it.",
     audioTooLarge: "The recording is too long. Record up to 3 minutes.",
     audioFormat: "We don't recognise that audio format.",
     transcribeFailed: "We couldn't turn the audio into text. Try again or type it.",
     nothingHeard: "Nothing could be made out in the recording. Try again, closer to the phone.",
     proposalFailed: "The AI couldn't prepare the proposal. Fill it in by hand.",
-    planFrequency: "Choose how often: by time (days, weeks or months) or by use (a meter), not both.",
+    suggestKind:
+      "Suggestions are for breakdowns: a preventive or a calibration follows its plan's tasks.",
+    suggestFailed: "The AI couldn't prepare the suggestion. Try again in a while.",
+    planFrequency:
+      "Choose how often: by time (days, weeks or months) or by use (a meter), not both.",
     readingLower: (last: number) =>
       `The reading can't be lower than the last one (${String(last)}). If the meter was replaced, create a new one.`,
   },

@@ -235,6 +235,12 @@ usuario + PIN.
    **Preventivo** (planes y contadores), tareas a marcar en la OT, y en Calidad › Prerrequisitos la tarjeta
    «Calibraciones de Mantenimiento» (solo lectura, decisión 5).
 4. **Resolución con IA**: sugerencia con historial y manuales, valoración.
+   **Hecha el 10/11/2026**, sin probar por el mantenedor. Migración `maintenance_suggestions`
+   (`MaintSuggestion`). `suggest.service.ts`: el historial resuelto del equipo y de los del mismo modelo
+   (hasta 30, con sus repuestos), los fragmentos de documentos que Bian encuentra para el equipo y el
+   síntoma (solo lo que la persona puede ver) y el modelo de Bian con salida JSON fija; solo se guardan
+   las fuentes que existen y que cita. Una consulta de IA. En la ficha de la OT, «Sugerir resolución» con
+   las causas, sus pasos, sus fuentes enlazadas y «Útil / No útil».
 5. **Repuestos y stock**: punto de extensión para plugins, API de integración con token, catálogo de solo
    lectura, consumo.
 6. **Indicadores** y Resumen.
