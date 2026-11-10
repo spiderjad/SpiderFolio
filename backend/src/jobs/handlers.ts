@@ -1,5 +1,7 @@
 // Handlers del worker. Reciben sus dependencias por parámetro para poder probarlos.
 import { maintenanceLimits } from "@spiderfolio/limits";
+import { generateDue } from "../modules/maintenance/plans.service.ts";
+import { companyToday } from "../modules/quality/prps.service.ts";
 import { dayIn, formatDayIn, zoneOf } from "../lib/time-zone.ts";
 import * as Sentry from "@sentry/node";
 import type { Logger } from "pino";
@@ -873,6 +875,36 @@ export async function cleanupExpiredUploads(
 }
 
 /** Limpieza horaria (UTC): contadores de rate limit, sesiones y tokens vencidos. */
+/**
+ * Preventive maintenance (docs/spec/mantenimiento.md, section 5): every company with plans gets the work
+ * orders of the ones that are due, on its own day. Each company apart: one failing doesn't stop the rest.
+ */
+export async function generatePreventive(
+  deps: Pick<WorkerDeps, "prisma" | "logger">,
+  payload: unknown,
+): Promise<number> {
+  MaintenanceJobSchema.parse(payload ?? {});
+  const groups = await deps.prisma.maintPlan.groupBy({
+    by: ["workspaceId"],
+    where: { archivedAt: null },
+    orderBy: { workspaceId: "asc" },
+  });
+  let created = 0;
+  for (const { workspaceId } of groups) {
+    const db = forTenant(deps.prisma, workspaceId);
+    try {
+      created += await generateDue(
+        { db, info: { actorId: "", ip: null, userAgent: null } },
+        await companyToday(db),
+      );
+    } catch (error) {
+      deps.logger.error({ err: error, workspaceId }, "Preventivo: no se pudieron generar las OT");
+    }
+  }
+  if (created > 0) deps.logger.info({ created }, "OT preventivas generadas");
+  return created;
+}
+
 /**
  * Maintenance voice notes (docs/spec/mantenimiento.md, section 3): the audio is deleted after 30 days
  * (the transcript stays), and a report's note never confirmed, after a day. Of every company.

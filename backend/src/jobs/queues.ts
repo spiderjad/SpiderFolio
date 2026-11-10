@@ -100,6 +100,11 @@ export const queues = {
     schema: EmailJobSchema,
     options: { retryLimit: 0, deleteAfterSeconds: 14 * 24 * 3600 },
   },
+  // Preventive maintenance: the plans that are due get their work order (docs/spec/mantenimiento.md, 5).
+  "maintenance-plans": {
+    schema: MaintenanceJobSchema,
+    options: { retryLimit: 2, expireInSeconds: 900, deleteAfterSeconds: 7 * 24 * 3600 },
+  },
   "maintenance-cleanup": {
     schema: MaintenanceJobSchema,
     options: { retryLimit: 2, expireInSeconds: 300, deleteAfterSeconds: 7 * 24 * 3600 },
@@ -221,6 +226,7 @@ export type QueuePayload<Q extends QueueName> = z.infer<(typeof queues)[Q]["sche
  */
 export const schedules = [
   { queue: "maintenance-cleanup", cron: "15 * * * *", tz: "UTC" },
+  { queue: "maintenance-plans", cron: "35 * * * *", tz: "UTC" },
   { queue: "uploads-cleanup", cron: "*/15 * * * *", tz: "UTC" },
   { queue: "trash-expire", cron: "30 3 * * *", tz: "UTC" },
   { queue: "audit-retention", cron: "20 4 * * 0", tz: "UTC" },

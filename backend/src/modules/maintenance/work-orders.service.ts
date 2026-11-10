@@ -28,6 +28,7 @@ import {
   requireManage,
   requireWork,
 } from "./maintenance-access.ts";
+import { planWorkFinished } from "./plans.service.ts";
 import { maintenanceEnabled, noteOnNc } from "./quality-link.ts";
 
 export const WORK_ORDER_EXPIRY = "maintenance.work_order";
@@ -81,6 +82,9 @@ export interface WorkOrderDetail extends WorkOrderSummary {
   totalMinutes: number;
   parts: { id: string; partCode: string; description: string; quantity: number; unit: string }[];
   events: { id: string; action: string; detail: string; who: string | null; createdAt: Date }[];
+  /** The preventive plan that generated it (section 5), and its steps. */
+  plan: { id: string; name: string } | null;
+  checklist: { text: string; done: boolean }[];
   /** The quality nonconformity it's for (section 8), if any. */
   nc: { id: string; code: string } | null;
   /** Voice notes (section 3): the transcript stays; the audio, 30 days. */
@@ -153,7 +157,8 @@ export type WorkAction =
   | { action: "labor"; minutes: number; note: string; day: string }
   | { action: "remove_labor"; laborId: string }
   | { action: "part"; partCode: string; description: string; quantity: number; unit: string }
-  | { action: "remove_part"; partId: string };
+  | { action: "remove_part"; partId: string }
+  | { action: "check"; index: number; done: boolean };
 
 const summarySelect = {
   id: true,
@@ -174,7 +179,7 @@ const summarySelect = {
 
 type SummaryRow = Prisma.MaintWorkOrderGetPayload<{ select: typeof summarySelect }>;
 
-async function namesOf(db: TenantDb, ids: (string | null)[]): Promise<Map<string, string>> {
+export async function namesOf(db: TenantDb, ids: (string | null)[]): Promise<Map<string, string>> {
   const unique = [...new Set(ids.filter((id): id is string => id !== null))];
   if (unique.length === 0) return new Map();
   const rows = await db.membership.findMany({
@@ -290,6 +295,8 @@ const detailSelect = {
   hygieneReleasedById: true,
   hygieneReleasedAt: true,
   ncId: true,
+  planId: true,
+  checklist: true,
 } as const;
 
 async function rowOf(ctx: AdminContext, id: string) {
@@ -304,7 +311,7 @@ async function rowOf(ctx: AdminContext, id: string) {
 export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkOrderDetail> {
   await requireMaintenance(ctx);
   const row = await rowOf(ctx, id);
-  const [labor, parts, events, recordings, nc] = await Promise.all([
+  const [labor, parts, events, recordings, nc, plan] = await Promise.all([
     ctx.db.maintLabor.findMany({
       where: { workOrderId: id },
       orderBy: [{ startedAt: "asc" }, { id: "asc" }],
@@ -347,6 +354,9 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
           where: { id: row.ncId },
           select: { id: true, year: true, number: true },
         }),
+    row.planId === null
+      ? Promise.resolve(null)
+      : ctx.db.maintPlan.findFirst({ where: { id: row.planId }, select: { id: true, name: true } }),
   ]);
   const names = await namesOf(ctx.db, [
     ...recordings.map((entry) => entry.membershipId),
@@ -398,6 +408,8 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
       createdAt: entry.createdAt,
     })),
     nc: nc === null ? null : { id: nc.id, code: qualityTexts.code(nc.year, nc.number) },
+    plan,
+    checklist: checklistOf(row.checklist),
     recordings: recordings.map((entry) => ({
       id: entry.id,
       purpose: entry.purpose,
@@ -470,7 +482,7 @@ async function assertAsset(db: TenantDb, id: string | null): Promise<void> {
 }
 
 /** The assignee must be an active member who works on maintenance. */
-async function assertTechnician(db: TenantDb, id: string | null): Promise<void> {
+export async function assertTechnician(db: TenantDb, id: string | null): Promise<void> {
   if (id === null) return;
   const row = await db.membership.findFirst({
     where: {
@@ -485,14 +497,28 @@ async function assertTechnician(db: TenantDb, id: string | null): Promise<void> 
   if (row === null) throw notFound();
 }
 
-async function insert(
-  ctx: AdminContext,
+/** The steps of a work order, as stored ([{ text, done }]); anything else is dropped. */
+export function checklistOf(value: unknown): { text: string; done: boolean }[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((step: unknown) => {
+    if (typeof step !== "object" || step === null) return [];
+    const { text, done } = step as { text?: unknown; done?: unknown };
+    return typeof text === "string" ? [{ text, done: done === true }] : [];
+  });
+}
+
+/** Creates a work order (its number, timeline, expiry, audit and notices). `actorId` reports it. */
+export async function insertWorkOrder(
+  ctx: Pick<AdminContext, "db" | "info">,
+  actorId: string,
   input: ReportInput & {
     kind: MaintWorkKind;
     assignedToId: string | null;
     dueOn: string | null;
     lockout: boolean;
     ncId?: string | null;
+    planId?: string | null;
+    checklist?: string[];
   },
 ): Promise<string> {
   const year = Number((await companyToday(ctx.db)).slice(0, 4));
@@ -514,17 +540,19 @@ async function insert(
         kind: input.kind,
         priority: input.priority,
         status: planned ? "PLANNED" : "REPORTED",
-        reportedById: ctx.tenant.membershipId,
+        reportedById: actorId,
         assignedToId: input.assignedToId,
         dueOn: input.dueOn === null ? null : dateOf(input.dueOn),
         lockout: input.lockout,
         source: input.source,
         ncId: input.ncId ?? null,
+        planId: input.planId ?? null,
+        checklist: (input.checklist ?? []).map((text) => ({ text, done: false })),
       },
       select: { id: true, status: true, dueOn: true, assignedToId: true, year: true, number: true },
     });
   });
-  await event(ctx.db, row.id, ctx.tenant.membershipId, "reported");
+  await event(ctx.db, row.id, actorId, "reported");
   await syncExpiry(ctx.db, row);
   await auditAdmin(ctx, {
     action: "maintenance.work_order.create",
@@ -540,7 +568,7 @@ async function insert(
     ...(input.assignedToId === null ? [] : [input.assignedToId]),
     ...(input.priority === "URGENT" ? await maintenanceManagers(ctx.db) : []),
   ];
-  await notify(ctx.db, to, ctx.tenant.membershipId, row.id);
+  await notify(ctx.db, to, actorId, row.id);
   return row.id;
 }
 
@@ -566,7 +594,7 @@ export async function reportWorkOrder(
     if (recording === null) throw notFound();
   }
   const { recordingId, ...fields } = input;
-  const id = await insert(ctx, {
+  const id = await insertWorkOrder(ctx, ctx.tenant.membershipId, {
     ...fields,
     // Whoever only reports doesn't decide the source beyond the app, the QR or their voice.
     source: recordingId !== null ? "AUDIO" : input.source === "QR" ? "QR" : "APP",
@@ -620,7 +648,7 @@ export async function workOrderForNc(
       return { id: open.id, code: codeOf(open), created: false };
     }
   }
-  const id = await insert(ctx, {
+  const id = await insertWorkOrder(ctx, ctx.tenant.membershipId, {
     title: `${nc.code} · ${nc.title}`.slice(0, maintenanceLimits.nameMax),
     description: nc.description.slice(0, maintenanceLimits.textMax),
     assetId,
@@ -696,7 +724,7 @@ export async function createWorkOrder(
   await requireManage(ctx);
   await assertAsset(ctx.db, input.assetId);
   await assertTechnician(ctx.db, input.assignedToId);
-  const id = await insert(ctx, { ...input, source: "APP" });
+  const id = await insertWorkOrder(ctx, ctx.tenant.membershipId, { ...input, source: "APP" });
   return await getWorkOrder(ctx, id);
 }
 
@@ -961,6 +989,17 @@ export async function actOnWorkOrder(
       });
       detail = `${input.partCode} ${input.description} × ${String(input.quantity)}`.trim();
       break;
+    case "check": {
+      await requireWork(ctx);
+      if (!open) throw wrongState();
+      const steps = checklistOf(row.checklist);
+      const step = steps[input.index];
+      if (step === undefined) throw notFound();
+      step.done = input.done;
+      await update({ checklist: steps });
+      detail = `${input.done ? "✓" : "✗"} ${step.text}`;
+      break;
+    }
     case "remove_part": {
       await requireWork(ctx);
       if (FINAL.includes(row.status)) throw wrongState();
@@ -974,6 +1013,10 @@ export async function actOnWorkOrder(
     }
   }
   await event(ctx.db, id, me, input.action, detail);
+  // Its plan moves on to the next one when it's done or cancelled (section 5).
+  if ((input.action === "done" || input.action === "cancel") && row.planId !== null) {
+    await planWorkFinished(ctx, row.planId, input.action);
+  }
   // Its nonconformity hears when it's done, closed, cancelled or reopened (section 8).
   if (["done", "close", "cancel", "reopen"].includes(input.action) && row.ncId !== null) {
     const after = await ctx.db.maintWorkOrder.findFirst({

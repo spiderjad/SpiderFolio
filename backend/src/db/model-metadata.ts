@@ -157,6 +157,9 @@ export const modelMetadata = {
       maintPartUses: "MaintPartUse",
       maintEvents: "MaintEvent",
       maintRecordings: "MaintRecording",
+      maintPlans: "MaintPlan",
+      maintMeters: "MaintMeter",
+      maintMeterReadings: "MaintMeterReading",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -457,6 +460,15 @@ export const modelMetadata = {
   MaintRecording: {
     scope: "tenant",
     relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },
+  },
+  MaintPlan: { scope: "tenant", relations: { workspace: "Workspace" } },
+  MaintMeter: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", readings: "MaintMeterReading" },
+  },
+  MaintMeterReading: {
+    scope: "tenant",
+    relations: { workspace: "Workspace", meter: "MaintMeter" },
   },
   WhistleblowingManager: { scope: "tenant", relations: { workspace: "Workspace" } },
   WhistleblowingCounter: { scope: "tenant", relations: { workspace: "Workspace" } },

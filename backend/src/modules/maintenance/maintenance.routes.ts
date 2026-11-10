@@ -12,6 +12,15 @@ import { assetQr, createAsset, getAsset, listAssets, updateAsset } from "./asset
 import { requireAny } from "./maintenance-access.ts";
 import { getMaintenanceSettings, updateMaintenanceSettings } from "./maintenance.service.ts";
 import {
+  addReading,
+  calibrationPlans,
+  createMeter,
+  createPlan,
+  listMeters,
+  listPlans,
+  updatePlan,
+} from "./plans.service.ts";
+import {
   closeByVoice,
   recordingAudio,
   reportByVoice,
@@ -127,7 +136,39 @@ const ActionSchema: z.ZodType<WorkAction> = z.discriminatedUnion("action", [
     unit: z.string().trim().min(1).max(20).default("ud"),
   }),
   z.strictObject({ action: z.literal("remove_part"), partId: Id }),
+  z.strictObject({
+    action: z.literal("check"),
+    index: z.number().int().min(0).max(L.planStepsMax),
+    done: z.boolean(),
+  }),
 ]);
+
+// Preventive plans and meters (section 5).
+const Count = (max: number) => z.number().int().min(1).max(max);
+const PlanSchema = z.strictObject({
+  assetId: Id,
+  kind: z.enum(["PREVENTIVE", "CALIBRATION"]).default("PREVENTIVE"),
+  name: z.string().trim().min(1).max(L.nameMax),
+  instructions: Text.default(""),
+  checklist: z.array(z.string().trim().max(L.planStepMax)).max(L.planStepsMax).default([]),
+  every: Count(L.planEveryMax).nullable().default(null),
+  everyUnit: z.enum(["DAYS", "WEEKS", "MONTHS"]).nullable().default(null),
+  firstDueOn: Day.nullable().default(null),
+  meterId: Id.nullable().default(null),
+  meterEvery: Count(L.meterValueMax).nullable().default(null),
+  firstMeterAt: z.number().int().min(0).max(L.meterValueMax).nullable().default(null),
+  assignedToId: Id.nullable().default(null),
+  estimatedMinutes: Count(L.laborMinutesMax).nullable().default(null),
+  leadDays: z.number().int().min(0).max(L.planLeadDaysMax).default(3),
+  lockout: z.boolean().default(false),
+});
+const PlanUpdateSchema = PlanSchema.extend({ archived: z.boolean().optional() });
+const MeterSchema = z.strictObject({
+  assetId: Id,
+  name: z.string().trim().min(1).max(L.shortMax),
+  unit: z.string().trim().min(1).max(20),
+});
+const ReadingSchema = z.strictObject({ value: z.number().int().min(0).max(L.meterValueMax) });
 
 const archivedOf = (req: Request) => ArchivedQuery.parse(req.query).archivado === "1";
 
@@ -288,6 +329,66 @@ export function maintenanceRoutes(deps: AppDeps): TenantRoute[] {
         res.setHeader("Cache-Control", "private, no-store");
         res.setHeader("X-Content-Type-Options", "nosniff");
         audio.stream.pipe(res);
+      },
+    },
+    // ─── Preventive (section 5) ───
+    {
+      method: "get",
+      path: "/maintenance/plans",
+      handler: async (req, res) => {
+        res.json({ plans: await listPlans(adminContextOf(req), { archived: archivedOf(req) }) });
+      },
+    },
+    {
+      method: "post",
+      path: "/maintenance/plans",
+      handler: async (req, res) => {
+        res
+          .status(201)
+          .json({ plan: await createPlan(adminContextOf(req), PlanSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "put",
+      path: "/maintenance/plans/:id",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({
+          plan: await updatePlan(adminContextOf(req), id, PlanUpdateSchema.parse(req.body)),
+        });
+      },
+    },
+    {
+      // Quality's calibration prerequisite reads them here (decision 5).
+      method: "get",
+      path: "/maintenance/calibrations",
+      handler: async (req, res) => {
+        res.json({ plans: await calibrationPlans(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "get",
+      path: "/maintenance/meters",
+      handler: async (req, res) => {
+        res.json({ meters: await listMeters(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/maintenance/meters",
+      handler: async (req, res) => {
+        res
+          .status(201)
+          .json({ meter: await createMeter(adminContextOf(req), MeterSchema.parse(req.body)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/maintenance/meters/:id/readings",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { value } = ReadingSchema.parse(req.body);
+        res.json({ meter: await addReading(adminContextOf(req), id, value) });
       },
     },
     // ─── Technicians (to assign) ───

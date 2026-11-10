@@ -369,6 +369,9 @@ model Workspace {
   maintPartUses            MaintPartUse[]
   maintEvents              MaintEvent[]
   maintRecordings          MaintRecording[]
+  maintPlans               MaintPlan[]
+  maintMeters              MaintMeter[]
+  maintMeterReadings       MaintMeterReading[]
 }
 
 model Role {
@@ -4181,6 +4184,8 @@ enum MaintWorkKind {
   IMPROVEMENT
   SAFETY
   HYGIENE
+  /// Calibration of a measuring instrument (probes, scales, metal detectors).
+  CALIBRATION
 }
 
 enum MaintPriority {
@@ -4289,6 +4294,10 @@ model MaintWorkOrder {
   updatedAt           DateTime        @updatedAt
   /// The quality nonconformity it's for (no FK: an NC is never deleted, and a WO outlives it).
   ncId                String?
+  /// The preventive plan that generated it (no FK: plans are archived, never deleted).
+  planId              String?
+  /// The plan's steps, copied when generated: [{ text, done }].
+  checklist           Json            @default("[]")
 
   workspace  Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   labor      MaintLabor[]
@@ -4302,6 +4311,7 @@ model MaintWorkOrder {
   @@index([workspaceId, assetId, reportedAt])
   @@index([workspaceId, assignedToId, status])
   @@index([workspaceId, ncId])
+  @@index([workspaceId, planId, status])
   @@index([workspaceId, reportedAt, id])
 }
 
@@ -4370,6 +4380,88 @@ model MaintRecording {
   @@unique([id, workspaceId])
   @@index([workspaceId, workOrderId, createdAt])
   @@index([createdAt])
+}
+
+enum MaintPlanKind {
+  PREVENTIVE
+  CALIBRATION
+}
+
+enum MaintPlanUnit {
+  DAYS
+  WEEKS
+  MONTHS
+}
+
+/// A preventive or calibration plan of a piece of equipment (docs/spec/mantenimiento.md, section 5): by
+/// time (every N days, weeks or months) or by use (every N units of one of its meters). The worker
+/// generates its work order when it's due (leadDays before), one at a time. Archived, never deleted.
+model MaintPlan {
+  id               String         @id @default(cuid())
+  workspaceId      String
+  /// No FK, like the work orders.
+  assetId          String
+  kind             MaintPlanKind  @default(PREVENTIVE)
+  name             String
+  instructions     String         @default("")
+  checklist        String[]
+  every            Int?
+  everyUnit        MaintPlanUnit?
+  /// By use: the meter and every how many of its units.
+  meterId          String?
+  meterEvery       Int?
+  /// Membership; no FK.
+  assignedToId     String?
+  estimatedMinutes Int?
+  leadDays         Int            @default(3)
+  lockout          Boolean        @default(false)
+  nextDueOn        DateTime?      @db.Date
+  nextMeterAt      Int?
+  lastDoneOn       DateTime?      @db.Date
+  archivedAt       DateTime?
+  createdById      String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, assetId])
+  @@index([workspaceId, archivedAt, nextDueOn])
+}
+
+/// A meter of a piece of equipment (operating hours, cycles), read by hand or through the API.
+model MaintMeter {
+  id          String    @id @default(cuid())
+  workspaceId String
+  assetId     String
+  name        String
+  unit        String
+  lastValue   Int?
+  lastReadAt  DateTime?
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  readings  MaintMeterReading[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, assetId])
+}
+
+/// One reading of a meter: only added.
+model MaintMeterReading {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  meterId      String
+  value        Int
+  membershipId String
+  readAt       DateTime @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  meter     MaintMeter @relation(fields: [meterId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId, meterId, readAt])
 }
 
 model MaintEvent {

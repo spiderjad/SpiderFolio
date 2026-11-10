@@ -163,6 +163,9 @@ function maintenanceItems(slug: string, person: Membership, context: AreaContext
   items.push({ to: `${base}/avisar`, label: n.report, icon: Megaphone });
   if (work) items.push({ to: `${base}/ot?mias=1&estado=open`, label: n.mine, icon: ListTodo });
   items.push({ to: `${base}/ot`, label: n.workOrders, icon: Wrench });
+  if (caps.includes("maintenance.view") || work) {
+    items.push({ to: `${base}/preventivo`, label: n.preventive, icon: CalendarClock });
+  }
   items.push({ to: `${base}/equipos`, label: n.assets, icon: Cog });
   items.push(...spaceItems(slug, context.spaces.MAINTENANCE, texts.shell.areas.areaSpaces));
   return items;

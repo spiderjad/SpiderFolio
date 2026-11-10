@@ -184,6 +184,10 @@ export const routes = [
                     path: "equipos",
                     lazy: page(() => import("@/features/maintenance/assets-page"), "AssetsPage"),
                   },
+                  {
+                    path: "preventivo",
+                    lazy: page(() => import("@/features/maintenance/plans-page"), "PlansPage"),
+                  },
                 ],
               },
               {

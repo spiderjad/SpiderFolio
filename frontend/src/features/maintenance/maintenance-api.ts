@@ -4,7 +4,68 @@ import type { CursorPage } from "@/components/ui/infinite";
 import { listQuery } from "@/features/admin/api";
 import { api, apiBlob } from "@/lib/api";
 
-export const WORK_KINDS = ["CORRECTIVE", "PREVENTIVE", "IMPROVEMENT", "SAFETY", "HYGIENE"] as const;
+export const WORK_KINDS = [
+  "CORRECTIVE",
+  "PREVENTIVE",
+  "CALIBRATION",
+  "IMPROVEMENT",
+  "SAFETY",
+  "HYGIENE",
+] as const;
+export const PLAN_UNITS = ["DAYS", "WEEKS", "MONTHS"] as const;
+export type PlanUnit = (typeof PLAN_UNITS)[number];
+export type PlanKind = "PREVENTIVE" | "CALIBRATION";
+
+/** A preventive or calibration plan (docs/spec/mantenimiento.md, section 5). */
+export interface Plan {
+  id: string;
+  asset: { id: string; code: string; name: string } | null;
+  kind: PlanKind;
+  name: string;
+  instructions: string;
+  checklist: string[];
+  every: number | null;
+  everyUnit: PlanUnit | null;
+  meter: { id: string; name: string; unit: string; lastValue: number | null } | null;
+  meterEvery: number | null;
+  nextMeterAt: number | null;
+  assignedTo: { id: string; name: string } | null;
+  estimatedMinutes: number | null;
+  leadDays: number;
+  lockout: boolean;
+  nextDueOn: string | null;
+  lastDoneOn: string | null;
+  state: "ok" | "due_soon" | "overdue";
+  openWorkOrder: { id: string; code: string } | null;
+  archived: boolean;
+}
+
+export interface PlanInput {
+  assetId: string;
+  kind: PlanKind;
+  name: string;
+  instructions: string;
+  checklist: string[];
+  every: number | null;
+  everyUnit: PlanUnit | null;
+  firstDueOn: string | null;
+  meterId: string | null;
+  meterEvery: number | null;
+  firstMeterAt: number | null;
+  assignedToId: string | null;
+  estimatedMinutes: number | null;
+  leadDays: number;
+  lockout: boolean;
+}
+
+export interface Meter {
+  id: string;
+  asset: { id: string; code: string; name: string } | null;
+  name: string;
+  unit: string;
+  lastValue: number | null;
+  lastReadAt: string | null;
+}
 export const PRIORITIES = ["URGENT", "HIGH", "NORMAL", "LOW"] as const;
 export const WORK_STATUSES = [
   "REPORTED",
@@ -105,6 +166,8 @@ export interface WorkOrderDetail extends WorkOrderSummary {
   parts: { id: string; partCode: string; description: string; quantity: number; unit: string }[];
   events: { id: string; action: string; detail: string; who: string | null; createdAt: string }[];
   nc: { id: string; code: string } | null;
+  plan: { id: string; name: string } | null;
+  checklist: { text: string; done: boolean }[];
   recordings: {
     id: string;
     purpose: "REPORT" | "CLOSE";
@@ -173,7 +236,8 @@ export type WorkAction =
   | { action: "labor"; minutes: number; note: string; day: string }
   | { action: "remove_labor"; laborId: string }
   | { action: "part"; partCode: string; description: string; quantity: number; unit: string }
-  | { action: "remove_part"; partId: string };
+  | { action: "remove_part"; partId: string }
+  | { action: "check"; index: number; done: boolean };
 
 export interface WorkOrderFilters {
   estado?: "open" | WorkStatus | undefined;
@@ -197,6 +261,10 @@ export const maintenanceKeys = {
   workOrder: (slug: string, id: string) => ["w", slug, "maintenance", "work-order", id] as const,
   counts: (slug: string) => ["w", slug, "maintenance", "counts"] as const,
   voice: (slug: string) => ["w", slug, "maintenance", "voice"] as const,
+  plans: (slug: string, archived: boolean) =>
+    ["w", slug, "maintenance", "plans", archived] as const,
+  meters: (slug: string) => ["w", slug, "maintenance", "meters"] as const,
+  calibrations: (slug: string) => ["w", slug, "maintenance", "calibrations"] as const,
 };
 
 function voiceRequest(note: VoiceNote, query: URLSearchParams, signal?: AbortSignal) {
@@ -253,6 +321,21 @@ export const maintenanceApi = {
     },
   ) => api<{ workOrder: WorkOrderDetail }>(m(slug, "/reports"), { method: "POST", body }),
   voice: (slug: string) => api<{ voice: VoiceStatus }>(m(slug, "/voice")),
+  plans: (slug: string, archived: boolean) =>
+    api<{ plans: Plan[] }>(m(slug, `/plans${archived ? "?archivado=1" : ""}`)),
+  createPlan: (slug: string, body: PlanInput) =>
+    api<{ plan: Plan }>(m(slug, "/plans"), { method: "POST", body }),
+  updatePlan: (slug: string, id: string, body: PlanInput & { archived?: boolean }) =>
+    api<{ plan: Plan }>(m(slug, `/plans/${id}`), { method: "PUT", body }),
+  calibrations: (slug: string) => api<{ plans: Plan[] }>(m(slug, "/calibrations")),
+  meters: (slug: string) => api<{ meters: Meter[] }>(m(slug, "/meters")),
+  createMeter: (slug: string, body: { assetId: string; name: string; unit: string }) =>
+    api<{ meter: Meter }>(m(slug, "/meters"), { method: "POST", body }),
+  addReading: (slug: string, id: string, value: number) =>
+    api<{ meter: Meter }>(m(slug, `/meters/${id}/readings`), {
+      method: "POST",
+      body: { value },
+    }),
   voiceReport: (slug: string, note: VoiceNote, assetId: string | null, signal?: AbortSignal) => {
     const query = new URLSearchParams(assetId === null ? {} : { equipo: assetId });
     const { suffix, options } = voiceRequest(note, query, signal);

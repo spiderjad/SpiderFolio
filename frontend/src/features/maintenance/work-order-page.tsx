@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Banner, Card, CardTitle, EmptyState, Skeleton } from "@/components/ui/display";
-import { FormField, Input, Textarea } from "@/components/ui/form";
+import { Checkbox, FormField, Input, Textarea } from "@/components/ui/form";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatDateTime, formatUtcDate } from "@/lib/utils";
@@ -43,11 +43,12 @@ export function WorkOrderPage() {
   const voice = useVoice();
   const act = useMutation({
     mutationFn: (body: WorkAction) => maintenanceApi.act(workspaceSlug, workOrderId, body),
-    onSuccess: async (result) => {
+    onSuccess: async (result, body) => {
       setAsking(null);
       queryClient.setQueryData(maintenanceKeys.workOrder(workspaceSlug, workOrderId), result);
       await queryClient.invalidateQueries({ queryKey: maintenanceKeys.all(workspaceSlug) });
-      toast.success(t.done);
+      // Ticking a task shows itself: no toast for each one.
+      if (body.action !== "check") toast.success(t.done);
     },
     onError: (error) => {
       toast.error(adminErrorText(error));
@@ -257,7 +258,48 @@ export function WorkOrderPage() {
             {data.description !== "" && (
               <p className="whitespace-pre-line text-sm">{data.description}</p>
             )}
+            {data.plan !== null && (
+              <p className="text-xs text-muted-foreground">
+                {texts.maintenance.checklist.fromPlan}:{" "}
+                <Link
+                  to={`/app/${workspaceSlug}/mantenimiento/preventivo`}
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {data.plan.name}
+                </Link>
+              </p>
+            )}
           </Section>
+
+          {data.checklist.length > 0 && (
+            <Section
+              title={texts.maintenance.checklist.title}
+              action={
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {texts.maintenance.checklist.progress(
+                    data.checklist.filter((step) => step.done).length,
+                    data.checklist.length,
+                  )}
+                </span>
+              }
+            >
+              <ul className="grid gap-2">
+                {data.checklist.map((step, index) => (
+                  // The steps are the plan's, in order: their position is their identity.
+                  <li key={`${String(index)}-${step.text}`}>
+                    <Checkbox
+                      label={step.text}
+                      checked={step.done}
+                      disabled={!data.can.work || !open || busy}
+                      onChange={(event) => {
+                        run({ action: "check", index, done: event.target.checked });
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
 
           <Section
             title={t.work}

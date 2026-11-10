@@ -2099,6 +2099,9 @@ export const maintenanceTexts: Catalog<typeof Es.maintenanceTexts> = {
     transcribeFailed: "We couldn't turn the audio into text. Try again or type it.",
     nothingHeard: "Nothing could be made out in the recording. Try again, closer to the phone.",
     proposalFailed: "The AI couldn't prepare the proposal. Fill it in by hand.",
+    planFrequency: "Choose how often: by time (days, weeks or months) or by use (a meter), not both.",
+    readingLower: (last: number) =>
+      `The reading can't be lower than the last one (${String(last)}). If the meter was replaced, create a new one.`,
   },
   qrLabel: "Report a breakdown",
 };

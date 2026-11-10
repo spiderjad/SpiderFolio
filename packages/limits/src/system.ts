@@ -89,6 +89,12 @@ export const maintenanceLimits = {
   audioRetentionDays: 30,
   /** An unconfirmed report's voice note (no work order) is deleted after this many hours. */
   audioOrphanHours: 24,
+  /** Preventive plans (section 5): their steps, how often and how early the work order comes. */
+  planStepsMax: 50,
+  planStepMax: 200,
+  planEveryMax: 1000,
+  planLeadDaysMax: 60,
+  meterValueMax: 2_000_000_000,
 } as const;
 
 /** Whistleblowing channel (docs/spec/canal-denuncias.md, Ley 2/2023). */

@@ -2557,6 +2557,38 @@ const cases: IsolationCase[] = [
     url: () => "/maintenance/recordings/x/audio",
     ownStatus: 404,
   },
+  { method: "get", path: "/maintenance/plans", url: () => "/maintenance/plans", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/maintenance/plans",
+    url: () => "/maintenance/plans",
+    body: { assetId: "x", name: "Ajeno", every: 1, everyUnit: "DAYS" },
+  },
+  {
+    method: "put",
+    path: "/maintenance/plans/:id",
+    url: () => "/maintenance/plans/x",
+    body: { assetId: "x", name: "Ajeno", every: 1, everyUnit: "DAYS" },
+  },
+  {
+    method: "get",
+    path: "/maintenance/calibrations",
+    url: () => "/maintenance/calibrations",
+    ownStatus: 404,
+  },
+  { method: "get", path: "/maintenance/meters", url: () => "/maintenance/meters", ownStatus: 404 },
+  {
+    method: "post",
+    path: "/maintenance/meters",
+    url: () => "/maintenance/meters",
+    body: { assetId: "x", name: "Horas", unit: "h" },
+  },
+  {
+    method: "post",
+    path: "/maintenance/meters/:id/readings",
+    url: () => "/maintenance/meters/x/readings",
+    body: { value: 1 },
+  },
 ];
 
 let ctx: TestContext;

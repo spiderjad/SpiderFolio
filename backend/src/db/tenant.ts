@@ -418,6 +418,15 @@ export interface TenantDb {
     PrismaClient["maintRecording"],
     "findFirst" | "findMany" | "create" | "updateMany"
   >;
+  maintPlan: TenantDelegate<
+    PrismaClient["maintPlan"],
+    "findFirst" | "findMany" | "count" | "create" | "update"
+  >;
+  maintMeter: TenantDelegate<
+    PrismaClient["maintMeter"],
+    "findFirst" | "findMany" | "create" | "update"
+  >;
+  maintMeterReading: TenantDelegate<PrismaClient["maintMeterReading"], "findMany" | "create">;
   envCoolingEvent: TenantDelegate<
     PrismaClient["envCoolingEvent"],
     "findFirst" | "findMany" | "create" | "delete"
@@ -772,6 +781,9 @@ const delegates = {
     model: "MaintRecording",
     ops: ["findFirst", "findMany", "create", "updateMany"],
   },
+  maintPlan: { model: "MaintPlan", ops: ["findFirst", "findMany", "count", "create", "update"] },
+  maintMeter: { model: "MaintMeter", ops: ["findFirst", "findMany", "create", "update"] },
+  maintMeterReading: { model: "MaintMeterReading", ops: ["findMany", "create"] },
   qualityLot: {
     model: "QualityLot",
     ops: ["findFirst", "findMany", "count", "create", "update", "delete"],

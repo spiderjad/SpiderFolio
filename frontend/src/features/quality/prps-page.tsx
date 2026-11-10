@@ -15,6 +15,7 @@ import { Checkbox, FormField, FormGrid, Input, Textarea } from "@/components/ui/
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/overlay";
 import { adminErrorText } from "@/features/admin/admin-utils";
 import { formatUtcDate } from "@/lib/utils";
+import { MaintenanceCalibrationsCard } from "@/features/maintenance/calibrations-card";
 import { useFormSource } from "./ccp-dialog";
 import {
   PRP_KINDS,
@@ -628,6 +629,7 @@ export function PrpsPage() {
           </Card>
         ))
       )}
+      {view && !archived && <MaintenanceCalibrationsCard />}
       <Dialog
         open={dialog !== null}
         onOpenChange={(open) => {

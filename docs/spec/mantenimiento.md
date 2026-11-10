@@ -226,6 +226,14 @@ usuario + PIN.
    «Cerrar hablando» en la OT (tiempo, repuestos y «hecha» con las acciones de siempre) y las notas de voz
    en la ficha. El reconocimiento de repuestos por código queda para la fase 5 (catálogo del SGA).
 3. **Preventivo**: planes, generación automática de OT, contadores, calibración.
+   **Hecha el 10/11/2026**, sin probar por el mantenedor. Migración `maintenance_preventive` (`MaintPlan`,
+   `MaintMeter`, `MaintMeterReading`; `MaintWorkOrder.planId` y `checklist`; tipo de OT `CALIBRATION`).
+   `plans.service.ts`: planes por tiempo (días, semanas o meses) o por uso (cada N unidades de un contador),
+   con tareas, técnico, minutos estimados, antelación y consignación. La cola `maintenance-plans` (cada hora)
+   crea la OT del plan que toca, una a la vez; también al crear o editar el plan y al anotar una lectura.
+   Hecha → la siguiente cuenta desde ese día (o desde la lectura); cancelada → se salta esa. Pantalla
+   **Preventivo** (planes y contadores), tareas a marcar en la OT, y en Calidad › Prerrequisitos la tarjeta
+   «Calibraciones de Mantenimiento» (solo lectura, decisión 5).
 4. **Resolución con IA**: sugerencia con historial y manuales, valoración.
 5. **Repuestos y stock**: punto de extensión para plugins, API de integración con token, catálogo de solo
    lectura, consumo.

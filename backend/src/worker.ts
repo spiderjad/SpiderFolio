@@ -8,6 +8,7 @@ import { createBoss, createJobs, ensureQueues } from "./jobs/boss.ts";
 import {
   cleanupExpired,
   cleanupExpiredUploads,
+  generatePreventive,
   deleteObjects,
   expireTrash,
   reportFailedEmail,
@@ -94,6 +95,9 @@ export async function startWorker(boss: PgBoss, deps: WorkerDeps): Promise<void>
   });
   await boss.work("maintenance-cleanup", async (jobs) => {
     for (const job of jobs) await cleanupExpired(deps, job.data);
+  });
+  await boss.work("maintenance-plans", async (jobs) => {
+    for (const job of jobs) await generatePreventive(deps, job.data);
   });
   await boss.work("uploads-cleanup", async (jobs) => {
     for (const job of jobs) await cleanupExpiredUploads(deps, job.data);
