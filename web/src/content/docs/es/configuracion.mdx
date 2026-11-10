@@ -153,6 +153,23 @@ Cómo elegir y cómo configurar el bucket: [Almacenamiento](/es/docs/almacenamie
 
 Más en [Gotenberg](/es/docs/gotenberg).
 
+## Audio de Mantenimiento
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `WHISPER_URL` | No | Con el perfil `audio`: `http://whisper:9000`. Pasa a texto en el propio servidor lo que se avisa o cierra hablando en [Mantenimiento](/es/docs/mantenimiento). Vacía: el dictado del navegador. |
+
+## Mucha gente a la vez
+
+| Variable | Obligatoria | Para qué sirve |
+| --- | --- | --- |
+| `RATE_LIMIT_PER_USER` | No (`300`) | Peticiones por minuto de cada persona con sesión. |
+| `RATE_LIMIT_PER_IP` | No (`300`) | Peticiones por minuto de cada IP sin sesión. |
+| `RATE_LIMIT_PER_SHARED_IP` | No (`6000`) | Tope por minuto de todo lo que llega con sesión desde una misma IP (una planta entera detrás de un router). |
+| `LOGIN_LIMIT_PER_IP` | No (`500`) | Inicios de sesión por IP cada 15 minutos (el cambio de turno). Los 5 intentos por cuenta no cambian. |
+| `DATABASE_POOL_MAX` | No (`20`) | Conexiones a Postgres de cada proceso. |
+| `API_PROCESSES` | No (`1`) | Procesos de la API, uno por núcleo. `(API_PROCESSES + 1) × DATABASE_POOL_MAX` tiene que quedar por debajo de 100. |
+
 ## Bian, el asistente IA
 
 | Variable | Obligatoria | Para qué sirve |

@@ -77,6 +77,7 @@ export const DOC_KEYS = [
   "environment",
   "environmentWaste",
   "environmentMore",
+  "maintenance",
   "search",
   "bian",
   "security2fa",

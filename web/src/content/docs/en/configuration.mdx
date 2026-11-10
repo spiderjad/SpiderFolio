@@ -151,6 +151,23 @@ How to choose and how to set up the bucket: [Storage](/en/docs/storage).
 
 More in [Gotenberg](/en/docs/gotenberg).
 
+## Maintenance audio
+
+| Variable | Required | What it's for |
+| --- | --- | --- |
+| `WHISPER_URL` | No | With the `audio` profile: `http://whisper:9000`. Turns what's reported or closed by talking in [Maintenance](/en/docs/maintenance) into text on the server itself. Empty: the browser's dictation. |
+
+## Many people at once
+
+| Variable | Required | What it's for |
+| --- | --- | --- |
+| `RATE_LIMIT_PER_USER` | No (`300`) | Requests a minute of each person with a session. |
+| `RATE_LIMIT_PER_IP` | No (`300`) | Requests a minute of each IP without a session. |
+| `RATE_LIMIT_PER_SHARED_IP` | No (`6000`) | Cap a minute for everything that comes with a session from one IP (a whole plant behind a router). |
+| `LOGIN_LIMIT_PER_IP` | No (`500`) | Sign-ins per IP every 15 minutes (the shift change). The 5 tries per account don't change. |
+| `DATABASE_POOL_MAX` | No (`20`) | Postgres connections of each process. |
+| `API_PROCESSES` | No (`1`) | API processes, one per core. `(API_PROCESSES + 1) × DATABASE_POOL_MAX` has to stay under 100. |
+
 ## Bian, the AI assistant
 
 | Variable | Required | What it's for |

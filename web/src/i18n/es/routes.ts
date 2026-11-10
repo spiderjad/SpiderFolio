@@ -70,6 +70,7 @@ export const routes: LocaleRoutes = {
     environment: "medio-ambiente",
     environmentWaste: "residuos-y-sandach",
     environmentMore: "vertidos-consumos-y-frio",
+    maintenance: "mantenimiento",
     search: "busqueda",
     bian: "bian",
     security2fa: "seguridad-y-2fa",

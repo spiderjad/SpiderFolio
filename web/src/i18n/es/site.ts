@@ -332,6 +332,7 @@ export const site = {
       prevencion: "Prevención (PRL)",
       calidad: "Calidad",
       "medio-ambiente": "Medio ambiente",
+      mantenimiento: "Mantenimiento",
       administracion: "Administración",
       seguridad: "Seguridad",
       autoalojamiento: "Autoalojamiento",

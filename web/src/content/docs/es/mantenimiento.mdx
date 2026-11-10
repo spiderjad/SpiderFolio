@@ -1,0 +1,154 @@
+---
+title: "Mantenimiento"
+description: "Equipos con su QR, avisos de avería (también hablando), órdenes de trabajo, preventivo y calibración, repuestos del SGA e indicadores."
+group: mantenimiento
+order: 1
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## Para qué sirve
+
+El módulo **Mantenimiento** lleva los **equipos** de la planta, las **averías** que avisa cualquiera (desde el
+móvil, una tablet o el QR pegado en la máquina, escribiendo o hablando), las **órdenes de trabajo** con su
+tiempo, sus repuestos y la **liberación higiénica**, el **preventivo** y la **calibración**, y los
+**indicadores** (disponibilidad, MTBF, MTTR). Está pensado para la industria alimentaria: lo que pide IFS,
+BRCGS y una inspección sanitaria.
+
+<Shot
+  name="mantenimiento-resumen"
+  alt="El Resumen de Mantenimiento: disponibilidad, tiempo medio entre averías y de reparación, averías, preventivo frente a correctivo, cumplimiento del preventivo y los equipos con más averías"
+  eager
+/>
+
+## Activarlo
+
+En **Administración › Seguridad › General**, la tarjeta **Mantenimiento**. Solo el **propietario**. Al
+activarlo aparece el área **Mantenimiento** en la barra y se crea su **espacio de documentos**, donde cada
+equipo tiene su carpeta (manuales, esquemas, certificados, fotos).
+
+Apagarlo oculta el área y pausa los avisos. **No borra nada.**
+
+## Quién hace qué
+
+Tres capacidades, en **Administración › Roles y permisos**:
+
+- **Gestionar mantenimiento**: equipos, planes, crear, asignar, cerrar y cancelar órdenes. Por defecto,
+  propietario y administradores.
+- **Trabajar en mantenimiento**: para los técnicos. Ven todas las órdenes, se las quedan, anotan tiempos y
+  repuestos y las dan por hechas.
+- **Ver mantenimiento**: lee todo sin cambiar nada (dirección, calidad).
+
+**Avisar de una avería** puede **cualquiera** menos los invitados: también las plazas de lector y las
+cuentas de **usuario + PIN** de las tablets de planta. Quien solo avisa ve sus avisos y en qué están.
+
+## Equipos
+
+En **Mantenimiento › Equipos**, las líneas, las máquinas y sus componentes en árbol («Línea 1 › Embutidora
+2»), con su ubicación, fabricante, modelo, número de serie y **criticidad** (A, B o C). Marca **En zona de
+producto** los que tocan alimento: sus órdenes piden la liberación higiénica antes de cerrarse.
+
+Cada equipo tiene su **QR** para pegar en la máquina: al escanearlo se abre el aviso con el equipo ya
+elegido. Y su carpeta de **Documentos**.
+
+<Shot
+  name="mantenimiento-equipos"
+  alt="Equipos en árbol: la línea 1 con la embutidora y la clipadora, la cámara, el secadero y la báscula, con su criticidad, la zona de producto y el QR de cada uno"
+/>
+
+## Avisar de una avería
+
+Desde **Mantenimiento › Avisar de una avería**, desde el QR del equipo o, en una tablet con usuario + PIN,
+desde la tarjeta grande de su inicio. Se elige el equipo, se cuenta qué pasa y si para la producción, y
+mantenimiento lo recibe al momento. Un aviso urgente avisa a quienes gestionan mantenimiento.
+
+**Hablando**: con [Bian](/es/docs/bian) activo aparece el botón **Grabar**. La persona cuenta qué pasa («la
+embutidora dos pierde presión y la línea está parada») y la IA rellena el aviso: el título, el equipo, la
+descripción y la prioridad con su motivo. Se revisa y se envía; **nada se crea sin confirmar**.
+
+<Shot
+  name="mantenimiento-avisar"
+  alt="Avisar de una avería en el móvil: el equipo, qué pasa, más detalles y si para la producción"
+/>
+
+El audio se pasa a texto en el propio servidor con Whisper (ver [Configuración](/es/docs/configuracion),
+`WHISPER_URL`); sin él, con el dictado del navegador. El audio se guarda 30 días y después se borra; el texto
+queda en la orden.
+
+## Órdenes de trabajo
+
+En **Mantenimiento › Órdenes de trabajo**, todas, con filtros por estado, prioridad, tipo y equipo; las
+abiertas primero por urgencia. **Mis órdenes** son las que tiene asignadas cada técnico.
+
+<Shot
+  name="mantenimiento-ordenes"
+  alt="Órdenes de trabajo abiertas: la urgente de la embutidora en curso, la clipadora avisada y la mejora de la iluminación planificada"
+/>
+
+El ciclo: **Avisada** → **Planificada** (con técnico y fecha) → **En curso** → **Hecha** → **Cerrada**. En
+la ficha de la orden:
+
+- **Me la quedo**, **Empezar** y **Parar tiempo**: el tiempo de cada técnico se anota solo; también se
+  puede anotar a mano.
+- **Agregar repuesto**: buscando en el catálogo del almacén (con su stock) o escribiéndolo.
+- **Consignación (LOTO)**: si la orden la pide, avisa antes de empezar.
+- **Marcar como hecha**: causa, qué se hizo y minutos de parada. O **Cerrar hablando**: el técnico cuenta qué
+  encontró y qué hizo y la IA propone causa, solución, tiempo y repuestos.
+- **Liberación higiénica**: en un equipo de zona de producto, calidad confirma que quedó limpio, sin
+  herramientas ni restos (IFS 4.17.4), y solo entonces se puede **Cerrar**.
+
+<Shot
+  name="mantenimiento-orden"
+  alt="La ficha de una orden urgente en curso: el equipo, el aviso de consignación, el tiempo, los repuestos y el historial"
+/>
+
+**Sugerir resolución**: en una avería, la IA lee el síntoma, las averías ya resueltas del mismo equipo y de
+los del mismo modelo, y los manuales que encuentra, y propone las causas probables con sus pasos, **citando
+de dónde lo saca**. Es una sugerencia: el técnico decide y marca si le sirvió.
+
+## Preventivo y calibración
+
+En **Mantenimiento › Preventivo**, los planes de cada equipo: **por tiempo** (cada N días, semanas o meses) o
+**por uso** (cada N horas o ciclos de un contador, en la pestaña **Contadores**). Cada plan lleva sus tareas,
+su técnico, los minutos estimados y con cuántos días de antelación aparece la orden.
+
+<Shot
+  name="mantenimiento-preventivo"
+  alt="Planes de preventivo y calibración: el engrase de la embutidora cada dos semanas, la revisión por horas de funcionamiento y las calibraciones de la báscula y las sondas"
+/>
+
+Cuando le toca, **la orden se crea sola**, con sus tareas para marcar. Hecha, la siguiente cuenta desde ese
+día (o desde esa lectura); cancelada, se salta esa vez.
+
+Los planes de tipo **Calibración** (sondas, básculas, detector de metales) aparecen también en
+**Calidad › Prerrequisitos**, sin cargarlos dos veces.
+
+## Enlace con Calidad
+
+Si un registro de vigilancia sale fuera de límite (la cámara a 9 °C, el secadero fuera de curva) y abre una
+no conformidad, y el registro nombra un equipo («Cámara 1 · canales» nombra al equipo «Cámara 1»), se crea
+una **orden urgente** en ese equipo enlazada con la no conformidad. Desde la no conformidad también se puede
+**Pedir a mantenimiento**. La no conformidad muestra cómo va su orden y su responsable recibe el aviso cuando
+se termina.
+
+## Repuestos y stock del almacén (SGA)
+
+El stock es del sistema de almacén: Mantenimiento lo lee y le informa de lo usado. En la tarjeta del módulo,
+**Integración con el almacén (SGA)**, el propietario crea un **token** (se ve una sola vez) y el SGA lo usa con
+la API:
+
+- `PUT /api/v1/integrations/maintenance/parts`: el catálogo (código, descripción, unidad, stock, mínimo y
+  ubicación), hasta 2000 por llamada, en UTF-8.
+- `GET /api/v1/integrations/maintenance/consumption?since=…`: los repuestos usados en las órdenes, para
+  descontarlos.
+
+Al agregar un repuesto a una orden se busca en ese catálogo, con su stock y el aviso cuando queda en el
+mínimo.
+
+## Resumen
+
+**Mantenimiento › Resumen**, por período y para toda la planta o una línea o equipo: la **disponibilidad**,
+el **tiempo medio entre averías** (MTBF), el **de reparación** (MTTR), las horas de parada, el preventivo
+frente al correctivo, el **cumplimiento del preventivo** y las órdenes abiertas, y los equipos con más
+averías. **Exportar CSV** da los de cada equipo.

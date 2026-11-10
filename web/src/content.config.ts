@@ -8,6 +8,7 @@ export const docGroups = [
   "prevencion",
   "calidad",
   "medio-ambiente",
+  "mantenimiento",
   "administracion",
   "seguridad",
   "autoalojamiento",

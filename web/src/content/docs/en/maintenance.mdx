@@ -1,0 +1,154 @@
+---
+title: "Maintenance"
+description: "Equipment with its QR, breakdown reports (also by talking), work orders, preventive and calibration, spare parts from the SGA and indicators."
+group: mantenimiento
+order: 1
+icon: clipboard
+---
+
+import Shot from "../../../components/Shot.astro";
+
+## What it's for
+
+The **Maintenance** module keeps the plant's **equipment**, the **breakdowns** anyone reports (from a phone, a
+tablet or the QR stuck on the machine, typing or talking), the **work orders** with their time, spare parts
+and **hygiene release**, **preventive** maintenance and **calibration**, and the **indicators**
+(availability, MTBF, MTTR). It's built for the food industry: what IFS, BRCGS and a health inspection ask for.
+
+<Shot
+  name="mantenimiento-resumen"
+  alt="The Maintenance summary: availability, mean time between failures and to repair, breakdowns, preventive versus corrective, preventive compliance and the equipment with the most breakdowns"
+  eager
+/>
+
+## Turning it on
+
+In **Administration › Security › General**, the **Maintenance** card. Only the **owner**. Turning it on adds
+the **Maintenance** area to the bar and creates its **documents space**, where each piece of equipment has its
+folder (manuals, diagrams, certificates, photos).
+
+Turning it off hides the area and pauses the notices. **It deletes nothing.**
+
+## Who does what
+
+Three capabilities, in **Administration › Roles and permissions**:
+
+- **Manage maintenance**: equipment, plans, creating, assigning, closing and cancelling work orders. By
+  default, owner and administrators.
+- **Work on maintenance**: for technicians. They see every work order, take them, log time and spare parts
+  and mark them as done.
+- **View maintenance**: reads everything without changing anything (management, quality).
+
+**Anyone** but guests can **report a breakdown**: reader seats and the plant tablets' **username + PIN**
+accounts too. Whoever only reports sees their reports and where they stand.
+
+## Equipment
+
+In **Maintenance › Equipment**, lines, machines and their components as a tree («Line 1 › Filler 2»), with
+their location, manufacturer, model, serial number and **criticality** (A, B or C). Mark **In the product
+zone** the ones that touch food: their work orders need the hygiene release before closing.
+
+Each piece of equipment has its **QR** to stick on the machine: scanning it opens the report with it already
+chosen. And its **Documents** folder.
+
+<Shot
+  name="mantenimiento-equipos"
+  alt="Equipment as a tree: line 1 with the filler and the clipper, the cold room, the dryer and the scale, with their criticality, the product zone and each one's QR"
+/>
+
+## Reporting a breakdown
+
+From **Maintenance › Report a breakdown**, from the equipment's QR or, on a username + PIN tablet, from the
+big card on its home. Choose the equipment, tell what's going on and whether it stops production, and
+maintenance gets it right away. An urgent report notifies whoever manages maintenance.
+
+**By talking**: with [Bian](/en/docs/bian) on, a **Record** button shows up. The person tells what's going on
+(«filler two is losing pressure and the line is stopped») and the AI fills in the report: title, equipment,
+description and priority with its reason. It's checked and sent; **nothing is created without confirming**.
+
+<Shot
+  name="mantenimiento-avisar"
+  alt="Reporting a breakdown on a phone: the equipment, what's going on, more details and whether it stops production"
+/>
+
+Audio is turned into text on the server itself with Whisper (see [Configuration](/en/docs/configuration),
+`WHISPER_URL`); without it, with the browser's dictation. The audio is kept 30 days and then deleted; the text
+stays on the work order.
+
+## Work orders
+
+In **Maintenance › Work orders**, all of them, filtered by status, priority, type and equipment; the open ones
+first by urgency. **My work orders** are the ones assigned to each technician.
+
+<Shot
+  name="mantenimiento-ordenes"
+  alt="Open work orders: the filler's urgent one in progress, the clipper reported and the lighting improvement planned"
+/>
+
+The cycle: **Reported** → **Planned** (with technician and date) → **In progress** → **Done** → **Closed**. On
+the work order:
+
+- **I'll take it**, **Start** and **Stop timer**: each technician's time is logged by itself; it can be logged
+  by hand too.
+- **Add spare part**: searching the warehouse's catalogue (with its stock) or typing it.
+- **Lockout/tagout (LOTO)**: if the work order needs it, it warns before starting.
+- **Mark as done**: cause, what was done and downtime minutes. Or **Close by talking**: the technician tells
+  what they found and did and the AI proposes cause, solution, time and spare parts.
+- **Hygiene release**: on equipment in the product zone, quality confirms it was left clean, with no tools or
+  debris (IFS 4.17.4), and only then can it be **Closed**.
+
+<Shot
+  name="mantenimiento-orden"
+  alt="An urgent work order in progress: the equipment, the lockout warning, the time, the spare parts and the history"
+/>
+
+**Suggest a resolution**: on a breakdown, the AI reads the symptom, the resolved breakdowns of the same
+equipment and of the ones of its same model, and the manuals it finds, and proposes the likely causes with
+their steps, **citing where it gets them from**. It's a suggestion: the technician decides and says whether it
+helped.
+
+## Preventive and calibration
+
+In **Maintenance › Preventive**, each piece of equipment's plans: **by time** (every N days, weeks or months)
+or **by use** (every N hours or cycles of a meter, in the **Meters** tab). Each plan has its tasks, its
+technician, the estimated minutes and how many days ahead the work order shows up.
+
+<Shot
+  name="mantenimiento-preventivo"
+  alt="Preventive and calibration plans: greasing the filler every two weeks, the overhaul by operating hours and the calibrations of the scale and the probes"
+/>
+
+When it's due, **the work order is created by itself**, with its tasks to tick. Done, the next one counts from
+that day (or that reading); cancelled, that one is skipped.
+
+**Calibration** plans (probes, scales, metal detectors) also show on **Quality › Prerequisites**, without
+being entered twice.
+
+## Link with Quality
+
+If a monitoring record is out of limits (the cold room at 9 °C, the dryer off its curve) and opens a
+nonconformity, and the record names a piece of equipment («Cold room 1 · carcasses» names the equipment «Cold
+room 1»), an **urgent work order** is created on that equipment, linked to the nonconformity. From the
+nonconformity it can also be **asked of maintenance**. The nonconformity shows how its work order is going and
+its owner is notified when it's finished.
+
+## Spare parts and warehouse stock (SGA)
+
+The stock belongs to the warehouse system: Maintenance reads it and tells it what was used. In the module's
+card, **Warehouse integration (SGA)**, the owner creates a **token** (shown only once) and the SGA uses it with
+the API:
+
+- `PUT /api/v1/integrations/maintenance/parts`: the catalogue (code, description, unit, stock, minimum and
+  location), up to 2000 per call, in UTF-8.
+- `GET /api/v1/integrations/maintenance/consumption?since=…`: the spare parts used on the work orders, to
+  discount them.
+
+Adding a spare part to a work order searches that catalogue, with its stock and a warning when it reaches the
+minimum.
+
+## Summary
+
+**Maintenance › Summary**, by period and for the whole plant or a line or machine: **availability**, **mean
+time between failures** (MTBF), **mean time to repair** (MTTR), downtime hours, preventive versus corrective,
+**preventive compliance** and open work orders, and the equipment with the most breakdowns. **Export CSV** gives
+each piece of equipment's.

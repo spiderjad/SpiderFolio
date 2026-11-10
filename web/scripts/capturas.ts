@@ -44,6 +44,7 @@ import { demoIndicators } from "./demo-indicators.ts";
 import { demoPlanning } from "./demo-planning.ts";
 import { demoQuality } from "./demo-quality.ts";
 import { demoEnvironment } from "./demo-environment.ts";
+import { demoMaintenance, type DemoMaintenanceIds } from "./demo-maintenance.ts";
 const out = join(root, "web", "public", "capturas");
 const PORT = 4100;
 const BASE = `http://localhost:${String(PORT)}`;
@@ -487,6 +488,33 @@ async function demoPlanningOf(locale: Locale, slug: string): Promise<void> {
 /** Food quality (web/scripts/demo-quality.ts): the module on and nonconformities in every step. */
 
 // ─── Environment and the whistleblowing channel ─────────────────────────────────────────────
+
+const demoMaintenanceIds = new Map<Locale, DemoMaintenanceIds>();
+
+/** Maintenance (web/scripts/demo-maintenance.ts): equipment, plans, the catalogue and work orders. */
+async function demoMaintenanceOf(locale: Locale, slug: string): Promise<void> {
+  if (demoMaintenanceIds.has(locale)) return;
+  demoMaintenanceIds.set(
+    locale,
+    await demoMaintenance({ base: BASE, token: await ownerToken(locale), slug, locale }),
+  );
+  // The demo is loaded in seconds: the breakdowns get believable report times (only in this database),
+  // closed ones a few hours before they were done and open ones this morning, so MTTR isn't «0 min».
+  await db.query(
+    `UPDATE "MaintWorkOrder" w SET "reportedAt" = w."doneAt" - interval '3 hours 20 minutes'
+     FROM "Workspace" ws
+     WHERE ws.id = w."workspaceId" AND ws.slug = $1 AND w."doneAt" IS NOT NULL
+       AND w."reportedAt" > w."doneAt" - interval '1 minute'`,
+    [slug],
+  );
+  await db.query(
+    `UPDATE "MaintWorkOrder" w SET "reportedAt" = now() - interval '2 hours 40 minutes'
+     FROM "Workspace" ws
+     WHERE ws.id = w."workspaceId" AND ws.slug = $1 AND w."doneAt" IS NULL
+       AND w.source <> 'PREVENTIVE' AND w."reportedAt" > now() - interval '1 hour'`,
+    [slug],
+  );
+}
 
 const demoEnvironmentDone = new Set<Locale>();
 
@@ -1732,6 +1760,48 @@ const CAPTURES: Capture[] = [
     who: "owner",
     path: (i) => `/app/${i.slug}/medio-ambiente/frio`,
     before: ({ slug, locale }) => demoEnvironmentOf(locale, slug),
+  },
+  // ─── Maintenance (docs/spec/mantenimiento.md) ───
+  {
+    name: "mantenimiento-resumen",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/mantenimiento/resumen`,
+    before: ({ slug, locale }) => demoMaintenanceOf(locale, slug),
+  },
+  {
+    name: "mantenimiento-avisar",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/mantenimiento/avisar`,
+    before: ({ slug, locale }) => demoMaintenanceOf(locale, slug),
+    viewport: { width: 430, height: 900 },
+  },
+  {
+    name: "mantenimiento-ordenes",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/mantenimiento/ot?estado=open`,
+    before: ({ slug, locale }) => demoMaintenanceOf(locale, slug),
+  },
+  {
+    name: "mantenimiento-orden",
+    who: "owner",
+    path: (i, locale) => {
+      const id = demoMaintenanceIds.get(locale)?.urgent;
+      if (id === undefined) throw new Error("demoMaintenance no dejó la avería urgente");
+      return `/app/${i.slug}/mantenimiento/ot/${id}`;
+    },
+    before: ({ slug, locale }) => demoMaintenanceOf(locale, slug),
+  },
+  {
+    name: "mantenimiento-equipos",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/mantenimiento/equipos`,
+    before: ({ slug, locale }) => demoMaintenanceOf(locale, slug),
+  },
+  {
+    name: "mantenimiento-preventivo",
+    who: "owner",
+    path: (i) => `/app/${i.slug}/mantenimiento/preventivo`,
+    before: ({ slug, locale }) => demoMaintenanceOf(locale, slug),
   },
   // ─── The whistleblowing channel (docs/spec/canal-denuncias.md): its public side and its setup ───
   {
