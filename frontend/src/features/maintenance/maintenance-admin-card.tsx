@@ -9,6 +9,7 @@ import { useAuth } from "@/auth/auth-context";
 import { Card, CardTitle, Skeleton } from "@/components/ui/display";
 import { Switch } from "@/components/ui/form";
 import { adminErrorText } from "@/features/admin/admin-utils";
+import { IntegrationTokens } from "./integration-tokens";
 import { maintenanceApi, maintenanceKeys } from "./maintenance-api";
 import { texts } from "@/i18n";
 
@@ -75,6 +76,7 @@ export function MaintenanceAdminCard() {
               </Link>
             </p>
           )}
+          {data.enabled && <IntegrationTokens />}
         </div>
       )}
     </Card>

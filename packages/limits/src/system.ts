@@ -95,6 +95,8 @@ export const maintenanceLimits = {
   planEveryMax: 1000,
   planLeadDaysMax: 60,
   meterValueMax: 2_000_000_000,
+  /** Parts per call of the SGA's catalogue (the JSON body tops at 1 MB). */
+  partsPerCall: 2000,
 } as const;
 
 /** Whistleblowing channel (docs/spec/canal-denuncias.md, Ley 2/2023). */

@@ -58,6 +58,33 @@ export interface PlanInput {
   lockout: boolean;
 }
 
+/** A spare part of the SGA's catalogue (docs/spec/mantenimiento.md, section 6). */
+export interface Part {
+  id: string;
+  code: string;
+  description: string;
+  unit: string;
+  stock: number | null;
+  minStock: number | null;
+  location: string;
+  low: boolean;
+  syncedAt: string;
+}
+
+/** A token the SGA uses for the integration API (owner only). */
+export interface IntegrationToken {
+  id: string;
+  name: string;
+  prefix: string;
+  scopes: string[];
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+export const TOKEN_SCOPES = ["parts.write", "consumption.read"] as const;
+export type TokenScope = (typeof TOKEN_SCOPES)[number];
+
 export interface Meter {
   id: string;
   asset: { id: string; code: string; name: string } | null;
@@ -290,6 +317,8 @@ export const maintenanceKeys = {
     ["w", slug, "maintenance", "plans", archived] as const,
   meters: (slug: string) => ["w", slug, "maintenance", "meters"] as const,
   calibrations: (slug: string) => ["w", slug, "maintenance", "calibrations"] as const,
+  parts: (slug: string, q: string) => ["w", slug, "maintenance", "parts", q] as const,
+  tokens: (slug: string) => ["w", slug, "maintenance", "tokens"] as const,
 };
 
 function voiceRequest(note: VoiceNote, query: URLSearchParams, signal?: AbortSignal) {
@@ -353,6 +382,19 @@ export const maintenanceApi = {
   updatePlan: (slug: string, id: string, body: PlanInput & { archived?: boolean }) =>
     api<{ plan: Plan }>(m(slug, `/plans/${id}`), { method: "PUT", body }),
   calibrations: (slug: string) => api<{ plans: Plan[] }>(m(slug, "/calibrations")),
+  parts: (slug: string, q: string) =>
+    api<{ parts: Part[]; total: number }>(m(slug, `/parts?q=${encodeURIComponent(q)}`)),
+  tokens: (slug: string) =>
+    api<{ tokens: IntegrationToken[] }>(`/w/${slug}/admin/maintenance/tokens`),
+  createToken: (slug: string, body: { name: string; scopes: TokenScope[] }) =>
+    api<{ token: string; view: IntegrationToken }>(`/w/${slug}/admin/maintenance/tokens`, {
+      method: "POST",
+      body,
+    }),
+  revokeToken: (slug: string, id: string) =>
+    api<{ token: IntegrationToken }>(`/w/${slug}/admin/maintenance/tokens/${id}/revoke`, {
+      method: "POST",
+    }),
   meters: (slug: string) => api<{ meters: Meter[] }>(m(slug, "/meters")),
   createMeter: (slug: string, body: { assetId: string; name: string; unit: string }) =>
     api<{ meter: Meter }>(m(slug, "/meters"), { method: "POST", body }),

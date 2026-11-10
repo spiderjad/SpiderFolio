@@ -25,6 +25,7 @@ import {
   requireAny,
   requireMaintenance,
 } from "./maintenance-access.ts";
+import { partsForText } from "./parts.service.ts";
 import { getWorkOrder } from "./work-orders.service.ts";
 
 const L = maintenanceLimits;
@@ -425,7 +426,7 @@ Devuelves:
 - solution: qué se hizo, incluidas las pruebas («probado con producto»).
 - minutes: minutos de trabajo que dice («media hora» = 30); 0 si no lo dice.
 - downtimeMinutes: minutos que la línea estuvo parada, si lo dice; -1 si no lo dice.
-- parts: los repuestos que dice haber usado o cambiado: código (solo si lo dice, si no vacío), descripción corta, cantidad (1 si no la dice) y unidad («ud», «m», «l», «kg»). Nunca agregues repuestos que no nombra.`;
+- parts: los repuestos que dice haber usado o cambiado: código, descripción corta, cantidad (1 si no la dice) y unidad («ud», «m», «l», «kg»). Si el repuesto está en la lista del almacén, usa su código y su unidad tal cual; si no está ni dice el código, código vacío. Nunca agregues repuestos que no nombra.`;
 
 export async function closeByVoice(
   ctx: AdminContext,
@@ -441,6 +442,14 @@ export async function closeByVoice(
   }
   await assertVoice(ctx, deps);
   const note = await saveNote(ctx, deps, input, "CLOSE", workOrderId, signal);
+  // The SGA's parts that sound like what was said (section 6), for the AI to name their codes.
+  const catalog = await partsForText(ctx.db, note.transcript);
+  const catalogText =
+    catalog.length === 0
+      ? ""
+      : `\n\nRepuestos del almacén que pueden ser (código · descripción · unidad):\n${catalog
+          .map((part) => `${part.code} · ${part.description} · ${part.unit}`)
+          .join("\n")}`;
   const answer = await askJson(
     ctx,
     deps,
@@ -448,7 +457,7 @@ export async function closeByVoice(
       system: closeSystem(),
       user: `Orden de trabajo: ${order.code} · ${order.title}\nEquipo: ${
         order.asset === null ? "sin equipo" : `${order.asset.code} · ${order.asset.name}`
-      }\nSíntoma avisado: ${order.description === "" ? "(sin detalle)" : order.description}\n\nLo que cuenta el técnico:\n<nota>\n${note.transcript}\n</nota>`,
+      }\nSíntoma avisado: ${order.description === "" ? "(sin detalle)" : order.description}${catalogText}\n\nLo que cuenta el técnico:\n<nota>\n${note.transcript}\n</nota>`,
       schema: CLOSE_SCHEMA,
       parse: CloseAnswer,
     },
@@ -465,12 +474,18 @@ export async function closeByVoice(
             answer.downtimeMinutes < 0 ? null : Math.min(answer.downtimeMinutes, 100_000),
           parts: answer.parts
             .filter((part) => part.description.trim() !== "")
-            .map((part) => ({
-              partCode: part.code.trim().slice(0, L.shortMax),
-              description: part.description.trim().slice(0, L.nameMax),
-              quantity: part.quantity > 0 && part.quantity <= L.quantityMax ? part.quantity : 1,
-              unit: part.unit.trim().slice(0, 20) || "ud",
-            })),
+            .map((part) => {
+              // A code of the catalogue keeps the SGA's spelling and unit; any other is as said.
+              const known = catalog.find(
+                (candidate) => nameKeyOf(candidate.code) === nameKeyOf(part.code),
+              );
+              return {
+                partCode: (known?.code ?? part.code.trim()).slice(0, L.shortMax),
+                description: part.description.trim().slice(0, L.nameMax),
+                quantity: part.quantity > 0 && part.quantity <= L.quantityMax ? part.quantity : 1,
+                unit: (known?.unit ?? part.unit.trim()).slice(0, 20) || "ud",
+              };
+            }),
         };
   await auditAdmin(ctx, {
     action: "maintenance.voice.close",

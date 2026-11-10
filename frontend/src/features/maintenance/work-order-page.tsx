@@ -16,10 +16,12 @@ import { formatDateTime, formatUtcDate } from "@/lib/utils";
 import {
   maintenanceApi,
   maintenanceKeys,
+  type Part,
   type WorkAction,
   type WorkOrderDetail,
 } from "./maintenance-api";
 import { PriorityBadge, StatusBadge, todayDay } from "./maintenance-common";
+import { lowAfter, PartPicker } from "./part-picker";
 import { SuggestionCard } from "./suggestion-card";
 import { useVoice } from "./voice-capture";
 import { VoiceCloseDialog, VoiceNotes } from "./voice-close";
@@ -891,6 +893,7 @@ function PartDialog({
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("ud");
+  const [chosen, setChosen] = useState<Part | null>(null);
   const amount = Number(quantity.replace(",", "."));
   return (
     <Dialog
@@ -923,6 +926,15 @@ function PartDialog({
         }
       >
         <div className="grid gap-4">
+          <PartPicker
+            chosen={chosen}
+            onChoose={(part) => {
+              setChosen(part);
+              setCode(part.code);
+              setDescription(part.description);
+              setUnit(part.unit);
+            }}
+          />
           <div className="grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]">
             <FormField label={d.partCode} hint={d.partCodeHint}>
               {(control) => (
@@ -932,6 +944,7 @@ function PartDialog({
                   value={code}
                   onChange={(event) => {
                     setCode(event.target.value);
+                    setChosen(null);
                   }}
                 />
               )}
@@ -975,6 +988,9 @@ function PartDialog({
               )}
             </FormField>
           </div>
+          {Number.isFinite(amount) && lowAfter(chosen, amount) && (
+            <Banner tone="warning">{texts.maintenance.parts.lowAfter}</Banner>
+          )}
         </div>
       </DialogContent>
     </Dialog>

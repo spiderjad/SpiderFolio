@@ -243,6 +243,15 @@ usuario + PIN.
    las causas, sus pasos, sus fuentes enlazadas y «Útil / No útil».
 5. **Repuestos y stock**: punto de extensión para plugins, API de integración con token, catálogo de solo
    lectura, consumo.
+   **API y catálogo hechos el 10/11/2026**, sin probar por el mantenedor (el punto de extensión para plugins
+   queda para después). Migración `maintenance_parts_integration` (`MaintPart`, `MaintIntegrationToken`).
+   Tokens `sfm_…` que crea el propietario en la tarjeta del módulo (se ven una vez; se guarda su SHA-256;
+   alcances `parts.write` y `consumption.read`; revocables). API en `/api/v1/integrations/maintenance`:
+   `PUT /parts` (`mode` merge o replace, hasta 2000 por llamada, `retire` con códigos) y
+   `GET /consumption?since=&cursor=&limit=` (los repuestos usados en las OT, del más viejo al más nuevo).
+   Token inválido, revocado o de una empresa sin el módulo: 401; sin el alcance: 403. En la app, «Buscar en
+   el almacén» al agregar un repuesto (con el stock y el aviso de mínimo) y «Cerrar hablando» usa los códigos
+   del catálogo.
 6. **Indicadores** y Resumen.
 7. **Tests de seguridad** al cerrar el módulo (cuando el mantenedor lo pida): permisos de cada capacidad,
    quien avisa solo ve lo suyo, tokens de integración (alcance, revocación, empresa), audio y transcripción

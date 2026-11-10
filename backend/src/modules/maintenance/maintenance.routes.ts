@@ -10,6 +10,13 @@ import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import { assetQr, createAsset, getAsset, listAssets, updateAsset } from "./assets.service.ts";
 import { rateSuggestion, suggestResolution } from "./suggest.service.ts";
+import {
+  createToken,
+  listTokens,
+  revokeToken,
+  searchParts,
+  TOKEN_SCOPES,
+} from "./parts.service.ts";
 import { requireAny } from "./maintenance-access.ts";
 import { getMaintenanceSettings, updateMaintenanceSettings } from "./maintenance.service.ts";
 import {
@@ -236,6 +243,51 @@ export function maintenanceRoutes(deps: AppDeps): TenantRoute[] {
       handler: async (req, res) => {
         const input = z.strictObject({ enabled: z.boolean() }).parse(req.body);
         res.json({ maintenance: await updateMaintenanceSettings(adminContextOf(req), input) });
+      },
+    },
+    // ─── The SGA's integration tokens (section 6): only the owner ───
+    {
+      method: "get",
+      path: "/admin/maintenance/tokens",
+      capability: "workspace.settings",
+      ownerOnly: true,
+      handler: async (req, res) => {
+        res.json({ tokens: await listTokens(adminContextOf(req)) });
+      },
+    },
+    {
+      method: "post",
+      path: "/admin/maintenance/tokens",
+      capability: "workspace.settings",
+      ownerOnly: true,
+      handler: async (req, res) => {
+        const input = z
+          .strictObject({
+            name: z.string().trim().min(1).max(L.shortMax),
+            scopes: z.array(z.enum(TOKEN_SCOPES)).min(1),
+          })
+          .parse(req.body);
+        const { token, view } = await createToken(adminContextOf(req), input);
+        res.status(201).json({ token, view });
+      },
+    },
+    {
+      method: "post",
+      path: "/admin/maintenance/tokens/:id/revoke",
+      capability: "workspace.settings",
+      ownerOnly: true,
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        res.json({ token: await revokeToken(adminContextOf(req), id) });
+      },
+    },
+    // ─── The SGA's catalogue (read-only copy) ───
+    {
+      method: "get",
+      path: "/maintenance/parts",
+      handler: async (req, res) => {
+        const { q } = z.object({ q: z.string().max(L.shortMax).default("") }).parse(req.query);
+        res.json(await searchParts(adminContextOf(req), { q }));
       },
     },
     // ─── Assets ───

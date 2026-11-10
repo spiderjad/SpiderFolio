@@ -2100,6 +2100,9 @@ export const maintenanceTexts: Catalog<typeof Es.maintenanceTexts> = {
     transcribeFailed: "We couldn't turn the audio into text. Try again or type it.",
     nothingHeard: "Nothing could be made out in the recording. Try again, closer to the phone.",
     proposalFailed: "The AI couldn't prepare the proposal. Fill it in by hand.",
+    tokenScope: "This token isn't allowed to do this.",
+    notUtf8:
+      "The text doesn't arrive in UTF-8 (there are «�» characters): send it with Content-Type: application/json; charset=utf-8.",
     suggestKind:
       "Suggestions are for breakdowns: a preventive or a calibration follows its plan's tasks.",
     suggestFailed: "The AI couldn't prepare the suggestion. Try again in a while.",

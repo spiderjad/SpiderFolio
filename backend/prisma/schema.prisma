@@ -373,6 +373,8 @@ model Workspace {
   maintMeters              MaintMeter[]
   maintMeterReadings       MaintMeterReading[]
   maintSuggestions         MaintSuggestion[]
+  maintParts               MaintPart[]
+  maintIntegrationTokens   MaintIntegrationToken[]
 }
 
 model Role {
@@ -4352,6 +4354,7 @@ model MaintPartUse {
   workOrder MaintWorkOrder @relation(fields: [workOrderId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
 
   @@index([workspaceId, workOrderId])
+  @@index([workspaceId, createdAt, id])
 }
 
 /// A work order's timeline: who changed what and when.
@@ -4486,6 +4489,53 @@ model MaintSuggestion {
 
   @@unique([id, workspaceId])
   @@index([workspaceId, workOrderId, createdAt])
+}
+
+/// A spare part of the warehouse system (SGA), as it last sent it (docs/spec/mantenimiento.md, section 6):
+/// a read-only copy for searching and for the AI. The stock is the SGA's: maintenance never changes it.
+model MaintPart {
+  id          String   @id @default(cuid())
+  workspaceId String
+  code        String
+  /// nameKeyOf(code): unique per company.
+  codeKey     String
+  description String
+  unit        String   @default("ud")
+  stock       Decimal? @db.Decimal(14, 3)
+  minStock    Decimal? @db.Decimal(14, 3)
+  location    String   @default("")
+  /// false: the SGA stopped sending it (a full catalogue without it).
+  active      Boolean  @default(true)
+  syncedAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, codeKey])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, active])
+}
+
+/// A token another system (the SGA) uses to talk to Maintenance's integration API (section 6). Only its
+/// SHA-256 is kept; it's shown once. Revoked, never deleted.
+model MaintIntegrationToken {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  /// sha256 of the whole token, hex.
+  tokenHash   String    @unique
+  /// Its first characters, to tell tokens apart («sfm_3fA9…»).
+  prefix      String
+  /// parts.write | consumption.read
+  scopes      String[]
+  createdById String
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, createdAt])
 }
 
 model MaintEvent {

@@ -161,6 +161,8 @@ export const modelMetadata = {
       maintMeters: "MaintMeter",
       maintMeterReadings: "MaintMeterReading",
       maintSuggestions: "MaintSuggestion",
+      maintParts: "MaintPart",
+      maintIntegrationTokens: "MaintIntegrationToken",
       pageImages: "PageImage",
       commentThreads: "CommentThread",
       comments: "Comment",
@@ -464,6 +466,8 @@ export const modelMetadata = {
     relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },
   },
   MaintPlan: { scope: "tenant", relations: { workspace: "Workspace" } },
+  MaintPart: { scope: "tenant", relations: { workspace: "Workspace" } },
+  MaintIntegrationToken: { scope: "tenant", relations: { workspace: "Workspace" } },
   MaintSuggestion: {
     scope: "tenant",
     relations: { workspace: "Workspace", workOrder: "MaintWorkOrder" },

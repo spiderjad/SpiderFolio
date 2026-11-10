@@ -2568,6 +2568,19 @@ const cases: IsolationCase[] = [
     url: () => "/maintenance/work-orders/x/suggestion/y",
     body: { useful: true },
   },
+  { method: "get", path: "/admin/maintenance/tokens", url: () => "/admin/maintenance/tokens" },
+  {
+    method: "post",
+    path: "/admin/maintenance/tokens",
+    url: () => "/admin/maintenance/tokens",
+    body: { name: "Ajeno", scopes: ["parts.write"] },
+  },
+  {
+    method: "post",
+    path: "/admin/maintenance/tokens/:id/revoke",
+    url: () => "/admin/maintenance/tokens/x/revoke",
+  },
+  { method: "get", path: "/maintenance/parts", url: () => "/maintenance/parts", ownStatus: 404 },
   { method: "get", path: "/maintenance/plans", url: () => "/maintenance/plans", ownStatus: 404 },
   {
     method: "post",
