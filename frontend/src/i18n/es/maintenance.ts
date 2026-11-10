@@ -8,6 +8,7 @@ export const maintenanceTexts = {
     workOrders: "Órdenes de trabajo",
     assets: "Equipos",
     preventive: "Preventivo",
+    summary: "Resumen",
     pending: (n: number) =>
       n === 1 ? "1 orden espera algo de ti" : `${String(n)} órdenes esperan algo de ti`,
   },
@@ -310,6 +311,52 @@ export const maintenanceTexts = {
       value: "Lectura actual",
       saved: "Lectura anotada",
     },
+  },
+  summary: {
+    title: "Resumen",
+    subtitle:
+      "Cómo está el mantenimiento de la planta: averías, paradas, tiempos y cumplimiento del preventivo.",
+    periods: { "30": "30 días", "90": "90 días", "365": "12 meses", year: "Este año" },
+    allPlant: "Toda la planta",
+    scope: "Línea o equipo",
+    export: "Exportar CSV",
+    availability: "Disponibilidad",
+    availabilityDetail: (time: string) => `${time} de parada`,
+    duration: {
+      minutes: (m: number) => `${String(m)} min`,
+      hours: (h: number, m: number) =>
+        m === 0 ? `${String(h)} h` : `${String(h)} h ${String(m)} min`,
+      days: (d: number, h: number) =>
+        h === 0 ? `${String(d)} d` : `${String(d)} d ${String(h)} h`,
+      exact: (hours: string) => `${hours} horas`,
+    },
+    mtbf: "Tiempo medio entre averías (MTBF)",
+    mttr: "Tiempo medio de reparación (MTTR)",
+    breakdowns: "Averías",
+    breakdownsDetail: (equipment: number) =>
+      equipment === 1 ? "en 1 equipo" : `en ${String(equipment)} equipos`,
+    preventive: "Preventivo frente a correctivo",
+    preventiveDetail: (planned: number, corrective: number) =>
+      `${String(planned)} planificadas · ${String(corrective)} averías resueltas`,
+    compliance: "Cumplimiento del preventivo",
+    complianceDetail: (onTime: number, due: number) =>
+      `${String(onTime)} de ${String(due)} hechas a tiempo`,
+    open: "Órdenes abiertas",
+    openDetail: (overdue: number, onHold: number) =>
+      `${String(overdue)} vencidas · ${String(onHold)} en espera`,
+    none: "—",
+    top: "Equipos con más averías",
+    topEmpty: "No hubo averías en el período.",
+    columns: {
+      asset: "Equipo",
+      line: "Línea",
+      breakdowns: "Averías",
+      downtime: "Parada",
+      mttr: "MTTR",
+      mtbf: "MTBF",
+      availability: "Disponib.",
+    },
+    how: "Avería: orden correctiva, de seguridad o higiénica. MTBF: horas de funcionamiento ÷ averías. MTTR: horas desde el aviso hasta «hecha». Disponibilidad: 1 − horas de parada ÷ horas del período (24 h al día). La parada es la que anota el técnico al terminar cualquier orden, también las preventivas.",
   },
   parts: {
     search: "Buscar en el almacén",

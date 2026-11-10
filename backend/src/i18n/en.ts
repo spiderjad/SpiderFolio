@@ -2112,4 +2112,15 @@ export const maintenanceTexts: Catalog<typeof Es.maintenanceTexts> = {
       `The reading can't be lower than the last one (${String(last)}). If the meter was replaced, create a new one.`,
   },
   qrLabel: "Report a breakdown",
+  indicatorsCsv: {
+    file: "maintenance-indicators",
+    code: "Code",
+    name: "Equipment",
+    line: "Line",
+    breakdowns: "Breakdowns",
+    downtime: "Downtime hours",
+    mttr: "MTTR (h)",
+    mtbf: "MTBF (h)",
+    availability: "Availability (%)",
+  },
 };

@@ -2121,4 +2121,15 @@ export const maintenanceTexts = {
       `La lectura no puede ser menor que la última (${String(last)}). Si cambiaron el contador, crea uno nuevo.`,
   },
   qrLabel: "Avisar de una avería",
+  indicatorsCsv: {
+    file: "indicadores-mantenimiento",
+    code: "Código",
+    name: "Equipo",
+    line: "Línea",
+    breakdowns: "Averías",
+    downtime: "Horas de parada",
+    mttr: "MTTR (h)",
+    mtbf: "MTBF (h)",
+    availability: "Disponibilidad (%)",
+  },
 };

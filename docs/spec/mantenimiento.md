@@ -253,6 +253,13 @@ usuario + PIN.
    el almacén» al agregar un repuesto (con el stock y el aviso de mínimo) y «Cerrar hablando» usa los códigos
    del catálogo.
 6. **Indicadores** y Resumen.
+   **Hecha el 10/11/2026**, sin probar por el mantenedor. `indicators.service.ts`: por período (días de la
+   empresa) y para toda la planta o una línea o equipo con todo lo que cuelga de él. Avería = OT correctiva,
+   de seguridad o higiénica no cancelada. MTBF = (horas del período × equipos − horas de parada) ÷ averías;
+   MTTR = horas medias del aviso a «hecha»; disponibilidad = 1 − parada ÷ (horas × equipos), con 24 h al
+   día; % preventivo = planificadas ÷ (planificadas + averías resueltas); cumplimiento = OT de planes
+   vencidas en el período hechas a su fecha. Pantalla **Resumen** con las cifras, los equipos con más
+   averías y la exportación CSV de cada equipo.
 7. **Tests de seguridad** al cerrar el módulo (cuando el mantenedor lo pida): permisos de cada capacidad,
    quien avisa solo ve lo suyo, tokens de integración (alcance, revocación, empresa), audio y transcripción
    solo de quien puede ver la OT, aislamiento entre empresas.

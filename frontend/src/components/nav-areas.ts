@@ -159,6 +159,9 @@ function maintenanceItems(slug: string, person: Membership, context: AreaContext
   const base = `/app/${slug}/mantenimiento`;
   const n = texts.maintenance.nav;
   const items: AreaItem[] = [];
+  if (caps.includes("maintenance.view") || work) {
+    items.push({ to: `${base}/resumen`, label: n.summary, icon: LayoutDashboard });
+  }
   // Everyone but guests reports (readers and user + PIN accounts included: shared tablets).
   items.push({ to: `${base}/avisar`, label: n.report, icon: Megaphone });
   if (work) items.push({ to: `${base}/ot?mias=1&estado=open`, label: n.mine, icon: ListTodo });

@@ -10,6 +10,7 @@ export const maintenanceTexts: typeof es = {
     workOrders: "Work orders",
     assets: "Equipment",
     preventive: "Preventive",
+    summary: "Summary",
     pending: (n: number) =>
       n === 1 ? "1 work order is waiting for you" : `${String(n)} work orders are waiting for you`,
   },
@@ -314,6 +315,52 @@ export const maintenanceTexts: typeof es = {
       value: "Current reading",
       saved: "Reading logged",
     },
+  },
+  summary: {
+    title: "Summary",
+    subtitle:
+      "How the plant's maintenance is going: breakdowns, downtime, times and preventive compliance.",
+    periods: { "30": "30 days", "90": "90 days", "365": "12 months", year: "This year" },
+    allPlant: "Whole plant",
+    scope: "Line or equipment",
+    export: "Export CSV",
+    availability: "Availability",
+    availabilityDetail: (time: string) => `${time} of downtime`,
+    duration: {
+      minutes: (m: number) => `${String(m)} min`,
+      hours: (h: number, m: number) =>
+        m === 0 ? `${String(h)} h` : `${String(h)} h ${String(m)} min`,
+      days: (d: number, h: number) =>
+        h === 0 ? `${String(d)} d` : `${String(d)} d ${String(h)} h`,
+      exact: (hours: string) => `${hours} hours`,
+    },
+    mtbf: "Mean time between failures (MTBF)",
+    mttr: "Mean time to repair (MTTR)",
+    breakdowns: "Breakdowns",
+    breakdownsDetail: (equipment: number) =>
+      equipment === 1 ? "on 1 piece of equipment" : `on ${String(equipment)} pieces of equipment`,
+    preventive: "Preventive versus corrective",
+    preventiveDetail: (planned: number, corrective: number) =>
+      `${String(planned)} planned · ${String(corrective)} breakdowns fixed`,
+    compliance: "Preventive compliance",
+    complianceDetail: (onTime: number, due: number) =>
+      `${String(onTime)} of ${String(due)} done on time`,
+    open: "Open work orders",
+    openDetail: (overdue: number, onHold: number) =>
+      `${String(overdue)} overdue · ${String(onHold)} on hold`,
+    none: "—",
+    top: "Equipment with the most breakdowns",
+    topEmpty: "No breakdowns in the period.",
+    columns: {
+      asset: "Equipment",
+      line: "Line",
+      breakdowns: "Breakdowns",
+      downtime: "Downtime",
+      mttr: "MTTR",
+      mtbf: "MTBF",
+      availability: "Availab.",
+    },
+    how: "Breakdown: a corrective, safety or hygiene work order. MTBF: operating hours ÷ breakdowns. MTTR: hours from the report to «done». Availability: 1 − downtime hours ÷ hours of the period (24 a day). Downtime is what the technician writes when finishing any work order, preventive ones too.",
   },
   parts: {
     search: "Search the warehouse",

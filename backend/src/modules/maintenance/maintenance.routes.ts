@@ -9,6 +9,7 @@ import { clientIp, sensitiveRateLimit } from "../../middleware/rate-limit.ts";
 import type { AppDeps, TenantRoute } from "../../routes.ts";
 import { adminContextOf } from "../admin/admin-context.ts";
 import { assetQr, createAsset, getAsset, listAssets, updateAsset } from "./assets.service.ts";
+import { indicatorsCsv, maintenanceIndicators } from "./indicators.service.ts";
 import { rateSuggestion, suggestResolution } from "./suggest.service.ts";
 import {
   createToken,
@@ -179,6 +180,14 @@ const MeterSchema = z.strictObject({
 const ReadingSchema = z.strictObject({ value: z.number().int().min(0).max(L.meterValueMax) });
 
 const archivedOf = (req: Request) => ArchivedQuery.parse(req.query).archivado === "1";
+
+// Indicators (section 7): a period of company days (up to five years) and, optionally, one line or machine.
+const IndicatorsQuery = z
+  .object({ desde: Day.optional(), hasta: Day.optional(), equipo: Id.optional() })
+  .refine(
+    (query) => query.desde === undefined || query.hasta === undefined || query.desde <= query.hasta,
+  )
+  .transform((query) => ({ from: query.desde, to: query.hasta, assetId: query.equipo }));
 
 // A voice note: the audio as the raw body (audio/*), or the dictated or typed text as JSON.
 const VoiceTextSchema = z.strictObject({ text: z.string().min(1).max(L.textMax) });
@@ -464,6 +473,30 @@ export function maintenanceRoutes(deps: AppDeps): TenantRoute[] {
         const { id } = IdParams.parse(req.params);
         const { value } = ReadingSchema.parse(req.body);
         res.json({ meter: await addReading(adminContextOf(req), id, value) });
+      },
+    },
+    // ─── Indicators (section 7) ───
+    {
+      method: "get",
+      path: "/maintenance/indicators",
+      handler: async (req, res) => {
+        res.json(
+          await maintenanceIndicators(adminContextOf(req), IndicatorsQuery.parse(req.query)),
+        );
+      },
+    },
+    {
+      method: "get",
+      path: "/maintenance/indicators/export",
+      handler: async (req, res) => {
+        const file = await indicatorsCsv(adminContextOf(req), IndicatorsQuery.parse(req.query));
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="indicadores.csv"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+        );
+        res.setHeader("Cache-Control", "no-store");
+        res.send(file.body);
       },
     },
     // ─── Technicians (to assign) ───

@@ -2581,6 +2581,18 @@ const cases: IsolationCase[] = [
     url: () => "/admin/maintenance/tokens/x/revoke",
   },
   { method: "get", path: "/maintenance/parts", url: () => "/maintenance/parts", ownStatus: 404 },
+  {
+    method: "get",
+    path: "/maintenance/indicators",
+    url: () => "/maintenance/indicators",
+    ownStatus: 404,
+  },
+  {
+    method: "get",
+    path: "/maintenance/indicators/export",
+    url: () => "/maintenance/indicators/export",
+    ownStatus: 404,
+  },
   { method: "get", path: "/maintenance/plans", url: () => "/maintenance/plans", ownStatus: 404 },
   {
     method: "post",

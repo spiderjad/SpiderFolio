@@ -185,6 +185,10 @@ export const routes = [
                     lazy: page(() => import("@/features/maintenance/assets-page"), "AssetsPage"),
                   },
                   {
+                    path: "resumen",
+                    lazy: page(() => import("@/features/maintenance/summary-page"), "SummaryPage"),
+                  },
+                  {
                     path: "preventivo",
                     lazy: page(() => import("@/features/maintenance/plans-page"), "PlansPage"),
                   },

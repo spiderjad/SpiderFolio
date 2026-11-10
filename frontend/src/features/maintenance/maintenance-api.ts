@@ -85,6 +85,46 @@ export interface IntegrationToken {
 export const TOKEN_SCOPES = ["parts.write", "consumption.read"] as const;
 export type TokenScope = (typeof TOKEN_SCOPES)[number];
 
+/** The indicators of a period (docs/spec/mantenimiento.md, section 7). */
+export interface AssetIndicators {
+  id: string;
+  code: string;
+  name: string;
+  line: string;
+  breakdowns: number;
+  downtimeHours: number;
+  mttrHours: number | null;
+  mtbfHours: number | null;
+  availability: number;
+}
+
+export interface Indicators {
+  from: string;
+  to: string;
+  days: number;
+  equipment: number;
+  breakdowns: number;
+  downtimeHours: number;
+  mttrHours: number | null;
+  mtbfHours: number | null;
+  availability: number | null;
+  preventiveDone: number;
+  correctiveDone: number;
+  preventiveShare: number | null;
+  open: number;
+  overdue: number;
+  onHold: number;
+  compliance: { due: number; onTime: number; rate: number | null };
+  top: AssetIndicators[];
+  assets: AssetIndicators[];
+}
+
+export interface IndicatorsQuery {
+  desde: string;
+  hasta: string;
+  equipo?: string | undefined;
+}
+
 export interface Meter {
   id: string;
   asset: { id: string; code: string; name: string } | null;
@@ -319,6 +359,8 @@ export const maintenanceKeys = {
   calibrations: (slug: string) => ["w", slug, "maintenance", "calibrations"] as const,
   parts: (slug: string, q: string) => ["w", slug, "maintenance", "parts", q] as const,
   tokens: (slug: string) => ["w", slug, "maintenance", "tokens"] as const,
+  indicators: (slug: string, query: IndicatorsQuery) =>
+    ["w", slug, "maintenance", "indicators", query] as const,
 };
 
 function voiceRequest(note: VoiceNote, query: URLSearchParams, signal?: AbortSignal) {
@@ -386,6 +428,10 @@ export const maintenanceApi = {
     api<{ parts: Part[]; total: number }>(m(slug, `/parts?q=${encodeURIComponent(q)}`)),
   tokens: (slug: string) =>
     api<{ tokens: IntegrationToken[] }>(`/w/${slug}/admin/maintenance/tokens`),
+  indicators: (slug: string, query: IndicatorsQuery) =>
+    api<Indicators>(m(slug, `/indicators?${listQuery({ ...query })}`)),
+  indicatorsCsv: (slug: string, query: IndicatorsQuery) =>
+    apiBlob(m(slug, `/indicators/export?${listQuery({ ...query })}`)),
   createToken: (slug: string, body: { name: string; scopes: TokenScope[] }) =>
     api<{ token: string; view: IntegrationToken }>(`/w/${slug}/admin/maintenance/tokens`, {
       method: "POST",
