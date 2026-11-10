@@ -824,11 +824,11 @@ function useAreaNav(membership: Membership) {
     select: (page) => page.total,
     enabled: caeReview,
   });
-  // Maintenance: the open work orders assigned to the person (technicians only).
-  const maintenanceMine = useQuery({
+  // Maintenance: the open work orders assigned to the person (technicians), and for whoever manages it
+  // the ones waiting for them (new reports nobody took, done ones still to close).
+  const maintenanceCounts = useQuery({
     queryKey: maintenanceKeys.counts(slug),
     queryFn: () => maintenanceApi.counts(slug),
-    select: (data) => data.mine,
     staleTime: 60_000,
     enabled:
       maintenanceOn && (caps.includes("maintenance.work") || caps.includes("maintenance.manage")),
@@ -888,9 +888,21 @@ function useAreaNav(membership: Membership) {
         detail: texts.expiries.countDetail(expired, count - expired),
       };
     }
-    if (to === `${base}/mantenimiento/ot?mias=1&estado=open` && (maintenanceMine.data ?? 0) > 0) {
-      const count = maintenanceMine.data ?? 0;
+    if (
+      to === `${base}/mantenimiento/ot?mias=1&estado=open` &&
+      (maintenanceCounts.data?.mine ?? 0) > 0
+    ) {
+      const count = maintenanceCounts.data?.mine ?? 0;
       return { kind: "count", count, tone: "primary", label: texts.maintenance.nav.mine };
+    }
+    if (to === `${base}/mantenimiento/ot` && (maintenanceCounts.data?.pending ?? 0) > 0) {
+      const count = maintenanceCounts.data?.pending ?? 0;
+      return {
+        kind: "count",
+        count,
+        tone: "warning",
+        label: texts.maintenance.nav.pending(count),
+      };
     }
     if (to === `${base}/canal` && (channelUnread.data ?? 0) > 0) {
       const count = channelUnread.data ?? 0;

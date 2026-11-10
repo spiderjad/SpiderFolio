@@ -92,6 +92,17 @@ export interface NcDetail extends NcSummary {
   actionItems: QualityAction[];
   verifications: { id: string; effective: boolean; note: string; by: Person; at: string }[];
   holds: Hold[];
+  /** Its maintenance work orders (docs/spec/mantenimiento.md, section 8). */
+  maintenance: {
+    id: string;
+    code: string;
+    title: string;
+    status: "REPORTED" | "PLANNED" | "IN_PROGRESS" | "ON_HOLD" | "DONE" | "CLOSED" | "CANCELLED";
+    asset: { code: string; name: string } | null;
+    solution: string;
+    doneAt: string | null;
+  }[];
+  maintenanceEnabled: boolean;
   audit: { id: string; title: string; clause: string } | null;
   supplier: { id: string; name: string } | null;
   access: "manage" | "edit" | "read";
@@ -224,6 +235,11 @@ export const qualityApi = {
     api<{ nc: NcDetail }>(w(slug, `/quality/ncs/${id}/cancel`), {
       method: "POST",
       body: { reason },
+    }),
+  askMaintenance: (slug: string, id: string, assetId: string | null) =>
+    api<{ nc: NcDetail }>(w(slug, `/quality/ncs/${id}/maintenance`), {
+      method: "POST",
+      body: { assetId },
     }),
   reopen: (slug: string, id: string, reason: string) =>
     api<{ nc: NcDetail }>(w(slug, `/quality/ncs/${id}/reopen`), {

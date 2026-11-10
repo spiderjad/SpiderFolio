@@ -27,6 +27,7 @@ import { adminErrorText } from "@/features/admin/admin-utils";
 import { cn, formatDateTime, formatUtcDate } from "@/lib/utils";
 import { QualityActionDialog } from "./action-dialog";
 import { DecisionDialog, HoldDialog } from "./hold-dialogs";
+import { NcMaintenanceCard } from "@/features/maintenance/nc-maintenance";
 import { HoldStatusBadge } from "./holds-page";
 import { NcFields, formReady, useNcForm } from "./nc-form";
 import {
@@ -625,6 +626,20 @@ function HoldsCard({ nc, editable }: { nc: NcDetail; editable: boolean }) {
   );
 }
 
+/** «OT-2026-0012 → Hecha»: a work order of the NC that moved (docs/spec/mantenimiento.md, section 8). */
+function maintenanceNote(data: Record<string, unknown>): string | null {
+  const code = typeof data.code === "string" ? data.code : null;
+  if (code === null) return null;
+  const statuses: Record<string, string> = texts.maintenance.statuses;
+  const status =
+    data.status === "linked"
+      ? texts.maintenance.quality.linked
+      : typeof data.status === "string"
+        ? (statuses[data.status] ?? null)
+        : null;
+  return status === null ? code : `${code} ${t.history.to(status)}`;
+}
+
 function HistoryCard({ nc }: { nc: NcDetail }) {
   const { workspaceSlug = "" } = useParams();
   const events = useQuery({
@@ -646,10 +661,12 @@ function HistoryCard({ nc }: { nc: NcDetail }) {
         <ol className="grid gap-2 border-l border-border pl-4">
           {(events.data ?? []).map((event) => {
             const to = statusOf(event.data.to);
+            const order = event.kind === "maintenance" ? maintenanceNote(event.data) : null;
             return (
               <li key={event.id} className="text-sm">
                 <span className="font-medium">{kinds[event.kind] ?? event.kind}</span>
                 {to !== null && <span className="text-muted-foreground"> {t.history.to(to)}</span>}
+                {order !== null && <span className="text-muted-foreground"> · {order}</span>}
                 <p className="text-xs text-muted-foreground">
                   {[event.actor?.name, formatDateTime(event.at)].filter(Boolean).join(" · ")}
                 </p>
@@ -942,6 +959,7 @@ export function NcPage() {
       <CauseCard key={`${nc.id}-${nc.causeMethod ?? ""}`} nc={nc} editable={editable} />
       <ActionsCard nc={nc} editable={editable} />
       <HoldsCard nc={nc} editable={editable} />
+      <NcMaintenanceCard nc={nc} editable={editable} />
       <VerificationCard key={nc.verifyOn ?? "none"} nc={nc} />
       <Card className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
         <div>

@@ -12,7 +12,7 @@ import type {
 } from "../../generated/prisma/client.ts";
 import { AppError, forbidden, notFound } from "../../lib/errors.ts";
 import { offsetArgs, pageOf, type Page } from "../../lib/pagination.ts";
-import { maintenanceTexts } from "../../i18n/index.ts";
+import { maintenanceTexts, qualityTexts } from "../../i18n/index.ts";
 import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { dayOf, resolveExpiry, setExpiry } from "../expiries/expiries.service.ts";
 import { companyToday } from "../quality/prps.service.ts";
@@ -28,6 +28,7 @@ import {
   requireManage,
   requireWork,
 } from "./maintenance-access.ts";
+import { maintenanceEnabled, noteOnNc } from "./quality-link.ts";
 
 export const WORK_ORDER_EXPIRY = "maintenance.work_order";
 
@@ -80,6 +81,8 @@ export interface WorkOrderDetail extends WorkOrderSummary {
   totalMinutes: number;
   parts: { id: string; partCode: string; description: string; quantity: number; unit: string }[];
   events: { id: string; action: string; detail: string; who: string | null; createdAt: Date }[];
+  /** The quality nonconformity it's for (section 8), if any. */
+  nc: { id: string; code: string } | null;
   /** Voice notes (section 3): the transcript stays; the audio, 30 days. */
   recordings: {
     id: string;
@@ -286,6 +289,7 @@ const detailSelect = {
   solution: true,
   hygieneReleasedById: true,
   hygieneReleasedAt: true,
+  ncId: true,
 } as const;
 
 async function rowOf(ctx: AdminContext, id: string) {
@@ -300,7 +304,7 @@ async function rowOf(ctx: AdminContext, id: string) {
 export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkOrderDetail> {
   await requireMaintenance(ctx);
   const row = await rowOf(ctx, id);
-  const [labor, parts, events, recordings] = await Promise.all([
+  const [labor, parts, events, recordings, nc] = await Promise.all([
     ctx.db.maintLabor.findMany({
       where: { workOrderId: id },
       orderBy: [{ startedAt: "asc" }, { id: "asc" }],
@@ -337,6 +341,12 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
         createdAt: true,
       },
     }),
+    row.ncId === null
+      ? Promise.resolve(null)
+      : ctx.db.qualityNc.findFirst({
+          where: { id: row.ncId },
+          select: { id: true, year: true, number: true },
+        }),
   ]);
   const names = await namesOf(ctx.db, [
     ...recordings.map((entry) => entry.membershipId),
@@ -387,6 +397,7 @@ export async function getWorkOrder(ctx: AdminContext, id: string): Promise<WorkO
       who: entry.membershipId === null ? null : (names.get(entry.membershipId) ?? ""),
       createdAt: entry.createdAt,
     })),
+    nc: nc === null ? null : { id: nc.id, code: qualityTexts.code(nc.year, nc.number) },
     recordings: recordings.map((entry) => ({
       id: entry.id,
       purpose: entry.purpose,
@@ -481,6 +492,7 @@ async function insert(
     assignedToId: string | null;
     dueOn: string | null;
     lockout: boolean;
+    ncId?: string | null;
   },
 ): Promise<string> {
   const year = Number((await companyToday(ctx.db)).slice(0, 4));
@@ -507,6 +519,7 @@ async function insert(
         dueOn: input.dueOn === null ? null : dateOf(input.dueOn),
         lockout: input.lockout,
         source: input.source,
+        ncId: input.ncId ?? null,
       },
       select: { id: true, status: true, dueOn: true, assignedToId: true, year: true, number: true },
     });
@@ -569,6 +582,110 @@ export async function reportWorkOrder(
     });
   }
   return await getWorkOrder(ctx, id);
+}
+
+/**
+ * The work order of a quality nonconformity (section 8): the one already linked, else the open one of
+ * the same equipment (linked now, without duplicating), else a new urgent one. A system action (the NC
+ * opens it, whoever filled in the record or handles the NC): no permission checks. Null with the module
+ * off.
+ */
+export async function workOrderForNc(
+  ctx: AdminContext,
+  nc: { id: string; code: string; title: string; description: string },
+  assetId: string | null,
+): Promise<{ id: string; code: string; created: boolean } | null> {
+  if (!(await maintenanceEnabled(ctx.db))) return null;
+  const codeOf = (row: { year: number; number: number }) =>
+    maintenanceTexts.code(row.year, row.number);
+  const linked = await ctx.db.maintWorkOrder.findFirst({
+    where: { ncId: nc.id, status: { in: OPEN } },
+    select: { id: true, year: true, number: true },
+  });
+  if (linked !== null) return { id: linked.id, code: codeOf(linked), created: false };
+  if (assetId !== null) {
+    await assertAsset(ctx.db, assetId);
+    const open = await ctx.db.maintWorkOrder.findFirst({
+      where: { assetId, ncId: null, status: { in: OPEN } },
+      orderBy: { reportedAt: "desc" },
+      select: { id: true, year: true, number: true },
+    });
+    if (open !== null) {
+      await ctx.db.maintWorkOrder.update({
+        where: { id: open.id },
+        data: { ncId: nc.id },
+        select: { id: true },
+      });
+      await event(ctx.db, open.id, ctx.tenant.membershipId, "linked_nc", nc.code);
+      return { id: open.id, code: codeOf(open), created: false };
+    }
+  }
+  const id = await insert(ctx, {
+    title: `${nc.code} · ${nc.title}`.slice(0, maintenanceLimits.nameMax),
+    description: nc.description.slice(0, maintenanceLimits.textMax),
+    assetId,
+    priority: "URGENT",
+    source: "QUALITY",
+    kind: "CORRECTIVE",
+    assignedToId: null,
+    dueOn: null,
+    lockout: false,
+    ncId: nc.id,
+  });
+  const created = await ctx.db.maintWorkOrder.findFirst({
+    where: { id },
+    select: { year: true, number: true },
+  });
+  return { id, code: created === null ? "" : codeOf(created), created: true };
+}
+
+/** The work orders of a nonconformity, for its screen (whoever sees the NC sees how they're going). */
+export async function workOrdersOfNc(
+  db: TenantDb,
+  ncId: string,
+): Promise<
+  {
+    id: string;
+    code: string;
+    title: string;
+    status: MaintWorkStatus;
+    asset: { code: string; name: string } | null;
+    solution: string;
+    doneAt: Date | null;
+  }[]
+> {
+  if (!(await maintenanceEnabled(db))) return [];
+  const rows = await db.maintWorkOrder.findMany({
+    where: { ncId },
+    orderBy: { reportedAt: "asc" },
+    take: 20,
+    select: {
+      id: true,
+      year: true,
+      number: true,
+      title: true,
+      status: true,
+      assetId: true,
+      solution: true,
+      doneAt: true,
+    },
+  });
+  const assets = await assetsOf(
+    db,
+    rows.flatMap((row) => (row.assetId === null ? [] : [row.assetId])),
+  );
+  return rows.map((row) => {
+    const asset = row.assetId === null ? undefined : assets.get(row.assetId);
+    return {
+      id: row.id,
+      code: maintenanceTexts.code(row.year, row.number),
+      title: row.title,
+      status: row.status,
+      asset: asset === undefined ? null : { code: asset.code, name: asset.name },
+      solution: row.solution,
+      doneAt: row.doneAt,
+    };
+  });
 }
 
 /** A work order created by maintenance, with everything. */
@@ -857,6 +974,24 @@ export async function actOnWorkOrder(
     }
   }
   await event(ctx.db, id, me, input.action, detail);
+  // Its nonconformity hears when it's done, closed, cancelled or reopened (section 8).
+  if (["done", "close", "cancel", "reopen"].includes(input.action) && row.ncId !== null) {
+    const after = await ctx.db.maintWorkOrder.findFirst({
+      where: { id },
+      select: { status: true, year: true, number: true },
+    });
+    if (after !== null) {
+      await noteOnNc(
+        ctx.db,
+        {
+          ncId: row.ncId,
+          code: maintenanceTexts.code(after.year, after.number),
+          status: after.status,
+        },
+        me,
+      );
+    }
+  }
   await auditAdmin(ctx, {
     action: `maintenance.work_order.${input.action}`,
     entityType: "MaintWorkOrder",
@@ -865,17 +1000,27 @@ export async function actOnWorkOrder(
   return await getWorkOrder(ctx, id);
 }
 
-/** How many open work orders the person has assigned, and the urgent ones (for the menu). */
+/**
+ * For the menu: the open work orders the person has assigned, the urgent ones, and (for whoever manages
+ * maintenance) the ones waiting for them: new reports nobody took and done ones still to close.
+ */
 export async function workOrderCounts(
   ctx: AdminContext,
-): Promise<{ mine: number; urgent: number }> {
+): Promise<{ mine: number; urgent: number; pending: number }> {
   await requireMaintenance(ctx);
-  if (!canWorkMaintenance(ctx)) return { mine: 0, urgent: 0 };
-  const [mine, urgent] = await Promise.all([
+  if (!canWorkMaintenance(ctx)) return { mine: 0, urgent: 0, pending: 0 };
+  const [mine, urgent, pending] = await Promise.all([
     ctx.db.maintWorkOrder.count({
       where: { assignedToId: ctx.tenant.membershipId, status: { in: OPEN } },
     }),
     ctx.db.maintWorkOrder.count({ where: { priority: "URGENT", status: { in: OPEN } } }),
+    canManageMaintenance(ctx)
+      ? ctx.db.maintWorkOrder.count({
+          where: {
+            OR: [{ status: "REPORTED", assignedToId: null }, { status: "DONE" }],
+          },
+        })
+      : Promise.resolve(0),
   ]);
-  return { mine, urgent };
+  return { mine, urgent, pending };
 }

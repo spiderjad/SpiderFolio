@@ -9,6 +9,8 @@ export const maintenanceTexts: typeof es = {
     mine: "My work orders",
     workOrders: "Work orders",
     assets: "Equipment",
+    pending: (n: number) =>
+      n === 1 ? "1 work order is waiting for you" : `${String(n)} work orders are waiting for you`,
   },
   kinds: {
     CORRECTIVE: "Corrective",
@@ -245,6 +247,22 @@ export const maintenanceTexts: typeof es = {
     closeParts: "Spare parts to add",
     closeConfirm: "Confirm and mark as done",
     closing: "Saving…",
+  },
+  quality: {
+    title: "Maintenance",
+    hint: "This nonconformity's work orders. When maintenance marks one as done, you're told.",
+    empty: "Nothing has been asked of maintenance yet.",
+    ask: "Ask maintenance",
+    askTitle: "Ask maintenance",
+    askHint:
+      "An urgent work order is created for the equipment, with this nonconformity's text. If the equipment already has an open one, it's linked to that one.",
+    asset: "Equipment",
+    assetPlaceholder: "No equipment",
+    send: "Ask",
+    sent: (code: string) => `Work order ${code} linked`,
+    solution: (text: string) => `What was done: ${text}`,
+    linked: "linked",
+    fromNc: "Nonconformity",
   },
   kiosk: {
     title: "Something not working?",

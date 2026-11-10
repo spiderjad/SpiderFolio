@@ -4206,6 +4206,8 @@ enum MaintSource {
   QR
   PREVENTIVE
   API
+  /// Opened by Quality: a monitoring record out of its limits on the equipment (spec, section 8).
+  QUALITY
 }
 
 /// A piece of equipment: a line, a machine or a component (parentId), with its documents folder.
@@ -4285,6 +4287,8 @@ model MaintWorkOrder {
   folderId            String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
+  /// The quality nonconformity it's for (no FK: an NC is never deleted, and a WO outlives it).
+  ncId                String?
 
   workspace  Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   labor      MaintLabor[]
@@ -4297,6 +4301,7 @@ model MaintWorkOrder {
   @@index([workspaceId, status, priority])
   @@index([workspaceId, assetId, reportedAt])
   @@index([workspaceId, assignedToId, status])
+  @@index([workspaceId, ncId])
   @@index([workspaceId, reportedAt, id])
 }
 

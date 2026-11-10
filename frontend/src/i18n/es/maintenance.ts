@@ -7,6 +7,8 @@ export const maintenanceTexts = {
     mine: "Mis órdenes",
     workOrders: "Órdenes de trabajo",
     assets: "Equipos",
+    pending: (n: number) =>
+      n === 1 ? "1 orden espera algo de ti" : `${String(n)} órdenes esperan algo de ti`,
   },
   kinds: {
     CORRECTIVE: "Correctivo",
@@ -241,6 +243,22 @@ export const maintenanceTexts = {
     closeParts: "Repuestos que se agregan",
     closeConfirm: "Confirmar y marcar como hecha",
     closing: "Guardando…",
+  },
+  quality: {
+    title: "Mantenimiento",
+    hint: "Las órdenes de trabajo de esta no conformidad. Cuando mantenimiento la da por hecha, te avisa.",
+    empty: "Todavía no se pidió nada a mantenimiento.",
+    ask: "Pedir a mantenimiento",
+    askTitle: "Pedir a mantenimiento",
+    askHint:
+      "Se crea una orden urgente para el equipo, con el texto de esta no conformidad. Si el equipo ya tiene una abierta, se enlaza a esa.",
+    asset: "Equipo",
+    assetPlaceholder: "Sin equipo",
+    send: "Pedir",
+    sent: (code: string) => `Orden ${code} enlazada`,
+    solution: (text: string) => `Qué se hizo: ${text}`,
+    linked: "enlazada",
+    fromNc: "No conformidad",
   },
   kiosk: {
     title: "¿Algo no funciona?",

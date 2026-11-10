@@ -702,6 +702,12 @@ const cases: IsolationCase[] = [
   },
   {
     method: "post",
+    path: "/quality/ncs/:id/maintenance",
+    url: () => "/quality/ncs/x/maintenance",
+    body: { assetId: null },
+  },
+  {
+    method: "post",
     path: "/quality/ncs/:id/reopen",
     url: () => "/quality/ncs/x/reopen",
     body: { reason: "Ajena" },

@@ -28,7 +28,7 @@ export interface AssetView {
   status: MaintAssetStatus;
   notes: string;
   folder: { spaceId: string; id: string } | null;
-  /** Work orders not closed yet. */
+  /** Open work orders (reported, planned, in progress or on hold), as the list's «Open» filter. */
   openWorkOrders: number;
   archived: boolean;
 }
@@ -72,7 +72,7 @@ async function views(ctx: AdminContext, rows: Row[]): Promise<AssetView[]> {
   const open = await ctx.db.maintWorkOrder.findMany({
     where: {
       assetId: { in: rows.map((row) => row.id) },
-      status: { notIn: ["CLOSED", "CANCELLED"] },
+      status: { in: ["REPORTED", "PLANNED", "IN_PROGRESS", "ON_HOLD"] },
     },
     select: { assetId: true },
   });

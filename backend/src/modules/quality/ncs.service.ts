@@ -22,6 +22,8 @@ import { auditAdmin, type AdminContext } from "../admin/admin-context.ts";
 import { ledDepartmentIds } from "../departments/departments.scope.ts";
 import { dayOf, resolveExpiry, setExpiry } from "../expiries/expiries.service.ts";
 import { FieldsSchema } from "../forms/forms.schemas.ts";
+import { assetNamedByRecord, maintenanceEnabled } from "../maintenance/quality-link.ts";
+import { workOrderForNc, workOrdersOfNc } from "../maintenance/work-orders.service.ts";
 import { responsiblesOf } from "../forms/settings.service.ts";
 import { toCsv } from "../members/members.csv.ts";
 import { lastPosition } from "../nodes/nodes.service.ts";
@@ -91,6 +93,10 @@ export interface QualityActionView {
 }
 
 export interface NcDetail extends NcSummary {
+  /** Its maintenance work orders (docs/spec/mantenimiento.md, section 8); empty with the module off. */
+  maintenance: Awaited<ReturnType<typeof workOrdersOfNc>>;
+  /** The Maintenance module is on: «Ask maintenance» is offered. */
+  maintenanceEnabled: boolean;
   description: string;
   location: string | null;
   record: { id: string; formId: string; spaceId: string; label: string } | null;
@@ -463,6 +469,8 @@ async function detailOf(ctx: AdminContext, row: NcRow, access: Access): Promise<
       at: v.verifiedAt,
     })),
     holds: await holdsOfNc(ctx, row.id),
+    maintenance: await workOrdersOfNc(ctx.db, row.id),
+    maintenanceEnabled: await maintenanceEnabled(ctx.db),
     audit: await auditOfNc(ctx, row.id),
     supplier: await supplierOfNc(ctx, row.supplierId),
     access,
@@ -719,6 +727,56 @@ export async function autoNcFromRecord(
   if (settings?.qualityAutoNc !== true) return;
   const opened = await ncFromRecord(ctx, record.id, ctx.tenant.membershipId);
   if (opened.created) await notifyNc(ctx.db, opened.id, [opened.ownerId], ctx.tenant.membershipId);
+  // The record names a piece of equipment (the cold room, the dryer): maintenance gets its urgent work
+  // order, linked to the NC (docs/spec/mantenimiento.md, section 8).
+  if (opened.created) {
+    const assetId = await assetNamedByRecord(ctx.db, record.id);
+    if (assetId !== null) await linkMaintenance(ctx, opened.id, assetId);
+  }
+}
+
+/** Opens (or links) the NC's work order and notes it in the NC's history. */
+async function linkMaintenance(
+  ctx: AdminContext,
+  ncId: string,
+  assetId: string | null,
+): Promise<{ id: string; code: string; created: boolean } | null> {
+  const nc = await ctx.db.qualityNc.findFirst({
+    where: { id: ncId },
+    select: { id: true, year: true, number: true, title: true, description: true },
+  });
+  if (nc === null) return null;
+  const order = await workOrderForNc(
+    ctx,
+    { id: nc.id, code: codeOf(nc), title: nc.title, description: nc.description },
+    assetId,
+  );
+  if (order !== null) {
+    await addEvent(ctx.db, nc.id, "maintenance", ctx.tenant.membershipId, {
+      code: order.code,
+      status: order.created ? "REPORTED" : "linked",
+    });
+  }
+  return order;
+}
+
+/** «Ask maintenance» from the NC: whoever can handle it, with the equipment (or without one). */
+export async function askMaintenance(
+  ctx: AdminContext,
+  ncId: string,
+  assetId: string | null,
+): Promise<NcDetail> {
+  const row = await loadEditable(ctx, ncId);
+  if (!(await maintenanceEnabled(ctx.db))) throw notFound();
+  const order = await linkMaintenance(ctx, row.id, assetId);
+  if (order === null) throw notFound();
+  await auditAdmin(ctx, {
+    action: "quality.nc.maintenance",
+    entityType: "QualityNc",
+    entityId: row.id,
+    metadata: { workOrder: order.code, created: order.created },
+  });
+  return await getNc(ctx, row.id);
 }
 
 /** The NC open for a record (its form screen links to it), if the person sees it. */

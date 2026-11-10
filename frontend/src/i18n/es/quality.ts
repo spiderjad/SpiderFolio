@@ -213,6 +213,7 @@ export const qualityTexts = {
         reopened: "Reabierta",
         hold_added: "Producto retenido",
         hold_decided: "Decisión sobre el producto",
+        maintenance: "Mantenimiento",
       },
       to: (status: string) => `→ ${status}`,
     },

@@ -104,6 +104,7 @@ export interface WorkOrderDetail extends WorkOrderSummary {
   totalMinutes: number;
   parts: { id: string; partCode: string; description: string; quantity: number; unit: string }[];
   events: { id: string; action: string; detail: string; who: string | null; createdAt: string }[];
+  nc: { id: string; code: string } | null;
   recordings: {
     id: string;
     purpose: "REPORT" | "CLOSE";
@@ -238,7 +239,8 @@ export const maintenanceApi = {
       m(slug, `/work-orders?${listQuery({ ...filters, cursor })}`),
       { signal },
     ),
-  counts: (slug: string) => api<{ mine: number; urgent: number }>(m(slug, "/counts")),
+  counts: (slug: string) =>
+    api<{ mine: number; urgent: number; pending: number }>(m(slug, "/counts")),
   report: (
     slug: string,
     body: {

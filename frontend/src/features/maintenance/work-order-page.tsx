@@ -97,6 +97,17 @@ export function WorkOrderPage() {
           <p className="mt-1 text-xs text-muted-foreground">
             {t.reportedBy(data.reportedBy.name, formatDateTime(data.reportedAt))}
           </p>
+          {data.nc !== null && (
+            <p className="mt-1 text-xs">
+              {texts.maintenance.quality.fromNc}:{" "}
+              <Link
+                to={`/app/${workspaceSlug}/calidad/no-conformidades/${data.nc.id}`}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {data.nc.code}
+              </Link>
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {data.can.work && open && data.assignedTo === null && (

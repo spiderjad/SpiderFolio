@@ -59,6 +59,7 @@ import {
   createNcFromRecord,
   exportNcsCsv,
   getNc,
+  askMaintenance,
   listNcs,
   listQualityActions,
   ncEvents,
@@ -360,6 +361,18 @@ export function qualityRoutes(deps: Pick<AppDeps, "prisma" | "env">): TenantRout
         const { id } = IdParams.parse(req.params);
         const { reason } = ReasonSchema.parse(req.body);
         res.json({ nc: await cancelNc(adminContextOf(req), id, reason) });
+      },
+    },
+    {
+      // «Ask maintenance» (docs/spec/mantenimiento.md, section 8): its work order, with the equipment.
+      method: "post",
+      path: "/quality/ncs/:id/maintenance",
+      handler: async (req, res) => {
+        const { id } = IdParams.parse(req.params);
+        const { assetId } = z
+          .strictObject({ assetId: z.string().min(1).max(64).nullable().default(null) })
+          .parse(req.body);
+        res.json({ nc: await askMaintenance(adminContextOf(req), id, assetId) });
       },
     },
     {

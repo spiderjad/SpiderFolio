@@ -147,8 +147,20 @@ exportación CSV.
 
 ## 8. Enlace con Calidad (cámaras, secaderos…)
 
-Pedido por el mantenedor el 10/11/2026, pendiente de diseñar en detalle y aprobar: Calidad y Mantenimiento
-tienen que estar enlazados. Lo que se propone:
+Pedido por el mantenedor el 10/11/2026 y **hecho ese día** (sin probar por el mantenedor): migración
+`maintenance_quality_link` (`MaintWorkOrder.ncId`, origen `QUALITY`), `maintenance/quality-link.ts`,
+`workOrderForNc` y `workOrdersOfNc` en `work-orders.service.ts`, `askMaintenance` y
+`POST /quality/ncs/:id/maintenance` en Calidad.
+
+Cómo quedó: **el equipo lo nombra el propio registro**, sin configurar nada. Si una respuesta de opción o de
+texto del registro es el código o el nombre de un equipo activo, o empieza por él antes de « · »
+(«Cámara 1 · canales» nombra al equipo «Cámara 1»), y la NC se abre sola, se crea la **OT urgente** de ese
+equipo (o se enlaza la que ya tiene abierta). Si el registro no nombra un equipo (o nombra dos), no se crea
+nada y Calidad la pide a mano. Lo de los PCC apuntando a un equipo queda para más adelante, si hace falta.
+Cuando la OT queda hecha, cerrada, cancelada o reabierta, la NC lo anota en su historial y avisa a su
+responsable.
+
+Lo que se propuso:
 
 - **Equipo en el registro de Calidad**: los puntos de control (PCC) y los formularios de vigilancia
   (Temperatura de cámaras, Curva de secaderos, Cocción…) pueden apuntar a un **equipo** (la cámara 3, el

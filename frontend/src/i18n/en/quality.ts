@@ -215,6 +215,7 @@ export const qualityTexts: typeof es = {
         reopened: "Reopened",
         hold_added: "Product put on hold",
         hold_decided: "Decision on the product",
+        maintenance: "Maintenance",
       },
       to: (status: string) => `→ ${status}`,
     },
